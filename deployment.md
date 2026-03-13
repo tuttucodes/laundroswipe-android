@@ -252,14 +252,14 @@ window.__LS_CONFIG__ = {
 };
 ```
 
-2. For quick local testing, copy it to `config/env.js`:
+2. For quick local testing, run the build script so config is injected into the HTML files (no separate env.js file):
 
 ```bash
 cd ~/Desktop/laundroswipe
-cp config/env.development.js config/env.js
+SUPABASE_URL='https://YOUR_PROJECT.supabase.co' SUPABASE_ANON_KEY='your_anon_key' npm run generate-env
 ```
 
-3. Open `index.html` and `admin/index.html` in the browser. Both will read Supabase config from `config/env.js`.
+3. Open `index.html` and `admin/index.html` in the browser. Config is inlined in the HTML.
 
 ### Vercel / production (laundroswipe.com)
 
@@ -272,11 +272,11 @@ cp config/env.development.js config/env.js
    - **Output Directory:** leave empty (static site)
    - **Install Command:** leave default
 
-   This creates `config/env.js` on every deploy so the app (and Google Sign-In) works on production.
+   The build injects Supabase config into the HTML files (no separate `/config/env.js` file), so keys are never exposed at a public URL.
 
-3. Redeploy after saving env vars so `config/env.js` is generated. If "Continue with Google" still does nothing or fails, see **Troubleshooting** below.
+3. Redeploy after saving env vars so the config is injected. If "Continue with Google" still does nothing or fails, see **Troubleshooting** below.
 
-> Note: `.gitignore` already ignores `config/env.js` so real keys never get committed. The app is **production-only**: login, signup, and orders require Supabase; there is no demo or local-only mode.
+> Note: Config is inlined at build time only; it is not committed. The app is **production-only**: login, signup, and orders require Supabase; there is no demo or local-only mode.
 
 ---
 
@@ -346,7 +346,7 @@ Vercel auto-deploys from GitHub — your changes go live in ~30 seconds.
 → Double check CNAME records in Cloudflare point to `cname.vercel-dns.com`.
 
 **"Continue with Google doesn't work on laundroswipe.com"**
-1. **Check config is loaded:** Open `https://laundroswipe.com/config/env.js` in a new tab. You should see a short script with `SUPA_URL` and `SUPA_KEY`. If you get 404, the build did not run or env vars are missing: set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Vercel, set Build Command to `npm install && npm run generate-env`, and redeploy.
+1. **Check that the build ran:** The app gets config from env vars injected into the HTML at build time. If the app loads but sign-in or data fails, set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Vercel (Settings → Environment Variables), ensure Build Command is `npm install && npm run generate-env`, and redeploy.
 2. **Supabase Redirect URLs:** In Supabase → Authentication → URL Configuration → Redirect URLs, add exactly: `https://laundroswipe.com/` and `https://laundroswipe.com`. If you use www, also add `https://www.laundroswipe.com/` and `https://www.laundroswipe.com`.
 3. **Google provider:** Supabase → Authentication → Providers → Google must be enabled with valid Client ID and Secret from Google Cloud Console (redirect URI in Google must match Supabase’s callback URL).
 

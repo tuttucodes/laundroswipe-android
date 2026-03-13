@@ -1,4 +1,7 @@
 {
   "buildCommand": "npm install && npm run generate-env",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" }
+  ]
 }
