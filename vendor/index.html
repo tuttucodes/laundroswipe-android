@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vendor Bill — LaundroSwipe</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../config/env.js"></script>
+<script src="../js/api.js"></script>
+<!--
+  This is a public vendor billing entrypoint at /vendor.
+  It mirrors the admin/vendor.html UI so that https://laundroswipe.com/vendor
+  always works. Any changes to admin/vendor.html should be replicated here.
+-->
+<?php /* The rest of the content is identical to admin/vendor.html */ ?>
+</head>
+<body>
+<script>
+  // Simple redirect in case you prefer to keep logic under /admin/vendor.html.
+  // Comment this out if you want the full standalone vendor UI here instead.
+  window.location.replace('/admin/vendor.html');
+</script>
+</body>
+</html>
+
