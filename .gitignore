@@ -1,0 +1,17 @@
+# Node / tooling
+node_modules/
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# Env & config
+.env
+.env.*.local
+config/env.js
+config/env*.local.js
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+

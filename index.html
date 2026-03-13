@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config/env.js"></script>
+<script src="./js/api.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--b:#1746A2;--bl:#E8EEFB;--bm:#3B6FD4;--t:#0D9488;--tl:#CCFBF1;--o:#F97316;--ol:#FFF7ED;--bg:#F6F7FB;--c:#FFF;--tx:#1A1D2E;--ts:#64748B;--tm:#94A3B8;--bd:#E2E8F0;--er:#EF4444;--ok:#16A34A;--r:14px;--rs:8px;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);--fd:'Fraunces',serif;--fb:'DM Sans',sans-serif}
@@ -170,10 +172,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 <body>
 <div id="app"></div>
 <script>
-// ===== CONFIG — REPLACE WITH YOUR SUPABASE CREDENTIALS =====
-const SUPA_URL='YOUR_SUPABASE_URL_HERE';
-const SUPA_KEY='YOUR_SUPABASE_ANON_KEY_HERE';
-let sb;try{sb=window.supabase.createClient(SUPA_URL,SUPA_KEY)}catch(e){console.warn('Supabase not connected, using local storage')}
+// Supabase client is configured via config/env.js and js/api.js (LSApi).
 
 const C={
   colleges:[
@@ -204,7 +203,7 @@ const C={
 const A={
   s:'splash',u:null,orders:[],sd:{},dd:{},sl:0,tt:null,
   $:id=>document.getElementById(id),
-  init(){this.r();setTimeout(()=>{document.querySelector('.splash')?.classList.add('h');setTimeout(()=>{const u=localStorage.getItem('ls_u');if(u){this.u=JSON.parse(u);this.orders=JSON.parse(localStorage.getItem('ls_o')||'[]');this.go('home')}else if(localStorage.getItem('ls_ob'))this.go('login');else this.go('onboarding')},600)},1800)},
+  async init(){this.r();setTimeout(async()=>{document.querySelector('.splash')?.classList.add('h');setTimeout(async()=>{const uStr=localStorage.getItem('ls_u');if(uStr){this.u=JSON.parse(uStr);if(window.LSApi&&LSApi.hasSupabase&&this.u.sid){const supOrders=await LSApi.fetchOrdersForUser(this.u.sid);if(Array.isArray(supOrders)){this.orders=supOrders.map(o=>({id:o.id,on:o.order_number,tk:o.token,svc:o.service_id,sl:o.service_name,pd:o.pickup_date,ts:o.time_slot,ins:o.instructions||'',status:o.status,ca:o.created_at}));}else{this.orders=JSON.parse(localStorage.getItem('ls_o')||'[]');}}else{this.orders=JSON.parse(localStorage.getItem('ls_o')||'[]');}this.go('home')}else if(localStorage.getItem('ls_ob'))this.go('login');else this.go('onboarding')},600)},1800)},
   go(s,d){this.s=s;if(d)this.dd=d;this.r();window.scrollTo(0,0)},
   toast(m,t=''){clearTimeout(this.tt);document.querySelector('.toast')?.remove();const e=document.createElement('div');e.className=`toast ${t}`;e.textContent=m;document.body.appendChild(e);this.tt=setTimeout(()=>e.remove(),3000)},
   save(){localStorage.setItem('ls_u',JSON.stringify(this.u))},
@@ -258,22 +257,22 @@ const A={
 
     if($('st-c'))$('st-c').onchange=()=>{const v=$('st-c').value,c=C.colleges.find(x=>x.id===v);if(c&&!c.active){this.dd={college:c.name};this.go('coming-soon')}};
 
-    if($('l-btn'))$('l-btn').onclick=()=>{const e=$('l-e').value.trim(),p=$('l-p').value;if(!e||!p){this.toast('Fill all fields','er');return}this.u={fn:'Demo User',em:e,ph:'+919876543210',wa:'+919876543210',ut:'general'};this.save();this.toast('Welcome back!','ok');this.go('home')};
-    if($('g-btn'))$('g-btn').onclick=()=>{this.u={fn:'Demo User',em:'demo@gmail.com',ph:'+919876543210',wa:'+919876543210',ut:'general'};this.save();this.toast('Signed in!','ok');this.go('home')};
+    if($('l-btn'))$('l-btn').onclick=async()=>{const e=$('l-e').value.trim(),p=$('l-p').value;if(!e||!p){this.toast('Fill all fields','er');return}if(window.LSApi&&LSApi.hasSupabase){const users=await LSApi.fetchUsers();if(users){const match=users.find(u=>(u.email&&u.email.toLowerCase()===e.toLowerCase())||(u.phone&&u.phone===e));if(match){this.u={fn:match.full_name||'LaundroSwipe User',em:match.email,ph:match.phone||'+91',wa:match.whatsapp||match.phone||'+91',ut:match.user_type||'general',rn:match.reg_no||'',cid:match.college_id||'',hos:match.hostel_block||'',yr:match.year||'',sid:match.id};this.save();const supOrders=await LSApi.fetchOrdersForUser(match.id);if(Array.isArray(supOrders)){this.orders=supOrders.map(o=>({id:o.id,on:o.order_number,tk:o.token,svc:o.service_id,sl:o.service_name,pd:o.pickup_date,ts:o.time_slot,ins:o.instructions||'',status:o.status,ca:o.created_at}));}this.toast('Welcome back!','ok');this.go('home');return;}}this.toast('Account not found. Please sign up.','er');return;}this.u={fn:'Demo User',em:e,ph:'+919876543210',wa:'+919876543210',ut:'general'};this.save();this.toast('Welcome back! (demo mode)','ok');this.go('home')};
+    if($('g-btn'))$('g-btn').onclick=()=>{this.u={fn:'Demo User',em:'demo@gmail.com',ph:'+919876543210',wa:'+919876543210',ut:'general'};this.save();this.toast('Signed in! (demo mode)','ok');this.go('home')};
 
-    if($('su-btn'))$('su-btn').onclick=()=>{const n=$('su-n').value.trim(),p=$('su-p').value.trim(),w=$('su-w').value.trim(),e=$('su-e').value.trim(),pw=$('su-pw').value,pw2=$('su-pw2').value;if(!n||!p||!w||!e||!pw){this.toast('Fill all required fields','er');return}if(pw.length<8){this.toast('Password min 8 chars','er');return}if(pw!==pw2){this.toast('Passwords don\'t match','er');return}this.u={fn:n,ph:p,wa:w,em:e,ut:'general'};this.save();this.toast('Account created!','ok');this.go('home')};
+    if($('su-btn'))$('su-btn').onclick=async()=>{const n=$('su-n').value.trim(),p=$('su-p').value.trim(),w=$('su-w').value.trim(),e=$('su-e').value.trim(),pw=$('su-pw').value,pw2=$('su-pw2').value;if(!n||!p||!w||!e||!pw){this.toast('Fill all required fields','er');return}if(pw.length<8){this.toast('Password min 8 chars','er');return}if(pw!==pw2){this.toast('Passwords don\'t match','er');return}let base={fn:n,ph:p,wa:w,em:e,ut:'general'};if(window.LSApi&&LSApi.hasSupabase){const created=await LSApi.createUser(base);if(!created){this.toast('Could not create account. Please try again.','er');return}base.sid=created.id;}this.u=base;this.save();this.toast(window.LSApi&&LSApi.hasSupabase?'Account created!':'Account created! (local only)','ok');this.go('home')};
 
-    if($('st-btn'))$('st-btn').onclick=()=>{const n=$('st-n').value.trim(),r=$('st-r').value.trim(),c=$('st-c').value,y=$('st-y').value,p=$('st-p').value.trim(),w=$('st-w').value.trim(),e=$('st-e').value.trim(),pw=$('st-pw').value,pw2=$('st-pw2').value,h=$('st-h').value.trim();if(!n||!r||!c||!y||!p||!w||!e||!pw){this.toast('Fill all required fields','er');return}const co=C.colleges.find(x=>x.id===c);if(co&&!co.active){this.dd={college:co.name};this.go('coming-soon');return}if(pw.length<8){this.toast('Password min 8 chars','er');return}if(pw!==pw2){this.toast('Passwords don\'t match','er');return}this.u={fn:n,ph:p,wa:w,em:e,ut:'student',rn:r,cid:c,hos:h,yr:parseInt(y)};this.save();this.toast('Student account created! 🎓','ok');this.go('home')};
+    if($('st-btn'))$('st-btn').onclick=async()=>{const n=$('st-n').value.trim(),r=$('st-r').value.trim(),c=$('st-c').value,y=$('st-y').value,p=$('st-p').value.trim(),w=$('st-w').value.trim(),e=$('st-e').value.trim(),pw=$('st-pw').value,pw2=$('st-pw2').value,h=$('st-h').value.trim();if(!n||!r||!c||!y||!p||!w||!e||!pw){this.toast('Fill all required fields','er');return}const co=C.colleges.find(x=>x.id===c);if(co&&!co.active){this.dd={college:co.name};this.go('coming-soon');return}if(pw.length<8){this.toast('Password min 8 chars','er');return}if(pw!==pw2){this.toast('Passwords don\'t match','er');return}let base={fn:n,ph:p,wa:w,em:e,ut:'student',rn:r,cid:c,hos:h,yr:parseInt(y)};if(window.LSApi&&LSApi.hasSupabase){const created=await LSApi.createUser(base);if(!created){this.toast('Could not create student account. Please try again.','er');return}base.sid=created.id;}this.u=base;this.save();this.toast(window.LSApi&&LSApi.hasSupabase?'Student account created! 🎓':'Student account created! 🎓 (local only)','ok');this.go('home')};
 
     if($('s1n'))$('s1n').onclick=()=>{if(!this.sd.svc)return;this.sd.step=2;this.r()};
     if($('s2n'))$('s2n').onclick=()=>{if(!this.sd.date||!this.sd.ts)return;const ins=$('s-ins');if(ins)this.sd.ins=ins.value.trim();this.sd.step=3;this.r()};
-    if($('s-cf'))$('s-cf').onclick=()=>{const svc=C.services.find(s=>s.id===this.sd.svc);const o={id:'o'+Date.now(),on:this.genOid(),tk:this.genTk(),svc:this.sd.svc,sl:svc?.name||'',pd:this.sd.date,ts:'Afternoon',ins:this.sd.ins||'',status:'scheduled',ca:new Date().toISOString()};this.orders.push(o);this.saveO();this.sd={};this.go('token-success')};
+    if($('s-cf'))$('s-cf').onclick=async()=>{const svc=C.services.find(s=>s.id===this.sd.svc);const o={id:'o'+Date.now(),on:this.genOid(),tk:this.genTk(),svc:this.sd.svc,sl:svc?.name||'',pd:this.sd.date,ts:'Afternoon',ins:this.sd.ins||'',status:'scheduled',ca:new Date().toISOString()};let storedOrder=o;if(window.LSApi&&LSApi.hasSupabase&&this.u?.sid){const created=await LSApi.createOrder(o,this.u.sid);if(!created){this.toast('Could not place order. Please try again.','er');return}storedOrder={id:created.id,on:created.order_number,tk:created.token,svc:created.service_id,sl:created.service_name,pd:created.pickup_date,ts:created.time_slot,ins:created.instructions||'',status:created.status,ca:created.created_at};}this.orders.push(storedOrder);this.saveO();this.sd={};this.go('token-success')};
   },
 
   selSvc(id){this.sd=this.sd||{};this.sd.svc=id;this.sd.step=1;this.r()},
   selDt(d){this.sd.date=d;this.r()},
   selTs(t){this.sd.ts=t;this.r()},
-  advO(id){const o=this.orders.find(x=>x.id===id);if(!o)return;const i=C.statuses.indexOf(o.status);if(i<C.statuses.length-1){o.status=C.statuses[i+1];this.saveO();this.toast(`Status: ${this.sLbl(o.status)}`,'ok');this.r()}},
+  async advO(id){const o=this.orders.find(x=>x.id===id);if(!o)return;if(window.LSApi&&LSApi.hasSupabase){const updated=await LSApi.advanceOrderStatus(o.id);if(updated){o.status=updated.status;this.toast(`Status: ${this.sLbl(o.status)}`,'ok');this.r();return;}this.toast('Could not update status.','er');return;}const i=C.statuses.indexOf(o.status);if(i<C.statuses.length-1){o.status=C.statuses[i+1];this.saveO();this.toast(`Status: ${this.sLbl(o.status)}`,'ok');this.r()}},
   logout(){localStorage.removeItem('ls_u');localStorage.removeItem('ls_o');this.u=null;this.orders=[];this.go('login');this.toast('Logged out')}
 };
 A.init();

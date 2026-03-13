@@ -1,0 +1,10 @@
+{
+  "name": "laundroswipe",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "generate-env": "node scripts/generate-env.js"
+  },
+  "devDependencies": {}
+}
+

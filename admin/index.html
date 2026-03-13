@@ -6,6 +6,8 @@
 <title>LaundroSwipe Admin — Pro Fab Power Laundry</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../config/env.js"></script>
+<script src="../js/api.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--b:#1746A2;--bl:#E8EEFB;--o:#F97316;--ol:#FFF7ED;--t:#0D9488;--tl:#CCFBF1;--ok:#16A34A;--er:#EF4444;--bg:#F1F3F8;--tx:#1A1D2E;--ts:#64748B;--tm:#94A3B8;--bd:#E2E8F0;--c:#FFF;--fd:'Fraunces',serif;--fb:'DM Sans',sans-serif}
@@ -98,10 +100,7 @@ tbody tr:hover{background:var(--bl)}
 <body>
 <div id="admin"></div>
 <script>
-// ===== SUPABASE CONFIG =====
-const SUPA_URL='YOUR_SUPABASE_URL_HERE';
-const SUPA_KEY='YOUR_SUPABASE_ANON_KEY_HERE';
-let sb;try{sb=window.supabase.createClient(SUPA_URL,SUPA_KEY)}catch(e){}
+// Supabase client is configured via ../config/env.js and ../js/api.js (LSApi).
 
 // HARDCODED ADMIN CREDENTIALS
 const ADMIN_EMAIL='profab@laundroswipe.com';
@@ -125,16 +124,46 @@ const AD={
   },
 
   loadData(){
-    // Load orders & users from localStorage (shared with main app on same domain)
-    // In production, these would come from Supabase
+    if(window.LSApi && LSApi.hasSupabase){
+      Promise.all([LSApi.fetchOrders(), LSApi.fetchUsers()]).then(([orders, users])=>{
+        const userMap=new Map();
+        if(Array.isArray(users)){
+          this.users=users;
+          users.forEach(u=>{userMap.set(u.id,u);});
+        }else{
+          this.users=[];
+        }
+        if(Array.isArray(orders)){
+          this.orders=orders.map(o=>{
+            const u=userMap.get(o.user_id);
+            return {
+              id:o.id,
+              on:o.order_number,
+              tk:o.token,
+              svc:o.service_id,
+              sl:o.service_name,
+              pd:o.pickup_date,
+              ts:o.time_slot,
+              status:o.status,
+              ca:o.created_at,
+              ins:o.instructions||'',
+              user:u?(u.full_name||u.email||'User'):'—'
+            };
+          });
+        }else{
+          this.orders=[];
+        }
+        this.r();
+      });
+      return;
+    }
+
     const rawOrders=localStorage.getItem('ls_o');
     const rawUser=localStorage.getItem('ls_u');
     this.orders=rawOrders?JSON.parse(rawOrders):[];
     this.users=rawUser?[JSON.parse(rawUser)]:[];
 
-    // Also check for demo data
     if(!this.orders.length){
-      // Seed some demo orders
       this.orders=[
         {id:'o1',on:'LS-20260313-001',tk:'472',svc:'wash_fold',sl:'Wash & Fold',pd:'2026-03-14',ts:'Afternoon',status:'scheduled',ca:'2026-03-13T10:00:00Z',ins:'',user:'Rahul K'},
         {id:'o2',on:'LS-20260313-002',tk:'815',svc:'wash_iron',sl:'Wash & Iron',pd:'2026-03-14',ts:'Afternoon',status:'picked_up',ca:'2026-03-13T11:30:00Z',ins:'Separate whites',user:'Sneha M'},
@@ -198,10 +227,21 @@ const AD={
 
   advOrder(id){
     const o=this.orders.find(x=>x.id===id);if(!o)return;
+    if(window.LSApi && LSApi.hasSupabase){
+      LSApi.advanceOrderStatus(o.id).then(updated=>{
+        if(updated){
+          o.status=updated.status;
+          this.toast(`Order ${o.on} → ${this.statusLabel(o.status)}`,'ok');
+          this.r();
+        }else{
+          this.toast('Could not update order status.','er');
+        }
+      });
+      return;
+    }
     const i=STATUSES.indexOf(o.status);
     if(i<STATUSES.length-1){
       o.status=STATUSES[i+1];
-      // Save back to localStorage so the user app sees the update too
       localStorage.setItem('ls_o',JSON.stringify(this.orders));
       this.toast(`Order ${o.on} → ${this.statusLabel(o.status)}`,'ok');
       this.r();
