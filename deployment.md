@@ -223,20 +223,17 @@ Go to your site → **DNS** → **Records** → Add these:
 
 ---
 
-## STEP 10: Supabase Final Setup
+## STEP 10: Supabase Final Setup (required for laundroswipe.com)
 
 Go to your Supabase project:
 
 1. **Authentication** → **URL Configuration:**
-   - Site URL: `https://laundroswipe.com` (or your Vercel URL for staging)
-   - Redirect URLs: add **all** of:
-     - `https://laundroswipe.com/**`
-     - `https://laundroswipe.com/` (root, required for Google OAuth callback)
-     - For local testing: `http://localhost:3000/`, `http://127.0.0.1:5500/` (or whatever port you use)
+   - **Site URL:** `https://laundroswipe.com`
+   - **Redirect URLs:** add each (one per line): `https://laundroswipe.com/`, `https://laundroswipe.com`, `https://www.laundroswipe.com/`, `https://www.laundroswipe.com`. For local: `http://localhost:3000/`. Without these, Continue with Google will not work.
 
 2. **Authentication** → **Providers:**
    - Email: already enabled
-   - **Google:** enable and add your OAuth Client ID & Secret (from Google Cloud Console). The app uses “Sign in with Google” and redirects back to the Site URL/Redirect URL above.
+   - **Google:** Enable and add OAuth Client ID and Secret from Google Cloud Console. In Google Cloud, set Authorized redirect URI to the exact URL Supabase shows (e.g. `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`).
 
 ---
 
@@ -264,25 +261,22 @@ cp config/env.development.js config/env.js
 
 3. Open `index.html` and `admin/index.html` in the browser. Both will read Supabase config from `config/env.js`.
 
-### Vercel / production
+### Vercel / production (laundroswipe.com)
 
-1. In your Vercel project → **Settings** → **Environment Variables**, add:
-   - `SUPABASE_URL` = your project URL
-   - `SUPABASE_ANON_KEY` = your anon public key
+1. In your Vercel project → **Settings** → **Environment Variables**, add (for Production):
+   - `SUPABASE_URL` = your Supabase project URL (e.g. `https://xxxxx.supabase.co`)
+   - `SUPABASE_ANON_KEY` = your Supabase anon public key (starts with `eyJ...`)
 
-2. In **Build & Development Settings**, set a build command to generate `config/env.js` before deploy:
+2. In **Settings** → **General** → **Build & Development Settings**:
+   - **Build Command:** `npm install && npm run generate-env`
+   - **Output Directory:** leave empty (static site)
+   - **Install Command:** leave default
 
-```bash
-npm install
-npm run generate-env
-```
+   This creates `config/env.js` on every deploy so the app (and Google Sign-In) works on production.
 
-Vercel will:
-- Install dependencies (for the small Node script in `scripts/generate-env.js`)
-- Run `scripts/generate-env.js`, which creates `config/env.js` from your env vars
-- Then serve the static HTML (no further build step needed).
+3. Redeploy after saving env vars so `config/env.js` is generated. If "Continue with Google" still does nothing or fails, see **Troubleshooting** below.
 
-> Note: `.gitignore` already ignores `config/env.js` so real keys never get committed.
+> Note: `.gitignore` already ignores `config/env.js` so real keys never get committed. The app is **production-only**: login, signup, and orders require Supabase; there is no demo or local-only mode.
 
 ---
 
@@ -298,7 +292,8 @@ Vercel will:
 - [ ] ₹20 fee notice visible in small text
 - [ ] Token number issued after booking
 - [ ] Admin: can log in with your chosen secure credentials
-- [ ] Admin: can see Supabase orders (once DB tables are wired) and advance status
+- [ ] Admin: can see Supabase orders and advance status
+- [ ] **Continue with Google** works on https://laundroswipe.com (requires STEP 10 and env build)
 - [ ] HTTPS green lock showing
 
 ---
@@ -350,11 +345,24 @@ Vercel auto-deploys from GitHub — your changes go live in ~30 seconds.
 **"Vercel says domain not configured"**
 → Double check CNAME records in Cloudflare point to `cname.vercel-dns.com`.
 
+**"Continue with Google doesn't work on laundroswipe.com"**
+1. **Check config is loaded:** Open `https://laundroswipe.com/config/env.js` in a new tab. You should see a short script with `SUPA_URL` and `SUPA_KEY`. If you get 404, the build did not run or env vars are missing: set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Vercel, set Build Command to `npm install && npm run generate-env`, and redeploy.
+2. **Supabase Redirect URLs:** In Supabase → Authentication → URL Configuration → Redirect URLs, add exactly: `https://laundroswipe.com/` and `https://laundroswipe.com`. If you use www, also add `https://www.laundroswipe.com/` and `https://www.laundroswipe.com`.
+3. **Google provider:** Supabase → Authentication → Providers → Google must be enabled with valid Client ID and Secret from Google Cloud Console (redirect URI in Google must match Supabase’s callback URL).
+
 **"Admin login not working"**
-→ Make sure you're typing exactly: `profab@laundroswipe.com` and `Mujeeb@123`
+→ Use the credentials you set in the admin panel (see `admin/index.html` if you need to change them).
 
 **"I want to update code but git says error"**
 → Run `git pull` first, then make changes, then `git add . && git commit -m "msg" && git push`
+
+---
+
+## What's next (post-launch)
+
+- **Security:** Turn on Row Level Security (RLS) on `users` and `orders` in Supabase and add policies so customers only see their own data. Change the hardcoded admin password or move admin login to Supabase Auth.
+- **Vendor bill:** Use **Admin → Vendor / Bill** (`/admin/vendor.html`) to look up orders by token, add line items, and print the 2" thermal receipt (choose your Bluetooth printer in the print dialog).
+- **Data:** Orders and users are stored in Supabase; admin and vendor pages read from the same database.
 
 ---
 

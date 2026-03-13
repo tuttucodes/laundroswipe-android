@@ -93,8 +93,26 @@ tbody tr:hover{background:var(--bl)}
 .empty{text-align:center;padding:48px 20px;color:var(--ts)}
 .empty .em{font-size:48px;margin-bottom:12px}
 
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--ts)}
+.loading::after{content:'';width:28px;height:28px;border:3px solid var(--bd);border-top-color:var(--b);border-radius:50%;animation:spin .7s linear infinite}
+
 /* RESPONSIVE */
-@media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:20px 16px}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .sidebar{width:100%;position:relative;display:flex;flex-direction:row;flex-wrap:wrap;padding:12px;gap:8px;border-bottom:1px solid var(--bd)}
+  .sb-logo{display:none}
+  .sb-nav{display:flex;flex:1;flex-wrap:wrap;gap:4px;padding:0}
+  .sb-item{margin:0;padding:8px 12px;border-radius:8px}
+  .sb-foot{width:100%;padding:12px;border-top:1px solid var(--bd)}
+  .main{margin-left:0;padding:16px 12px}
+  .stats{grid-template-columns:repeat(2,1fr);gap:12px}
+  .table-head{flex-direction:column;align-items:flex-start;gap:12px}
+  .table-filters{flex-wrap:wrap}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:640px}
+  tbody td,tbody th{padding:10px 12px;font-size:13px}
+}
+@media(max-width:480px){.stats{grid-template-columns:1fr}.page-title{font-size:22px}}
 </style>
 </head>
 <body>
@@ -125,6 +143,7 @@ const AD={
 
   loadData(){
     if(window.LSApi && LSApi.hasSupabase){
+      this.orders=[];this.users=[];this.r();
       Promise.all([LSApi.fetchOrders(), LSApi.fetchUsers()]).then(([orders, users])=>{
         const userMap=new Map();
         if(Array.isArray(users)){
@@ -158,19 +177,9 @@ const AD={
       return;
     }
 
-    const rawOrders=localStorage.getItem('ls_o');
-    const rawUser=localStorage.getItem('ls_u');
-    this.orders=rawOrders?JSON.parse(rawOrders):[];
-    this.users=rawUser?[JSON.parse(rawUser)]:[];
-
-    if(!this.orders.length){
-      this.orders=[
-        {id:'o1',on:'LS-20260313-001',tk:'472',svc:'wash_fold',sl:'Wash & Fold',pd:'2026-03-14',ts:'Afternoon',status:'scheduled',ca:'2026-03-13T10:00:00Z',ins:'',user:'Rahul K'},
-        {id:'o2',on:'LS-20260313-002',tk:'815',svc:'wash_iron',sl:'Wash & Iron',pd:'2026-03-14',ts:'Afternoon',status:'picked_up',ca:'2026-03-13T11:30:00Z',ins:'Separate whites',user:'Sneha M'},
-        {id:'o3',on:'LS-20260311-001',tk:'293',svc:'dry_clean',sl:'Dry Cleaning',pd:'2026-03-11',ts:'Afternoon',status:'delivered',ca:'2026-03-11T09:00:00Z',ins:'',user:'Arjun R'},
-        {id:'o4',on:'LS-20260313-003',tk:'641',svc:'iron_only',sl:'Iron Only',pd:'2026-03-15',ts:'Afternoon',status:'processing',ca:'2026-03-13T14:00:00Z',ins:'Handle with care',user:'Priya S'},
-      ];
-    }
+    this.orders=[];
+    this.users=[];
+    this.r();
   },
 
   toast(m,t=''){clearTimeout(this.toastTm);document.querySelector('.toast')?.remove();const e=document.createElement('div');e.className=`toast ${t}`;e.textContent=m;document.body.appendChild(e);this.toastTm=setTimeout(()=>e.remove(),3000)},
@@ -195,7 +204,7 @@ const AD={
     const delivered=this.orders.filter(o=>o.status==='delivered').length;
     const revenue=this.orders.length*20; // ₹20 per order convenience fee
 
-    return`<div class="dash"><aside class="sidebar"><div class="sb-logo"><h2>🧺 LaundroSwipe</h2><p>Admin Dashboard</p></div><nav class="sb-nav"><div class="sb-item ${this.tab==='orders'?'active':''}" onclick="AD.tab='orders';AD.r()"><span class="ic">📦</span>Orders</div><div class="sb-item ${this.tab==='users'?'active':''}" onclick="AD.tab='users';AD.r()"><span class="ic">👥</span>Users</div><div class="sb-item ${this.tab==='colleges'?'active':''}" onclick="AD.tab='colleges';AD.r()"><span class="ic">🎓</span>Colleges</div><div class="sb-item ${this.tab==='settings'?'active':''}" onclick="AD.tab='settings';AD.r()"><span class="ic">⚙️</span>Settings</div></nav><div class="sb-foot"><div class="user">Pro Fab Power Laundry</div><div class="email">profab@laundroswipe.com</div><button class="btn bout" style="margin-top:12px;padding:8px 16px;font-size:12px;width:100%" onclick="AD.logout()">Log Out</button></div></aside><div class="main">${this.tab==='orders'?this.rOrders(filtered,total,active,delivered,revenue):''}${this.tab==='users'?this.rUsers():''}${this.tab==='colleges'?this.rColleges():''}${this.tab==='settings'?this.rSettings():''}</div></div>`;
+    return`<div class="dash"><aside class="sidebar"><div class="sb-logo"><h2>🧺 LaundroSwipe</h2><p>Admin Dashboard</p></div><nav class="sb-nav"><div class="sb-item ${this.tab==='orders'?'active':''}" onclick="AD.tab='orders';AD.r()"><span class="ic">📦</span>Orders</div><div class="sb-item ${this.tab==='users'?'active':''}" onclick="AD.tab='users';AD.r()"><span class="ic">👥</span>Users</div><a href="vendor.html" class="sb-item" style="text-decoration:none;color:inherit"><span class="ic">🧾</span>Vendor / Bill</a><div class="sb-item ${this.tab==='colleges'?'active':''}" onclick="AD.tab='colleges';AD.r()"><span class="ic">🎓</span>Colleges</div><div class="sb-item ${this.tab==='settings'?'active':''}" onclick="AD.tab='settings';AD.r()"><span class="ic">⚙️</span>Settings</div></nav><div class="sb-foot"><div class="user">Pro Fab Power Laundry</div><div class="email">profab@laundroswipe.com</div><button class="btn bout" style="margin-top:12px;padding:8px 16px;font-size:12px;width:100%" onclick="AD.logout()">Log Out</button></div></aside><div class="main">${this.tab==='orders'?this.rOrders(filtered,total,active,delivered,revenue):''}${this.tab==='users'?this.rUsers():''}${this.tab==='colleges'?this.rColleges():''}${this.tab==='settings'?this.rSettings():''}</div></div>`;
   },
 
   rOrders(filtered,total,active,delivered,revenue){

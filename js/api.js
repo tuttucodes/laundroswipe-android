@@ -10,11 +10,14 @@
     try {
       sb = global.supabase.createClient(SUPA_URL, SUPA_KEY);
     } catch (e) {
-      console.warn('Failed to init Supabase client, falling back to local-only mode', e);
+      console.error('Supabase client init failed', e);
       sb = null;
     }
   } else {
-    console.warn('Supabase config missing or placeholder, running in local-only demo mode');
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('LaundroSwipe: Supabase config required. Set SUPABASE_URL and SUPABASE_ANON_KEY and run build (see deployment.md).');
+    }
+    sb = null;
   }
 
   async function createUser(user) {
@@ -112,6 +115,31 @@
     }
   }
 
+  async function fetchOrderByToken(token) {
+    if (!sb) return null;
+    const t = String(token).replace(/^#/, '').trim();
+    if (!t) return null;
+    try {
+      const { data: orders, error } = await sb
+        .from('orders')
+        .select('*')
+        .eq('token', t)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error || !orders || !orders.length) return null;
+      const order = orders[0];
+      let user = null;
+      if (order.user_id) {
+        const { data: u } = await sb.from('users').select('*').eq('id', order.user_id).single();
+        user = u;
+      }
+      return { order, user };
+    } catch (e) {
+      console.error('Supabase fetchOrderByToken exception', e);
+      return null;
+    }
+  }
+
   async function fetchUsers() {
     if (!sb) return null;
     try {
@@ -133,9 +161,12 @@
   async function signInWithGoogle(redirectTo) {
     if (!sb) return { error: { message: 'Supabase not configured' } };
     try {
+      var base = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+      if (!base || base === 'null' || base === 'file://') base = 'https://laundroswipe.com';
+      var to = redirectTo || (base + (base.endsWith('/') ? '' : '/'));
       const { data, error } = await sb.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: redirectTo || (typeof window !== 'undefined' && window.location.origin + '/') },
+        options: { redirectTo: to },
       });
       if (error) return { error };
       if (data && data.url) {
@@ -262,6 +293,7 @@
     createOrder,
     fetchOrders,
     fetchOrdersForUser,
+    fetchOrderByToken,
     fetchUsers,
     advanceOrderStatus,
     signInWithGoogle,
