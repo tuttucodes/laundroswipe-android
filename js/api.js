@@ -130,6 +130,89 @@
     }
   }
 
+  async function signInWithGoogle(redirectTo) {
+    if (!sb) return { error: { message: 'Supabase not configured' } };
+    try {
+      const { data, error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: redirectTo || (typeof window !== 'undefined' && window.location.origin + '/') },
+      });
+      if (error) return { error };
+      if (data && data.url) {
+        window.location.href = data.url;
+        return { data };
+      }
+      return { error: { message: 'No redirect URL' } };
+    } catch (e) {
+      console.error('signInWithGoogle exception', e);
+      return { error: { message: e && e.message } };
+    }
+  }
+
+  async function getAuthSession() {
+    if (!sb) return null;
+    try {
+      const { data: { session }, error } = await sb.auth.getSession();
+      if (error || !session) return null;
+      return session;
+    } catch (e) {
+      console.error('getAuthSession exception', e);
+      return null;
+    }
+  }
+
+  async function signOutAuth() {
+    if (!sb) return;
+    try {
+      await sb.auth.signOut();
+    } catch (e) {
+      console.error('signOutAuth exception', e);
+    }
+  }
+
+  async function upsertUserFromAuth(authUser) {
+    if (!sb || !authUser || !authUser.id) return null;
+    const fullName = (authUser.user_metadata && authUser.user_metadata.full_name) ||
+      authUser.user_metadata?.name ||
+      (authUser.email && authUser.email.split('@')[0]) ||
+      'User';
+    const row = {
+      id: authUser.id,
+      full_name: fullName,
+      email: authUser.email || '',
+      phone: null,
+      whatsapp: null,
+      user_type: 'general',
+      college_id: null,
+      reg_no: null,
+      hostel_block: null,
+      year: null,
+    };
+    try {
+      const { data: upserted, error: upsertErr } = await sb
+        .from('users')
+        .upsert(row, { onConflict: 'id' })
+        .select()
+        .single();
+      if (!upsertErr && upserted) return upserted;
+      const { data: inserted, error: insertErr } = await sb
+        .from('users')
+        .insert(row)
+        .select()
+        .single();
+      if (!insertErr && inserted) return inserted;
+      const { data: existing } = await sb
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+      return existing || null;
+    } catch (e) {
+      console.error('upsertUserFromAuth exception', e);
+      return null;
+    }
+  }
+
   async function advanceOrderStatus(orderId) {
     if (!sb) return null;
     try {
@@ -181,6 +264,10 @@
     fetchOrdersForUser,
     fetchUsers,
     advanceOrderStatus,
+    signInWithGoogle,
+    getAuthSession,
+    signOutAuth,
+    upsertUserFromAuth,
   };
 })(window);
 

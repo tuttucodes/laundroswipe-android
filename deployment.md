@@ -228,12 +228,15 @@ Go to your site → **DNS** → **Records** → Add these:
 Go to your Supabase project:
 
 1. **Authentication** → **URL Configuration:**
-   - Site URL: `https://laundroswipe.com`
-   - Redirect URLs: add `https://laundroswipe.com/**`
+   - Site URL: `https://laundroswipe.com` (or your Vercel URL for staging)
+   - Redirect URLs: add **all** of:
+     - `https://laundroswipe.com/**`
+     - `https://laundroswipe.com/` (root, required for Google OAuth callback)
+     - For local testing: `http://localhost:3000/`, `http://127.0.0.1:5500/` (or whatever port you use)
 
 2. **Authentication** → **Providers:**
    - Email: already enabled
-   - (Optional) Google: add OAuth credentials
+   - **Google:** enable and add your OAuth Client ID & Secret (from Google Cloud Console). The app uses “Sign in with Google” and redirects back to the Site URL/Redirect URL above.
 
 ---
 
