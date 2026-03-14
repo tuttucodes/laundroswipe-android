@@ -9,7 +9,9 @@ const SUPA_URL = process.env.SUPABASE_URL || '';
 const SUPA_KEY = process.env.SUPABASE_ANON_KEY || '';
 
 const configObj = { SUPA_URL, SUPA_KEY };
-const configStr = JSON.stringify(configObj);
+// Escape </script> so injected JSON cannot close the script tag in HTML
+let configStr = JSON.stringify(configObj);
+configStr = configStr.replace(/<\/script>/gi, '<\\/script>');
 
 const root = path.join(__dirname, '..');
 const htmlFiles = [
