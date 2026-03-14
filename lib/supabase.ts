@@ -11,7 +11,13 @@ if (
   key !== 'YOUR_SUPABASE_ANON_KEY_HERE'
 ) {
   try {
-    client = createClient(url, key);
+    client = createClient(url, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
   } catch (e) {
     console.error('Supabase client init failed', e);
   }

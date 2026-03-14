@@ -336,7 +336,7 @@ Vercel auto-deploys from GitHub — your changes go live in ~30 seconds.
 | Hosting | Vercel (auto-deploys from GitHub) |
 | Domain | Namecheap: `laundroswipe.com` |
 | DNS | Cloudflare (nameservers point here) |
-| Database | Supabase (tables already created) |
+| Database | Supabase — see `supabase/schema.sql` for tables (`users`, `orders`) |
 | Customer App | `https://laundroswipe.com` |
 | Admin Dashboard | `https://laundroswipe.com/admin` |
 

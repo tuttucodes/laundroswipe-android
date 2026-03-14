@@ -178,25 +178,46 @@ export default function LaundroApp() {
       if (screen === 'splash') setScreen(lsOb ? 'login' : 'onboarding');
     }, 900);
 
+    async function tryApplySession(session: { user: unknown } | null) {
+      if (!mounted || !session?.user) return false;
+      const profile = await LSApi.upsertUserFromAuth(session.user as { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } });
+      if (!profile) return false;
+      const u = rowToUser(profile);
+      setUser(u);
+      saveUser(u);
+      const ords = await LSApi.fetchOrdersForUser(profile.id);
+      if (mounted && ords) {
+        const mapped = ords.map(rowToOrder);
+        setOrders(mapped);
+        saveO(mapped);
+      }
+      setScreen('home');
+      showToast('Signed in with Google!', 'ok');
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      return true;
+    }
+
     async function init() {
-      const session = await LSApi.getAuthSession();
+      let session = await LSApi.getAuthSession();
       if (!mounted) return;
       if (session?.user) {
-        const profile = await LSApi.upsertUserFromAuth(session.user as { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } });
-        if (profile) {
-          const u = rowToUser(profile);
-          setUser(u);
-          saveUser(u);
-          const ords = await LSApi.fetchOrdersForUser(profile.id);
-          if (ords) {
-            const mapped = ords.map(rowToOrder);
-            setOrders(mapped);
-            saveO(mapped);
-          }
-          setScreen('home');
-          showToast('Signed in', 'ok');
-        }
+        await tryApplySession(session);
         return;
+      }
+      // After OAuth redirect, tokens can be in the URL hash; Supabase may need a moment to process.
+      const hasHash = typeof window !== 'undefined' && window.location.hash && /access_token|refresh_token/.test(window.location.hash);
+      if (hasHash) {
+        for (let i = 0; i < 15; i++) {
+          await new Promise((r) => setTimeout(r, 200));
+          if (!mounted) return;
+          session = await LSApi.getAuthSession();
+          if (session?.user) {
+            const applied = await tryApplySession(session);
+            if (applied) return;
+          }
+        }
       }
       if (LSApi.hasSupabase && restoredUser?.sid) {
         const ords = await LSApi.fetchOrdersForUser(restoredUser.sid);
@@ -206,8 +227,8 @@ export default function LaundroApp() {
           saveO(mapped);
         }
         if (mounted && restoredUser) setScreen('home');
-      } else {
-        if (restoredUser) setScreen('home');
+      } else if (restoredUser) {
+        setScreen('home');
       }
     }
     init();
