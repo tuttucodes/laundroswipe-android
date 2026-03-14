@@ -3,18 +3,23 @@
 
 ---
 
-## What You Have (2 files)
+## What You Have (Next.js app)
 
 ```
 laundroswipe/
-├── index.html          ← Customer app (laundroswipe.com)
-└── admin/
-    └── index.html      ← Admin dashboard (laundroswipe.com/admin)
+├── app/                ← Next.js App Router (customer app at /, admin at /admin)
+├── components/         ← LaundroApp (main SPA)
+├── lib/                ← Supabase client & API (uses env vars)
+└── ...
 ```
 
-**Admin Login:**
-- Email: `profab@laundroswipe.com`
-- Password: `Mujeeb@123`
+- **Customer app:** https://yoursite.com/
+- **Admin dashboard:** https://yoursite.com/admin (sign in with the email and password you set in env)
+- **Vendor bill:** https://yoursite.com/admin/vendor
+
+**Admin login:** Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in your environment (see Step 3).
+
+**Security:** Never commit real credentials to GitHub. Only `.env.example` (placeholders) is safe to commit. Use `.env.local` locally and Vercel Environment Variables in production; both are ignored by git.
 
 ---
 
@@ -72,40 +77,44 @@ Your folder should look like:
 
 ---
 
-## STEP 3: Add Your Supabase Credentials
-
-You said you already created Supabase tables — great!
+## STEP 3: Add Your Supabase Credentials (Next.js)
 
 1. Go to your Supabase project → **Settings** → **API**
-2. Copy your **Project URL** (looks like `https://abcdefg.supabase.co`)
-3. Copy your **anon public key** (starts with `eyJ...`)
+2. Copy your **Project URL** (e.g. `https://xxxx.supabase.co`)
+3. Copy your **anon public** key (starts with `eyJ...`)
 
-Now open BOTH `index.html` files and replace:
+**Local development:** Create `.env.local` in the project root. **Never commit this file.** Example:
 
-**In `laundroswipe/index.html` (line ~11):**
-```javascript
-const SUPA_URL='YOUR_SUPABASE_URL_HERE';       // ← paste your URL
-const SUPA_KEY='YOUR_SUPABASE_ANON_KEY_HERE';   // ← paste your key
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+ADMIN_EMAIL=your-admin@example.com
+ADMIN_PASSWORD=choose-a-secure-password
 ```
 
-**In `laundroswipe/admin/index.html` (line ~8):**
-```javascript
-const SUPA_URL='YOUR_SUPABASE_URL_HERE';       // ← paste your URL
-const SUPA_KEY='YOUR_SUPABASE_ANON_KEY_HERE';   // ← paste your key
-```
+**Vercel:** In your project → **Settings** → **Environment Variables**, add (use your real values only in Vercel; they are not in git):
+- `NEXT_PUBLIC_SUPABASE_URL` = your Supabase URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = your anon key
+- `ADMIN_EMAIL` = email used to log in to /admin
+- `ADMIN_PASSWORD` = password for admin (keep strong and private)
 
-Save both files.
+No build-time script is needed; Next.js injects public env at build. Admin credentials stay server-side only.
 
 ---
 
 ## STEP 4: Test Locally
 
-Just double-click `index.html` to open in browser. Test:
-- Onboarding slides work
-- Sign up works
-- Schedule pickup shows only Tuesday & Saturday
-- Token number appears after booking
-- Go to `admin/index.html` and login with `profab@laundroswipe.com` / `Mujeeb@123`
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 and test:
+- Onboarding slides → Login / Sign up
+- Sign up (general or student) and schedule a pickup
+- Token appears after booking; check Orders and Profile
+- Admin: http://localhost:3000/admin — use the email and password from your `.env.local` (ADMIN_EMAIL / ADMIN_PASSWORD)
+- Vendor bill: http://localhost:3000/admin/vendor — enter token to lookup order
 
 ---
 

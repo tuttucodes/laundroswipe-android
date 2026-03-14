@@ -1,11 +1,16 @@
 # Node / tooling
 node_modules/
+.next/
 npm-debug.log*
 pnpm-lock.yaml
 yarn.lock
 
-# Env & config
+# Env & config (never commit real credentials; .env.example is placeholders only)
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.*.local
 config/env.js
 config/env*.local.js

@@ -1,7 +1,5 @@
 {
-  "buildCommand": "npm install && npm run generate-env",
-  "outputDirectory": ".",
-  "rewrites": [
-    { "source": "/", "destination": "/index.html" }
-  ]
+  "buildCommand": "npm run build",
+  "framework": "nextjs",
+  "installCommand": "npm install"
 }
