@@ -16,6 +16,8 @@ export default function VendorPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [billAlreadyGenerated, setBillAlreadyGenerated] = useState(false);
+  const [showAnyway, setShowAnyway] = useState(false);
 
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
@@ -28,6 +30,8 @@ export default function VendorPage() {
     setOrder(null);
     setUser(null);
     setLineItems([]);
+    setBillAlreadyGenerated(false);
+    setShowAnyway(false);
     const t = token.replace(/^#/, '').trim();
     if (!t) {
       setLookupErr('Enter a token number');
@@ -37,6 +41,8 @@ export default function VendorPage() {
     if (result) {
       setOrder(result.order);
       setUser(result.user ?? null);
+      const existingCount = await LSApi.countBillsForOrderToken(t);
+      setBillAlreadyGenerated(existingCount > 0);
       showToast('Order loaded', 'ok');
     } else {
       setLookupErr('Order not found for this token');
@@ -80,12 +86,12 @@ export default function VendorPage() {
       ? lineItems.map((l) => `<tr><td>${l.label} x${l.qty}</td><td class="right">${l.price * l.qty}</td></tr>`).join('')
       : '<tr><td colspan="2">No items</td></tr>';
     const o = order as OrderRow | null;
-    const u = (user ?? {}) as Partial<UserRow>;
+    const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
     return `
     <h2>LaundroSwipe</h2>
     <p class="meta">Pro Fab Power Laundry</p>
-    <p><strong>Order:</strong> ${o?.order_number ?? ''} &nbsp; <strong>Token:</strong> #${o?.token ?? ''}</p>
-    <p><strong>Customer:</strong> ${u.full_name ?? u.email ?? '—'}</p>
+    <p><strong>Token:</strong> #${o?.token ?? ''} &nbsp; <strong>Order:</strong> ${o?.order_number ?? ''}</p>
+    <p><strong>Customer ID:</strong> ${u.display_id ?? '—'} &nbsp; <strong>Customer:</strong> ${u.full_name ?? u.email ?? '—'}</p>
     <p><strong>Phone:</strong> ${u.phone ?? '—'}</p>
     <table>
       <thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
@@ -111,6 +117,7 @@ export default function VendorPage() {
       order_number: order?.order_number ?? null,
       customer_name: user?.full_name ?? null,
       customer_phone: user?.phone ?? null,
+      user_id: order?.user_id ?? user?.id ?? null,
       line_items: lineItems,
       subtotal,
       convenience_fee: CONVENIENCE_FEE,
@@ -118,6 +125,7 @@ export default function VendorPage() {
     });
     setSaving(false);
     if (result) {
+      setBillAlreadyGenerated(true);
       showToast('Bill saved', 'ok');
     } else {
       showToast('Save failed. Run supabase/vendor_bills.sql if needed.', 'er');
@@ -174,6 +182,7 @@ export default function VendorPage() {
       order_number: order?.order_number ?? null,
       customer_name: user?.full_name ?? null,
       customer_phone: user?.phone ?? null,
+      user_id: order?.user_id ?? user?.id ?? null,
       line_items: lineItems,
       subtotal,
       convenience_fee: CONVENIENCE_FEE,
@@ -189,6 +198,8 @@ export default function VendorPage() {
     setOrder(null);
     setUser(null);
     setLineItems([]);
+    setBillAlreadyGenerated(false);
+    setShowAnyway(false);
   };
 
   return (
@@ -216,11 +227,26 @@ export default function VendorPage() {
         </form>
       </div>
 
-      {order && (
+      {order && billAlreadyGenerated && !showAnyway && (
         <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+          <div style={{ padding: '12px 16px', background: '#FEF3C7', borderRadius: 8, marginBottom: 12, fontSize: 13, color: '#92400E' }}>
+            <strong>A bill was already generated for this token.</strong> If you need to add more items (e.g. few missed), click Continue below.
+          </div>
+          <button type="button" onClick={() => setShowAnyway(true)} className="vendor-btn-primary" style={{ width: '100%' }}>Continue</button>
+        </div>
+      )}
+
+      {order && (showAnyway || !billAlreadyGenerated) && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+          {billAlreadyGenerated && showAnyway && (
+            <div style={{ padding: '12px 16px', background: '#FEF3C7', borderRadius: 8, marginBottom: 16, fontSize: 13, color: '#92400E' }}>
+              Adding another bill for same token (e.g. missed items).
+              <button type="button" onClick={() => setShowAnyway(false)} style={{ display: 'block', marginTop: 8, color: 'var(--b)', fontWeight: 600 }}>← Back</button>
+            </div>
+          )}
           <div style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ts)', marginBottom: 20 }}>
             <p><strong style={{ color: 'var(--tx)' }}>Order:</strong> {order.order_number} &nbsp;|&nbsp; <strong>Token:</strong> #{order.token}</p>
-            <p><strong style={{ color: 'var(--tx)' }}>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>
+            <p><strong style={{ color: 'var(--tx)' }}>Customer ID:</strong> {(user as UserRow & { display_id?: string | null })?.display_id ?? '—'} &nbsp;|&nbsp; <strong>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Phone:</strong> {user?.phone ?? '—'} &nbsp;|&nbsp; <strong>Email:</strong> {user?.email ?? '—'}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Service:</strong> {order.service_name} &nbsp;|&nbsp; <strong>Date:</strong> {order.pickup_date}</p>
           </div>

@@ -11,7 +11,7 @@ import {
   next10Days,
 } from '@/lib/constants';
 import { LSApi } from '@/lib/api';
-import type { UserRow } from '@/lib/api';
+import type { UserRow, VendorBillRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
 
 type Screen =
@@ -27,6 +27,7 @@ type Screen =
   | 'profile'
   | 'order-detail'
   | 'token-success'
+  | 'my-bills'
   | 'coming-soon';
 
 type User = {
@@ -40,6 +41,7 @@ type User = {
   hos?: string;
   yr?: number;
   sid: string;
+  displayId?: string;
 };
 
 type Order = {
@@ -53,6 +55,8 @@ type Order = {
   ins?: string;
   status: string;
   ca: string;
+  deliveryConfirmedAt?: string | null;
+  deliveryComments?: string | null;
 };
 
 type ScheduleData = {
@@ -82,6 +86,7 @@ function rowToUser(r: UserRow): User {
     hos: r.hostel_block ?? undefined,
     yr: r.year ?? undefined,
     sid: r.id,
+    displayId: r.display_id ?? undefined,
   };
 }
 
@@ -90,6 +95,8 @@ function rowToOrder(r: OrderRow): Order {
     id: r.id,
     on: r.order_number,
     tk: r.token,
+    deliveryConfirmedAt: r.delivery_confirmed_at ?? undefined,
+    deliveryComments: r.delivery_comments ?? undefined,
     svc: r.service_id,
     sl: r.service_name,
     pd: r.pickup_date,
@@ -103,6 +110,14 @@ function rowToOrder(r: OrderRow): Order {
 const TIME_SLOTS = [
   { id: 'afternoon', label: 'Afternoon (12–4 PM)', emoji: '☀️' },
 ];
+
+function validateIndianPhone(value: string): { valid: boolean; message?: string } {
+  const digits = value.replace(/\D/g, '');
+  if (digits.length === 10) return { valid: true };
+  if (digits.length === 11 && digits.startsWith('0')) return { valid: true };
+  if (digits.length === 12 && digits.startsWith('91')) return { valid: true };
+  return { valid: false, message: 'Enter a valid 10-digit mobile number' };
+}
 
 export default function LaundroApp() {
   const [screen, setScreen] = useState<Screen>('splash');
@@ -127,6 +142,12 @@ export default function LaundroApp() {
   const [studentYr, setStudentYr] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const [signupPhErr, setSignupPhErr] = useState('');
+  const [signupWaErr, setSignupWaErr] = useState('');
+  const [deliveryComments, setDeliveryComments] = useState('');
+  const [confirmingDelivery, setConfirmingDelivery] = useState(false);
+  const [myBills, setMyBills] = useState<VendorBillRow[]>([]);
+  const [myBillsLoading, setMyBillsLoading] = useState(false);
 
   const go = useCallback((s: Screen, detail?: DetailData) => {
     setScreen(s);
@@ -148,7 +169,9 @@ export default function LaundroApp() {
   }, []);
 
   const genTk = useCallback(() => {
-    return String(Math.floor(100 + Math.random() * 900));
+    const t = Date.now().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const r = String(Math.floor(1000 + Math.random() * 9000));
+    return (t.slice(-5) + r).slice(-8);
   }, []);
 
   const genOid = useCallback(() => {
@@ -314,41 +337,23 @@ export default function LaundroApp() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupFn.trim() || !signupEm.trim() || !signupPh.trim() || !signupWa.trim()) {
+    setSignupPhErr('');
+    setSignupWaErr('');
+    const phCheck = validateIndianPhone(signupPh.trim());
+    const waCheck = validateIndianPhone(signupWa.trim());
+    if (!phCheck.valid) {
+      setSignupPhErr(phCheck.message || 'Invalid phone');
+      return;
+    }
+    if (!waCheck.valid) {
+      setSignupWaErr(waCheck.message || 'Invalid WhatsApp');
+      return;
+    }
+    if (!signupFn.trim() || !signupEm.trim()) {
       showToast('Fill all required fields', 'er');
       return;
     }
-    setAuthLoading(true);
-    try {
-      const { user: row, error } = await LSApi.createUser({
-        fn: signupFn.trim(),
-        em: signupEm.trim(),
-        ph: signupPh.trim(),
-        wa: signupWa.trim(),
-        ut: 'general',
-      });
-      if (row) {
-        const u = rowToUser(row);
-        setUser(u);
-        saveUser(u);
-        go('home');
-        showToast('Account created', 'ok');
-      } else {
-        showToast(error || 'Sign up failed', 'er');
-      }
-    } catch (_) {
-      showToast('Sign up failed', 'er');
-    }
-    setAuthLoading(false);
-  };
-
-  const handleStudentSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
     const isGeneral = !studentCid || studentCid === 'general';
-    if (!signupFn.trim() || !signupEm.trim() || !signupPh.trim() || !signupWa.trim()) {
-      showToast('Fill name, email, phone and WhatsApp', 'er');
-      return;
-    }
     if (!isGeneral && !studentRn.trim()) {
       showToast('Registration number required for students', 'er');
       return;
@@ -383,8 +388,22 @@ export default function LaundroApp() {
 
   const handleCompleteProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.sid || !signupPh.trim() || !signupWa.trim()) {
-      showToast('Please enter phone and WhatsApp', 'er');
+    setSignupPhErr('');
+    setSignupWaErr('');
+    const phCheck = validateIndianPhone(signupPh.trim());
+    const waCheck = validateIndianPhone(signupWa.trim());
+    if (!phCheck.valid) {
+      setSignupPhErr(phCheck.message || 'Invalid phone');
+      return;
+    }
+    if (!waCheck.valid) {
+      setSignupWaErr(waCheck.message || 'Invalid WhatsApp');
+      return;
+    }
+    if (!user?.sid) return;
+    const isGeneral = !studentCid || studentCid === 'general';
+    if (!isGeneral && !studentRn.trim()) {
+      showToast('Registration number required for students', 'er');
       return;
     }
     setAuthLoading(true);
@@ -392,13 +411,18 @@ export default function LaundroApp() {
       const updated = await LSApi.updateUser(user.sid, {
         phone: signupPh.trim(),
         whatsapp: signupWa.trim(),
+        user_type: isGeneral ? 'general' : 'student',
+        college_id: isGeneral ? null : studentCid,
+        reg_no: isGeneral ? null : studentRn.trim() || null,
+        hostel_block: studentHos.trim() || null,
+        year: studentYr ? parseInt(studentYr, 10) : null,
       });
       if (updated) {
         const u = rowToUser(updated);
         setUser(u);
         saveUser(u);
         go('home');
-        showToast('Profile updated', 'ok');
+        showToast('Profile complete', 'ok');
       } else {
         showToast('Update failed', 'er');
       }
@@ -445,6 +469,26 @@ export default function LaundroApp() {
       showToast('Order failed', 'er');
     }
     setOrderSubmitting(false);
+  };
+
+  const handleConfirmDelivery = async (orderId: string) => {
+    setConfirmingDelivery(true);
+    try {
+      const updated = await LSApi.confirmDelivery(orderId, deliveryComments.trim() || undefined);
+      if (updated) {
+        const u = rowToOrder(updated);
+        const newOrders = orders.map((o) => (o.id === orderId ? u : o));
+        setOrders(newOrders);
+        saveO(newOrders);
+        setDeliveryComments('');
+        showToast('Thanks for confirming!', 'ok');
+      } else {
+        showToast('Could not confirm', 'er');
+      }
+    } catch (_) {
+      showToast('Could not confirm', 'er');
+    }
+    setConfirmingDelivery(false);
   };
 
   const handleLogout = async () => {
@@ -525,6 +569,27 @@ export default function LaundroApp() {
 
   const isStudentSignup = studentCid && studentCid !== 'general';
 
+  useEffect(() => {
+    if (screen === 'complete-profile' && user) {
+      setSignupPh(user.ph ?? '');
+      setSignupWa(user.wa ?? '');
+      setStudentCid(user.cid ?? 'general');
+      setStudentRn(user.rn ?? '');
+      setStudentHos(user.hos ?? '');
+      setStudentYr(user.yr != null ? String(user.yr) : '');
+    }
+  }, [screen, user?.sid]);
+
+  useEffect(() => {
+    if (screen === 'my-bills' && user?.sid) {
+      setMyBillsLoading(true);
+      LSApi.fetchVendorBillsForUser(user.sid).then((data) => {
+        setMyBills(data ?? []);
+        setMyBillsLoading(false);
+      });
+    }
+  }, [screen, user?.sid]);
+
   if (screen === 'login') {
     return (
       <div className="as">
@@ -573,10 +638,7 @@ export default function LaundroApp() {
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button type="button" className="btn bout bbl" onClick={() => go('signup')}>
-            Sign up (General)
-          </button>
-          <button type="button" className="btn bout bbl" onClick={() => go('student-signup')}>
-            Sign up (Student / Campus)
+            Sign up
           </button>
         </div>
         <p className="aft legal" style={{ marginTop: 20 }}>
@@ -593,7 +655,7 @@ export default function LaundroApp() {
       <div className="as">
         <div className="ah">
           <h1 className="atl">Complete your profile</h1>
-          <p className="asu">We need your phone and WhatsApp for orders & updates</p>
+          <p className="asu">We need your details for orders & updates. Phone and WhatsApp must be 10-digit Indian numbers.</p>
         </div>
         <form onSubmit={handleCompleteProfile}>
           <div className="fg">
@@ -606,12 +668,42 @@ export default function LaundroApp() {
           </div>
           <div className="fg">
             <label className="fl">Phone</label>
-            <input type="tel" className="fi" placeholder="Phone number" value={signupPh} onChange={(e) => setSignupPh(e.target.value)} required />
+            <input type="tel" className="fi" placeholder="10-digit mobile number" value={signupPh} onChange={(e) => { setSignupPh(e.target.value); setSignupPhErr(''); }} required />
+            {signupPhErr && <p className="field-error">{signupPhErr}</p>}
           </div>
           <div className="fg">
             <label className="fl">WhatsApp</label>
-            <input type="tel" className="fi" placeholder="WhatsApp number" value={signupWa} onChange={(e) => setSignupWa(e.target.value)} required />
+            <input type="tel" className="fi" placeholder="10-digit WhatsApp number" value={signupWa} onChange={(e) => { setSignupWa(e.target.value); setSignupWaErr(''); }} required />
+            {signupWaErr && <p className="field-error">{signupWaErr}</p>}
           </div>
+          <div className="fg">
+            <label className="fl">College</label>
+            <select className="fi fs" value={studentCid} onChange={(e) => setStudentCid(e.target.value)} required>
+              <option value="">Select one</option>
+              <option value="general">Not a student</option>
+              {COLLEGES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}{!c.active ? ' (coming soon)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          {isStudentSignup && (
+            <>
+              <div className="fg">
+                <label className="fl">Registration number</label>
+                <input type="text" className="fi" placeholder="Reg no" value={studentRn} onChange={(e) => setStudentRn(e.target.value)} required />
+              </div>
+              <div className="fg">
+                <label className="fl">Hostel block (optional)</label>
+                <input type="text" className="fi" placeholder="Block / room" value={studentHos} onChange={(e) => setStudentHos(e.target.value)} />
+              </div>
+              <div className="fg">
+                <label className="fl">Year (optional)</label>
+                <input type="number" className="fi" placeholder="e.g. 2" min={1} max={5} value={studentYr} onChange={(e) => setStudentYr(e.target.value)} />
+              </div>
+            </>
+          )}
           <button type="submit" className="btn bp bbl" disabled={authLoading}>
             {authLoading ? 'Saving…' : 'Continue'}
           </button>
@@ -620,12 +712,12 @@ export default function LaundroApp() {
     );
   }
 
-  if (screen === 'signup') {
+  if (screen === 'signup' || screen === 'student-signup') {
     return (
       <div className="as">
         <div className="ah">
-          <h1 className="atl">Create account (General)</h1>
-          <p className="asu">For non-student users</p>
+          <h1 className="atl">Create account</h1>
+          <p className="asu">Students: pick your college. Not a student? Choose &quot;Not a student&quot; below.</p>
         </div>
         <form onSubmit={handleSignup}>
           <div className="fg">
@@ -638,55 +730,13 @@ export default function LaundroApp() {
           </div>
           <div className="fg">
             <label className="fl">Phone</label>
-            <input type="tel" className="fi" placeholder="Phone" value={signupPh} onChange={(e) => setSignupPh(e.target.value)} required />
+            <input type="tel" className="fi" placeholder="10-digit mobile number" value={signupPh} onChange={(e) => { setSignupPh(e.target.value); setSignupPhErr(''); }} required />
+            {signupPhErr && <p className="field-error">{signupPhErr}</p>}
           </div>
           <div className="fg">
             <label className="fl">WhatsApp</label>
-            <input type="tel" className="fi" placeholder="WhatsApp number" value={signupWa} onChange={(e) => setSignupWa(e.target.value)} required />
-          </div>
-          <button type="submit" className="btn bp bbl" disabled={authLoading}>
-            {authLoading ? 'Creating…' : 'Sign up'}
-          </button>
-        </form>
-        <p className="aft">
-          Already have an account?{' '}
-          <span className="al" onClick={() => go('login')} role="button">
-            Sign in
-          </span>
-        </p>
-        <p className="aft">
-          Student or on campus?{' '}
-          <span className="al" onClick={() => go('student-signup')} role="button">
-            Student / Campus sign up
-          </span>
-        </p>
-      </div>
-    );
-  }
-
-  if (screen === 'student-signup') {
-    return (
-      <div className="as">
-        <div className="ah">
-          <h1 className="atl">Student / Campus sign up</h1>
-          <p className="asu">For students at any of the listed colleges. Not a student? Pick &quot;Not a student&quot; below.</p>
-        </div>
-        <form onSubmit={handleStudentSignup}>
-          <div className="fg">
-            <label className="fl">Full name</label>
-            <input type="text" className="fi" placeholder="Your name" value={signupFn} onChange={(e) => setSignupFn(e.target.value)} required />
-          </div>
-          <div className="fg">
-            <label className="fl">Email</label>
-            <input type="email" className="fi" placeholder="you@example.com" value={signupEm} onChange={(e) => setSignupEm(e.target.value)} required />
-          </div>
-          <div className="fg">
-            <label className="fl">Phone</label>
-            <input type="tel" className="fi" placeholder="Phone" value={signupPh} onChange={(e) => setSignupPh(e.target.value)} required />
-          </div>
-          <div className="fg">
-            <label className="fl">WhatsApp</label>
-            <input type="tel" className="fi" placeholder="WhatsApp number" value={signupWa} onChange={(e) => setSignupWa(e.target.value)} required />
+            <input type="tel" className="fi" placeholder="10-digit WhatsApp number" value={signupWa} onChange={(e) => { setSignupWa(e.target.value); setSignupWaErr(''); }} required />
+            {signupWaErr && <p className="field-error">{signupWaErr}</p>}
           </div>
           <div className="fg">
             <label className="fl">College</label>
@@ -726,12 +776,6 @@ export default function LaundroApp() {
             Sign in
           </span>
         </p>
-        <p className="aft">
-          Not a student?{' '}
-          <span className="al" onClick={() => go('signup')} role="button">
-            General sign up
-          </span>
-        </p>
       </div>
     );
   }
@@ -739,12 +783,21 @@ export default function LaundroApp() {
   if (screen === 'token-success') {
     const order = orders.find((o) => o.id === dd.oid) ?? orders[0];
     return (
-      <div className="as si">
-        <div className="vc">
-          <div className="vn">Order confirmed</div>
-          <div className="vd">Show this token at pickup</div>
+      <div className="as si token-success-page">
+        <div className="vc token-success-card">
+          <div className="vn" style={{ fontSize: 20, marginBottom: 8 }}>Order confirmed</div>
+          <div className="vd" style={{ marginBottom: 20 }}>Show this token at pickup</div>
           {order && (
-            <div className="tnb aotkv">{order.tk}</div>
+            <div className="tnb token-display">
+              <div className="token-label">YOUR TOKEN NUMBER</div>
+              <div className="token-value">#{order.tk}</div>
+            </div>
+          )}
+          {order && (
+            <div className="token-order-info">
+              <div className="vd"><strong>Order:</strong> {order.on}</div>
+              <div className="vd"><strong>Service:</strong> {order.sl} · {order.pd} · {order.ts}</div>
+            </div>
           )}
           <ul className="tkins">
             <li>Keep this token handy for pickup</li>
@@ -774,8 +827,8 @@ export default function LaundroApp() {
     );
   }
 
-  const tab = screen === 'order-detail' ? 'orders' : screen === 'home' ? 'home' : screen === 'schedule' ? 'schedule' : screen === 'orders' ? 'orders' : 'profile';
-  const showMain = ['home', 'schedule', 'orders', 'profile', 'order-detail'].includes(screen);
+  const tab = screen === 'order-detail' ? 'orders' : screen === 'my-bills' ? 'profile' : screen === 'home' ? 'home' : screen === 'schedule' ? 'schedule' : screen === 'orders' ? 'orders' : 'profile';
+  const showMain = ['home', 'schedule', 'orders', 'profile', 'order-detail', 'my-bills'].includes(screen);
 
   if (showMain && user) {
     return (
@@ -980,6 +1033,7 @@ export default function LaundroApp() {
             {screen === 'order-detail' && (() => {
               const order = orders.find((o) => o.id === dd.oid);
               if (!order) return <p className="fn">Order not found.</p>;
+              const canConfirmDelivery = order.status === 'delivered' && !order.deliveryConfirmedAt;
               return (
                 <>
                   <div className="vc">
@@ -991,12 +1045,70 @@ export default function LaundroApp() {
                     </div>
                     {order.ins && <div className="vd">Instructions: {order.ins}</div>}
                   </div>
+                  {(order.status === 'delivered' || order.deliveryConfirmedAt) && (
+                    <div className="vc" style={{ background: '#DCFCE7', borderColor: 'rgba(22,163,74,.2)' }}>
+                      {order.deliveryConfirmedAt ? (
+                        <div className="vd">✓ You confirmed you received all items.{order.deliveryComments && ` "${order.deliveryComments}"`}</div>
+                      ) : (
+                        <>
+                          <div className="vn" style={{ fontSize: 15 }}>Confirm you got all items</div>
+                          <div className="vd" style={{ marginBottom: 12 }}>Mark that you collected your clothes.</div>
+                          <textarea
+                            placeholder="Optional comments"
+                            className="fi fta"
+                            value={deliveryComments}
+                            onChange={(e) => setDeliveryComments(e.target.value)}
+                            rows={2}
+                            style={{ marginBottom: 12 }}
+                          />
+                          <button type="button" className="btn bp bbl" disabled={confirmingDelivery} onClick={() => handleConfirmDelivery(order.id)}>
+                            {confirmingDelivery ? 'Submitting…' : 'Submit confirmation'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {order.status !== 'delivered' && !order.deliveryConfirmedAt && (
+                    <div className="vd" style={{ marginBottom: 12 }}>Once delivered, you can confirm here that you received all items.</div>
+                  )}
                   <button type="button" className="btn bout bbl" onClick={() => go('orders')}>
                     Back to orders
                   </button>
                 </>
               );
             })()}
+
+            {screen === 'my-bills' && (
+              <>
+                <button type="button" className="btn bout bsm" style={{ marginBottom: 12 }} onClick={() => go('profile')}>
+                  ← Back to profile
+                </button>
+                <p className="st">My bills</p>
+                <p className="vd" style={{ marginBottom: 16 }}>Bills generated for your orders.</p>
+                {myBillsLoading ? (
+                  <p className="vd">Loading…</p>
+                ) : myBills.length === 0 ? (
+                  <p className="vd">No bills yet. Bills appear here after a vendor generates one for your order.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {myBills.map((b) => (
+                      <div key={b.id} className="oc" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'stretch' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--b)' }}>Token #{b.order_token} · {b.order_number ?? '—'}</div>
+                        <div style={{ fontSize: 13, color: 'var(--ts)' }}>₹{b.total} · {b.created_at ? new Date(b.created_at).toLocaleDateString() : ''}</div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button type="button" className="btn bout bbl" style={{ flex: 1 }} onClick={() => { const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title><style>body{font-family:system-ui;padding:16px}table{width:100%;border-collapse:collapse}.right{text-align:right}.total{font-weight:700;border-top:2px solid #000;padding-top:8px;margin-top:8px}</style></head><body><h2>LaundroSwipe</h2><p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p><p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p><p><strong>Phone:</strong> ${b.customer_phone ?? '—'}</p><p><strong>Date:</strong> ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p><table><thead><tr><th>Item</th><th class="right">₹</th></tr></thead><tbody>${(b.line_items || []).map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')}</tbody></table><p class="right">Subtotal: ₹${b.subtotal}</p><p class="right">Convenience fee: ₹${b.convenience_fee}</p><p class="total right">Total: ₹${b.total}</p></body></html>`); w.document.close(); }}>
+                            View bill
+                          </button>
+                          <button type="button" className="btn bp bbl" style={{ flex: 1 }} onClick={() => { const html = (b.line_items || []).map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join(''); const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title><style>body{font-family:system-ui;font-size:11px;padding:8px}table{width:100%;border-collapse:collapse}.right{text-align:right}.total{font-weight:700;font-size:12px;border-top:2px solid #000;padding-top:4px;margin-top:4px}</style></head><body><h2>LaundroSwipe</h2><p><strong>Token:</strong> #${b.order_token}</p><p><strong>Order:</strong> ${b.order_number ?? '—'}</p><p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p><table><thead><tr><th>Item</th><th class="right">₹</th></tr></thead><tbody>${html}</tbody></table><p class="right">Subtotal: ₹${b.subtotal}</p><p class="right">Convenience fee: ₹${b.convenience_fee}</p><p class="total right">Total: ₹${b.total}</p></body></html>`); w.document.close(); w.focus(); w.print(); setTimeout(() => w.close(), 500); }}>
+                            Print
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
 
             {screen === 'profile' && (
               <>
@@ -1005,6 +1117,10 @@ export default function LaundroApp() {
                   <p className="st" style={{ marginTop: 8 }}>{user.fn}</p>
                   <p className="vd">{user.em}</p>
                   {user.ph && <p className="vd">{user.ph}</p>}
+                </div>
+                <div className="pmi" onClick={() => go('my-bills')}>
+                  <div className="pmic bl2">🧾</div>
+                  <span>My bills</span>
                 </div>
                 <div className="pmi" onClick={() => go('coming-soon')}>
                   <div className="pmic bl2">📋</div>

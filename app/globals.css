@@ -52,6 +52,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 .fg{margin-bottom:18px}.fl{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
 .fi{width:100%;padding:13px 16px;border-radius:var(--rs);border:1.5px solid var(--bd);font-family:var(--fb);font-size:15px;color:var(--tx);background:#fff;transition:.2s;outline:none}
 .fi:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bl)}.fi::placeholder{color:var(--tm)}
+.field-error{font-size:13px;color:var(--er);margin-top:6px;margin-bottom:0}
 .fs{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
 .fta{resize:vertical;min-height:80px}
 .cr{display:flex;align-items:center;gap:10px;margin-top:8px}
@@ -110,6 +111,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 .ts2:hover{border-color:var(--bl)}.ts2.sel{border-color:var(--b);background:var(--bl)}
 
 .tnb{background:linear-gradient(135deg,var(--o),#E86207);border-radius:var(--r);padding:20px;display:inline-block;margin-bottom:24px;box-shadow:0 4px 24px rgba(249,115,22,.3)}
+.token-success-page{justify-content:center;padding:24px 16px}
+.token-success-card{text-align:center;max-width:360px;width:100%}
+.token-display{display:inline-block;padding:24px 32px;margin:16px 0;min-width:200px}
+.token-label{color:rgba(255,255,255,.9);font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:6px}
+.token-value{font-family:var(--fd);font-size:36px;font-weight:800;color:#fff;letter-spacing:6px}
+.token-order-info{text-align:left;margin-top:16px;padding:12px;background:rgba(255,255,255,.5);border-radius:var(--rs);font-size:13px}
 .tkins{background:var(--bl);border-radius:var(--r);padding:16px;text-align:left;margin-top:16px}
 .tkins li{font-size:13px;color:var(--ts);margin-bottom:6px;list-style:none;display:flex;align-items:flex-start;gap:8px}
 .tkins li::before{content:'→';color:var(--b);font-weight:700}

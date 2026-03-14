@@ -19,6 +19,7 @@ export default function AdminPage() {
   const [err, setErr] = useState('');
   const [orders, setOrders] = useState<OrderWithUser[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [bills, setBills] = useState<{ totalAmount: number; count: number }>({ totalAmount: 0, count: 0 });
   const [tab, setTab] = useState<Tab>('orders');
   const [filter, setFilter] = useState('all');
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
@@ -33,8 +34,8 @@ export default function AdminPage() {
   useEffect(() => {
     if (!loggedIn || !LSApi.hasSupabase) return;
     setLoading(true);
-    Promise.all([LSApi.fetchOrders(), LSApi.fetchUsers()])
-      .then(([ords, us]) => {
+    Promise.all([LSApi.fetchOrders(), LSApi.fetchUsers(), LSApi.fetchVendorBills()])
+      .then(([ords, us, billList]) => {
         const userMap = new Map<string, UserRow>();
         (us ?? []).forEach((u) => userMap.set(u.id, u));
         setUsers(us ?? []);
@@ -43,6 +44,9 @@ export default function AdminPage() {
           user: userMap.get(o.user_id ?? '')?.full_name ?? userMap.get(o.user_id ?? '')?.email ?? '—',
         }));
         setOrders(withUser);
+        const bl = billList ?? [];
+        const totalAmount = bl.reduce((s, b) => s + Number(b.total), 0);
+        setBills({ totalAmount, count: bl.length });
       })
       .finally(() => setLoading(false));
   }, [loggedIn]);
@@ -105,7 +109,10 @@ export default function AdminPage() {
   const totalOrders = orders.length;
   const active = orders.filter((o) => o.status !== 'delivered').length;
   const delivered = orders.filter((o) => o.status === 'delivered').length;
-  const totalRevenue = orders.length * CONVENIENCE_FEE;
+  const billsGenerated = bills.count;
+  const tokensGenerated = totalOrders;
+  const convenienceFeeToPay = billsGenerated * CONVENIENCE_FEE;
+  const totalBillAmount = bills.totalAmount;
 
   if (!loggedIn) {
     return (
@@ -143,6 +150,7 @@ export default function AdminPage() {
           <button type="button" onClick={() => setTab('orders')} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
           <button type="button" onClick={() => setTab('users')} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
           <Link href="/admin/vendor" className="admin-nav-link">🧾 Vendor / Bill</Link>
+          <Link href="/admin/pickup" className="admin-nav-link">📦 Pickup / Delivery</Link>
           <Link href="/admin/bills" className="admin-nav-link">📋 Saved bills</Link>
           <button type="button" onClick={() => setTab('colleges')} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
           <button type="button" onClick={() => setTab('settings')} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
@@ -159,15 +167,23 @@ export default function AdminPage() {
             <div className="admin-stat-grid">
               <div className="admin-stat-card">
                 <div className="admin-stat-value" style={{ color: 'var(--b)' }}>{totalOrders}</div>
-                <div className="admin-stat-label">Number of orders</div>
+                <div className="admin-stat-label">Orders (tokens)</div>
               </div>
               <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--t)' }}>₹{totalRevenue}</div>
-                <div className="admin-stat-label">Total revenue</div>
+                <div className="admin-stat-value" style={{ color: 'var(--t)' }}>{billsGenerated}</div>
+                <div className="admin-stat-label">Bills generated</div>
               </div>
               <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{CONVENIENCE_FEE}</div>
-                <div className="admin-stat-label">Convenience fee (per order)</div>
+                <div className="admin-stat-value" style={{ color: 'var(--b)' }}>₹{totalBillAmount.toFixed(0)}</div>
+                <div className="admin-stat-label">Total bill amount</div>
+              </div>
+              <div className="admin-stat-card">
+                <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{convenienceFeeToPay}</div>
+                <div className="admin-stat-label">Convenience fee (bills × ₹{CONVENIENCE_FEE})</div>
+              </div>
+              <div className="admin-stat-card">
+                <div className="admin-stat-value" style={{ color: 'var(--ok)', fontSize: 20 }}>₹{(totalBillAmount + convenienceFeeToPay).toFixed(0)}</div>
+                <div className="admin-stat-label">Total</div>
               </div>
               <div className="admin-stat-card">
                 <div className="admin-stat-value" style={{ color: 'var(--o)' }}>{active}</div>
@@ -238,6 +254,7 @@ export default function AdminPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>ID</th>
                       <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>User</th>
                       <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Email</th>
                       <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Phone</th>
@@ -250,8 +267,10 @@ export default function AdminPage() {
                     {(users ?? []).map((u) => {
                       const ini = (u.full_name ?? '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
                       const collegeName = u.college_id ? (COLLEGES.find((c) => c.id === u.college_id)?.name ?? u.college_id) : '—';
+                      const displayId = u.display_id ?? '—';
                       return (
                         <tr key={u.id} style={{ borderBottom: '1px solid var(--bd)' }}>
+                          <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontWeight: 600, color: 'var(--b)' }}>{displayId}</td>
                           <td style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--b)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, fontFamily: 'var(--fd)' }}>{ini}</div>
                             <span style={{ fontWeight: 600 }}>{u.full_name ?? '—'}</span>

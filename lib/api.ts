@@ -11,6 +11,7 @@ export type UserRow = {
   reg_no: string | null;
   hostel_block: string | null;
   year: number | null;
+  display_id: string | null;
 };
 
 export type OrderRow = {
@@ -25,6 +26,8 @@ export type OrderRow = {
   instructions: string | null;
   user_id: string | null;
   created_at: string;
+  delivery_confirmed_at: string | null;
+  delivery_comments: string | null;
 };
 
 export const LSApi = {
@@ -316,6 +319,27 @@ export const LSApi = {
     }
   },
 
+  async confirmDelivery(orderId: string, comments?: string | null): Promise<OrderRow | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update({
+          delivery_confirmed_at: new Date().toISOString(),
+          delivery_comments: comments ?? null,
+          status: 'delivered',
+        })
+        .eq('id', orderId)
+        .select()
+        .single();
+      if (error) return null;
+      return data as OrderRow;
+    } catch (e) {
+      console.error('confirmDelivery exception', e);
+      return null;
+    }
+  },
+
   async advanceOrderStatus(orderId: string): Promise<OrderRow | null> {
     if (!supabase) return null;
     const STATUSES = [
@@ -357,6 +381,7 @@ export const LSApi = {
     order_number?: string | null;
     customer_name?: string | null;
     customer_phone?: string | null;
+    user_id?: string | null;
     line_items: { id: string; label: string; price: number; qty: number }[];
     subtotal: number;
     convenience_fee: number;
@@ -372,6 +397,7 @@ export const LSApi = {
           order_number: bill.order_number ?? null,
           customer_name: bill.customer_name ?? null,
           customer_phone: bill.customer_phone ?? null,
+          user_id: bill.user_id ?? null,
           line_items: bill.line_items,
           subtotal: bill.subtotal,
           convenience_fee: bill.convenience_fee,
@@ -407,6 +433,53 @@ export const LSApi = {
       return null;
     }
   },
+
+  async fetchVendorBillsForUser(userId: string): Promise<VendorBillRow[] | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('vendor_bills')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) return null;
+      return (data ?? []) as VendorBillRow[];
+    } catch (e) {
+      console.error('fetchVendorBillsForUser exception', e);
+      return null;
+    }
+  },
+
+  async countBillsForOrderToken(orderToken: string): Promise<number> {
+    if (!supabase) return 0;
+    try {
+      const { count, error } = await supabase
+        .from('vendor_bills')
+        .select('*', { count: 'exact', head: true })
+        .eq('order_token', orderToken.replace(/^#/, '').trim());
+      if (error) return 0;
+      return count ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  },
+
+  async confirmDeliveryByToken(token: string): Promise<OrderRow | null> {
+    if (!supabase) return null;
+    const t = String(token).replace(/^#/, '').trim();
+    if (!t) return null;
+    try {
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('token', t)
+        .limit(1);
+      if (!orders?.length) return null;
+      return this.confirmDelivery(orders[0].id, 'Confirmed by admin (pickup/delivery)');
+    } catch (e) {
+      return null;
+    }
+  },
 };
 
 export type VendorBillRow = {
@@ -416,6 +489,7 @@ export type VendorBillRow = {
   order_number: string | null;
   customer_name: string | null;
   customer_phone: string | null;
+  user_id: string | null;
   line_items: { id: string; label: string; price: number; qty: number }[];
   subtotal: number;
   convenience_fee: number;
