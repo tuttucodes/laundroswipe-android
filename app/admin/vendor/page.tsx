@@ -18,7 +18,7 @@ export default function VendorPage() {
   const [saving, setSaving] = useState(false);
   const [billAlreadyGenerated, setBillAlreadyGenerated] = useState(false);
   const [showAnyway, setShowAnyway] = useState(false);
-  const lastSavedOrderTokenRef = useRef<string | null>(null);
+  const lastSavedBillFingerprintRef = useRef<string | null>(null);
 
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
@@ -33,7 +33,7 @@ export default function VendorPage() {
     setLineItems([]);
     setBillAlreadyGenerated(false);
     setShowAnyway(false);
-    lastSavedOrderTokenRef.current = null;
+    lastSavedBillFingerprintRef.current = null;
     const t = token.replace(/^#/, '').trim();
     if (!t) {
       setLookupErr('Enter a token number');
@@ -82,6 +82,15 @@ export default function VendorPage() {
 
   const subtotal = lineItems.reduce((s, l) => s + l.price * l.qty, 0);
   const total = subtotal + CONVENIENCE_FEE;
+
+  const billFingerprint = (): string => {
+    const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
+    const itemsKey = [...lineItems]
+      .sort((a, b) => a.id.localeCompare(b.id) || a.qty - b.qty)
+      .map((l) => `${l.id}:${l.qty}:${l.price}`)
+      .join('|');
+    return `${orderToken}|${itemsKey}|${subtotal}|${total}`;
+  };
 
   const buildReceiptHtml = () => {
     const rows = lineItems.length
@@ -191,13 +200,14 @@ ${buildReceiptHtml()}
       showToast('Add at least one item', 'er');
       return;
     }
-    const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
-    if (lastSavedOrderTokenRef.current === orderToken) {
+    const fingerprint = billFingerprint();
+    if (lastSavedBillFingerprintRef.current === fingerprint) {
       doPrint();
       showToast('Printing…', 'ok');
       return;
     }
     showToast('Saving & printing…', 'ok');
+    const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
     const result = await LSApi.saveVendorBill({
       order_id: order?.id ?? null,
       order_token: orderToken,
@@ -210,7 +220,7 @@ ${buildReceiptHtml()}
       convenience_fee: CONVENIENCE_FEE,
       total,
     });
-    if (result) lastSavedOrderTokenRef.current = orderToken;
+    if (result) lastSavedBillFingerprintRef.current = fingerprint;
     doPrint();
     showToast(result ? 'Bill saved. Printing…' : 'Printing…', result ? 'ok' : 'er');
   };
@@ -223,7 +233,7 @@ ${buildReceiptHtml()}
     setLineItems([]);
     setBillAlreadyGenerated(false);
     setShowAnyway(false);
-    lastSavedOrderTokenRef.current = null;
+    lastSavedBillFingerprintRef.current = null;
   };
 
   return (

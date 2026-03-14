@@ -105,6 +105,36 @@ export default function AdminPage() {
     return STATUS_LABELS[i] ?? s;
   };
 
+  const escapeCsv = (v: string | number | null | undefined): string => {
+    const s = v == null ? '' : String(v);
+    if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
+
+  const exportUsersToCsv = () => {
+    const cols = ['ID', 'Full name', 'Email', 'Phone', 'WhatsApp', 'Type', 'College', 'Reg No', 'Hostel', 'Year'];
+    const rows = (users ?? []).map((u) => [
+      escapeCsv(u.display_id ?? u.id),
+      escapeCsv(u.full_name),
+      escapeCsv(u.email),
+      escapeCsv(u.phone),
+      escapeCsv(u.whatsapp),
+      escapeCsv(u.user_type),
+      escapeCsv(u.college_id ? (COLLEGES.find((c) => c.id === u.college_id)?.name ?? u.college_id) : ''),
+      escapeCsv(u.reg_no),
+      escapeCsv(u.hostel_block),
+      escapeCsv(u.year),
+    ]);
+    const csv = [cols.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `laundroswipe-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Users exported', 'ok');
+  };
+
   const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
   const totalOrders = orders.length;
   const active = orders.filter((o) => o.status !== 'delivered').length;
@@ -245,8 +275,15 @@ export default function AdminPage() {
         )}
         {tab === 'users' && (
           <>
-            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Users</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Registered app users</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <div>
+                <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Users</h1>
+                <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>Registered app users</p>
+              </div>
+              <button type="button" onClick={exportUsersToCsv} disabled={loading || !users?.length} className="admin-nav-btn" style={{ marginLeft: 'auto' }}>
+                📥 Export to Excel
+              </button>
+            </div>
             {loading ? (
               <p style={{ color: 'var(--ts)' }}>Loading…</p>
             ) : (

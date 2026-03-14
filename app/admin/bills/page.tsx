@@ -40,6 +40,39 @@ export default function BillsPage() {
     });
   }, []);
 
+  const escapeCsv = (v: string | number | null | undefined): string => {
+    const s = v == null ? '' : String(v);
+    if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
+
+  const exportBillsToCsv = () => {
+    const cols = ['Token', 'Order', 'Customer', 'Phone', 'Date', 'Subtotal', 'Convenience fee', 'Total', 'Line items'];
+    const rows = bills.map((b) => {
+      const items = Array.isArray(b.line_items) && b.line_items.length
+        ? b.line_items.map((l: { label: string; qty: number; price: number }) => `${l.label} x${l.qty} ₹${l.price * l.qty}`).join('; ')
+        : '';
+      return [
+        escapeCsv(b.order_token),
+        escapeCsv(b.order_number),
+        escapeCsv(b.customer_name),
+        escapeCsv(b.customer_phone),
+        escapeCsv(b.created_at ? new Date(b.created_at).toISOString() : ''),
+        escapeCsv(b.subtotal),
+        escapeCsv(b.convenience_fee),
+        escapeCsv(b.total),
+        escapeCsv(items),
+      ];
+    });
+    const csv = [cols.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `laundroswipe-bills-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   const printBill = (b: VendorBillRow) => {
     const html = billToHtml(b);
     const w = window.open('', '_blank', 'width=320,height=480');
@@ -70,8 +103,15 @@ export default function BillsPage() {
         {' · '}
         <Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>Vendor Bill</Link>
       </p>
-      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 22, marginBottom: 8, color: 'var(--b)' }}>Saved bills</h1>
-      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 20 }}>View and re-print past bills.</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--fd)', fontSize: 22, marginBottom: 8, color: 'var(--b)' }}>Saved bills</h1>
+          <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>View and re-print past bills.</p>
+        </div>
+        <button type="button" onClick={exportBillsToCsv} disabled={loading || bills.length === 0} className="vendor-btn-secondary" style={{ marginLeft: 'auto' }}>
+          📥 Export to Excel
+        </button>
+      </div>
 
       {loading ? (
         <p style={{ color: 'var(--ts)' }}>Loading…</p>

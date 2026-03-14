@@ -361,38 +361,43 @@ export const LSApi = {
       authUser.user_metadata?.name ||
       (authUser.email ? authUser.email.split('@')[0] : '') ||
       'User';
-    const row = {
-      id: authUser.id,
-      auth_id: authUser.id,
-      full_name: fullName,
-      email: authUser.email ?? '',
-      phone: null,
-      whatsapp: null,
-      user_type: 'general',
-      college_id: null,
-      reg_no: null,
-      hostel_block: null,
-      year: null,
-    };
     try {
-      const { data: upserted, error: upsertErr } = await supabase
+      const { data: existing } = await supabase
         .from('users')
-        .upsert(row, { onConflict: 'id' })
-        .select()
+        .select('*')
+        .eq('id', authUser.id)
         .single();
-      if (!upsertErr && upserted) return upserted as UserRow;
+      if (existing) {
+        await supabase
+          .from('users')
+          .update({
+            full_name: fullName,
+            email: authUser.email ?? existing.email ?? '',
+            auth_id: authUser.id,
+          })
+          .eq('id', authUser.id);
+        return existing as UserRow;
+      }
+      const row = {
+        id: authUser.id,
+        auth_id: authUser.id,
+        full_name: fullName,
+        email: authUser.email ?? '',
+        phone: null,
+        whatsapp: null,
+        user_type: 'general',
+        college_id: null,
+        reg_no: null,
+        hostel_block: null,
+        year: null,
+      };
       const { data: inserted, error: insertErr } = await supabase
         .from('users')
         .insert(row)
         .select()
         .single();
       if (!insertErr && inserted) return inserted as UserRow;
-      const { data: existing } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-      return (existing as UserRow) ?? null;
+      return null;
     } catch (e) {
       console.error('upsertUserFromAuth exception', e);
       return null;
