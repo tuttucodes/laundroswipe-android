@@ -9,7 +9,8 @@ import {
   VENDOR,
   statusLabel,
   statusClass,
-  next10Days,
+  getScheduleDates,
+  isEveningOnlyDate,
 } from '@/lib/constants';
 import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow } from '@/lib/api';
@@ -114,11 +115,6 @@ const TIME_SLOTS = [
   { id: 'evening', label: 'Evening (4:45–5:45 PM)', emoji: '🌆' },
 ];
 
-function is15thSunday(dateStr: string | undefined): boolean {
-  if (!dateStr) return false;
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.getDay() === 0 && d.getDate() === 15;
-}
 
 function validateIndianPhone(value: string): { valid: boolean; message?: string } {
   const digits = value.replace(/\D/g, '');
@@ -674,7 +670,7 @@ export default function LaundroApp() {
     showToast('Signed out', 'ok');
   };
 
-  const days = next10Days().filter((d) => d.ok);
+  const days = getScheduleDates();
   const selectedSvc = SERVICES.find((s) => s.id === sd.svc);
   const selectedTs = TIME_SLOTS.find((t) => t.id === sd.ts);
 
@@ -1122,7 +1118,8 @@ export default function LaundroApp() {
                 )}
                 {sd.step === 2 && (
                   <>
-                    <p className="st">Pick date (Tue / Sat / Sun)</p>
+                    <p className="st">Pick date (Mar 15 or 18 — evening slot only)</p>
+                    {days.length === 0 && <p className="vd" style={{ marginBottom: 12 }}>No dates available. Mar 15 and 18 (evening) for this year have passed.</p>}
                     <div className="dss">
                       {days.map((d) => (
                         <button
@@ -1130,11 +1127,11 @@ export default function LaundroApp() {
                           key={d.full}
                           className={`ds ${sd.date === d.full ? 'sel' : ''}`}
                           onClick={() => {
-                            const is15Sun = is15thSunday(d.full);
+                            const eveningOnly = isEveningOnlyDate(d.full);
                             setSd((s) => ({
                               ...s,
                               date: d.full,
-                              ts: is15Sun && s.ts === 'afternoon' ? undefined : s.ts,
+                              ts: eveningOnly && s.ts === 'afternoon' ? undefined : s.ts,
                             }));
                           }}
                         >
@@ -1146,18 +1143,18 @@ export default function LaundroApp() {
                     </div>
                     <p className="st" style={{ marginTop: 20 }}>Time slot</p>
                     {TIME_SLOTS.map((t) => {
-                      const disableAfternoon15Sun = t.id === 'afternoon' && is15thSunday(sd.date);
+                      const afternoonDisabled = t.id === 'afternoon' && isEveningOnlyDate(sd.date);
                       return (
                         <div
                           key={t.id}
-                          className={`ts2 ${sd.ts === t.id ? 'sel' : ''} ${disableAfternoon15Sun ? 'ts2-dis' : ''}`}
-                          onClick={() => !disableAfternoon15Sun && setSd((s) => ({ ...s, ts: t.id }))}
-                          onKeyDown={(e) => !disableAfternoon15Sun && e.key === 'Enter' && setSd((s) => ({ ...s, ts: t.id }))}
+                          className={`ts2 ${sd.ts === t.id ? 'sel' : ''} ${afternoonDisabled ? 'ts2-dis' : ''}`}
+                          onClick={() => !afternoonDisabled && setSd((s) => ({ ...s, ts: t.id }))}
+                          onKeyDown={(e) => !afternoonDisabled && e.key === 'Enter' && setSd((s) => ({ ...s, ts: t.id }))}
                           role="button"
-                          tabIndex={disableAfternoon15Sun ? -1 : 0}
+                          tabIndex={afternoonDisabled ? -1 : 0}
                         >
                           <span>{t.emoji}</span>
-                          <span>{t.label}{disableAfternoon15Sun ? ' (not available this day)' : ''}</span>
+                          <span>{t.label}{afternoonDisabled ? ' (not available this day)' : ''}</span>
                         </div>
                       );
                     })}
