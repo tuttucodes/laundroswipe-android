@@ -206,7 +206,46 @@ const C={
 const A={
   s:'splash',u:null,orders:[],sd:{},dd:{},sl:0,tt:null,
   $:id=>document.getElementById(id),
-  async init(){var app=this;app.r();function showNext(){if(app.s!=='splash')return;document.querySelector('.splash')?.classList.add('h');if(localStorage.getItem('ls_ob'))app.go('login');else app.go('onboarding');}function tryRestoreSession(){if(!window.LSApi||!LSApi.hasSupabase)return;var uStr=localStorage.getItem('ls_u');if(uStr){try{app.u=JSON.parse(uStr);if(app.u.sid){LSApi.fetchOrdersForUser(app.u.sid).then(function(supOrders){if(Array.isArray(supOrders)){app.orders=supOrders.map(function(o){return{id:o.id,on:o.order_number,tk:o.token,svc:o.service_id,sl:o.service_name,pd:o.pickup_date,ts:o.time_slot,ins:o.instructions||'',status:o.status,ca:o.created_at};});}app.go('home');}).catch(function(){});}else{app.orders=[];app.go('home');}}catch(e){}}}if(window.LSApi&&LSApi.getAuthSession){LSApi.getAuthSession().then(function(session){if(session&&session.user){return LSApi.upsertUserFromAuth(session.user).then(function(profile){if(!profile)return;app.u={fn:profile.full_name||'User',em:profile.email||'',ph:profile.phone||'',wa:profile.whatsapp||profile.phone||'',ut:profile.user_type||'general',rn:profile.reg_no||'',cid:profile.college_id||'',hos:profile.hostel_block||'',yr:profile.year||'',sid:profile.id};app.save();return LSApi.fetchOrdersForUser(profile.id);}).then(function(supOrders){if(Array.isArray(supOrders)){app.orders=supOrders.map(function(o){return{id:o.id,on:o.order_number,tk:o.token,svc:o.service_id,sl:o.service_name,pd:o.pickup_date,ts:o.time_slot,ins:o.instructions||'',status:o.status,ca:o.created_at};});}else{app.orders=[];}if(window.history&&window.history.replaceState){window.history.replaceState(null,'',window.location.pathname+window.location.search);}app.toast('Signed in with Google!','ok');app.go('home');});}else{tryRestoreSession();}}).catch(function(){tryRestoreSession();});}else{tryRestoreSession();}setTimeout(showNext,900);},
+  async init(){
+    var app=this;
+    app.r();
+    function showNext(){
+      if(app.s!=='splash')return;
+      document.querySelector('.splash')&&document.querySelector('.splash').classList.add('h');
+      if(localStorage.getItem('ls_ob'))app.go('login');else app.go('onboarding');
+    }
+    window.tryRestoreSession=function(){
+      if(!window.LSApi||!LSApi.hasSupabase||!app.u||!app.u.sid)return;
+      LSApi.fetchOrdersForUser(app.u.sid).then(function(supOrders){ if(Array.isArray(supOrders)){app.orders=supOrders.map(function(o){return{id:o.id,on:o.order_number,tk:o.token,svc:o.service_id,sl:o.service_name,pd:o.pickup_date,ts:o.time_slot,ins:o.instructions||'',status:o.status,ca:o.created_at};}); } app.go('home'); }).catch(function(){});
+    };
+    if(window.LSApi&&LSApi.hasSupabase){
+      var uStr=localStorage.getItem('ls_u');
+      if(uStr){
+        try{ app.u=JSON.parse(uStr); }catch(e){}
+        if(app.u&&app.u.sid){ window.tryRestoreSession(); }
+        else{ app.orders=[]; app.go('home'); }
+      }
+    }
+    if(window.LSApi&&LSApi.getAuthSession){
+      LSApi.getAuthSession().then(function(session){
+        if(session&&session.user){
+          LSApi.upsertUserFromAuth(session.user).then(function(profile){
+            if(!profile)return;
+            app.u={fn:profile.full_name||'User',em:profile.email||'',ph:profile.phone||'',wa:profile.whatsapp||profile.phone||'',ut:profile.user_type||'general',rn:profile.reg_no||'',cid:profile.college_id||'',hos:profile.hostel_block||'',yr:profile.year||'',sid:profile.id};
+            app.save();
+            return LSApi.fetchOrdersForUser(profile.id);
+          }).then(function(supOrders){
+            if(Array.isArray(supOrders)){app.orders=supOrders.map(function(o){return{id:o.id,on:o.order_number,tk:o.token,svc:o.service_id,sl:o.service_name,pd:o.pickup_date,ts:o.time_slot,ins:o.instructions||'',status:o.status,ca:o.created_at};});}
+            else{app.orders=[];}
+            if(window.history&&window.history.replaceState){window.history.replaceState(null,'',window.location.pathname+window.location.search);}
+            app.toast('Signed in with Google!','ok');
+            app.go('home');
+          });
+        }else{ window.tryRestoreSession(); }
+      }).catch(function(){ window.tryRestoreSession(); });
+    }else{ window.tryRestoreSession(); }
+    setTimeout(showNext,900);
+  },
   go(s,d){this.s=s;if(d)this.dd=d;this.r();window.scrollTo(0,0)},
   toast(m,t=''){clearTimeout(this.tt);document.querySelector('.toast')?.remove();const e=document.createElement('div');e.className=`toast ${t}`;e.textContent=m;document.body.appendChild(e);this.tt=setTimeout(()=>e.remove(),3000)},
   save(){localStorage.setItem('ls_u',JSON.stringify(this.u))},
@@ -217,7 +256,7 @@ const A={
   sLbl(s){const i=C.statuses.indexOf(s);return C.statusLabels[i]||s},
   sCls(s){if(['scheduled','agent_assigned'].includes(s))return's-sch';if(s==='delivered')return's-del';return's-pro'},
 
-  r(){const a=document.getElementById('app');const m={splash:this.rSplash,onboarding:this.rOb,login:this.rLogin,signup:this.rSignup,'student-signup':this.rStuSignup,home:()=>this.rMain('home'),schedule:()=>this.rMain('schedule'),orders:()=>this.rMain('orders'),profile:()=>this.rMain('profile'),'order-detail':()=>this.rMain('order-detail'),'coming-soon':this.rCS,'token-success':this.rTk};const fn=m[this.s];a.innerHTML=fn?fn.call(this):'';this.bind()},
+  r(){const a=document.getElementById('app');const m={splash:this.rSplash,onboarding:this.rOb,login:this.rLogin,signup:this.rSignup,'student-signup':this.rStuSignup,home:()=>this.rMain('home'),schedule:()=>this.rMain('schedule'),orders:()=>this.rMain('orders'),profile:()=>this.rMain('profile'),'order-detail':()=>this.rMain('order-detail'),'coming-soon':this.rCS,'token-success':this.rTk};const fn=m[this.s];a.innerHTML=fn?fn.call(this):'';this.bindEvents()},
 
   rSplash(){return`<div class="splash"><div class="splash-logo"><svg viewBox="0 0 48 48" fill="none"><rect x="8" y="6" width="32" height="36" rx="4" stroke="#1746A2" stroke-width="3"/><circle cx="24" cy="26" r="10" stroke="#1746A2" stroke-width="2.5"/><circle cx="24" cy="26" r="5" stroke="#14B8A6" stroke-width="2" stroke-dasharray="4 3"/><circle cx="14" cy="12" r="2" fill="#F97316"/><circle cx="20" cy="12" r="2" fill="#1746A2"/></svg></div><h2>LaundroSwipe</h2><p>Your laundry sorted in one swipe</p><div class="splash-l"></div><div class="splash-legal"><a href="/privacy">Privacy Policy</a><span> · </span><a href="/terms">Terms</a></div></div>`},
 
@@ -251,7 +290,7 @@ const A={
   rTk(){const o=this.orders[this.orders.length-1];return`<div class="as" style="animation:fadeIn .4s;justify-content:center"><div style="text-align:center;padding:32px 20px"><div style="font-size:64px;margin-bottom:16px;animation:bounceIn .6s">🎉</div><div style="font-family:var(--fd);font-size:22px;font-weight:700;margin-bottom:8px">Booking Confirmed!</div><div style="color:var(--ts);font-size:14px;margin-bottom:24px">Show this token to the vendor at the drop-off point</div><div class="tnb" style="animation:bounceIn .6s"><div style="color:rgba(255,255,255,.8);font-size:12px;margin-bottom:4px">YOUR TOKEN NUMBER</div><div style="font-family:var(--fd);font-size:40px;font-weight:800;color:#fff;letter-spacing:6px">#${o?.tk||'000'}</div></div><div class="cd cp" style="text-align:left;margin-bottom:16px"><div style="font-size:13px;color:var(--ts);line-height:1.8"><b>Order:</b> ${o?.on}<br><b>Service:</b> ${o?.sl}<br><b>Date:</b> ${o?.pd}<br><b>Time:</b> Afternoon (12 PM – 4 PM)<br><b>Vendor:</b> ${C.vendor.name}<br><b>Location:</b> ${C.vendor.location}</div></div><div class="tkins"><li>Note down your token: <b>#${o?.tk}</b></li><li>Visit the drop-off on your scheduled date & time</li><li>Tell the vendor your token to hand over clothes</li><li>Track order in "My Orders" tab</li></div><div class="fn">₹20 convenience fee has been applied.</div><button class="btn bp bbl" style="margin-top:20px" onclick="A.go('home')">Go to Home →</button></div></div>`},
 
   // EVENTS
-  bind(){
+  bindEvents(){
     const $=this.$;
     if($('ob-nx'))$('ob-nx').onclick=()=>{this.sl++;if(this.sl>2){localStorage.setItem('ls_ob','1');this.go('login');return}document.querySelectorAll('.osl').forEach((s,i)=>{s.className='osl '+(i<this.sl?'prev':i===this.sl?'active':'next')});document.querySelectorAll('.od').forEach((d,i)=>d.classList.toggle('a',i===this.sl));if(this.sl===2)$('ob-nx').textContent='Get Started →'};
     if($('ob-sk'))$('ob-sk').onclick=()=>{localStorage.setItem('ls_ob','1');this.go('login')};
@@ -273,7 +312,6 @@ const A={
     if($('s2n'))$('s2n').onclick=()=>{if(!this.sd.date||!this.sd.ts)return;const ins=$('s-ins');if(ins)this.sd.ins=ins.value.trim();this.sd.step=3;this.r()};
     if($('s-cf'))$('s-cf').onclick=async()=>{if(!window.LSApi||!LSApi.hasSupabase||!this.u?.sid){this.toast('You must be signed in to book. Log in or sign up first.','er');return}const existingSameDateAndService=this.orders.some(x=>x.status!=='delivered'&&x.pd===this.sd.date&&x.svc===this.sd.svc);if(existingSameDateAndService){this.toast('You already have an active booking for this date and service. One pickup per date per service.','er');return;}const svc=C.services.find(s=>s.id===this.sd.svc);const o={id:'o'+Date.now(),on:this.genOid(),tk:this.genTk(),svc:this.sd.svc,sl:svc?.name||'',pd:this.sd.date,ts:'Afternoon',ins:this.sd.ins||'',status:'scheduled',ca:new Date().toISOString()};const created=await LSApi.createOrder(o,this.u.sid);if(!created){this.toast('Could not place order. Please try again.','er');return}const storedOrder={id:created.id,on:created.order_number,tk:created.token,svc:created.service_id,sl:created.service_name,pd:created.pickup_date,ts:created.time_slot,ins:created.instructions||'',status:created.status,ca:created.created_at};this.orders.push(storedOrder);this.saveO();this.sd={};this.go('token-success')};
   },
-
   selSvc(id){this.sd=this.sd||{};this.sd.svc=id;this.sd.step=1;this.r()},
   selDt(d){this.sd.date=d;this.r()},
   selTs(t){this.sd.ts=t;this.r()},
