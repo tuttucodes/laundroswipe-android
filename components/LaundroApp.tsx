@@ -114,6 +114,12 @@ const TIME_SLOTS = [
   { id: 'evening', label: 'Evening (4:45–5:45 PM)', emoji: '🌆' },
 ];
 
+function is15thSunday(dateStr: string | undefined): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.getDay() === 0 && d.getDate() === 15;
+}
+
 function validateIndianPhone(value: string): { valid: boolean; message?: string } {
   const digits = value.replace(/\D/g, '');
   if (digits.length === 10) return { valid: true };
@@ -151,6 +157,7 @@ export default function LaundroApp() {
   const [confirmingDelivery, setConfirmingDelivery] = useState(false);
   const [myBills, setMyBills] = useState<VendorBillRow[]>([]);
   const [myBillsLoading, setMyBillsLoading] = useState(false);
+  const [viewingBill, setViewingBill] = useState<VendorBillRow | null>(null);
   const [swipeProgress, setSwipeProgress] = useState(0);
   const swipeTrackRef = useRef<HTMLDivElement>(null);
 
@@ -338,6 +345,40 @@ export default function LaundroApp() {
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [screen, sd.step]);
+
+  // Non-passive touch on swipe track so we can preventDefault and stop back/scroll
+  useEffect(() => {
+    const track = swipeTrackRef.current;
+    if (!track) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (swipeStartRef.current) {
+        e.preventDefault();
+        const start = swipeStartRef.current;
+        const clientX = e.touches[0].clientX;
+        const p = Math.max(0, Math.min(100, ((clientX - start.left) / start.width) * 100));
+        swipeProgressRef.current = p;
+        setSwipeProgress(p);
+      }
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (swipeStartRef.current) {
+        e.preventDefault();
+        const progress = swipeProgressRef.current;
+        swipeStartRef.current = null;
+        if (progress >= 80) handleConfirmOrderRef.current();
+        setSwipeProgress(0);
+        swipeProgressRef.current = 0;
+      }
+    };
+    track.addEventListener('touchmove', onTouchMove, { passive: false });
+    track.addEventListener('touchend', onTouchEnd, { passive: false });
+    track.addEventListener('touchcancel', onTouchEnd, { passive: false });
+    return () => {
+      track.removeEventListener('touchmove', onTouchMove);
+      track.removeEventListener('touchend', onTouchEnd);
+      track.removeEventListener('touchcancel', onTouchEnd);
     };
   }, [screen, sd.step]);
 
@@ -571,9 +612,11 @@ export default function LaundroApp() {
   const swipeProgressRef = useRef(0);
   const handleConfirmOrderRef = useRef(handleConfirmOrder);
   handleConfirmOrderRef.current = handleConfirmOrder;
-  const handleSwipeStart = useCallback(() => {
+  const handleSwipeStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     const track = swipeTrackRef.current;
     if (!track || orderSubmitting) return;
+    if ('touches' in e) e.preventDefault();
+    e.stopPropagation();
     const rect = track.getBoundingClientRect();
     swipeStartRef.current = { left: rect.left, width: rect.width };
     setSwipeProgress(0);
@@ -582,12 +625,18 @@ export default function LaundroApp() {
   const handleSwipeMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     const start = swipeStartRef.current;
     if (!start) return;
+    if ('touches' in e) e.preventDefault();
+    e.stopPropagation();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const p = Math.max(0, Math.min(100, ((clientX - start.left) / start.width) * 100));
     swipeProgressRef.current = p;
     setSwipeProgress(p);
   }, []);
-  const handleSwipeEnd = useCallback(() => {
+  const handleSwipeEnd = useCallback((e?: React.TouchEvent | React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      if ('preventDefault' in e) e.preventDefault();
+    }
     const progress = swipeProgressRef.current;
     swipeStartRef.current = null;
     if (progress >= 80) handleConfirmOrderRef.current();
@@ -1080,7 +1129,14 @@ export default function LaundroApp() {
                           type="button"
                           key={d.full}
                           className={`ds ${sd.date === d.full ? 'sel' : ''}`}
-                          onClick={() => setSd((s) => ({ ...s, date: d.full }))}
+                          onClick={() => {
+                            const is15Sun = is15thSunday(d.full);
+                            setSd((s) => ({
+                              ...s,
+                              date: d.full,
+                              ts: is15Sun && s.ts === 'afternoon' ? undefined : s.ts,
+                            }));
+                          }}
                         >
                           <span className="dy">{d.day}</span>
                           <div className="dn2">{d.num}</div>
@@ -1089,19 +1145,23 @@ export default function LaundroApp() {
                       ))}
                     </div>
                     <p className="st" style={{ marginTop: 20 }}>Time slot</p>
-                    {TIME_SLOTS.map((t) => (
-                      <div
-                        key={t.id}
-                        className={`ts2 ${sd.ts === t.id ? 'sel' : ''}`}
-                        onClick={() => setSd((s) => ({ ...s, ts: t.id }))}
-                        onKeyDown={(e) => e.key === 'Enter' && setSd((s) => ({ ...s, ts: t.id }))}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <span>{t.emoji}</span>
-                        <span>{t.label}</span>
-                      </div>
-                    ))}
+                    {TIME_SLOTS.map((t) => {
+                      const disableAfternoon15Sun = t.id === 'afternoon' && is15thSunday(sd.date);
+                      return (
+                        <div
+                          key={t.id}
+                          className={`ts2 ${sd.ts === t.id ? 'sel' : ''} ${disableAfternoon15Sun ? 'ts2-dis' : ''}`}
+                          onClick={() => !disableAfternoon15Sun && setSd((s) => ({ ...s, ts: t.id }))}
+                          onKeyDown={(e) => !disableAfternoon15Sun && e.key === 'Enter' && setSd((s) => ({ ...s, ts: t.id }))}
+                          role="button"
+                          tabIndex={disableAfternoon15Sun ? -1 : 0}
+                        >
+                          <span>{t.emoji}</span>
+                          <span>{t.label}{disableAfternoon15Sun ? ' (not available this day)' : ''}</span>
+                        </div>
+                      );
+                    })}
+                    <p className="vd" style={{ marginTop: 10, fontSize: 12 }}>Timings may vary.</p>
                     <div className="fg" style={{ marginTop: 16 }}>
                       <label className="fl">Instructions (optional)</label>
                       <textarea
@@ -1130,25 +1190,36 @@ export default function LaundroApp() {
                     <div className="warn">
                       Pickup at {VENDOR.location} on {sd.date}. Keep your token ready.
                     </div>
+                    <p className="vd" style={{ marginTop: 8, fontSize: 12 }}>Timings may vary.</p>
                     <p className="vd" style={{ marginBottom: 12, fontWeight: 600 }}>Swipe to confirm order →</p>
                     <div
-                      ref={swipeTrackRef}
-                      className="swipe-track"
-                      onTouchStart={handleSwipeStart}
-                      onTouchMove={handleSwipeMove}
-                      onTouchEnd={handleSwipeEnd}
-                      onMouseDown={handleSwipeStart}
+                      className="swipe-wrap"
+                      onClick={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
                     >
-                      <div className="swipe-fill" style={{ width: `${swipeProgress}%` }} />
                       <div
-                        className="swipe-thumb"
-                        style={{ left: `${swipeProgress}%`, transform: 'translateX(-50%)' }}
+                        ref={swipeTrackRef}
+                        className="swipe-track"
+                        onTouchStart={handleSwipeStart}
+                        onMouseDown={handleSwipeStart}
                       >
-                        {swipeProgress >= 80 ? '✓' : '→'}
+                        <div className="swipe-fill" style={{ width: `${swipeProgress}%` }} />
+                        <div
+                          className="swipe-thumb"
+                          style={{
+                            left: `${swipeProgress}%`,
+                            transform: `translateX(-50%) translateZ(12px) scale(${swipeProgress >= 80 ? 1.08 : 1})`,
+                            boxShadow: swipeProgress >= 80
+                              ? '0 8px 24px rgba(23,70,162,.35), 0 2px 8px rgba(0,0,0,.15)'
+                              : `0 ${4 + (swipeProgress / 100) * 8}px ${12 + (swipeProgress / 100) * 16}px rgba(0,0,0,${0.15 + (swipeProgress / 100) * 0.1})`,
+                          }}
+                        >
+                          {swipeProgress >= 80 ? '✓' : '→'}
+                        </div>
+                        <span className="swipe-label">
+                          {orderSubmitting ? 'Placing…' : swipeProgress >= 80 ? 'Release to confirm' : 'Swipe right'}
+                        </span>
                       </div>
-                      <span className="swipe-label">
-                        {orderSubmitting ? 'Placing…' : swipeProgress >= 80 ? 'Release to confirm' : 'Swipe right'}
-                      </span>
                     </div>
                     <button type="button" className="btn bout bbl" style={{ marginTop: 16 }} onClick={() => setSd((s) => ({ ...s, step: 2 }))}>
                       Back
@@ -1249,14 +1320,9 @@ export default function LaundroApp() {
                       <div key={b.id} className="oc" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'stretch' }}>
                         <div style={{ fontWeight: 700, color: 'var(--b)' }}>Token #{b.order_token} · {b.order_number ?? '—'}</div>
                         <div style={{ fontSize: 13, color: 'var(--ts)' }}>₹{b.total} · {b.created_at ? new Date(b.created_at).toLocaleDateString() : ''}</div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button type="button" className="btn bout bbl" style={{ flex: 1 }} onClick={() => { const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title><style>body{font-family:system-ui;padding:16px}table{width:100%;border-collapse:collapse}.right{text-align:right}.total{font-weight:700;border-top:2px solid #000;padding-top:8px;margin-top:8px}</style></head><body><h2>LaundroSwipe</h2><p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p><p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p><p><strong>Phone:</strong> ${b.customer_phone ?? '—'}</p><p><strong>Date:</strong> ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p><table><thead><tr><th>Item</th><th class="right">₹</th></tr></thead><tbody>${(Array.isArray(b.line_items) ? b.line_items : []).map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')}</tbody></table><p class="right">Subtotal: ₹${b.subtotal}</p><p class="right">Convenience fee: ₹${b.convenience_fee}</p><p class="total right">Total: ₹${b.total}</p></body></html>`); w.document.close(); }}>
-                            View bill
-                          </button>
-                          <button type="button" className="btn bp bbl" style={{ flex: 1 }} onClick={() => { const html = (Array.isArray(b.line_items) ? b.line_items : []).map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join(''); const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title><style>body{font-family:system-ui;font-size:11px;padding:8px}table{width:100%;border-collapse:collapse}.right{text-align:right}.total{font-weight:700;font-size:12px;border-top:2px solid #000;padding-top:4px;margin-top:4px}</style></head><body><h2>LaundroSwipe</h2><p><strong>Token:</strong> #${b.order_token}</p><p><strong>Order:</strong> ${b.order_number ?? '—'}</p><p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p><table><thead><tr><th>Item</th><th class="right">₹</th></tr></thead><tbody>${html}</tbody></table><p class="right">Subtotal: ₹${b.subtotal}</p><p class="right">Convenience fee: ₹${b.convenience_fee}</p><p class="total right">Total: ₹${b.total}</p></body></html>`); w.document.close(); w.focus(); w.print(); setTimeout(() => w.close(), 500); }}>
-                            Print
-                          </button>
-                        </div>
+                        <button type="button" className="btn bout bbl" onClick={() => setViewingBill(b)}>
+                          View bill
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -1309,6 +1375,37 @@ export default function LaundroApp() {
             Profile
           </button>
         </nav>
+        {viewingBill && (
+          <div className="bill-popup-overlay" onClick={() => setViewingBill(null)} role="dialog" aria-modal="true" aria-label="View bill">
+            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>Bill #{viewingBill.order_token}</h3>
+                <button type="button" className="btn bout bsm" onClick={() => setViewingBill(null)} aria-label="Close">Close</button>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Order:</strong> {viewingBill.order_number ?? '—'}</p>
+              <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Date:</strong> {viewingBill.created_at ? new Date(viewingBill.created_at).toLocaleString() : '—'}</p>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 12, marginBottom: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--bd)' }}>
+                    <th style={{ textAlign: 'left', padding: '8px 0' }}>Item</th>
+                    <th style={{ textAlign: 'right', padding: '8px 0' }}>₹</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(Array.isArray(viewingBill.line_items) ? viewingBill.line_items : []).map((l: { label: string; qty: number; price: number }, i: number) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--bd)' }}>
+                      <td style={{ padding: '6px 0' }}>{l.label} ×{l.qty}</td>
+                      <td style={{ textAlign: 'right', padding: '6px 0' }}>₹{l.price * l.qty}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={{ textAlign: 'right', fontSize: 13, marginBottom: 2 }}>Subtotal: ₹{viewingBill.subtotal}</p>
+              <p style={{ textAlign: 'right', fontSize: 13, marginBottom: 2 }}>Convenience fee: ₹{viewingBill.convenience_fee}</p>
+              <p style={{ textAlign: 'right', fontWeight: 700, fontSize: 15, marginTop: 8, paddingTop: 8, borderTop: '2px solid var(--b)' }}>Total: ₹{viewingBill.total}</p>
+            </div>
+          </div>
+        )}
         {toast && (
           <div className={`toast ${toast.type ?? ''}`}>
             {toast.msg}
