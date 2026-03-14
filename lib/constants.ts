@@ -11,17 +11,21 @@ export const COLLEGES = [
 ] as const;
 
 export const SERVICES = [
-  { id: 'wash_fold', name: 'Wash & Fold', emoji: '👕', desc: 'Washed, dried & neatly folded' },
-  { id: 'wash_iron', name: 'Wash & Iron', emoji: '👔', desc: 'Washed, ironed & hung' },
-  { id: 'dry_clean', name: 'Dry Cleaning', emoji: '🧥', desc: 'Premium dry clean care' },
-  { id: 'iron_only', name: 'Iron Only', emoji: '♨️', desc: 'Press & steam finish' },
-  { id: 'express', name: 'Express', emoji: '⚡', desc: 'Same-day turnaround' },
-  { id: 'shoe_clean', name: 'Shoe Clean', emoji: '👟', desc: 'Deep clean per pair' },
+  { id: 'wash_fold', name: 'Wash & Fold', emoji: '👕', desc: 'Washed, dried & neatly folded', comingSoon: false },
+  { id: 'wash_iron', name: 'Wash & Iron', emoji: '👔', desc: 'Washed, ironed & hung', comingSoon: false },
+  { id: 'dry_clean', name: 'Dry Cleaning', emoji: '🧥', desc: 'Premium dry clean care', comingSoon: false },
+  { id: 'iron_only', name: 'Iron Only', emoji: '♨️', desc: 'Press & steam finish', comingSoon: false },
+  { id: 'express', name: 'Express', emoji: '⚡', desc: 'Same-day turnaround', comingSoon: true },
+  { id: 'shoe_clean', name: 'Shoe Clean', emoji: '👟', desc: 'Deep clean per pair', comingSoon: false },
+] as const;
+
+export const VENDORS = [
+  { id: 'profab', name: 'Pro Fab Power Laundry Services', location: 'VIT Chennai Campus', emoji: '🧺' },
 ] as const;
 
 export const VENDOR = {
   name: 'Pro Fab Power Laundry Services',
-  days: ['Tuesday', 'Saturday'],
+  days: ['Tuesday', 'Saturday', 'Sunday'],
   location: 'VIT Chennai Campus',
 } as const;
 
@@ -132,7 +136,7 @@ export function next10Days(): { date: Date; day: string; num: number; month: str
       day: dn[w],
       num: d.getDate(),
       month: mn[d.getMonth()],
-      ok: w === 2 || w === 6,
+      ok: w === 0 || w === 2 || w === 6, // Sun, Tue, Sat
       full: d.toISOString().split('T')[0],
     });
   }

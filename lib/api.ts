@@ -76,8 +76,8 @@ export const LSApi = {
   async updateUser(
     userId: string,
     updates: { full_name?: string; email?: string; phone?: string; whatsapp?: string; user_type?: string; college_id?: string | null; reg_no?: string | null; hostel_block?: string | null; year?: number | null }
-  ): Promise<UserRow | null> {
-    if (!supabase) return null;
+  ): Promise<{ user: UserRow | null; error?: string }> {
+    if (!supabase) return { user: null, error: 'Not connected' };
     try {
       const { data, error } = await supabase
         .from('users')
@@ -87,12 +87,12 @@ export const LSApi = {
         .single();
       if (error) {
         console.error('Supabase updateUser error', error);
-        return null;
+        return { user: null, error: error.message || 'Update failed' };
       }
-      return data as UserRow;
+      return { user: data as UserRow };
     } catch (e) {
       console.error('Supabase updateUser exception', e);
-      return null;
+      return { user: null, error: (e as Error)?.message || 'Update failed' };
     }
   },
 
@@ -223,6 +223,85 @@ export const LSApi = {
     }
   },
 
+  async signUpWithEmail(
+    email: string,
+    password: string,
+    profile: {
+      full_name: string;
+      phone: string;
+      whatsapp: string;
+      user_type: string;
+      college_id?: string | null;
+      reg_no?: string | null;
+      hostel_block?: string | null;
+      year?: number | null;
+    }
+  ): Promise<{ user: UserRow | null; error?: string }> {
+    if (!supabase) return { user: null, error: 'Not connected' };
+    try {
+      const { data: authData, error: authErr } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: { data: { full_name: profile.full_name } },
+      });
+      if (authErr) {
+        const msg = authErr.message?.includes('already registered') ? 'Email already registered' : authErr.message || 'Sign up failed';
+        return { user: null, error: msg };
+      }
+      const authUser = authData?.user;
+      if (!authUser?.id) return { user: null, error: 'Sign up failed' };
+      const row = {
+        id: authUser.id,
+        auth_id: authUser.id,
+        full_name: profile.full_name,
+        email: authUser.email ?? email,
+        phone: profile.phone,
+        whatsapp: profile.whatsapp,
+        user_type: profile.user_type,
+        college_id: profile.college_id ?? null,
+        reg_no: profile.reg_no ?? null,
+        hostel_block: profile.hostel_block ?? null,
+        year: profile.year ?? null,
+      };
+      const { data: inserted, error: insertErr } = await supabase
+        .from('users')
+        .insert(row)
+        .select()
+        .single();
+      if (insertErr) {
+        console.error('Supabase signUpWithEmail insert error', insertErr);
+        return { user: null, error: insertErr.message || 'Profile creation failed' };
+      }
+      return { user: inserted as UserRow };
+    } catch (e) {
+      console.error('signUpWithEmail exception', e);
+      return { user: null, error: (e as Error)?.message || 'Sign up failed' };
+    }
+  },
+
+  async signInWithPassword(email: string, password: string): Promise<{ user: UserRow | null; error?: string }> {
+    if (!supabase) return { user: null, error: 'Not connected' };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (error) return { user: null, error: error.message || 'Invalid email or password' };
+      const authUser = data?.user;
+      if (!authUser?.id) return { user: null, error: 'Sign in failed' };
+      const { data: profile, error: profileErr } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', authUser.id)
+        .maybeSingle();
+      if (profileErr || !profile) return { user: null, error: 'Profile not found' };
+      return { user: profile as UserRow };
+    } catch (e) {
+      console.error('signInWithPassword exception', e);
+      return { user: null, error: (e as Error)?.message || 'Sign in failed' };
+    }
+  },
+
   async signInWithGoogle(redirectTo?: string): Promise<{ error?: { message: string }; data?: { url: string } }> {
     if (!supabase) return { error: { message: 'Supabase not configured' } };
     try {
@@ -284,6 +363,7 @@ export const LSApi = {
       'User';
     const row = {
       id: authUser.id,
+      auth_id: authUser.id,
       full_name: fullName,
       email: authUser.email ?? '',
       phone: null,

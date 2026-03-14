@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   COLLEGES,
   SERVICES,
+  VENDORS,
   VENDOR,
   statusLabel,
   statusClass,
@@ -61,6 +62,7 @@ type Order = {
 
 type ScheduleData = {
   step: number;
+  vendorId?: string;
   svc?: string;
   date?: string;
   ts?: string;
@@ -109,6 +111,7 @@ function rowToOrder(r: OrderRow): Order {
 
 const TIME_SLOTS = [
   { id: 'afternoon', label: 'Afternoon (12–4 PM)', emoji: '☀️' },
+  { id: 'evening', label: 'Evening (4:45–5:45 PM)', emoji: '🌆' },
 ];
 
 function validateIndianPhone(value: string): { valid: boolean; message?: string } {
@@ -148,6 +151,8 @@ export default function LaundroApp() {
   const [confirmingDelivery, setConfirmingDelivery] = useState(false);
   const [myBills, setMyBills] = useState<VendorBillRow[]>([]);
   const [myBillsLoading, setMyBillsLoading] = useState(false);
+  const [swipeProgress, setSwipeProgress] = useState(0);
+  const swipeTrackRef = useRef<HTMLDivElement>(null);
 
   const go = useCallback((s: Screen, detail?: DetailData) => {
     setScreen(s);
@@ -169,9 +174,9 @@ export default function LaundroApp() {
   }, []);
 
   const genTk = useCallback(() => {
-    const t = Date.now().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const r = String(Math.floor(1000 + Math.random() * 9000));
-    return (t.slice(-5) + r).slice(-8);
+    const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    const digits = String(Math.floor(100 + Math.random() * 900)); // 100–999
+    return letter + digits; // e.g. A704
   }, []);
 
   const genOid = useCallback(() => {
@@ -197,9 +202,14 @@ export default function LaundroApp() {
     setUser(restoredUser);
     setOrders(restoredOrders);
 
+    const hasAuthHash = typeof window !== 'undefined' && !!window.location.hash && /access_token|refresh_token/.test(window.location.hash);
     const t = setTimeout(() => {
       if (!mounted) return;
-      if (screen === 'splash') setScreen(lsOb ? 'login' : 'onboarding');
+      if (screen === 'splash') {
+        if (restoredUser) setScreen('home');
+        else if (hasAuthHash) { /* stay on splash; init() will set complete-profile or home */ }
+        else setScreen(lsOb ? 'login' : 'onboarding');
+      }
     }, 900);
 
     async function tryApplySession(session: { user: unknown } | null) {
@@ -291,6 +301,51 @@ export default function LaundroApp() {
     }
   }, [screen, user?.sid]);
 
+  // Refetch orders when user views Orders or order-detail so vendor status updates (picked_up, delivered) show
+  useEffect(() => {
+    if ((screen === 'orders' || screen === 'order-detail') && user?.sid) {
+      LSApi.fetchOrdersForUser(user.sid).then((ords) => {
+        if (ords && ords.length >= 0) {
+          const mapped = ords.map(rowToOrder);
+          setOrders(mapped);
+          saveO(mapped);
+        }
+      });
+    }
+  }, [screen, user?.sid, saveO]);
+
+  useEffect(() => {
+    if (screen !== 'schedule' || sd.step !== 3) return;
+    const onMouseMove = (e: MouseEvent) => {
+      if (swipeStartRef.current) {
+        const start = swipeStartRef.current;
+        const p = Math.max(0, Math.min(100, ((e.clientX - start.left) / start.width) * 100));
+        swipeProgressRef.current = p;
+        setSwipeProgress(p);
+      }
+    };
+    const onMouseUp = () => {
+      if (swipeStartRef.current) {
+        const progress = swipeProgressRef.current;
+        swipeStartRef.current = null;
+        if (progress >= 80) handleConfirmOrderRef.current();
+        setSwipeProgress(0);
+        swipeProgressRef.current = 0;
+      }
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [screen, sd.step]);
+
+  // Once logged in, never show login again — redirect to home
+  useEffect(() => {
+    if (screen === 'login' && user) go('home');
+  }, [screen, user, go]);
+
   const handleObNext = () => {
     if (obSlide < 2) setObSlide((obSlide + 1) as 0 | 1 | 2);
     else {
@@ -306,7 +361,11 @@ export default function LaundroApp() {
   const handleLoginEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEm.trim()) {
-      showToast('Enter email or phone', 'er');
+      showToast('Enter your email', 'er');
+      return;
+    }
+    if (!loginPw) {
+      showToast('Enter your password', 'er');
       return;
     }
     if (!LSApi.hasSupabase) {
@@ -315,17 +374,12 @@ export default function LaundroApp() {
     }
     setAuthLoading(true);
     try {
-      const users = await LSApi.fetchUsers();
-      const match = users?.find(
-        (u) =>
-          (u.email && u.email.toLowerCase() === loginEm.trim().toLowerCase()) ||
-          (u.phone && u.phone === loginEm.trim())
-      );
-      if (match) {
-        const u = rowToUser(match);
+      const { user: profile, error } = await LSApi.signInWithPassword(loginEm.trim(), loginPw);
+      if (profile) {
+        const u = rowToUser(profile);
         setUser(u);
         saveUser(u);
-        const ords = await LSApi.fetchOrdersForUser(match.id);
+        const ords = await LSApi.fetchOrdersForUser(profile.id);
         if (ords) {
           const mapped = ords.map(rowToOrder);
           setOrders(mapped);
@@ -334,7 +388,7 @@ export default function LaundroApp() {
         go('home');
         showToast('Welcome back!', 'ok');
       } else {
-        showToast('Account not found. Please sign up.', 'er');
+        showToast(error || 'Invalid email or password', 'er');
       }
     } catch (_) {
       showToast('Login failed', 'er');
@@ -369,6 +423,10 @@ export default function LaundroApp() {
       showToast('Fill all required fields', 'er');
       return;
     }
+    if (!signupPw || signupPw.length < 6) {
+      showToast('Create a password (at least 6 characters) to sign in later', 'er');
+      return;
+    }
     const isGeneral = !studentCid || studentCid === 'general';
     if (!isGeneral && !studentRn.trim()) {
       showToast('Registration number required for students', 'er');
@@ -376,23 +434,32 @@ export default function LaundroApp() {
     }
     setAuthLoading(true);
     try {
-      const { user: row, error } = await LSApi.createUser({
-        fn: signupFn.trim(),
-        em: signupEm.trim(),
-        ph: signupPh.trim(),
-        wa: signupWa.trim(),
-        ut: isGeneral ? 'general' : 'student',
-        rn: isGeneral ? undefined : studentRn.trim(),
-        cid: isGeneral ? undefined : studentCid,
-        hos: studentHos.trim() || undefined,
-        yr: studentYr ? parseInt(studentYr, 10) : undefined,
-      });
+      const { user: row, error } = await LSApi.signUpWithEmail(
+        signupEm.trim(),
+        signupPw,
+        {
+          full_name: signupFn.trim(),
+          phone: signupPh.trim(),
+          whatsapp: signupWa.trim(),
+          user_type: isGeneral ? 'general' : 'student',
+          college_id: isGeneral ? null : studentCid,
+          reg_no: isGeneral ? null : studentRn.trim() || null,
+          hostel_block: studentHos.trim() || null,
+          year: studentYr?.trim() ? parseInt(studentYr, 10) || null : null,
+        }
+      );
       if (row) {
         const u = rowToUser(row);
         setUser(u);
         saveUser(u);
+        const ords = await LSApi.fetchOrdersForUser(row.id);
+        if (ords) {
+          const mapped = ords.map(rowToOrder);
+          setOrders(mapped);
+          saveO(mapped);
+        }
         go('home');
-        showToast('Account created', 'ok');
+        showToast('Account created. You can sign in with email + password anytime.', 'ok');
       } else {
         showToast(error || 'Sign up failed', 'er');
       }
@@ -424,14 +491,15 @@ export default function LaundroApp() {
     }
     setAuthLoading(true);
     try {
-      const updated = await LSApi.updateUser(user.sid, {
+      const yearNum = studentYr?.trim() ? parseInt(studentYr, 10) : null;
+      const { user: updated, error } = await LSApi.updateUser(user.sid, {
         phone: signupPh.trim(),
         whatsapp: signupWa.trim(),
         user_type: isGeneral ? 'general' : 'student',
         college_id: isGeneral ? null : studentCid,
         reg_no: isGeneral ? null : studentRn.trim() || null,
         hostel_block: studentHos.trim() || null,
-        year: studentYr ? parseInt(studentYr, 10) : null,
+        year: yearNum != null && !Number.isNaN(yearNum) ? yearNum : null,
       });
       if (updated) {
         const u = rowToUser(updated);
@@ -440,12 +508,16 @@ export default function LaundroApp() {
         go('home');
         showToast('Profile complete', 'ok');
       } else {
-        showToast('Update failed', 'er');
+        showToast(error || 'Update failed', 'er');
       }
     } catch (_) {
       showToast('Update failed', 'er');
     }
     setAuthLoading(false);
+  };
+
+  const handleSelectVendor = (vendorId: string) => {
+    setSd((s) => ({ ...s, step: 1, vendorId }));
   };
 
   const handleScheduleService = (svcId: string) => {
@@ -458,6 +530,14 @@ export default function LaundroApp() {
 
   const handleConfirmOrder = async () => {
     if (!user || !sd.svc || !sd.date || !sd.ts) return;
+    const existingSameDay = orders.some(
+      (o) => o.pd === sd.date && o.svc === sd.svc && o.status !== 'delivered'
+    );
+    if (existingSameDay) {
+      const svcName = SERVICES.find((x) => x.id === sd.svc)?.name ?? 'this service';
+      showToast(`You already have a ${svcName} order for this date. Complete it first.`, 'er');
+      return;
+    }
     const svc = SERVICES.find((x) => x.id === sd.svc);
     const payload = {
       on: genOid(),
@@ -476,7 +556,7 @@ export default function LaundroApp() {
         const newOrder = rowToOrder(row);
         setOrders((prev) => [newOrder, ...prev]);
         saveO([newOrder, ...orders]);
-        setSd({ step: 1 });
+        setSd({ step: 0 });
         go('token-success', { oid: row.id });
       } else {
         showToast('Order failed', 'er');
@@ -486,6 +566,34 @@ export default function LaundroApp() {
     }
     setOrderSubmitting(false);
   };
+
+  const swipeStartRef = useRef<{ left: number; width: number } | null>(null);
+  const swipeProgressRef = useRef(0);
+  const handleConfirmOrderRef = useRef(handleConfirmOrder);
+  handleConfirmOrderRef.current = handleConfirmOrder;
+  const handleSwipeStart = useCallback(() => {
+    const track = swipeTrackRef.current;
+    if (!track || orderSubmitting) return;
+    const rect = track.getBoundingClientRect();
+    swipeStartRef.current = { left: rect.left, width: rect.width };
+    setSwipeProgress(0);
+    swipeProgressRef.current = 0;
+  }, [orderSubmitting]);
+  const handleSwipeMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    const start = swipeStartRef.current;
+    if (!start) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const p = Math.max(0, Math.min(100, ((clientX - start.left) / start.width) * 100));
+    swipeProgressRef.current = p;
+    setSwipeProgress(p);
+  }, []);
+  const handleSwipeEnd = useCallback(() => {
+    const progress = swipeProgressRef.current;
+    swipeStartRef.current = null;
+    if (progress >= 80) handleConfirmOrderRef.current();
+    setSwipeProgress(0);
+    swipeProgressRef.current = 0;
+  }, []);
 
   const handleConfirmDelivery = async (orderId: string) => {
     setConfirmingDelivery(true);
@@ -552,8 +660,8 @@ export default function LaundroApp() {
           </div>
           <div className={`osl ${obSlide === 1 ? 'active' : obSlide > 1 ? 'prev' : 'next'}`}>
             <div className="oi s2">📅</div>
-            <div className="ott">Tue & Sat pickups</div>
-            <div className="otd">Campus pickups. Afternoon slot for your convenience.</div>
+            <div className="ott">Tue, Sat & Sun pickups</div>
+            <div className="otd">Campus pickups. Afternoon or evening slot for your convenience.</div>
           </div>
           <div className={`osl ${obSlide === 2 ? 'active' : obSlide < 2 ? 'next' : 'prev'}`}>
             <div className="oi s3">✨</div>
@@ -734,6 +842,11 @@ export default function LaundroApp() {
             {signupWaErr && <p className="field-error">{signupWaErr}</p>}
           </div>
           <div className="fg">
+            <label className="fl">Password</label>
+            <input type="password" className="fi" placeholder="At least 6 characters (to sign in later)" value={signupPw} onChange={(e) => setSignupPw(e.target.value)} required minLength={6} />
+            <p className="vd" style={{ marginTop: 4, fontSize: 12 }}>You’ll use this with your email to sign in after sign out.</p>
+          </div>
+          <div className="fg">
             <label className="fl">College</label>
             <select className="fi fs" value={studentCid} onChange={(e) => setStudentCid(e.target.value)} required>
               <option value="">Select one</option>
@@ -837,26 +950,27 @@ export default function LaundroApp() {
               <>
                 <div className="hh">
                   <p style={{ marginBottom: 8 }}>Hi, {user.fn || 'User'} 👋</p>
-                  <p style={{ opacity: 0.9, fontSize: 14 }}>Schedule a pickup or check your orders.</p>
-                  <button type="button" className="scta" onClick={() => go('schedule')}>
+                  <p style={{ opacity: 0.9, fontSize: 14 }}>Schedule pickup from your favorite laundry company at ease.</p>
+                  <button type="button" className="scta" onClick={() => { setSd({ step: 0 }); go('schedule'); }}>
                     Schedule pickup
                     <span className="aw">→</span>
                   </button>
                 </div>
                 <p className="st">Services</p>
                 <div className="sg">
-                  {SERVICES.map((s) => (
+                  {SERVICES.filter((s) => !s.comingSoon).map((s) => (
                     <button
                       type="button"
                       key={s.id}
                       className="sc"
-                      onClick={() => go('schedule')}
+                      onClick={() => { setSd({ step: 0 }); go('schedule'); }}
                     >
                       <span className="ic">{s.emoji}</span>
                       <span className="nm">{s.name}</span>
                     </button>
                   ))}
                 </div>
+                <p className="fn" style={{ marginTop: 8 }}>LaundroSwipe — schedule pickup from your favorite laundry company in one swipe.</p>
                 <div className="hiw">
                   <div className="hiws">
                     <div className="hiwn">1</div>
@@ -898,30 +1012,33 @@ export default function LaundroApp() {
             {screen === 'schedule' && (
               <>
                 <div className="spi">
-                  <div className={`spd ${sd.step >= 1 ? 'ac' : ''} ${sd.step > 1 ? 'dn' : ''}`}>1</div>
+                  <div className={`spd ${sd.step >= 0 ? 'ac' : ''} ${sd.step > 0 ? 'dn' : ''}`}>1</div>
+                  <div className={`spl ${sd.step > 0 ? 'dn' : ''}`} />
+                  <div className={`spd ${sd.step >= 1 ? 'ac' : ''} ${sd.step > 1 ? 'dn' : ''}`}>2</div>
                   <div className={`spl ${sd.step > 1 ? 'dn' : ''}`} />
-                  <div className={`spd ${sd.step >= 2 ? 'ac' : ''} ${sd.step > 2 ? 'dn' : ''}`}>2</div>
+                  <div className={`spd ${sd.step >= 2 ? 'ac' : ''} ${sd.step > 2 ? 'dn' : ''}`}>3</div>
                   <div className={`spl ${sd.step > 2 ? 'dn' : ''}`} />
-                  <div className={`spd ${sd.step >= 3 ? 'ac' : ''} ${sd.step > 2 ? 'dn' : ''}`}>3</div>
+                  <div className={`spd ${sd.step >= 3 ? 'ac' : ''} ${sd.step > 2 ? 'dn' : ''}`}>4</div>
                 </div>
-                {sd.step === 1 && (
+                {sd.step === 0 && (
                   <>
-                    <p className="st">Choose service</p>
-                    {SERVICES.map((s) => (
+                    <p className="st">Select vendor</p>
+                    <p className="vd" style={{ marginBottom: 16 }}>Choose your laundry partner for pickup & delivery.</p>
+                    {VENDORS.map((v) => (
                       <div
-                        key={s.id}
-                        className={`ssc ${sd.svc === s.id ? 'sel' : ''}`}
-                        onClick={() => handleScheduleService(s.id)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleScheduleService(s.id)}
+                        key={v.id}
+                        className="ssc vendor-card"
+                        onClick={() => handleSelectVendor(v.id)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSelectVendor(v.id)}
                         role="button"
                         tabIndex={0}
                       >
-                        <span className="em">{s.emoji}</span>
+                        <span className="em">{v.emoji}</span>
                         <div className="inf">
-                          <div className="sn">{s.name}</div>
-                          <div className="sd">{s.desc}</div>
+                          <div className="sn">{v.name}</div>
+                          <div className="sd">{v.location}</div>
                         </div>
-                        <div className="rd" />
+                        <span className="aw" style={{ fontSize: 20 }}>→</span>
                       </div>
                     ))}
                     <button type="button" className="btn bout bbl" style={{ marginTop: 16 }} onClick={() => go('home')}>
@@ -929,9 +1046,34 @@ export default function LaundroApp() {
                     </button>
                   </>
                 )}
+                {sd.step === 1 && (
+                  <>
+                    <p className="st">Choose service</p>
+                    {SERVICES.map((s) => (
+                      <div
+                        key={s.id}
+                        className={`ssc ${sd.svc === s.id ? 'sel' : ''} ${s.comingSoon ? 'coming-soon' : ''}`}
+                        onClick={() => !s.comingSoon && handleScheduleService(s.id)}
+                        onKeyDown={(e) => !s.comingSoon && e.key === 'Enter' && handleScheduleService(s.id)}
+                        role="button"
+                        tabIndex={s.comingSoon ? -1 : 0}
+                      >
+                        <span className="em">{s.emoji}</span>
+                        <div className="inf">
+                          <div className="sn">{s.name} {s.comingSoon ? '(Coming soon)' : ''}</div>
+                          <div className="sd">{s.desc}</div>
+                        </div>
+                        {!s.comingSoon && <div className="rd" />}
+                      </div>
+                    ))}
+                    <button type="button" className="btn bout bbl" style={{ marginTop: 16 }} onClick={() => setSd((s) => ({ ...s, step: 0 }))}>
+                      Back
+                    </button>
+                  </>
+                )}
                 {sd.step === 2 && (
                   <>
-                    <p className="st">Pick date (Tue / Sat)</p>
+                    <p className="st">Pick date (Tue / Sat / Sun)</p>
                     <div className="dss">
                       {days.map((d) => (
                         <button
@@ -988,10 +1130,27 @@ export default function LaundroApp() {
                     <div className="warn">
                       Pickup at {VENDOR.location} on {sd.date}. Keep your token ready.
                     </div>
-                    <button type="button" className="btn bp bbl" onClick={handleConfirmOrder} disabled={orderSubmitting}>
-                      {orderSubmitting ? 'Placing…' : 'Confirm order'}
-                    </button>
-                    <button type="button" className="btn bout bbl" style={{ marginTop: 8 }} onClick={() => setSd((s) => ({ ...s, step: 2 }))}>
+                    <p className="vd" style={{ marginBottom: 12, fontWeight: 600 }}>Swipe to confirm order →</p>
+                    <div
+                      ref={swipeTrackRef}
+                      className="swipe-track"
+                      onTouchStart={handleSwipeStart}
+                      onTouchMove={handleSwipeMove}
+                      onTouchEnd={handleSwipeEnd}
+                      onMouseDown={handleSwipeStart}
+                    >
+                      <div className="swipe-fill" style={{ width: `${swipeProgress}%` }} />
+                      <div
+                        className="swipe-thumb"
+                        style={{ left: `${swipeProgress}%`, transform: 'translateX(-50%)' }}
+                      >
+                        {swipeProgress >= 80 ? '✓' : '→'}
+                      </div>
+                      <span className="swipe-label">
+                        {orderSubmitting ? 'Placing…' : swipeProgress >= 80 ? 'Release to confirm' : 'Swipe right'}
+                      </span>
+                    </div>
+                    <button type="button" className="btn bout bbl" style={{ marginTop: 16 }} onClick={() => setSd((s) => ({ ...s, step: 2 }))}>
                       Back
                     </button>
                   </>
@@ -1137,7 +1296,7 @@ export default function LaundroApp() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
             Home
           </button>
-          <button type="button" className={`ni ct ${tab === 'schedule' ? 'a' : ''}`} onClick={() => { setSd({ step: 1 }); go('schedule'); }}>
+          <button type="button" className={`ni ct ${tab === 'schedule' ? 'a' : ''}`} onClick={() => { setSd({ step: 0 }); go('schedule'); }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
             Schedule
           </button>
