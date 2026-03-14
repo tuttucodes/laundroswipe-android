@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
 import { VENDOR_BILL_ITEMS, CONVENIENCE_FEE } from '@/lib/constants';
@@ -18,6 +18,7 @@ export default function VendorPage() {
   const [saving, setSaving] = useState(false);
   const [billAlreadyGenerated, setBillAlreadyGenerated] = useState(false);
   const [showAnyway, setShowAnyway] = useState(false);
+  const lastSavedOrderTokenRef = useRef<string | null>(null);
 
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
@@ -32,6 +33,7 @@ export default function VendorPage() {
     setLineItems([]);
     setBillAlreadyGenerated(false);
     setShowAnyway(false);
+    lastSavedOrderTokenRef.current = null;
     const t = token.replace(/^#/, '').trim();
     if (!t) {
       setLookupErr('Enter a token number');
@@ -83,25 +85,25 @@ export default function VendorPage() {
 
   const buildReceiptHtml = () => {
     const rows = lineItems.length
-      ? lineItems.map((l) => `<tr><td>${l.label} x${l.qty}</td><td class="right">${l.price * l.qty}</td></tr>`).join('')
+      ? lineItems.map((l) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')
       : '<tr><td colspan="2">No items</td></tr>';
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
     return `
-    <h2>LaundroSwipe</h2>
-    <p class="meta">Pro Fab Power Laundry</p>
-    <p><strong>Token:</strong> #${o?.token ?? ''} &nbsp; <strong>Order:</strong> ${o?.order_number ?? ''}</p>
-    <p><strong>Customer ID:</strong> ${u.display_id ?? '—'} &nbsp; <strong>Customer:</strong> ${u.full_name ?? u.email ?? '—'}</p>
-    <p><strong>Phone:</strong> ${u.phone ?? '—'}</p>
-    <table>
-      <thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <p class="right">Subtotal: ₹${subtotal}</p>
-    <p class="right conv">Convenience fee: ₹${CONVENIENCE_FEE}</p>
-    <p class="total right">Total: ₹${total}</p>
-    <p style="text-align:center;margin-top:12px;font-size:10px">Thank you!</p>
-  `;
+<h2>LaundroSwipe</h2>
+<p class="meta">Pro Fab Power Laundry</p>
+<p><strong>Token:</strong> #${o?.token ?? ''} <strong>Ord:</strong> ${o?.order_number ?? ''}</p>
+<p><strong>Customer:</strong> ${(u.full_name ?? u.email ?? '—').toString().slice(0, 20)}</p>
+<p><strong>Phone:</strong> ${(u.phone ?? '—').toString().slice(0, 14)}</p>
+<table>
+<thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
+<tbody>${rows}</tbody>
+</table>
+<p class="right">Subtotal: ₹${subtotal}</p>
+<p class="right conv">Conv fee: ₹${CONVENIENCE_FEE}</p>
+<p class="total right">TOTAL: ₹${total}</p>
+<p class="foot">Thank you!</p>
+`;
   };
 
   const handleSaveBill = async () => {
@@ -148,20 +150,35 @@ export default function VendorPage() {
     }
     doc.open();
     doc.write(`
-      <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${order?.token ?? ''}</title>
-      <style>
-      body{font-family:system-ui,sans-serif;font-size:11px;padding:8px;margin:0;width:58mm;max-width:58mm}
-      table{width:100%;border-collapse:collapse;font-size:10px}
-      th,td{padding:2px 0}
-      .right{text-align:right}
-      .total{font-weight:700;font-size:12px;border-top:2px solid #000;padding-top:4px;margin-top:4px}
-      .conv{font-size:10px;color:#666}
-      h2{text-align:center;font-size:13px;margin:0 0 2px}
-      p{margin:2px 0;font-size:10px}
-      @media print{body{width:58mm!important;max-width:58mm!important}}
-      </style></head><body>
-      ${buildReceiptHtml()}
-      </body></html>
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=58mm">
+<title>Bill #${order?.token ?? ''}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:58mm;max-width:58mm;min-width:58mm;font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.3;padding:2mm;margin:0;background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{overflow:visible}
+.receipt{width:58mm;max-width:58mm}
+h2{text-align:center;font-size:11px;font-weight:700;margin:0 0 1mm;letter-spacing:0}
+.meta{text-align:center;font-size:9px;margin:0 0 2mm}
+p{margin:1mm 0;font-size:9px;word-break:break-word}
+table{width:100%;border-collapse:collapse;font-size:9px;margin:2mm 0}
+th,td{padding:1mm 0;border-bottom:1px dotted #000}
+th{text-align:left;font-weight:700}
+.right{text-align:right}
+.total{border-top:2px solid #000;font-weight:700;font-size:10px;padding-top:2mm;margin-top:2mm}
+.conv{font-size:8px}
+.foot{text-align:center;margin-top:3mm;font-size:9px}
+@media print{
+  html,body{width:58mm!important;max-width:58mm!important;min-width:58mm!important;padding:0!important;margin:0!important;background:#fff!important}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:58mm auto;margin:2mm}
+}
+</style>
+</head><body><div class="receipt">
+${buildReceiptHtml()}
+</div></body></html>
     `);
     doc.close();
     iframe.contentWindow?.focus();
@@ -175,8 +192,13 @@ export default function VendorPage() {
       return;
     }
     const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
+    if (lastSavedOrderTokenRef.current === orderToken) {
+      doPrint();
+      showToast('Printing…', 'ok');
+      return;
+    }
     showToast('Saving & printing…', 'ok');
-    await LSApi.saveVendorBill({
+    const result = await LSApi.saveVendorBill({
       order_id: order?.id ?? null,
       order_token: orderToken,
       order_number: order?.order_number ?? null,
@@ -188,8 +210,9 @@ export default function VendorPage() {
       convenience_fee: CONVENIENCE_FEE,
       total,
     });
+    if (result) lastSavedOrderTokenRef.current = orderToken;
     doPrint();
-    showToast('Bill saved. Printing…', 'ok');
+    showToast(result ? 'Bill saved. Printing…' : 'Printing…', result ? 'ok' : 'er');
   };
 
   const handleNewBill = () => {
@@ -200,6 +223,7 @@ export default function VendorPage() {
     setLineItems([]);
     setBillAlreadyGenerated(false);
     setShowAnyway(false);
+    lastSavedOrderTokenRef.current = null;
   };
 
   return (
@@ -217,9 +241,12 @@ export default function VendorPage() {
             <input
               type="text"
               className="vendor-input"
-              placeholder="e.g. 472"
+              placeholder="e.g. A704"
               value={token}
-              onChange={(e) => setToken(e.target.value)}
+              onChange={(e) => setToken(e.target.value.toUpperCase())}
+              autoCapitalize="characters"
+              autoComplete="off"
+              style={{ textTransform: 'uppercase' }}
             />
           </div>
           <button type="submit" className="vendor-btn-primary" style={{ width: '100%', minHeight: 52 }}>Lookup order</button>
