@@ -11,7 +11,7 @@ export type UserRow = {
   reg_no: string | null;
   hostel_block: string | null;
   year: number | null;
-  display_id: string | null;
+  display_id?: string | null;
 };
 
 export type OrderRow = {
@@ -26,8 +26,8 @@ export type OrderRow = {
   instructions: string | null;
   user_id: string | null;
   created_at: string;
-  delivery_confirmed_at: string | null;
-  delivery_comments: string | null;
+  delivery_confirmed_at?: string | null;
+  delivery_comments?: string | null;
 };
 
 export const LSApi = {

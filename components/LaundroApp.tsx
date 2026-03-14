@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   COLLEGES,
@@ -569,16 +569,22 @@ export default function LaundroApp() {
 
   const isStudentSignup = studentCid && studentCid !== 'general';
 
+  const prefillCompleteProfileRef = useRef<string | null>(null);
   useEffect(() => {
-    if (screen === 'complete-profile' && user) {
-      setSignupPh(user.ph ?? '');
-      setSignupWa(user.wa ?? '');
-      setStudentCid(user.cid ?? 'general');
-      setStudentRn(user.rn ?? '');
-      setStudentHos(user.hos ?? '');
-      setStudentYr(user.yr != null ? String(user.yr) : '');
+    if (screen !== 'complete-profile' || !user) {
+      prefillCompleteProfileRef.current = null;
+      return;
     }
-  }, [screen, user?.sid]);
+    const key = `${user.sid}`;
+    if (prefillCompleteProfileRef.current === key) return;
+    prefillCompleteProfileRef.current = key;
+    setSignupPh(user.ph ?? '');
+    setSignupWa(user.wa ?? '');
+    setStudentCid(user.cid ?? 'general');
+    setStudentRn(user.rn ?? '');
+    setStudentHos(user.hos ?? '');
+    setStudentYr(user.yr != null ? String(user.yr) : '');
+  }, [screen, user]);
 
   useEffect(() => {
     if (screen === 'my-bills' && user?.sid) {
@@ -841,7 +847,7 @@ export default function LaundroApp() {
             {screen === 'home' && (
               <>
                 <div className="hh">
-                  <p style={{ marginBottom: 8 }}>Hi, {user.fn} 👋</p>
+                  <p style={{ marginBottom: 8 }}>Hi, {user.fn || 'User'} 👋</p>
                   <p style={{ opacity: 0.9, fontSize: 14 }}>Schedule a pickup or check your orders.</p>
                   <button type="button" className="scta" onClick={() => go('schedule')}>
                     Schedule pickup
@@ -1096,10 +1102,10 @@ export default function LaundroApp() {
                         <div style={{ fontWeight: 700, color: 'var(--b)' }}>Token #{b.order_token} · {b.order_number ?? '—'}</div>
                         <div style={{ fontSize: 13, color: 'var(--ts)' }}>₹{b.total} · {b.created_at ? new Date(b.created_at).toLocaleDateString() : ''}</div>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <button type="button" className="btn bout bbl" style={{ flex: 1 }} onClick={() => { const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title><style>body{font-family:system-ui;padding:16px}table{width:100%;border-collapse:collapse}.right{text-align:right}.total{font-weight:700;border-top:2px solid #000;padding-top:8px;margin-top:8px}</style></head><body><h2>LaundroSwipe</h2><p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p><p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p><p><strong>Phone:</strong> ${b.customer_phone ?? '—'}</p><p><strong>Date:</strong> ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p><table><thead><tr><th>Item</th><th class="right">₹</th></tr></thead><tbody>${(b.line_items || []).map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')}</tbody></table><p class="right">Subtotal: ₹${b.subtotal}</p><p class="right">Convenience fee: ₹${b.convenience_fee}</p><p class="total right">Total: ₹${b.total}</p></body></html>`); w.document.close(); }}>
+                          <button type="button" className="btn bout bbl" style={{ flex: 1 }} onClick={() => { const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title><style>body{font-family:system-ui;padding:16px}table{width:100%;border-collapse:collapse}.right{text-align:right}.total{font-weight:700;border-top:2px solid #000;padding-top:8px;margin-top:8px}</style></head><body><h2>LaundroSwipe</h2><p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p><p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p><p><strong>Phone:</strong> ${b.customer_phone ?? '—'}</p><p><strong>Date:</strong> ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p><table><thead><tr><th>Item</th><th class="right">₹</th></tr></thead><tbody>${(Array.isArray(b.line_items) ? b.line_items : []).map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')}</tbody></table><p class="right">Subtotal: ₹${b.subtotal}</p><p class="right">Convenience fee: ₹${b.convenience_fee}</p><p class="total right">Total: ₹${b.total}</p></body></html>`); w.document.close(); }}>
                             View bill
                           </button>
-                          <button type="button" className="btn bp bbl" style={{ flex: 1 }} onClick={() => { const html = (b.line_items || []).map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join(''); const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title><style>body{font-family:system-ui;font-size:11px;padding:8px}table{width:100%;border-collapse:collapse}.right{text-align:right}.total{font-weight:700;font-size:12px;border-top:2px solid #000;padding-top:4px;margin-top:4px}</style></head><body><h2>LaundroSwipe</h2><p><strong>Token:</strong> #${b.order_token}</p><p><strong>Order:</strong> ${b.order_number ?? '—'}</p><p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p><table><thead><tr><th>Item</th><th class="right">₹</th></tr></thead><tbody>${html}</tbody></table><p class="right">Subtotal: ₹${b.subtotal}</p><p class="right">Convenience fee: ₹${b.convenience_fee}</p><p class="total right">Total: ₹${b.total}</p></body></html>`); w.document.close(); w.focus(); w.print(); setTimeout(() => w.close(), 500); }}>
+                          <button type="button" className="btn bp bbl" style={{ flex: 1 }} onClick={() => { const html = (Array.isArray(b.line_items) ? b.line_items : []).map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join(''); const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title><style>body{font-family:system-ui;font-size:11px;padding:8px}table{width:100%;border-collapse:collapse}.right{text-align:right}.total{font-weight:700;font-size:12px;border-top:2px solid #000;padding-top:4px;margin-top:4px}</style></head><body><h2>LaundroSwipe</h2><p><strong>Token:</strong> #${b.order_token}</p><p><strong>Order:</strong> ${b.order_number ?? '—'}</p><p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p><table><thead><tr><th>Item</th><th class="right">₹</th></tr></thead><tbody>${html}</tbody></table><p class="right">Subtotal: ₹${b.subtotal}</p><p class="right">Convenience fee: ₹${b.convenience_fee}</p><p class="total right">Total: ₹${b.total}</p></body></html>`); w.document.close(); w.focus(); w.print(); setTimeout(() => w.close(), 500); }}>
                             Print
                           </button>
                         </div>
@@ -1113,9 +1119,9 @@ export default function LaundroApp() {
             {screen === 'profile' && (
               <>
                 <div style={{ marginBottom: 24 }}>
-                  <div className="pa">{user.fn.charAt(0).toUpperCase()}</div>
-                  <p className="st" style={{ marginTop: 8 }}>{user.fn}</p>
-                  <p className="vd">{user.em}</p>
+                  <div className="pa">{(user.fn || 'U').charAt(0).toUpperCase()}</div>
+                  <p className="st" style={{ marginTop: 8 }}>{user.fn || 'User'}</p>
+                  <p className="vd">{user.em || ''}</p>
                   {user.ph && <p className="vd">{user.ph}</p>}
                 </div>
                 <div className="pmi" onClick={() => go('my-bills')}>
