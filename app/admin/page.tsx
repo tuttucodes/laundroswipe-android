@@ -143,6 +143,7 @@ export default function AdminPage() {
           <button type="button" onClick={() => setTab('orders')} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
           <button type="button" onClick={() => setTab('users')} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
           <Link href="/admin/vendor" className="admin-nav-link">🧾 Vendor / Bill</Link>
+          <Link href="/admin/bills" className="admin-nav-link">📋 Saved bills</Link>
           <button type="button" onClick={() => setTab('colleges')} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
           <button type="button" onClick={() => setTab('settings')} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
         </nav>

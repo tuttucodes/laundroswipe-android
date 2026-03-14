@@ -69,6 +69,29 @@ export const LSApi = {
     }
   },
 
+  async updateUser(
+    userId: string,
+    updates: { full_name?: string; email?: string; phone?: string; whatsapp?: string; user_type?: string; college_id?: string | null; reg_no?: string | null; hostel_block?: string | null; year?: number | null }
+  ): Promise<UserRow | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', userId)
+        .select()
+        .single();
+      if (error) {
+        console.error('Supabase updateUser error', error);
+        return null;
+      }
+      return data as UserRow;
+    } catch (e) {
+      console.error('Supabase updateUser exception', e);
+      return null;
+    }
+  },
+
   async createOrder(
     order: {
       on: string;
@@ -326,4 +349,75 @@ export const LSApi = {
       return null;
     }
   },
+
+  async saveVendorBill(bill: {
+    order_id?: string | null;
+    order_token: string;
+    order_number?: string | null;
+    customer_name?: string | null;
+    customer_phone?: string | null;
+    line_items: { id: string; label: string; price: number; qty: number }[];
+    subtotal: number;
+    convenience_fee: number;
+    total: number;
+  }): Promise<{ id: string } | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('vendor_bills')
+        .insert({
+          order_id: bill.order_id ?? null,
+          order_token: bill.order_token,
+          order_number: bill.order_number ?? null,
+          customer_name: bill.customer_name ?? null,
+          customer_phone: bill.customer_phone ?? null,
+          line_items: bill.line_items,
+          subtotal: bill.subtotal,
+          convenience_fee: bill.convenience_fee,
+          total: bill.total,
+        })
+        .select('id')
+        .single();
+      if (error) {
+        console.error('Supabase saveVendorBill error', error);
+        return null;
+      }
+      return data as { id: string };
+    } catch (e) {
+      console.error('Supabase saveVendorBill exception', e);
+      return null;
+    }
+  },
+
+  async fetchVendorBills(): Promise<VendorBillRow[] | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('vendor_bills')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Supabase fetchVendorBills error', error);
+        return null;
+      }
+      return (data ?? []) as VendorBillRow[];
+    } catch (e) {
+      console.error('Supabase fetchVendorBills exception', e);
+      return null;
+    }
+  },
+};
+
+export type VendorBillRow = {
+  id: string;
+  order_id: string | null;
+  order_token: string;
+  order_number: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  line_items: { id: string; label: string; price: number; qty: number }[];
+  subtotal: number;
+  convenience_fee: number;
+  total: number;
+  created_at: string;
 };

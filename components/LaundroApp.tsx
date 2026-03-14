@@ -20,6 +20,7 @@ type Screen =
   | 'login'
   | 'signup'
   | 'student-signup'
+  | 'complete-profile'
   | 'home'
   | 'schedule'
   | 'orders'
@@ -191,10 +192,16 @@ export default function LaundroApp() {
         setOrders(mapped);
         saveO(mapped);
       }
-      setScreen('home');
-      showToast('Signed in with Google!', 'ok');
       if (typeof window !== 'undefined' && window.history?.replaceState) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      const needsProfile = !profile.phone?.trim();
+      if (needsProfile) {
+        setScreen('complete-profile');
+        showToast('Complete your profile', 'ok');
+      } else {
+        setScreen('home');
+        showToast('Signed in with Google!', 'ok');
       }
       return true;
     }
@@ -365,6 +372,33 @@ export default function LaundroApp() {
       }
     } catch (_) {
       showToast('Sign up failed', 'er');
+    }
+    setAuthLoading(false);
+  };
+
+  const handleCompleteProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.sid || !signupPh.trim() || !signupWa.trim()) {
+      showToast('Please enter phone and WhatsApp', 'er');
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const updated = await LSApi.updateUser(user.sid, {
+        phone: signupPh.trim(),
+        whatsapp: signupWa.trim(),
+      });
+      if (updated) {
+        const u = rowToUser(updated);
+        setUser(u);
+        saveUser(u);
+        go('home');
+        showToast('Profile updated', 'ok');
+      } else {
+        showToast('Update failed', 'er');
+      }
+    } catch (_) {
+      showToast('Update failed', 'er');
     }
     setAuthLoading(false);
   };
@@ -540,6 +574,38 @@ export default function LaundroApp() {
           {' · '}
           <Link href="/terms">Terms</Link>
         </p>
+      </div>
+    );
+  }
+
+  if (screen === 'complete-profile') {
+    return (
+      <div className="as">
+        <div className="ah">
+          <h1 className="atl">Complete your profile</h1>
+          <p className="asu">We need your phone and WhatsApp for orders & updates</p>
+        </div>
+        <form onSubmit={handleCompleteProfile}>
+          <div className="fg">
+            <label className="fl">Full name</label>
+            <input type="text" className="fi" value={user?.fn ?? ''} readOnly style={{ background: 'var(--bg)', color: 'var(--ts)' }} />
+          </div>
+          <div className="fg">
+            <label className="fl">Email</label>
+            <input type="email" className="fi" value={user?.em ?? ''} readOnly style={{ background: 'var(--bg)', color: 'var(--ts)' }} />
+          </div>
+          <div className="fg">
+            <label className="fl">Phone</label>
+            <input type="tel" className="fi" placeholder="Phone number" value={signupPh} onChange={(e) => setSignupPh(e.target.value)} required />
+          </div>
+          <div className="fg">
+            <label className="fl">WhatsApp</label>
+            <input type="tel" className="fi" placeholder="WhatsApp number" value={signupWa} onChange={(e) => setSignupWa(e.target.value)} required />
+          </div>
+          <button type="submit" className="btn bp bbl" disabled={authLoading}>
+            {authLoading ? 'Saving…' : 'Continue'}
+          </button>
+        </form>
       </div>
     );
   }

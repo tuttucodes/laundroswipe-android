@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
 import { VENDOR_BILL_ITEMS, CONVENIENCE_FEE } from '@/lib/constants';
@@ -14,10 +14,8 @@ export default function VendorPage() {
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [user, setUser] = useState<UserRow | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
-  const [selectedItem, setSelectedItem] = useState('');
-  const [qty, setQty] = useState(1);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
-  const selectRef = useRef<HTMLSelectElement>(null);
+  const [saving, setSaving] = useState(false);
 
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
@@ -45,15 +43,29 @@ export default function VendorPage() {
     }
   };
 
-  const addLine = () => {
-    if (!selectedItem) return;
-    const item = VENDOR_BILL_ITEMS.find((i) => i.id === selectedItem);
+  const addItem = (itemId: string) => {
+    const item = VENDOR_BILL_ITEMS.find((i) => i.id === itemId);
     if (!item) return;
-    const q = Math.max(1, qty);
-    setLineItems((prev) => [...prev, { id: item.id, label: item.label, price: item.price, qty: q }]);
-    setSelectedItem('');
-    setQty(1);
-    selectRef.current?.focus();
+    setLineItems((prev) => {
+      const i = prev.findIndex((l) => l.id === itemId);
+      if (i >= 0) {
+        const next = [...prev];
+        next[i] = { ...next[i], qty: next[i].qty + 1 };
+        return next;
+      }
+      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1 }];
+    });
+  };
+
+  const removeOne = (itemId: string) => {
+    setLineItems((prev) => {
+      const i = prev.findIndex((l) => l.id === itemId);
+      if (i < 0) return prev;
+      const next = [...prev];
+      if (next[i].qty <= 1) return next.filter((_, j) => j !== i);
+      next[i] = { ...next[i], qty: next[i].qty - 1 };
+      return next;
+    });
   };
 
   const removeLine = (index: number) => {
@@ -84,6 +96,32 @@ export default function VendorPage() {
     <p class="total right">Total: ₹${total}</p>
     <p style="text-align:center;margin-top:12px;font-size:10px">Thank you!</p>
   `;
+  };
+
+  const handleSaveBill = async () => {
+    if (lineItems.length === 0) {
+      showToast('Add at least one item', 'er');
+      return;
+    }
+    const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
+    setSaving(true);
+    const result = await LSApi.saveVendorBill({
+      order_id: order?.id ?? null,
+      order_token: orderToken,
+      order_number: order?.order_number ?? null,
+      customer_name: user?.full_name ?? null,
+      customer_phone: user?.phone ?? null,
+      line_items: lineItems,
+      subtotal,
+      convenience_fee: CONVENIENCE_FEE,
+      total,
+    });
+    setSaving(false);
+    if (result) {
+      showToast('Bill saved', 'ok');
+    } else {
+      showToast('Save failed. Run supabase/vendor_bills.sql if needed.', 'er');
+    }
   };
 
   const handlePrint = () => {
@@ -127,8 +165,6 @@ export default function VendorPage() {
     setOrder(null);
     setUser(null);
     setLineItems([]);
-    setSelectedItem('');
-    setQty(1);
   };
 
   return (
@@ -166,33 +202,43 @@ export default function VendorPage() {
           </div>
 
           <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16, marginTop: 16 }}>
-            <div className="vendor-line-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 12 }}>
-              <div style={{ flex: '1 1 200px' }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Item</label>
-                <select
-                  ref={selectRef}
-                  value={selectedItem}
-                  onChange={(e) => setSelectedItem(e.target.value)}
-                  className="vendor-select"
-                >
-                  <option value="">Select item</option>
-                  {VENDOR_BILL_ITEMS.map((i) => (
-                    <option key={i.id} value={i.id}>{i.label} — ₹{i.price}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ width: 80 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Qty</label>
-                <input
-                  type="number"
-                  className="vendor-input"
-                  min={1}
-                  value={qty}
-                  onChange={(e) => setQty(parseInt(e.target.value, 10) || 1)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addLine())}
-                />
-              </div>
-              <button type="button" onClick={addLine} className="vendor-add-btn" style={{ padding: '10px 18px', borderRadius: 8, fontWeight: 600, background: 'var(--bl)', color: 'var(--b)', border: 'none', cursor: 'pointer' }}>Add</button>
+            <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--tx)' }}>Tap an item to add one (tap again to add more)</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginBottom: 16 }}>
+              {VENDOR_BILL_ITEMS.map((i) => {
+                const line = lineItems.find((l) => l.id === i.id);
+                const qty = line?.qty ?? 0;
+                return (
+                  <div key={i.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
+                    <button
+                      type="button"
+                      onClick={() => addItem(i.id)}
+                      style={{
+                        padding: '10px 8px',
+                        borderRadius: 10,
+                        border: '1.5px solid var(--bd)',
+                        background: qty > 0 ? 'var(--bl)' : '#fff',
+                        color: qty > 0 ? 'var(--b)' : 'var(--tx)',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {i.label}
+                      {qty > 0 && <span style={{ display: 'block', fontSize: 11, marginTop: 2 }}>×{qty} ₹{i.price * qty}</span>}
+                    </button>
+                    {qty > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => removeOne(i.id)}
+                        style={{ padding: 4, fontSize: 11, borderRadius: 6, border: '1px solid var(--bd)', background: '#fff', cursor: 'pointer' }}
+                      >
+                        −1
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{ marginBottom: 12, minHeight: 24 }}>
@@ -218,7 +264,16 @@ export default function VendorPage() {
 
             <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button type="button" onClick={handlePrint} className="vendor-btn-primary">Print bill</button>
+              <button
+                type="button"
+                onClick={handleSaveBill}
+                disabled={saving || lineItems.length === 0}
+                className="vendor-btn-secondary"
+              >
+                {saving ? 'Saving…' : 'Save bill'}
+              </button>
               <button type="button" onClick={handleNewBill} className="vendor-btn-secondary">New bill</button>
+              <Link href="/admin/bills" className="vendor-btn-secondary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>View saved bills</Link>
             </div>
           </div>
         </div>
