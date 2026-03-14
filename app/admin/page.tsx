@@ -102,10 +102,10 @@ export default function AdminPage() {
   };
 
   const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
-  const total = orders.length;
+  const totalOrders = orders.length;
   const active = orders.filter((o) => o.status !== 'delivered').length;
   const delivered = orders.filter((o) => o.status === 'delivered').length;
-  const revenue = orders.length * CONVENIENCE_FEE;
+  const totalRevenue = orders.length * CONVENIENCE_FEE;
 
   if (!loggedIn) {
     return (
@@ -157,21 +157,25 @@ export default function AdminPage() {
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Orders</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Manage pickups and status</p>
             <div className="admin-stat-grid">
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-                <div style={{ fontFamily: 'var(--fd)', fontSize: 32, fontWeight: 800, color: 'var(--b)' }}>{total}</div>
-                <div style={{ fontSize: 13, color: 'var(--ts)' }}>Total orders</div>
+              <div className="admin-stat-card">
+                <div className="admin-stat-value" style={{ color: 'var(--b)' }}>{totalOrders}</div>
+                <div className="admin-stat-label">Number of orders</div>
               </div>
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-                <div style={{ fontFamily: 'var(--fd)', fontSize: 32, fontWeight: 800, color: 'var(--o)' }}>{active}</div>
-                <div style={{ fontSize: 13, color: 'var(--ts)' }}>Active</div>
+              <div className="admin-stat-card">
+                <div className="admin-stat-value" style={{ color: 'var(--t)' }}>₹{totalRevenue}</div>
+                <div className="admin-stat-label">Total revenue</div>
               </div>
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-                <div style={{ fontFamily: 'var(--fd)', fontSize: 32, fontWeight: 800, color: 'var(--ok)' }}>{delivered}</div>
-                <div style={{ fontSize: 13, color: 'var(--ts)' }}>Delivered</div>
+              <div className="admin-stat-card">
+                <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{CONVENIENCE_FEE}</div>
+                <div className="admin-stat-label">Convenience fee (per order)</div>
               </div>
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-                <div style={{ fontFamily: 'var(--fd)', fontSize: 32, fontWeight: 800, color: 'var(--t)' }}>₹{revenue}</div>
-                <div style={{ fontSize: 13, color: 'var(--ts)' }}>Total order value</div>
+              <div className="admin-stat-card">
+                <div className="admin-stat-value" style={{ color: 'var(--o)' }}>{active}</div>
+                <div className="admin-stat-label">Active</div>
+              </div>
+              <div className="admin-stat-card">
+                <div className="admin-stat-value" style={{ color: 'var(--ok)' }}>{delivered}</div>
+                <div className="admin-stat-label">Delivered</div>
               </div>
             </div>
             <div className="admin-filter-row">

@@ -4,8 +4,7 @@
 -- Column names match the Next.js app (users.*, orders.*) so the app works as-is.
 --
 -- To reset and re-run: Supabase Dashboard → SQL Editor → run this file.
--- If tables already exist, run as-is (IF NOT EXISTS / ON CONFLICT keep it safe).
--- To fully reset: Database → delete tables in reverse order, then run this file.
+-- If you already ran an older master with users.college_id as UUID, run fix_college_id_to_text.sql so signup works.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -46,7 +45,7 @@ CREATE TABLE IF NOT EXISTS users (
   phone TEXT,
   whatsapp TEXT,
   user_type TEXT NOT NULL DEFAULT 'general' CHECK (user_type IN ('general', 'student')),
-  college_id UUID REFERENCES colleges(id),
+  college_id TEXT,
   reg_no TEXT,
   hostel_block TEXT,
   year SMALLINT CHECK (year IS NULL OR (year >= 1 AND year <= 5)),

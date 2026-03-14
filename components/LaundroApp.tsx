@@ -320,7 +320,7 @@ export default function LaundroApp() {
     }
     setAuthLoading(true);
     try {
-      const row = await LSApi.createUser({
+      const { user: row, error } = await LSApi.createUser({
         fn: signupFn.trim(),
         em: signupEm.trim(),
         ph: signupPh.trim(),
@@ -334,7 +334,7 @@ export default function LaundroApp() {
         go('home');
         showToast('Account created', 'ok');
       } else {
-        showToast('Sign up failed', 'er');
+        showToast(error || 'Sign up failed', 'er');
       }
     } catch (_) {
       showToast('Sign up failed', 'er');
@@ -344,20 +344,25 @@ export default function LaundroApp() {
 
   const handleStudentSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupFn.trim() || !signupEm.trim() || !signupPh.trim() || !signupWa.trim() || !studentRn.trim() || !studentCid) {
-      showToast('Fill all required fields', 'er');
+    const isGeneral = !studentCid || studentCid === 'general';
+    if (!signupFn.trim() || !signupEm.trim() || !signupPh.trim() || !signupWa.trim()) {
+      showToast('Fill name, email, phone and WhatsApp', 'er');
+      return;
+    }
+    if (!isGeneral && !studentRn.trim()) {
+      showToast('Registration number required for students', 'er');
       return;
     }
     setAuthLoading(true);
     try {
-      const row = await LSApi.createUser({
+      const { user: row, error } = await LSApi.createUser({
         fn: signupFn.trim(),
         em: signupEm.trim(),
         ph: signupPh.trim(),
         wa: signupWa.trim(),
-        ut: 'student',
-        rn: studentRn.trim(),
-        cid: studentCid,
+        ut: isGeneral ? 'general' : 'student',
+        rn: isGeneral ? undefined : studentRn.trim(),
+        cid: isGeneral ? undefined : studentCid,
         hos: studentHos.trim() || undefined,
         yr: studentYr ? parseInt(studentYr, 10) : undefined,
       });
@@ -368,7 +373,7 @@ export default function LaundroApp() {
         go('home');
         showToast('Account created', 'ok');
       } else {
-        showToast('Sign up failed', 'er');
+        showToast(error || 'Sign up failed', 'er');
       }
     } catch (_) {
       showToast('Sign up failed', 'er');
@@ -488,7 +493,7 @@ export default function LaundroApp() {
           <div className={`osl ${obSlide === 1 ? 'active' : obSlide > 1 ? 'prev' : 'next'}`}>
             <div className="oi s2">📅</div>
             <div className="ott">Tue & Sat pickups</div>
-            <div className="otd">VIT Chennai campus. Afternoon slot for your convenience.</div>
+            <div className="otd">Campus pickups. Afternoon slot for your convenience.</div>
           </div>
           <div className={`osl ${obSlide === 2 ? 'active' : obSlide < 2 ? 'next' : 'prev'}`}>
             <div className="oi s3">✨</div>
@@ -518,6 +523,8 @@ export default function LaundroApp() {
     );
   }
 
+  const isStudentSignup = studentCid && studentCid !== 'general';
+
   if (screen === 'login') {
     return (
       <div className="as">
@@ -526,50 +533,53 @@ export default function LaundroApp() {
             <div className="lgi">🧺</div>
             <span className="lgt">LaundroSwipe</span>
           </div>
-          <h1 className="atl">Welcome back</h1>
-          <p className="asu">Sign in to schedule pickups</p>
+          <h1 className="atl">Sign in</h1>
+          <p className="asu">Use your account to schedule pickups</p>
         </div>
-        <form onSubmit={handleLoginEmail} className="fg">
-          <label className="fl">Email</label>
-          <input
-            type="email"
-            className="fi"
-            placeholder="you@example.com"
-            value={loginEm}
-            onChange={(e) => setLoginEm(e.target.value)}
-            autoComplete="email"
-          />
-          <label className="fl">Password</label>
-          <input
-            type="password"
-            className="fi"
-            placeholder="••••••••"
-            value={loginPw}
-            onChange={(e) => setLoginPw(e.target.value)}
-            autoComplete="current-password"
-          />
-          <button type="submit" className="btn bp bbl" disabled={authLoading}>
-            {authLoading ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
         {LSApi.hasSupabase && (
-          <button type="button" className="btn bout bbl" style={{ marginTop: 12 }} onClick={handleGoogleLogin} disabled={authLoading}>
-            Sign in with Google
+          <button type="button" className="btn bp bbl" onClick={handleGoogleLogin} disabled={authLoading}>
+            Continue with Google
           </button>
         )}
-        <p className="aft">
-          Don&apos;t have an account?{' '}
-          <span className="al" onClick={() => go('signup')} role="button">
-            Sign up
-          </span>
+        <form onSubmit={handleLoginEmail} style={{ marginTop: LSApi.hasSupabase ? 16 : 0 }}>
+          <div className="fg">
+            <label className="fl">Email</label>
+            <input
+              type="email"
+              className="fi"
+              placeholder="you@example.com"
+              value={loginEm}
+              onChange={(e) => setLoginEm(e.target.value)}
+              autoComplete="email"
+            />
+          </div>
+          <div className="fg">
+            <label className="fl">Password</label>
+            <input
+              type="password"
+              className="fi"
+              placeholder="••••••••"
+              value={loginPw}
+              onChange={(e) => setLoginPw(e.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
+          <button type="submit" className="btn bout bbl" disabled={authLoading}>
+            {authLoading ? 'Signing in…' : 'Sign in with email'}
+          </button>
+        </form>
+        <p className="aft" style={{ marginTop: 24, fontWeight: 600, color: 'var(--tx)' }}>
+          New here? Create an account
         </p>
-        <p className="aft">
-          Student?{' '}
-          <span className="al" onClick={() => go('student-signup')} role="button">
-            Student sign up
-          </span>
-        </p>
-        <p className="aft legal">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button type="button" className="btn bout bbl" onClick={() => go('signup')}>
+            Sign up (General)
+          </button>
+          <button type="button" className="btn bout bbl" onClick={() => go('student-signup')}>
+            Sign up (Student / Campus)
+          </button>
+        </div>
+        <p className="aft legal" style={{ marginTop: 20 }}>
           <Link href="/privacy">Privacy</Link>
           {' · '}
           <Link href="/terms">Terms</Link>
@@ -614,8 +624,8 @@ export default function LaundroApp() {
     return (
       <div className="as">
         <div className="ah">
-          <h1 className="atl">Create account</h1>
-          <p className="asu">General sign up</p>
+          <h1 className="atl">Create account (General)</h1>
+          <p className="asu">For non-student users</p>
         </div>
         <form onSubmit={handleSignup}>
           <div className="fg">
@@ -644,6 +654,12 @@ export default function LaundroApp() {
             Sign in
           </span>
         </p>
+        <p className="aft">
+          Student or on campus?{' '}
+          <span className="al" onClick={() => go('student-signup')} role="button">
+            Student / Campus sign up
+          </span>
+        </p>
       </div>
     );
   }
@@ -652,8 +668,8 @@ export default function LaundroApp() {
     return (
       <div className="as">
         <div className="ah">
-          <h1 className="atl">Student sign up</h1>
-          <p className="asu">VIT Chennai students</p>
+          <h1 className="atl">Student / Campus sign up</h1>
+          <p className="asu">For students at any of the listed colleges. Not a student? Pick &quot;Not a student&quot; below.</p>
         </div>
         <form onSubmit={handleStudentSignup}>
           <div className="fg">
@@ -662,7 +678,7 @@ export default function LaundroApp() {
           </div>
           <div className="fg">
             <label className="fl">Email</label>
-            <input type="email" className="fi" placeholder="you@vit.ac.in" value={signupEm} onChange={(e) => setSignupEm(e.target.value)} required />
+            <input type="email" className="fi" placeholder="you@example.com" value={signupEm} onChange={(e) => setSignupEm(e.target.value)} required />
           </div>
           <div className="fg">
             <label className="fl">Phone</label>
@@ -670,31 +686,36 @@ export default function LaundroApp() {
           </div>
           <div className="fg">
             <label className="fl">WhatsApp</label>
-            <input type="tel" className="fi" placeholder="WhatsApp" value={signupWa} onChange={(e) => setSignupWa(e.target.value)} required />
-          </div>
-          <div className="fg">
-            <label className="fl">Registration number</label>
-            <input type="text" className="fi" placeholder="Reg no" value={studentRn} onChange={(e) => setStudentRn(e.target.value)} required />
+            <input type="tel" className="fi" placeholder="WhatsApp number" value={signupWa} onChange={(e) => setSignupWa(e.target.value)} required />
           </div>
           <div className="fg">
             <label className="fl">College</label>
             <select className="fi fs" value={studentCid} onChange={(e) => setStudentCid(e.target.value)} required>
-              <option value="">Select</option>
-              {COLLEGES.filter((c) => c.active).map((c) => (
+              <option value="">Select one</option>
+              <option value="general">Not a student</option>
+              {COLLEGES.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {c.name}{!c.active ? ' (coming soon)' : ''}
                 </option>
               ))}
             </select>
           </div>
-          <div className="fg">
-            <label className="fl">Hostel block (optional)</label>
-            <input type="text" className="fi" placeholder="Block / room" value={studentHos} onChange={(e) => setStudentHos(e.target.value)} />
-          </div>
-          <div className="fg">
-            <label className="fl">Year (optional)</label>
-            <input type="number" className="fi" placeholder="e.g. 2" min={1} max={5} value={studentYr} onChange={(e) => setStudentYr(e.target.value)} />
-          </div>
+          {isStudentSignup && (
+            <>
+              <div className="fg">
+                <label className="fl">Registration number</label>
+                <input type="text" className="fi" placeholder="Reg no" value={studentRn} onChange={(e) => setStudentRn(e.target.value)} required />
+              </div>
+              <div className="fg">
+                <label className="fl">Hostel block (optional)</label>
+                <input type="text" className="fi" placeholder="Block / room" value={studentHos} onChange={(e) => setStudentHos(e.target.value)} />
+              </div>
+              <div className="fg">
+                <label className="fl">Year (optional)</label>
+                <input type="number" className="fi" placeholder="e.g. 2" min={1} max={5} value={studentYr} onChange={(e) => setStudentYr(e.target.value)} />
+              </div>
+            </>
+          )}
           <button type="submit" className="btn bp bbl" disabled={authLoading}>
             {authLoading ? 'Creating…' : 'Sign up'}
           </button>
@@ -703,6 +724,12 @@ export default function LaundroApp() {
           Already have an account?{' '}
           <span className="al" onClick={() => go('login')} role="button">
             Sign in
+          </span>
+        </p>
+        <p className="aft">
+          Not a student?{' '}
+          <span className="al" onClick={() => go('signup')} role="button">
+            General sign up
           </span>
         </p>
       </div>

@@ -40,8 +40,8 @@ export const LSApi = {
     rn?: string | null;
     hos?: string | null;
     yr?: number | null;
-  }): Promise<UserRow | null> {
-    if (!supabase) return null;
+  }): Promise<{ user: UserRow | null; error?: string }> {
+    if (!supabase) return { user: null, error: 'Not connected' };
     try {
       const { data, error } = await supabase
         .from('users')
@@ -60,12 +60,13 @@ export const LSApi = {
         .single();
       if (error) {
         console.error('Supabase createUser error', error);
-        return null;
+        const msg = error.code === '23505' ? 'Email or phone already registered' : error.message || 'Sign up failed';
+        return { user: null, error: msg };
       }
-      return data as UserRow;
+      return { user: data as UserRow };
     } catch (e) {
       console.error('Supabase createUser exception', e);
-      return null;
+      return { user: null, error: 'Sign up failed' };
     }
   },
 

@@ -124,17 +124,22 @@ export default function VendorPage() {
     }
   };
 
-  const handlePrint = () => {
-    if (lineItems.length === 0) {
-      showToast('Add at least one item', 'er');
+  const doPrint = () => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      document.body.removeChild(iframe);
       return;
     }
-    const w = window.open('', '_blank', 'width=320,height=480');
-    if (!w) {
-      showToast('Allow popups to print', 'er');
-      return;
-    }
-    w.document.write(`
+    doc.open();
+    doc.write(`
       <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${order?.token ?? ''}</title>
       <style>
       body{font-family:system-ui,sans-serif;font-size:11px;padding:8px;margin:0;width:58mm;max-width:58mm}
@@ -150,13 +155,32 @@ export default function VendorPage() {
       ${buildReceiptHtml()}
       </body></html>
     `);
-    w.document.close();
-    w.focus();
-    setTimeout(() => {
-      w.print();
-      w.close();
-    }, 300);
-    showToast('Print dialog opened. Select your Bluetooth thermal printer.', 'ok');
+    doc.close();
+    iframe.contentWindow?.focus();
+    iframe.contentWindow?.print();
+    setTimeout(() => document.body.removeChild(iframe), 1000);
+  };
+
+  const handlePrint = async () => {
+    if (lineItems.length === 0) {
+      showToast('Add at least one item', 'er');
+      return;
+    }
+    const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
+    showToast('Saving & printing…', 'ok');
+    await LSApi.saveVendorBill({
+      order_id: order?.id ?? null,
+      order_token: orderToken,
+      order_number: order?.order_number ?? null,
+      customer_name: user?.full_name ?? null,
+      customer_phone: user?.phone ?? null,
+      line_items: lineItems,
+      subtotal,
+      convenience_fee: CONVENIENCE_FEE,
+      total,
+    });
+    doPrint();
+    showToast('Bill saved. Printing…', 'ok');
   };
 
   const handleNewBill = () => {
@@ -187,7 +211,7 @@ export default function VendorPage() {
               onChange={(e) => setToken(e.target.value)}
             />
           </div>
-          <button type="submit" className="vendor-btn-primary">Lookup order</button>
+          <button type="submit" className="vendor-btn-primary" style={{ width: '100%', minHeight: 52 }}>Lookup order</button>
           {lookupErr && <p style={{ color: 'var(--er)', fontSize: 13, marginTop: 8 }}>{lookupErr}</p>}
         </form>
       </div>
@@ -203,36 +227,22 @@ export default function VendorPage() {
 
           <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16, marginTop: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--tx)' }}>Tap an item to add one (tap again to add more)</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginBottom: 16 }}>
+            <div className="vendor-item-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
               {VENDOR_BILL_ITEMS.map((i) => {
                 const line = lineItems.find((l) => l.id === i.id);
                 const qty = line?.qty ?? 0;
                 return (
-                  <div key={i.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
+                  <div key={i.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                     <button
                       type="button"
                       onClick={() => addItem(i.id)}
-                      style={{
-                        padding: '10px 8px',
-                        borderRadius: 10,
-                        border: '1.5px solid var(--bd)',
-                        background: qty > 0 ? 'var(--bl)' : '#fff',
-                        color: qty > 0 ? 'var(--b)' : 'var(--tx)',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                      }}
+                      className={`vendor-item-btn ${qty > 0 ? 'has-qty' : ''}`}
                     >
                       {i.label}
-                      {qty > 0 && <span style={{ display: 'block', fontSize: 11, marginTop: 2 }}>×{qty} ₹{i.price * qty}</span>}
+                      {qty > 0 && <span style={{ display: 'block', fontSize: 12, marginTop: 2 }}>×{qty} ₹{i.price * qty}</span>}
                     </button>
                     {qty > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeOne(i.id)}
-                        style={{ padding: 4, fontSize: 11, borderRadius: 6, border: '1px solid var(--bd)', background: '#fff', cursor: 'pointer' }}
-                      >
+                      <button type="button" onClick={() => removeOne(i.id)} className="vendor-item-btn-minus">
                         −1
                       </button>
                     )}
@@ -250,7 +260,7 @@ export default function VendorPage() {
                     <span>{l.label} × {l.qty} @ ₹{l.price}</span>
                     <span>
                       ₹{l.price * l.qty}
-                      <button type="button" onClick={() => removeLine(i)} style={{ marginLeft: 8, padding: '6px 10px', minWidth: 32, fontSize: 12, borderRadius: 6, border: '1px solid var(--bd)', background: '#fff', cursor: 'pointer' }} aria-label="Remove line">×</button>
+                      <button type="button" onClick={() => removeLine(i)} className="vendor-item-btn-minus" style={{ marginLeft: 8, minWidth: 44 }} aria-label="Remove line">×</button>
                     </span>
                   </div>
                 ))
@@ -262,18 +272,19 @@ export default function VendorPage() {
             <p style={{ fontWeight: 600, fontSize: 14 }}>Convenience fee: ₹{CONVENIENCE_FEE}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
 
-            <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button type="button" onClick={handlePrint} className="vendor-btn-primary">Print bill</button>
+            <div className="vendor-action-row" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <button type="button" onClick={handlePrint} className="vendor-btn-primary" style={{ flex: '1 1 200px' }}>Print bill</button>
               <button
                 type="button"
                 onClick={handleSaveBill}
                 disabled={saving || lineItems.length === 0}
                 className="vendor-btn-secondary"
+                style={{ flex: '1 1 200px' }}
               >
                 {saving ? 'Saving…' : 'Save bill'}
               </button>
-              <button type="button" onClick={handleNewBill} className="vendor-btn-secondary">New bill</button>
-              <Link href="/admin/bills" className="vendor-btn-secondary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>View saved bills</Link>
+              <button type="button" onClick={handleNewBill} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>New bill</button>
+              <Link href="/admin/bills" className="vendor-btn-secondary" style={{ flex: '1 1 200px', textDecoration: 'none' }}>View saved bills</Link>
             </div>
           </div>
         </div>
