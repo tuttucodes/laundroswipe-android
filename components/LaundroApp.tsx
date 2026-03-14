@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   COLLEGES,
@@ -220,6 +220,12 @@ export default function LaundroApp() {
       }
       const needsProfile = !profile.phone?.trim();
       if (needsProfile) {
+        setSignupPh(profile.phone ?? '');
+        setSignupWa(profile.whatsapp ?? '');
+        setStudentCid(profile.college_id ?? 'general');
+        setStudentRn(profile.reg_no ?? '');
+        setStudentHos(profile.hostel_block ?? '');
+        setStudentYr(profile.year != null ? String(profile.year) : '');
         setScreen('complete-profile');
         showToast('Complete your profile', 'ok');
       } else {
@@ -274,6 +280,16 @@ export default function LaundroApp() {
   useEffect(() => {
     saveO(orders);
   }, [orders, saveO]);
+
+  useEffect(() => {
+    if (screen === 'my-bills' && user?.sid) {
+      setMyBillsLoading(true);
+      LSApi.fetchVendorBillsForUser(user.sid).then((data) => {
+        setMyBills(data ?? []);
+        setMyBillsLoading(false);
+      });
+    }
+  }, [screen, user?.sid]);
 
   const handleObNext = () => {
     if (obSlide < 2) setObSlide((obSlide + 1) as 0 | 1 | 2);
@@ -568,33 +584,6 @@ export default function LaundroApp() {
   }
 
   const isStudentSignup = studentCid && studentCid !== 'general';
-
-  const prefillCompleteProfileRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (screen !== 'complete-profile' || !user) {
-      prefillCompleteProfileRef.current = null;
-      return;
-    }
-    const key = `${user.sid}`;
-    if (prefillCompleteProfileRef.current === key) return;
-    prefillCompleteProfileRef.current = key;
-    setSignupPh(user.ph ?? '');
-    setSignupWa(user.wa ?? '');
-    setStudentCid(user.cid ?? 'general');
-    setStudentRn(user.rn ?? '');
-    setStudentHos(user.hos ?? '');
-    setStudentYr(user.yr != null ? String(user.yr) : '');
-  }, [screen, user]);
-
-  useEffect(() => {
-    if (screen === 'my-bills' && user?.sid) {
-      setMyBillsLoading(true);
-      LSApi.fetchVendorBillsForUser(user.sid).then((data) => {
-        setMyBills(data ?? []);
-        setMyBillsLoading(false);
-      });
-    }
-  }, [screen, user?.sid]);
 
   if (screen === 'login') {
     return (
