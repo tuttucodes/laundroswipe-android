@@ -10,7 +10,11 @@ const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'rea
 const STATUS_LABELS = ['Scheduled', 'Agent Assigned', 'Picked Up', 'Processing', 'Ready', 'Out for Delivery', 'Delivered'];
 
 type OrderWithUser = OrderRow & { user?: string };
-type Tab = 'orders' | 'users' | 'colleges' | 'settings';
+type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'settings';
+
+type ScheduleSlot = { id: string; label: string; time_from: string; time_to: string; sort_order: number; active: boolean };
+type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
+type AdminNotification = { id: string; title: string; body: string | null; sent_at: string | null; scheduled_at: string | null; created_at: string };
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -25,6 +29,16 @@ export default function AdminPage() {
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
+  const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [notifyTitle, setNotifyTitle] = useState('');
+  const [notifyBody, setNotifyBody] = useState('');
+  const [notifyScheduledAt, setNotifyScheduledAt] = useState('');
+  const [notifySending, setNotifySending] = useState(false);
+  const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
+  const [adminNotificationsLoading, setAdminNotificationsLoading] = useState(false);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('admin_logged') : null;
@@ -50,6 +64,31 @@ export default function AdminPage() {
       })
       .finally(() => setLoading(false));
   }, [loggedIn]);
+
+  useEffect(() => {
+    if (!loggedIn || tab !== 'schedule') return;
+    setScheduleLoading(true);
+    fetch('/api/admin/schedule', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.slots) setScheduleSlots(data.slots);
+        if (data.dates) setScheduleDates(data.dates);
+      })
+      .catch(() => setScheduleSlots([]))
+      .finally(() => setScheduleLoading(false));
+  }, [loggedIn, tab]);
+
+  useEffect(() => {
+    if (!loggedIn || tab !== 'notifications') return;
+    setAdminNotificationsLoading(true);
+    fetch('/api/admin/notifications', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.notifications) setAdminNotifications(data.notifications);
+      })
+      .catch(() => setAdminNotifications([]))
+      .finally(() => setAdminNotificationsLoading(false));
+  }, [loggedIn, tab]);
 
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
@@ -183,6 +222,8 @@ export default function AdminPage() {
           <Link href="/admin/pickup" className="admin-nav-link">📦 Pickup / Delivery</Link>
           <Link href="/admin/bills" className="admin-nav-link">📋 Saved bills</Link>
           <button type="button" onClick={() => setTab('colleges')} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
+          <button type="button" onClick={() => setTab('schedule')} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
+          <button type="button" onClick={() => setTab('notifications')} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
           <button type="button" onClick={() => setTab('settings')} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
         </nav>
         <div className="admin-foot" style={{ padding: 16, borderTop: '1px solid var(--bd)' }}>
@@ -355,6 +396,173 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+          </>
+        )}
+        {tab === 'schedule' && (
+          <>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Schedule</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enable/disable dates and slots. Users only see enabled dates and the slots you allow per date.</p>
+            {scheduleLoading ? (
+              <p style={{ color: 'var(--ts)' }}>Loading…</p>
+            ) : (
+              <>
+                <section style={{ marginBottom: 32 }}>
+                  <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, marginBottom: 12 }}>Time slots</h2>
+                  <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 12 }}>Add or edit slot labels and timings. Toggle active to hide from users.</p>
+                  <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+                    {scheduleSlots.map((s) => (
+                      <div key={s.id} style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--bd)' }}>
+                        <input placeholder="ID" value={s.id} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, id: e.target.value } : x)))} style={{ width: 100, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
+                        <input placeholder="Label" value={s.label} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, label: e.target.value } : x)))} style={{ flex: '1 1 200px', minWidth: 160, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
+                        <input type="time" value={(s.time_from || '').slice(0, 5)} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, time_from: e.target.value + ':00' } : x)))} style={{ width: 90, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
+                        <span style={{ color: 'var(--ts)' }}>–</span>
+                        <input type="time" value={(s.time_to || '').slice(0, 5)} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, time_to: e.target.value + ':00' } : x)))} style={{ width: 90, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                          <input type="checkbox" checked={s.active} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, active: e.target.checked } : x)))} />
+                          Active
+                        </label>
+                      </div>
+                    ))}
+                    <button type="button" className="admin-nav-btn" style={{ marginTop: 12 }} onClick={() => setScheduleSlots((prev) => [...prev, { id: '', label: '', time_from: '09:00', time_to: '17:00', sort_order: prev.length, active: true }])}>
+                      + Add slot
+                    </button>
+                  </div>
+                </section>
+                <section style={{ marginBottom: 32 }}>
+                  <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, marginBottom: 12 }}>Bookable dates</h2>
+                  <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 12 }}>Enable or disable dates. For each date, choose which slots are available.</p>
+                  <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+                    {scheduleDates.map((d) => (
+                      <div key={d.date} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--bd)' }}>
+                        <strong style={{ minWidth: 120 }}>{d.date}</strong>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                          <input type="checkbox" checked={d.enabled} onChange={(e) => setScheduleDates((prev) => prev.map((x) => (x.date === d.date ? { ...x, enabled: e.target.checked } : x)))} />
+                          Enabled
+                        </label>
+                        <span style={{ color: 'var(--ts)', fontSize: 13 }}>Slots:</span>
+                        {scheduleSlots.filter((sl) => sl.active || d.slot_ids.includes(sl.id)).map((sl) => (
+                          <label key={sl.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
+                            <input type="checkbox" checked={d.slot_ids.includes(sl.id)} onChange={(e) => setScheduleDates((prev) => prev.map((x) => (x.date === d.date ? { ...x, slot_ids: e.target.checked ? [...x.slot_ids, sl.id] : x.slot_ids.filter((id) => id !== sl.id) } : x)))} />
+                            {sl.label || sl.id}
+                          </label>
+                        ))}
+                      </div>
+                    ))}
+                    <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input type="date" id="new-schedule-date" style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
+                      <button
+                        type="button"
+                        className="admin-nav-btn"
+                        onClick={() => {
+                          const el = document.getElementById('new-schedule-date') as HTMLInputElement | null;
+                          const v = el?.value?.trim();
+                          if (!v) return;
+                          if (scheduleDates.some((x) => x.date === v)) return;
+                          setScheduleDates((prev) => [...prev, { date: v, enabled: true, slot_ids: scheduleSlots.filter((s) => s.active).map((s) => s.id) }].sort((a, b) => a.date.localeCompare(b.date)));
+                          if (el) el.value = '';
+                        }}
+                      >
+                        Add date
+                      </button>
+                    </div>
+                  </div>
+                </section>
+                <button type="button" className="btn bp bbl" disabled={scheduleSaving} onClick={async () => {
+                  setScheduleSaving(true);
+                  try {
+                    const res = await fetch('/api/admin/schedule', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slots: scheduleSlots.filter((s) => s.id.trim()), dates: scheduleDates }) });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.ok) { showToast('Schedule saved. Users will see updated dates and slots.', 'ok'); } else { showToast(data?.error || 'Save failed', 'er'); }
+                  } catch {
+                    showToast('Save failed', 'er');
+                  } finally {
+                    setScheduleSaving(false);
+                  }
+                }}>
+                  {scheduleSaving ? 'Saving…' : 'Save schedule'}
+                </button>
+              </>
+            )}
+          </>
+        )}
+        {tab === 'notifications' && (
+          <>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Notifications</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Send or schedule messages to all users. They appear in the app under Profile → Notifications.</p>
+            <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 520, marginBottom: 24 }}>
+              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, marginBottom: 12 }}>New message</h3>
+              <div className="fg" style={{ marginBottom: 12 }}>
+                <label className="fl">Title</label>
+                <input className="fi" placeholder="e.g. Pickup reminder" value={notifyTitle} onChange={(e) => setNotifyTitle(e.target.value)} />
+              </div>
+              <div className="fg" style={{ marginBottom: 12 }}>
+                <label className="fl">Body (optional)</label>
+                <textarea className="fi fta" placeholder="Message text" value={notifyBody} onChange={(e) => setNotifyBody(e.target.value)} rows={3} />
+              </div>
+              <div className="fg" style={{ marginBottom: 12 }}>
+                <label className="fl">Schedule for (optional)</label>
+                <input type="datetime-local" className="fi" value={notifyScheduledAt} onChange={(e) => setNotifyScheduledAt(e.target.value)} />
+                <p className="vd" style={{ fontSize: 12, marginTop: 4 }}>Leave empty to send now.</p>
+              </div>
+              <button
+                type="button"
+                className="btn bp bbl"
+                disabled={!notifyTitle.trim() || notifySending}
+                onClick={async () => {
+                  setNotifySending(true);
+                  try {
+                    const res = await fetch('/api/admin/notifications', {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        title: notifyTitle.trim(),
+                        body: notifyBody.trim() || undefined,
+                        send_now: !notifyScheduledAt,
+                        scheduled_at: notifyScheduledAt || undefined,
+                      }),
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.ok) {
+                      showToast(notifyScheduledAt ? 'Scheduled.' : 'Sent to all users.', 'ok');
+                      setNotifyTitle('');
+                      setNotifyBody('');
+                      setNotifyScheduledAt('');
+                      const r = await fetch('/api/admin/notifications', { credentials: 'include' });
+                      const j = await r.json();
+                      if (j.notifications) setAdminNotifications(j.notifications);
+                    } else showToast(data?.error || 'Failed', 'er');
+                  } catch {
+                    showToast('Failed', 'er');
+                  }
+                  setNotifySending(false);
+                }}
+              >
+                {notifySending ? 'Sending…' : notifyScheduledAt ? 'Schedule' : 'Send now'}
+              </button>
+            </div>
+            <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, marginBottom: 12 }}>Recent messages</h3>
+            {adminNotificationsLoading ? (
+              <p style={{ color: 'var(--ts)' }}>Loading…</p>
+            ) : (
+              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 4px rgba(0,0,0,.04)', overflow: 'hidden' }}>
+                {adminNotifications.length === 0 ? (
+                  <p style={{ padding: 24, color: 'var(--ts)' }}>No messages yet.</p>
+                ) : (
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                    {adminNotifications.map((n) => (
+                      <li key={n.id} style={{ padding: 14, borderBottom: '1px solid var(--bd)' }}>
+                        <strong>{n.title}</strong>
+                        {n.body && <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ts)' }}>{n.body}</p>}
+                        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--ts)' }}>
+                          {n.sent_at ? `Sent ${new Date(n.sent_at).toLocaleString()}` : n.scheduled_at ? `Scheduled ${new Date(n.scheduled_at).toLocaleString()}` : 'Draft'}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </>
         )}
         {tab === 'settings' && (

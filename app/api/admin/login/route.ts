@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createAdminToken, adminSessionCookieHeader } from '@/lib/admin-session';
 
 // Credentials exist only in server env (Vercel / .env.local). Never in client bundle.
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? '';
@@ -17,7 +18,12 @@ export async function POST(request: Request) {
   const email = String(body?.email ?? '').trim().toLowerCase();
   const password = String(body?.password ?? '');
   if (email === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
-    return NextResponse.json({ ok: true });
+    const token = createAdminToken(email);
+    const res = NextResponse.json({ ok: true });
+    if (token) {
+      res.headers.set('Set-Cookie', adminSessionCookieHeader(token));
+    }
+    return res;
   }
   return NextResponse.json({ ok: false, error: 'Invalid email or password' }, { status: 401 });
 }

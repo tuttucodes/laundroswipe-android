@@ -13,7 +13,7 @@ import {
   isEveningOnlyDate,
 } from '@/lib/constants';
 import { LSApi } from '@/lib/api';
-import type { UserRow, VendorBillRow } from '@/lib/api';
+import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
 
 type Screen =
@@ -30,7 +30,11 @@ type Screen =
   | 'order-detail'
   | 'token-success'
   | 'my-bills'
-  | 'coming-soon';
+  | 'coming-soon'
+  | 'edit-profile'
+  | 'notifications'
+  | 'forgot-password'
+  | 'set-password';
 
 type User = {
   fn: string;
@@ -115,6 +119,20 @@ const TIME_SLOTS = [
   { id: 'evening', label: 'Evening (4:45–5:45 PM)', emoji: '🌆' },
 ];
 
+function formatScheduleDay(full: string): { date: Date; day: string; num: number; month: string; ok: boolean; full: string } {
+  const d = new Date(full + 'T12:00:00');
+  const dn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const mn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return {
+    date: d,
+    day: dn[d.getDay()],
+    num: d.getDate(),
+    month: mn[d.getMonth()],
+    ok: true,
+    full,
+  };
+}
+
 
 function validateIndianPhone(value: string): { valid: boolean; message?: string } {
   const digits = value.replace(/\D/g, '');
@@ -149,12 +167,34 @@ export default function LaundroApp() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [signupPhErr, setSignupPhErr] = useState('');
   const [signupWaErr, setSignupWaErr] = useState('');
+  const [forgotEm, setForgotEm] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [deliveryComments, setDeliveryComments] = useState('');
   const [confirmingDelivery, setConfirmingDelivery] = useState(false);
   const [myBills, setMyBills] = useState<VendorBillRow[]>([]);
   const [myBillsLoading, setMyBillsLoading] = useState(false);
   const [viewingBill, setViewingBill] = useState<VendorBillRow | null>(null);
+  const [profilePw, setProfilePw] = useState('');
+  const [profilePwConfirm, setProfilePwConfirm] = useState('');
+  const [profilePwSaving, setProfilePwSaving] = useState(false);
+  const [editFn, setEditFn] = useState('');
+  const [editPh, setEditPh] = useState('');
+  const [editWa, setEditWa] = useState('');
+  const [editCid, setEditCid] = useState('general');
+  const [editRn, setEditRn] = useState('');
+  const [editHos, setEditHos] = useState('');
+  const [editYr, setEditYr] = useState('');
+  const [editPhErr, setEditPhErr] = useState('');
+  const [editWaErr, setEditWaErr] = useState('');
+  const [editProfileSaving, setEditProfileSaving] = useState(false);
+  const [notifications, setNotifications] = useState<UserNotificationRow[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [swipeProgress, setSwipeProgress] = useState(0);
+  const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlotRow[]>([]);
+  const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
+  const [scheduleConfigLoaded, setScheduleConfigLoaded] = useState(false);
   const swipeTrackRef = useRef<HTMLDivElement>(null);
 
   const go = useCallback((s: Screen, detail?: DetailData) => {
@@ -217,8 +257,12 @@ export default function LaundroApp() {
 
     async function tryApplySession(session: { user: unknown } | null) {
       if (!mounted || !session?.user) return false;
-      const profile = await LSApi.upsertUserFromAuth(session.user as { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } });
+      let profile = await LSApi.upsertUserFromAuth(session.user as { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } });
       if (!profile) return false;
+      if (!profile.phone?.trim()) {
+        const refetched = await LSApi.fetchUserById(profile.id);
+        if (refetched?.phone?.trim()) profile = refetched;
+      }
       const u = rowToUser(profile);
       setUser(u);
       saveUser(u);
@@ -252,6 +296,14 @@ export default function LaundroApp() {
       let session = await LSApi.getAuthSession();
       if (!mounted) return;
       if (session?.user) {
+        const isRecovery = typeof window !== 'undefined' && /type=recovery/.test(window.location.hash || '');
+        if (isRecovery) {
+          setScreen('set-password');
+          if (typeof window !== 'undefined' && window.history?.replaceState) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          return;
+        }
         await tryApplySession(session);
         return;
       }
@@ -263,6 +315,14 @@ export default function LaundroApp() {
           if (!mounted) return;
           session = await LSApi.getAuthSession();
           if (session?.user) {
+            const isRecovery = typeof window !== 'undefined' && /type=recovery/.test(window.location.hash || '');
+            if (isRecovery) {
+              setScreen('set-password');
+              if (typeof window !== 'undefined' && window.history?.replaceState) {
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+              }
+              return;
+            }
             const applied = await tryApplySession(session);
             if (applied) return;
           }
@@ -316,6 +376,16 @@ export default function LaundroApp() {
       });
     }
   }, [screen, user?.sid, saveO]);
+
+  // Load schedule config (dates + slots) when user opens schedule flow
+  useEffect(() => {
+    if (screen !== 'schedule' || !LSApi.hasSupabase || scheduleConfigLoaded) return;
+    Promise.all([LSApi.fetchScheduleSlots(), LSApi.fetchScheduleDates()]).then(([slots, dates]) => {
+      if (slots?.length) setScheduleSlots(slots);
+      if (dates?.length) setScheduleDates(dates);
+      setScheduleConfigLoaded(true);
+    });
+  }, [screen, scheduleConfigLoaded]);
 
   useEffect(() => {
     if (screen !== 'schedule' || sd.step !== 3) return;
@@ -383,6 +453,33 @@ export default function LaundroApp() {
     if (screen === 'login' && user) go('home');
   }, [screen, user, go]);
 
+  // Prefill edit profile form when opening
+  useEffect(() => {
+    if (screen === 'edit-profile' && user) {
+      setEditFn(user.fn ?? '');
+      setEditPh(user.ph ?? '');
+      setEditWa(user.wa ?? '');
+      setEditCid(user.cid ?? 'general');
+      setEditRn(user.rn ?? '');
+      setEditHos(user.hos ?? '');
+      setEditYr(user.yr != null ? String(user.yr) : '');
+      setEditPhErr('');
+      setEditWaErr('');
+    }
+  }, [screen, user]);
+
+  // Load notifications when opening notifications screen
+  useEffect(() => {
+    if (screen !== 'notifications' || !LSApi.hasSupabase) return;
+    setNotificationsLoading(true);
+    LSApi.fetchNotifications()
+      .then((list) => {
+        if (list) setNotifications(list);
+        else setNotifications([]);
+      })
+      .finally(() => setNotificationsLoading(false));
+  }, [screen]);
+
   const handleObNext = () => {
     if (obSlide < 2) setObSlide((obSlide + 1) as 0 | 1 | 2);
     else {
@@ -442,6 +539,81 @@ export default function LaundroApp() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = forgotEm.trim();
+    if (!email) {
+      showToast('Enter your email', 'er');
+      return;
+    }
+    if (!LSApi.hasSupabase) {
+      showToast('Service unavailable.', 'er');
+      return;
+    }
+    setAuthLoading(true);
+    const { error } = await LSApi.resetPasswordForEmail(email);
+    setAuthLoading(false);
+    if (error) {
+      showToast(error, 'er');
+      return;
+    }
+    setResetSent(true);
+    showToast('Check your email for a reset link', 'ok');
+  };
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      showToast('Password must be at least 6 characters', 'er');
+      return;
+    }
+    if (newPassword !== newPasswordConfirm) {
+      showToast('Passwords do not match', 'er');
+      return;
+    }
+    if (!LSApi.hasSupabase) {
+      showToast('Service unavailable.', 'er');
+      return;
+    }
+    setAuthLoading(true);
+    const { error } = await LSApi.updatePassword(newPassword);
+    setAuthLoading(false);
+    if (error) {
+      showToast(error, 'er');
+      return;
+    }
+    showToast('Password updated. Signing you in…', 'ok');
+    const session = await LSApi.getAuthSession();
+    if (session?.user) {
+      let profile = await LSApi.upsertUserFromAuth(session.user as { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } });
+      if (profile && !profile.phone?.trim()) {
+        const refetched = await LSApi.fetchUserById(profile.id);
+        if (refetched?.phone?.trim()) profile = refetched;
+      }
+      if (profile) {
+        const u = rowToUser(profile);
+        setUser(u);
+        saveUser(u);
+        const needsProfile = !profile.phone?.trim();
+        if (needsProfile) {
+          setSignupPh(profile.phone ?? '');
+          setSignupWa(profile.whatsapp ?? '');
+          setStudentCid(profile.college_id ?? 'general');
+          setStudentRn(profile.reg_no ?? '');
+          setStudentHos(profile.hostel_block ?? '');
+          setStudentYr(profile.year != null ? String(profile.year) : '');
+          setScreen('complete-profile');
+        } else {
+          setScreen('home');
+        }
+      } else {
+        setScreen('login');
+      }
+    } else {
+      setScreen('login');
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupPhErr('');
@@ -461,7 +633,7 @@ export default function LaundroApp() {
       return;
     }
     if (!signupPw || signupPw.length < 6) {
-      showToast('Create a password (at least 6 characters) to sign in later', 'er');
+      showToast('Please enter a password (at least 6 characters) to sign in with email later', 'er');
       return;
     }
     const isGeneral = !studentCid || studentCid === 'general';
@@ -551,6 +723,54 @@ export default function LaundroApp() {
       showToast('Update failed', 'er');
     }
     setAuthLoading(false);
+  };
+
+  const handleSaveEditProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditPhErr('');
+    setEditWaErr('');
+    const phCheck = validateIndianPhone(editPh.trim());
+    const waCheck = validateIndianPhone(editWa.trim());
+    if (!phCheck.valid) {
+      setEditPhErr(phCheck.message ?? 'Invalid phone');
+      return;
+    }
+    if (!waCheck.valid) {
+      setEditWaErr(waCheck.message ?? 'Invalid WhatsApp');
+      return;
+    }
+    if (!user?.sid) return;
+    const isGeneral = !editCid || editCid === 'general';
+    if (!isGeneral && !editRn.trim()) {
+      showToast('Registration number required for students', 'er');
+      return;
+    }
+    setEditProfileSaving(true);
+    try {
+      const yearNum = editYr?.trim() ? parseInt(editYr, 10) : null;
+      const { user: updated, error } = await LSApi.updateUser(user.sid, {
+        full_name: editFn.trim() || undefined,
+        phone: editPh.trim(),
+        whatsapp: editWa.trim(),
+        user_type: isGeneral ? 'general' : 'student',
+        college_id: isGeneral ? null : editCid,
+        reg_no: isGeneral ? null : editRn.trim() || null,
+        hostel_block: editHos.trim() || null,
+        year: yearNum != null && !Number.isNaN(yearNum) ? yearNum : null,
+      });
+      if (updated) {
+        const u = rowToUser(updated);
+        setUser(u);
+        saveUser(u);
+        go('profile');
+        showToast('Profile updated', 'ok');
+      } else {
+        showToast(error ?? 'Update failed', 'er');
+      }
+    } catch (_) {
+      showToast('Update failed', 'er');
+    }
+    setEditProfileSaving(false);
   };
 
   const handleSelectVendor = (vendorId: string) => {
@@ -670,9 +890,45 @@ export default function LaundroApp() {
     showToast('Signed out', 'ok');
   };
 
-  const days = getScheduleDates();
+  const handleSetPasswordForEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (profilePw.length < 6) {
+      showToast('Password must be at least 6 characters', 'er');
+      return;
+    }
+    if (profilePw !== profilePwConfirm) {
+      showToast('Passwords do not match', 'er');
+      return;
+    }
+    setProfilePwSaving(true);
+    const { error } = await LSApi.updatePassword(profilePw);
+    setProfilePwSaving(false);
+    if (error) {
+      showToast(error, 'er');
+      return;
+    }
+    setProfilePw('');
+    setProfilePwConfirm('');
+    showToast('Password set. You can now sign in with email + password.', 'ok');
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const daysFromApi = scheduleDates
+    .filter((d) => d.enabled && d.date >= todayStr)
+    .map((d) => formatScheduleDay(d.date));
+  const days = daysFromApi.length > 0 ? daysFromApi : getScheduleDates();
   const selectedSvc = SERVICES.find((s) => s.id === sd.svc);
-  const selectedTs = TIME_SLOTS.find((t) => t.id === sd.ts);
+  const timeSlotsForStep2 =
+    scheduleSlots.length > 0 && scheduleDates.length > 0 && sd.date
+      ? scheduleSlots.filter(
+          (s) => s.active && (scheduleDates.find((d) => d.date === sd.date)?.slot_ids ?? []).includes(s.id)
+        )
+      : TIME_SLOTS;
+  const selectedTsFromApi = scheduleSlots.find((t) => t.id === sd.ts);
+  const selectedTs = selectedTsFromApi
+    ? { id: selectedTsFromApi.id, label: selectedTsFromApi.label, emoji: '🕐' }
+    : TIME_SLOTS.find((t) => t.id === sd.ts);
+  const afternoonDisabled = !selectedTsFromApi && sd.date ? isEveningOnlyDate(sd.date) : false;
 
   if (screen === 'splash') {
     return (
@@ -776,6 +1032,12 @@ export default function LaundroApp() {
               onChange={(e) => setLoginPw(e.target.value)}
               autoComplete="current-password"
             />
+            <p className="aft" style={{ marginTop: 6 }}>
+              <span className="al" onClick={() => go('forgot-password')} role="button">
+                Forgot password?
+              </span>
+            </p>
+            <p className="vd" style={{ marginTop: 4, fontSize: 12 }}>Signed up with Google? Set a password in Profile to sign in with email (same account).</p>
           </div>
           <button type="submit" className="btn bout bbl" disabled={authLoading}>
             {authLoading ? 'Signing in…' : 'Sign in with email'}
@@ -794,6 +1056,89 @@ export default function LaundroApp() {
           {' · '}
           <Link href="/terms">Terms</Link>
         </p>
+      </div>
+    );
+  }
+
+  if (screen === 'forgot-password') {
+    return (
+      <div className="as">
+        <div className="ah">
+          <h1 className="atl">Forgot password?</h1>
+          <p className="asu">Enter your email and we’ll send you a link to reset your password.</p>
+        </div>
+        {resetSent ? (
+          <>
+            <p className="vd" style={{ marginBottom: 16 }}>We’ve sent a link to <strong>{forgotEm}</strong>. Check your inbox and click the link to set a new password.</p>
+            <button type="button" className="btn bout bbl" onClick={() => { setResetSent(false); setForgotEm(''); go('login'); }}>
+              Back to sign in
+            </button>
+          </>
+        ) : (
+          <form onSubmit={handleForgotPassword}>
+            <div className="fg">
+              <label className="fl">Email</label>
+              <input
+                type="email"
+                className="fi"
+                placeholder="you@example.com"
+                value={forgotEm}
+                onChange={(e) => setForgotEm(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+            <button type="submit" className="btn bout bbl" disabled={authLoading}>
+              {authLoading ? 'Sending…' : 'Send reset link'}
+            </button>
+          </form>
+        )}
+        <p className="aft" style={{ marginTop: 20 }}>
+          <span className="al" onClick={() => go('login')} role="button">
+            Back to sign in
+          </span>
+        </p>
+      </div>
+    );
+  }
+
+  if (screen === 'set-password') {
+    return (
+      <div className="as">
+        <div className="ah">
+          <h1 className="atl">Set new password</h1>
+          <p className="asu">Choose a new password for your account.</p>
+        </div>
+        <form onSubmit={handleSetPassword}>
+          <div className="fg">
+            <label className="fl">New password</label>
+            <input
+              type="password"
+              className="fi"
+              placeholder="At least 6 characters"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
+              required
+            />
+          </div>
+          <div className="fg">
+            <label className="fl">Confirm password</label>
+            <input
+              type="password"
+              className="fi"
+              placeholder="Same as above"
+              value={newPasswordConfirm}
+              onChange={(e) => setNewPasswordConfirm(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
+              required
+            />
+          </div>
+          <button type="submit" className="btn bout bbl" disabled={authLoading}>
+            {authLoading ? 'Updating…' : 'Update password'}
+          </button>
+        </form>
       </div>
     );
   }
@@ -887,9 +1232,9 @@ export default function LaundroApp() {
             {signupWaErr && <p className="field-error">{signupWaErr}</p>}
           </div>
           <div className="fg">
-            <label className="fl">Password</label>
-            <input type="password" className="fi" placeholder="At least 6 characters (to sign in later)" value={signupPw} onChange={(e) => setSignupPw(e.target.value)} required minLength={6} />
-            <p className="vd" style={{ marginTop: 4, fontSize: 12 }}>You’ll use this with your email to sign in after sign out.</p>
+            <label className="fl">Password (required)</label>
+            <input type="password" className="fi" placeholder="Min 6 characters — you’ll use this with email to sign in" value={signupPw} onChange={(e) => setSignupPw(e.target.value)} required minLength={6} autoComplete="new-password" />
+            <p className="vd" style={{ marginTop: 4, fontSize: 12 }}>Required to sign in with email after sign out.</p>
           </div>
           <div className="fg">
             <label className="fl">College</label>
@@ -960,6 +1305,112 @@ export default function LaundroApp() {
         <button type="button" className="btn bp bbl" onClick={() => go('home')}>
           Back to Home
         </button>
+      </div>
+    );
+  }
+
+  if (screen === 'edit-profile') {
+    return (
+      <div className="as">
+        <div className="ah">
+          <h1 className="atl">Edit profile</h1>
+          <p className="asu">Update your details for orders and updates.</p>
+        </div>
+        <form onSubmit={handleSaveEditProfile}>
+          <div className="fg">
+            <label className="fl">Full name</label>
+            <input type="text" className="fi" placeholder="Your name" value={editFn} onChange={(e) => setEditFn(e.target.value)} />
+          </div>
+          <div className="fg">
+            <label className="fl">Email</label>
+            <input type="email" className="fi" value={user?.em ?? ''} readOnly style={{ background: 'var(--bg)', color: 'var(--ts)' }} />
+          </div>
+          <div className="fg">
+            <label className="fl">Phone</label>
+            <input type="tel" className="fi" placeholder="10-digit mobile number" value={editPh} onChange={(e) => { setEditPh(e.target.value); setEditPhErr(''); }} />
+            {editPhErr && <p className="field-error">{editPhErr}</p>}
+          </div>
+          <div className="fg">
+            <label className="fl">WhatsApp</label>
+            <input type="tel" className="fi" placeholder="10-digit WhatsApp number" value={editWa} onChange={(e) => { setEditWa(e.target.value); setEditWaErr(''); }} />
+            {editWaErr && <p className="field-error">{editWaErr}</p>}
+          </div>
+          <div className="fg">
+            <label className="fl">College</label>
+            <select className="fi fs" value={editCid} onChange={(e) => setEditCid(e.target.value)}>
+              <option value="">Select one</option>
+              <option value="general">Not a student</option>
+              {COLLEGES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}{!c.active ? ' (coming soon)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          {editCid && editCid !== 'general' && (
+            <>
+              <div className="fg">
+                <label className="fl">Registration number</label>
+                <input type="text" className="fi" placeholder="Reg no" value={editRn} onChange={(e) => setEditRn(e.target.value)} />
+              </div>
+              <div className="fg">
+                <label className="fl">Hostel block (optional)</label>
+                <input type="text" className="fi" placeholder="Block / room" value={editHos} onChange={(e) => setEditHos(e.target.value)} />
+              </div>
+              <div className="fg">
+                <label className="fl">Year (optional)</label>
+                <input type="number" className="fi" placeholder="e.g. 2" min={1} max={5} value={editYr} onChange={(e) => setEditYr(e.target.value)} />
+              </div>
+            </>
+          )}
+          <button type="submit" className="btn bp bbl" disabled={editProfileSaving}>
+            {editProfileSaving ? 'Saving…' : 'Save'}
+          </button>
+          <button type="button" className="btn bout bbl" style={{ marginTop: 8 }} onClick={() => go('profile')}>
+            Cancel
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  if (screen === 'notifications') {
+    return (
+      <div className="as">
+        <div className="ah" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button type="button" className="btn bout bsm" onClick={() => go('profile')} aria-label="Back">←</button>
+          <div>
+            <h1 className="atl" style={{ margin: 0 }}>Notifications</h1>
+            <p className="asu" style={{ margin: 0 }}>Messages from LaundroSwipe</p>
+          </div>
+        </div>
+        {notificationsLoading ? (
+          <p className="vd" style={{ marginTop: 24 }}>Loading…</p>
+        ) : notifications.length === 0 ? (
+          <p className="vd" style={{ marginTop: 24 }}>No messages yet.</p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: '16px 0 0' }}>
+            {notifications.map((n) => (
+              <li
+                key={n.id}
+                style={{
+                  background: n.read_at ? 'var(--bg)' : 'rgba(23,70,162,.06)',
+                  borderRadius: 12,
+                  padding: 14,
+                  marginBottom: 10,
+                  border: '1px solid var(--bd)',
+                }}
+                onClick={() => {
+                  if (!n.read_at) LSApi.markNotificationRead(n.id).then(() => setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))));
+                }}
+              >
+                <strong style={{ display: 'block', marginBottom: 4 }}>{n.title}</strong>
+                {n.body && <p className="vd" style={{ margin: 0, fontSize: 14 }}>{n.body}</p>}
+                <p className="vd" style={{ margin: '6px 0 0', fontSize: 12 }}>{n.sent_at ? new Date(n.sent_at).toLocaleString() : ''}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     );
   }
@@ -1118,43 +1569,54 @@ export default function LaundroApp() {
                 )}
                 {sd.step === 2 && (
                   <>
-                    <p className="st">Pick date (Mar 15 or 18 — evening slot only)</p>
-                    {days.length === 0 && <p className="vd" style={{ marginBottom: 12 }}>No dates available. Mar 15 and 18 (evening) for this year have passed.</p>}
+                    <p className="st">Pick date</p>
+                    {days.length === 0 && <p className="vd" style={{ marginBottom: 12 }}>No dates available. Add and enable dates in admin Schedule.</p>}
                     <div className="dss">
-                      {days.map((d) => (
-                        <button
-                          type="button"
-                          key={d.full}
-                          className={`ds ${sd.date === d.full ? 'sel' : ''}`}
-                          onClick={() => {
-                            const eveningOnly = isEveningOnlyDate(d.full);
-                            setSd((s) => ({
-                              ...s,
-                              date: d.full,
-                              ts: eveningOnly && s.ts === 'afternoon' ? undefined : s.ts,
-                            }));
-                          }}
-                        >
-                          <span className="dy">{d.day}</span>
-                          <div className="dn2">{d.num}</div>
-                          <span className="mo">{d.month}</span>
-                        </button>
-                      ))}
+                      {days.map((d) => {
+                        return (
+                          <button
+                            type="button"
+                            key={d.full}
+                            className={`ds ${sd.date === d.full ? 'sel' : ''}`}
+                            onClick={() => {
+                              const allowedIds =
+                                scheduleDates.length > 0
+                                  ? (scheduleDates.find((x) => x.date === d.full)?.slot_ids ?? [])
+                                  : isEveningOnlyDate(d.full)
+                                    ? ['evening']
+                                    : ['afternoon', 'evening'];
+                              setSd((s) => ({
+                                ...s,
+                                date: d.full,
+                                ts: allowedIds.includes(s.ts ?? '') ? s.ts : undefined,
+                              }));
+                            }}
+                          >
+                            <span className="dy">{d.day}</span>
+                            <div className="dn2">{d.num}</div>
+                            <span className="mo">{d.month}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                     <p className="st" style={{ marginTop: 20 }}>Time slot</p>
-                    {TIME_SLOTS.map((t) => {
-                      const afternoonDisabled = t.id === 'afternoon' && isEveningOnlyDate(sd.date);
+                    {timeSlotsForStep2.length === 0 && sd.date && <p className="vd" style={{ marginBottom: 8 }}>No slots enabled for this date. Enable slots in admin Schedule.</p>}
+                    {timeSlotsForStep2.map((t) => {
+                      const slotId = 'id' in t ? t.id : (t as { id: string }).id;
+                      const slotLabel = 'label' in t ? t.label : (t as { label: string }).label;
+                      const slotEmoji = 'emoji' in t ? (t as { emoji?: string }).emoji : '🕐';
+                      const isDisabled = scheduleSlots.length === 0 && slotId === 'afternoon' && isEveningOnlyDate(sd.date);
                       return (
                         <div
-                          key={t.id}
-                          className={`ts2 ${sd.ts === t.id ? 'sel' : ''} ${afternoonDisabled ? 'ts2-dis' : ''}`}
-                          onClick={() => !afternoonDisabled && setSd((s) => ({ ...s, ts: t.id }))}
-                          onKeyDown={(e) => !afternoonDisabled && e.key === 'Enter' && setSd((s) => ({ ...s, ts: t.id }))}
+                          key={slotId}
+                          className={`ts2 ${sd.ts === slotId ? 'sel' : ''} ${isDisabled ? 'ts2-dis' : ''}`}
+                          onClick={() => !isDisabled && setSd((s) => ({ ...s, ts: slotId }))}
+                          onKeyDown={(e) => !isDisabled && e.key === 'Enter' && setSd((s) => ({ ...s, ts: slotId }))}
                           role="button"
-                          tabIndex={afternoonDisabled ? -1 : 0}
+                          tabIndex={isDisabled ? -1 : 0}
                         >
-                          <span>{t.emoji}</span>
-                          <span>{t.label}{afternoonDisabled ? ' (not available this day)' : ''}</span>
+                          <span>{slotEmoji}</span>
+                          <span>{slotLabel}{isDisabled ? ' (not available this day)' : ''}</span>
                         </div>
                       );
                     })}
@@ -1335,15 +1797,34 @@ export default function LaundroApp() {
                   <p className="vd">{user.em || ''}</p>
                   {user.ph && <p className="vd">{user.ph}</p>}
                 </div>
+                {LSApi.hasSupabase && (
+                  <div className="oc" style={{ marginBottom: 16 }}>
+                    <p className="st" style={{ marginBottom: 8 }}>Sign in with email</p>
+                    <p className="vd" style={{ fontSize: 13, marginBottom: 12 }}>Set a password so you can also sign in with {user.em || 'your email'} and password (same account).</p>
+                    <form onSubmit={handleSetPasswordForEmail}>
+                      <div className="fg">
+                        <label className="fl">Password</label>
+                        <input type="password" className="fi" placeholder="Min 6 characters" value={profilePw} onChange={(e) => setProfilePw(e.target.value)} minLength={6} autoComplete="new-password" />
+                      </div>
+                      <div className="fg">
+                        <label className="fl">Confirm password</label>
+                        <input type="password" className="fi" placeholder="Same as above" value={profilePwConfirm} onChange={(e) => setProfilePwConfirm(e.target.value)} minLength={6} autoComplete="new-password" />
+                      </div>
+                      <button type="submit" className="btn bout bbl" disabled={profilePwSaving || !profilePw || !profilePwConfirm}>
+                        {profilePwSaving ? 'Setting…' : 'Set password for email sign-in'}
+                      </button>
+                    </form>
+                  </div>
+                )}
                 <div className="pmi" onClick={() => go('my-bills')}>
                   <div className="pmic bl2">🧾</div>
                   <span>My bills</span>
                 </div>
-                <div className="pmi" onClick={() => go('coming-soon')}>
+                <div className="pmi" onClick={() => go('edit-profile')}>
                   <div className="pmic bl2">📋</div>
                   <span>Edit profile</span>
                 </div>
-                <div className="pmi" onClick={() => go('coming-soon')}>
+                <div className="pmi" onClick={() => go('notifications')}>
                   <div className="pmic tl3">🔔</div>
                   <span>Notifications</span>
                 </div>

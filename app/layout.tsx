@@ -4,6 +4,8 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'LaundroSwipe — Your Laundry Sorted in One Swipe',
   description: 'LaundroSwipe - College laundry pickup & delivery. Schedule in one swipe.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: { capable: true, title: 'LaundroSwipe' },
 };
 
 export const viewport: Viewport = {
@@ -27,6 +29,9 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&display=swap"
           rel="stylesheet"
         />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="LaundroSwipe" />
       </head>
       <body>{children}</body>
     </html>

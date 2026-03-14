@@ -30,6 +30,35 @@ export type OrderRow = {
   delivery_comments?: string | null;
 };
 
+export type ScheduleSlotRow = {
+  id: string;
+  label: string;
+  time_from: string;
+  time_to: string;
+  sort_order: number;
+  active: boolean;
+  created_at?: string;
+};
+
+export type ScheduleDateRow = {
+  date: string;
+  enabled: boolean;
+  slot_ids: string[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type UserNotificationRow = {
+  id: string;
+  user_id: string | null;
+  title: string;
+  body: string | null;
+  sent_at: string | null;
+  scheduled_at: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
 export const LSApi = {
   hasSupabase,
 
@@ -223,6 +252,37 @@ export const LSApi = {
     }
   },
 
+  async fetchUserById(userId: string): Promise<UserRow | null> {
+    if (!supabase || !userId) return null;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) return null;
+      return data as UserRow | null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async fetchUserByEmail(email: string): Promise<UserRow | null> {
+    if (!supabase || !email?.trim()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .ilike('email', email.trim().toLowerCase())
+        .limit(1);
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error) return null;
+      return (row ?? null) as UserRow | null;
+    } catch (e) {
+      return null;
+    }
+  },
+
   async signUpWithEmail(
     email: string,
     password: string,
@@ -239,6 +299,13 @@ export const LSApi = {
   ): Promise<{ user: UserRow | null; error?: string }> {
     if (!supabase) return { user: null, error: 'Not connected' };
     try {
+      const existingByEmail = await this.fetchUserByEmail(email);
+      if (existingByEmail) {
+        return {
+          user: null,
+          error: 'This email is already registered. Sign in with Google, or use Forgot password to set a password and sign in with email.',
+        };
+      }
       const { data: authData, error: authErr } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -350,6 +417,36 @@ export const LSApi = {
     }
   },
 
+  async resetPasswordForEmail(email: string): Promise<{ error?: string }> {
+    if (!supabase) return { error: 'Not configured' };
+    try {
+      const redirectTo =
+        typeof window !== 'undefined' && window.location?.origin
+          ? `${window.location.origin}${window.location.pathname || '/'}`
+          : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: redirectTo || undefined,
+      });
+      if (error) return { error: error.message };
+      return {};
+    } catch (e) {
+      console.error('resetPasswordForEmail exception', e);
+      return { error: (e as Error)?.message || 'Failed to send reset email' };
+    }
+  },
+
+  async updatePassword(newPassword: string): Promise<{ error?: string }> {
+    if (!supabase) return { error: 'Not configured' };
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) return { error: error.message };
+      return {};
+    } catch (e) {
+      console.error('updatePassword exception', e);
+      return { error: (e as Error)?.message || 'Failed to update password' };
+    }
+  },
+
   async upsertUserFromAuth(authUser: {
     id: string;
     email?: string | null;
@@ -362,11 +459,15 @@ export const LSApi = {
       (authUser.email ? authUser.email.split('@')[0] : '') ||
       'User';
     try {
-      const { data: existing } = await supabase
+      const { data: existing, error: selectError } = await supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle();
+      if (selectError) {
+        console.error('upsertUserFromAuth select error', selectError);
+        return null;
+      }
       if (existing) {
         await supabase
           .from('users')
@@ -376,7 +477,12 @@ export const LSApi = {
             auth_id: authUser.id,
           })
           .eq('id', authUser.id);
-        return existing as UserRow;
+        const { data: refreshed } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        return (refreshed ?? existing) as UserRow;
       }
       const row = {
         id: authUser.id,
@@ -563,6 +669,78 @@ export const LSApi = {
       return this.confirmDelivery(orders[0].id, 'Confirmed by admin (pickup/delivery)');
     } catch (e) {
       return null;
+    }
+  },
+
+  async fetchScheduleSlots(): Promise<ScheduleSlotRow[] | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('schedule_slots')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) {
+        console.error('Supabase fetchScheduleSlots error', error);
+        return null;
+      }
+      return (data ?? []) as ScheduleSlotRow[];
+    } catch (e) {
+      console.error('fetchScheduleSlots exception', e);
+      return null;
+    }
+  },
+
+  async fetchScheduleDates(): Promise<ScheduleDateRow[] | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('schedule_dates')
+        .select('*')
+        .order('date', { ascending: true });
+      if (error) {
+        console.error('Supabase fetchScheduleDates error', error);
+        return null;
+      }
+      const rows = (data ?? []) as (ScheduleDateRow & { slot_ids?: unknown })[];
+      return rows.map((r) => ({
+        ...r,
+        slot_ids: Array.isArray(r.slot_ids) ? r.slot_ids : [],
+      }));
+    } catch (e) {
+      console.error('fetchScheduleDates exception', e);
+      return null;
+    }
+  },
+
+  async fetchNotifications(): Promise<UserNotificationRow[] | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('user_notifications')
+        .select('*')
+        .not('sent_at', 'is', null)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Supabase fetchNotifications error', error);
+        return null;
+      }
+      return (data ?? []) as UserNotificationRow[];
+    } catch (e) {
+      console.error('fetchNotifications exception', e);
+      return null;
+    }
+  },
+
+  async markNotificationRead(notificationId: string): Promise<boolean> {
+    if (!supabase) return false;
+    try {
+      const { error } = await supabase
+        .from('user_notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', notificationId);
+      return !error;
+    } catch (e) {
+      return false;
     }
   },
 };
