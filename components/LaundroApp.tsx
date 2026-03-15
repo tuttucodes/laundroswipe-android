@@ -199,10 +199,10 @@ export default function LaundroApp() {
   const swipeTrackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user?.id && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.id) === '1') {
+    if (user?.sid && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.sid) === '1') {
       setPasswordAlreadySet(true);
     }
-  }, [user?.id]);
+  }, [user?.sid]);
 
   const go = useCallback((s: Screen, detail?: DetailData) => {
     setScreen(s);
@@ -916,8 +916,8 @@ export default function LaundroApp() {
     }
     setProfilePw('');
     setProfilePwConfirm('');
-    if (user?.id && typeof window !== 'undefined') {
-      localStorage.setItem('ls_password_set_' + user.id, '1');
+    if (user?.sid && typeof window !== 'undefined') {
+      localStorage.setItem('ls_password_set_' + user.sid, '1');
       setPasswordAlreadySet(true);
     }
     showToast('Password set. You can now sign in with email + password.', 'ok');
