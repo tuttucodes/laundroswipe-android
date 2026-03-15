@@ -26,7 +26,7 @@ function billToHtml(b: VendorBillRow) {
     <p class="right">Subtotal: ₹${b.subtotal}</p>
     <p class="right conv">Convenience fee: ₹${b.convenience_fee}</p>
     <p class="total right">Total: ₹${b.total}</p>
-    <p style="text-align:center;margin-top:12px;font-size:10px">Thank you!</p>
+    <p class="foot">Thank you!</p>
   `;
 }
 

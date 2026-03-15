@@ -10,25 +10,25 @@ export interface PrinterPrintConfig {
   charsPerLine: number;
 }
 
-const DEFAULT_CONFIG: PrinterPrintConfig = { paperWidthMm: 58, charsPerLine: 32 };
+const DEFAULT_CONFIG: PrinterPrintConfig = { paperWidthMm: 78, charsPerLine: 46 };
 
 function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
   return `
 *{margin:0;padding:0}
-html,body{width:${w};max-width:${w};min-width:${w};font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.35;padding:3mm;margin:0;background:#fff;color:#000}
+html,body{width:${w};max-width:${w};min-width:${w};font-family:Arial,sans-serif;font-size:12px;font-weight:600;line-height:1.4;padding:3mm;margin:0;background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{overflow:visible}
 .receipt{width:${w};max-width:${w}}
-h2{text-align:center;font-size:11px;font-weight:700;margin:0 0 1mm}
-.meta{text-align:center;font-size:9px;margin:0 0 2mm}
-p{margin:1mm 0;font-size:9px;word-break:break-word}
-table{width:100%;border-collapse:collapse;font-size:9px;margin:2mm 0}
-th,td{padding:1mm 0;border-bottom:1px dotted #000}
+h2{text-align:center;font-size:14px;font-weight:700;margin:0 0 2mm}
+.meta{text-align:center;font-size:11px;font-weight:600;margin:0 0 2mm}
+p{margin:2mm 0;font-size:12px;font-weight:600;word-break:break-word}
+table{width:100%;border-collapse:collapse;font-size:12px;font-weight:600;margin:2mm 0}
+th,td{padding:2mm 0}
 th{text-align:left;font-weight:700}
 .right{text-align:right}
-.total{border-top:2px solid #000;font-weight:700;font-size:10px;padding-top:2mm;margin-top:2mm}
-.conv{font-size:8px}
-.foot{text-align:center;margin-top:3mm;font-size:9px}
+.total{font-weight:700;font-size:13px;padding-top:2mm;margin-top:2mm}
+.conv{font-size:11px;font-weight:600}
+.foot{text-align:center;margin-top:3mm;font-size:11px;font-weight:600}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 @media print{
   .escpos-hint{display:none!important}

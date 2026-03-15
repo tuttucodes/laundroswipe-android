@@ -38,7 +38,7 @@ function getTestReceiptPlain(): string {
 export default function AdminPrintersPage() {
   const [settings, setSettings] = useState(getPrinterSettings());
   const [adding, setAdding] = useState(false);
-  const [selectedModelId, setSelectedModelId] = useState<PrinterModelId>('epson-m80');
+  const [selectedModelId, setSelectedModelId] = useState<PrinterModelId>('generic-78');
   const [newName, setNewName] = useState('');
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [testing, setTesting] = useState(false);
