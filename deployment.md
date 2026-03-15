@@ -242,7 +242,22 @@ Go to your Supabase project:
 
 2. **Authentication** → **Providers:**
    - Email: already enabled
-   - **Google:** Enable and add OAuth Client ID and Secret from Google Cloud Console. In Google Cloud, set Authorized redirect URI to the exact URL Supabase shows (e.g. `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`).
+   - **Google:** Enable and add OAuth Client ID and Secret from Google Cloud Console. In the same Google Cloud project, open **APIs & Services** → **Credentials** → your OAuth 2.0 Client ID (Web application) and set:
+     - **Authorized JavaScript origins** (one per line):
+       - `https://laundroswipe.com`
+       - `https://www.laundroswipe.com`
+       - `http://localhost:3000`
+     - **Authorized redirect URIs** (only this one; copy the exact value from Supabase → Authentication → Providers → Google):
+       - `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
+       (Replace `YOUR_PROJECT_REF` with your Supabase project ref, e.g. `pngkqycwibyxkvnbpthe`.)
+
+3. **Show your domain/app name on Google sign-in** (instead of "Sign in to pngkqycwibyxkvnbpthe.supabase.co"):
+   - Open [Google Cloud Console](https://console.cloud.google.com/) and select the **same project** you use for Supabase’s Google provider.
+   - Go to **APIs & Services** → **OAuth consent screen**.
+   - Click **EDIT APP** (or set it when first creating the consent screen).
+   - Set **App name** to your brand (e.g. `LaundroSwipe`). That is the name Google shows as "Sign in to **LaundroSwipe**".
+   - Optionally set **App logo**, **User support email**, and **Developer contact**. Add **Authorized domains** (e.g. `laundroswipe.com`) if you use a custom domain.
+   - Save. Changes can take a few minutes to appear. If the app is in "Production" and already verified, re-verification may be needed for name/logo changes.
 
 ---
 

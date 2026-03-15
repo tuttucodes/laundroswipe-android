@@ -743,6 +743,21 @@ export const LSApi = {
       return false;
     }
   },
+
+  async fetchVendorProfile(slug = 'profab'): Promise<VendorProfileRow | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('vendor_profiles')
+        .select('id, slug, name, brief, pricing_details, updated_at')
+        .eq('slug', slug)
+        .maybeSingle();
+      if (error) return null;
+      return data as VendorProfileRow | null;
+    } catch (e) {
+      return null;
+    }
+  },
 };
 
 export type VendorBillRow = {
@@ -758,4 +773,13 @@ export type VendorBillRow = {
   convenience_fee: number;
   total: number;
   created_at: string;
+};
+
+export type VendorProfileRow = {
+  id: string;
+  slug: string;
+  name: string;
+  brief: string | null;
+  pricing_details: string | null;
+  updated_at?: string;
 };

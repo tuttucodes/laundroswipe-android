@@ -13,7 +13,7 @@ import {
   isEveningOnlyDate,
 } from '@/lib/constants';
 import { LSApi } from '@/lib/api';
-import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow } from '@/lib/api';
+import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
 
 type Screen =
@@ -80,6 +80,15 @@ type DetailData = {
 };
 
 type Toast = { msg: string; type: 'ok' | 'er' | null } | null;
+
+const DEFAULT_VENDOR_PROFILE: VendorProfileRow = {
+  id: '',
+  slug: 'profab',
+  name: 'Pro Fab Power Launders',
+  brief: 'Pro Fab Power Launders is our campus laundry partner. We pick up from your hostel, wash & iron, and deliver back on the same cycle. Service days: Tuesday, Saturday, Sunday.',
+  pricing_details: 'Shirt / T-shirt: ₹19 | White shirt / White T-shirt: ₹25 | Pant / Jean: ₹22 | White pants / White jean: ₹25 | Dry clean (shirt/T-shirt): ₹50 | Dry clean (white/formal): ₹60. Convenience fee: ₹20 per order.',
+  updated_at: '',
+};
 
 function rowToUser(r: UserRow): User {
   return {
@@ -196,6 +205,8 @@ export default function LaundroApp() {
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
   const [scheduleConfigLoaded, setScheduleConfigLoaded] = useState(false);
   const [passwordAlreadySet, setPasswordAlreadySet] = useState(false);
+  const [vendorProfile, setVendorProfile] = useState<VendorProfileRow | null>(null);
+  const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
   const swipeTrackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -403,6 +414,14 @@ export default function LaundroApp() {
       setScheduleConfigLoaded(true);
     });
   }, [screen, scheduleConfigLoaded]);
+
+  // Load vendor profile when user is on home (for Vendor section)
+  useEffect(() => {
+    if (screen !== 'home' || !LSApi.hasSupabase || vendorProfile) return;
+    LSApi.fetchVendorProfile().then((p) => {
+      if (p) setVendorProfile(p);
+    });
+  }, [screen, vendorProfile]);
 
   useEffect(() => {
     if (screen !== 'schedule' || sd.step !== 3) return;
@@ -1492,6 +1511,18 @@ export default function LaundroApp() {
                   ))}
                 </div>
                 <p className="fn" style={{ marginTop: 8 }}>LaundroSwipe — schedule pickup from your favorite laundry company in one swipe.</p>
+                <p className="st" style={{ marginTop: 24, marginBottom: 12 }}>Vendor</p>
+                <div
+                  className="oc"
+                  style={{ cursor: 'pointer', marginBottom: 16 }}
+                  onClick={() => setViewingVendor(vendorProfile ?? DEFAULT_VENDOR_PROFILE)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingVendor(vendorProfile ?? DEFAULT_VENDOR_PROFILE); } }}
+                >
+                  <span className="ic" style={{ fontSize: 24 }}>🧺</span>
+                  <span className="nm" style={{ fontWeight: 600 }}>{vendorProfile?.name ?? DEFAULT_VENDOR_PROFILE.name}</span>
+                </div>
                 <div className="hiw">
                   <div className="hiws">
                     <div className="hiwn">1</div>
@@ -1910,6 +1941,25 @@ export default function LaundroApp() {
               <p style={{ textAlign: 'right', fontSize: 13, marginBottom: 2 }}>Subtotal: ₹{viewingBill.subtotal}</p>
               <p style={{ textAlign: 'right', fontSize: 13, marginBottom: 2 }}>Convenience fee: ₹{viewingBill.convenience_fee}</p>
               <p style={{ textAlign: 'right', fontWeight: 700, fontSize: 15, marginTop: 8, paddingTop: 8, borderTop: '2px solid var(--b)' }}>Total: ₹{viewingBill.total}</p>
+            </div>
+          </div>
+        )}
+        {viewingVendor && (
+          <div className="bill-popup-overlay" onClick={() => setViewingVendor(null)} role="dialog" aria-modal="true" aria-label="Vendor info">
+            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>{viewingVendor.name}</h3>
+                <button type="button" className="btn bout bsm" onClick={() => setViewingVendor(null)} aria-label="Close">Close</button>
+              </div>
+              {viewingVendor.brief && (
+                <p style={{ fontSize: 14, color: 'var(--tx)', marginBottom: 16, lineHeight: 1.5 }}>{viewingVendor.brief}</p>
+              )}
+              {viewingVendor.pricing_details && (
+                <>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--b)', marginBottom: 8 }}>Pricing</p>
+                  <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{viewingVendor.pricing_details}</p>
+                </>
+              )}
             </div>
           </div>
         )}

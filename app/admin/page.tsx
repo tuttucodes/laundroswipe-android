@@ -10,7 +10,7 @@ const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'rea
 const STATUS_LABELS = ['Scheduled', 'Agent Assigned', 'Picked Up', 'Processing', 'Ready', 'Out for Delivery', 'Delivered'];
 
 type OrderWithUser = OrderRow & { user?: string };
-type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'settings';
+type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'vendor' | 'settings';
 
 type ScheduleSlot = { id: string; label: string; time_from: string; time_to: string; sort_order: number; active: boolean };
 type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
@@ -39,6 +39,11 @@ export default function AdminPage() {
   const [notifySending, setNotifySending] = useState(false);
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
   const [adminNotificationsLoading, setAdminNotificationsLoading] = useState(false);
+  const [vendorName, setVendorName] = useState('');
+  const [vendorBrief, setVendorBrief] = useState('');
+  const [vendorPricing, setVendorPricing] = useState('');
+  const [vendorProfileLoading, setVendorProfileLoading] = useState(false);
+  const [vendorProfileSaving, setVendorProfileSaving] = useState(false);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('admin_logged') : null;
@@ -100,6 +105,20 @@ export default function AdminPage() {
       })
       .catch(() => setAdminNotifications([]))
       .finally(() => setAdminNotificationsLoading(false));
+  }, [loggedIn, tab]);
+
+  useEffect(() => {
+    if (!loggedIn || tab !== 'vendor') return;
+    setVendorProfileLoading(true);
+    fetch('/api/admin/vendor-profile', { credentials: 'include', headers: adminAuthHeaders() })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.name != null) setVendorName(data.name);
+        if (data?.brief != null) setVendorBrief(data.brief);
+        if (data?.pricing_details != null) setVendorPricing(data.pricing_details);
+      })
+      .catch(() => {})
+      .finally(() => setVendorProfileLoading(false));
   }, [loggedIn, tab]);
 
   const showToast = (msg: string, type: string) => {
@@ -245,6 +264,7 @@ export default function AdminPage() {
           <button type="button" onClick={() => setTab('colleges')} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
           <button type="button" onClick={() => setTab('schedule')} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
           <button type="button" onClick={() => setTab('notifications')} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
+          <button type="button" onClick={() => setTab('vendor')} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
           <button type="button" onClick={() => setTab('settings')} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
         </nav>
         <div className="admin-foot" style={{ padding: 16, borderTop: '1px solid var(--bd)' }}>
@@ -596,6 +616,62 @@ export default function AdminPage() {
                     ))}
                   </ul>
                 )}
+              </div>
+            )}
+          </>
+        )}
+        {tab === 'vendor' && (
+          <>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Vendor</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Edit the vendor card shown on the user homepage (brief and pricing).</p>
+            {vendorProfileLoading ? (
+              <p style={{ color: 'var(--ts)' }}>Loading…</p>
+            ) : (
+              <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 520 }}>
+                <div className="fg" style={{ marginBottom: 12 }}>
+                  <label className="fl">Display name</label>
+                  <input className="fi" value={vendorName} onChange={(e) => setVendorName(e.target.value)} placeholder="e.g. Pro Fab Power Launders" />
+                </div>
+                <div className="fg" style={{ marginBottom: 12 }}>
+                  <label className="fl">Brief (about the vendor)</label>
+                  <textarea className="fi fta" value={vendorBrief} onChange={(e) => setVendorBrief(e.target.value)} rows={4} placeholder="Short description shown when user taps the vendor card" />
+                </div>
+                <div className="fg" style={{ marginBottom: 12 }}>
+                  <label className="fl">Pricing details</label>
+                  <textarea className="fi fta" value={vendorPricing} onChange={(e) => setVendorPricing(e.target.value)} rows={6} placeholder="e.g. Shirt: ₹19 | Pant: ₹22 | Convenience fee: ₹20" />
+                </div>
+                <button
+                  type="button"
+                  className="btn bp bbl"
+                  disabled={vendorProfileSaving}
+                  onClick={async () => {
+                    setVendorProfileSaving(true);
+                    try {
+                      const res = await fetch('/api/admin/vendor-profile', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+                        body: JSON.stringify({ name: vendorName.trim(), brief: vendorBrief.trim(), pricing_details: vendorPricing.trim() }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (res.ok && data?.id) {
+                        showToast('Vendor profile saved. Users will see the updated card on the home page.', 'ok');
+                      } else {
+                        if (res.status === 401) {
+                          sessionStorage.removeItem('admin_token');
+                          localStorage.removeItem('admin_logged');
+                          setLoggedIn(false);
+                          showToast('Session expired. Please log in again.', 'er');
+                        } else showToast(data?.error || 'Save failed', 'er');
+                      }
+                    } catch {
+                      showToast('Save failed', 'er');
+                    }
+                    setVendorProfileSaving(false);
+                  }}
+                >
+                  {vendorProfileSaving ? 'Saving…' : 'Save'}
+                </button>
               </div>
             )}
           </>
