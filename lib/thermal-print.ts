@@ -16,26 +16,28 @@ function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
   return `
 *{margin:0;padding:0}
-html,body{width:100%;max-width:${w};min-width:${w};font-family:Arial,sans-serif;font-size:14px;font-weight:600;line-height:1.5;padding:2mm 1.5mm;margin:0 auto;background:#fff;color:#000;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
+html,body{width:${w};max-width:${w};min-width:${w};font-family:Arial,sans-serif;font-size:16px;font-weight:700;line-height:1.45;padding:2mm 1mm;margin:0;background:#fff;color:#000;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 body{overflow:visible}
-.receipt{width:100%;max-width:${w};margin:0 auto;text-align:center}
-h2{text-align:center;font-size:18px;font-weight:700;margin:0 0 3mm}
-.meta{text-align:center;font-size:13px;font-weight:600;margin:0 0 3mm}
-p{margin:3mm 0;font-size:14px;font-weight:600;word-break:break-word;text-align:center}
-table{width:100%;max-width:100%;border-collapse:collapse;font-size:14px;font-weight:600;margin:3mm auto}
-th,td{padding:2.5mm 1mm}
+.receipt{width:100%;max-width:100%;margin:0;text-align:center;padding:0}
+h2{text-align:center;font-size:20px;font-weight:700;margin:0 0 3mm}
+.meta{text-align:center;font-size:15px;font-weight:700;margin:0 0 3mm}
+p{margin:3mm 0;font-size:16px;font-weight:700;word-break:break-word;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:16px;font-weight:700;margin:3mm 0}
+th,td{padding:2.5mm 2mm}
 th{font-weight:700;text-align:left}
 td{text-align:left}
 .right{text-align:right}
-.total{font-weight:700;font-size:16px;padding-top:3mm;margin-top:3mm;text-align:center}
-.conv{font-size:13px;font-weight:600;text-align:center}
-.foot{text-align:center;margin-top:4mm;font-size:13px;font-weight:600}
+.total{font-weight:700;font-size:18px;padding-top:3mm;margin-top:3mm;text-align:center}
+.conv{font-size:15px;font-weight:700;text-align:center}
+.foot{text-align:center;margin-top:4mm;font-size:15px;font-weight:700}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
+.no-print{}
 @media print{
-  .escpos-hint{display:none!important}
-  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:2mm 1.5mm!important;margin:0 auto!important;background:#fff!important}
-  @page{size:${paperWidthMm}mm auto;margin:1.5mm}
+  .escpos-hint,.no-print{display:none!important}
+  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:2mm 1mm!important;margin:0!important;background:#fff!important}
+  .receipt{width:100%!important;max-width:100%!important}
+  @page{size:${paperWidthMm}mm auto;margin:0}
 }
 `;
 }
@@ -205,7 +207,7 @@ export function printThermalReceipt(title: string, bodyHtml: string, paperWidthM
   if (!w) return false;
   const styles = getThermalStyles(paperWidthMm);
   const escposHint = '<p class="escpos-hint"><strong>In the print dialog, select: ESCPOS Bluetooth Print Service</strong> (then choose your printer if asked).</p>';
-  const closeLink = '<p class="foot" style="margin-top:8px"><a href="#" onclick="window.close();return false" style="color:#666;font-size:10px">Close window after printing</a></p>';
+  const closeLink = '<p class="no-print" style="margin-top:8px"><a href="#" onclick="window.close();return false" style="color:#666;font-size:10px">Close window after printing</a></p>';
   const doc = w.document;
   doc.open();
   doc.write(
