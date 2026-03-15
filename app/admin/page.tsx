@@ -9,6 +9,75 @@ import type { OrderRow, UserRow } from '@/lib/api';
 const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered'];
 const STATUS_LABELS = ['Scheduled', 'Agent Assigned', 'Picked Up', 'Processing', 'Ready', 'Out for Delivery', 'Delivered'];
 
+/** Opens a new window with only the gate pass letter (LaundroSwipe letterhead, no ProFab) and triggers print so only the letter is printed/saved as PDF. */
+function printGatePassLetter(vendorName: string, orderCount: number) {
+  const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  const ordersText = orderCount !== 1 ? `${orderCount} pickup orders` : '1 pickup order';
+  const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Permission Letter - VIT Chennai</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;background:#fff;color:#1e293b;padding:32px;max-width:600px;margin:0 auto;font-size:14px}
+  .letterhead{text-align:center;padding:32px 24px 24px;border-bottom:2px solid #1746a2}
+  .logo-text{font-size:28px;font-weight:700;color:#1746a2;letter-spacing:-.02em;margin-bottom:6px}
+  .tagline{font-size:12px;color:#64748b;margin-bottom:8px}
+  .website{font-size:11px;color:#94a3b8;letter-spacing:.02em}
+  .rule{height:0;border-bottom:1px solid #e2e8f0;margin-top:18px}
+  .ref{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:28px 0 10px}
+  .date{font-size:13px;color:#64748b;margin:0 0 22px}
+  .subject{font-size:18px;font-weight:700;margin:0 0 22px;color:#0f172a}
+  .body{font-size:14px;line-height:1.8}
+  .body p{margin-bottom:16px}
+  .signoff{margin-top:32px;padding-bottom:40px}
+  .regards{font-size:14px;font-weight:600;margin-bottom:8px}
+  .team{font-size:16px;font-weight:700;color:#1746a2;margin-bottom:12px}
+  .contact{font-size:13px;color:#64748b;margin:4px 0}
+</style>
+</head>
+<body>
+  <header class="letterhead">
+    <div class="logo-text">LaundroSwipe</div>
+    <div class="tagline">Your Laundry Sorted in One Swipe</div>
+    <div class="website">www.laundroswipe.com</div>
+    <div class="rule"></div>
+  </header>
+  <p class="ref">To be shown at the gate (VIT Chennai)</p>
+  <p class="date">Date: ${esc(date)}</p>
+  <h2 class="subject">Permission Letter for Campus Entry</h2>
+  <div class="body">
+    <p>To whom it may concern,</p>
+    <p>This is to certify that <strong>${esc(vendorName)}</strong> are official partners of <strong>LaundroSwipe</strong> (LaundroSwipe.com).</p>
+    <p>They have received <strong>${ordersText}</strong> from students of <strong>VIT CHENNAI</strong> and are here to drop off the clothes of students. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
+    <p>Kindly extend your cooperation.</p>
+  </div>
+  <div class="signoff">
+    <p class="regards">With regards,</p>
+    <p class="team">Team LaundroSwipe</p>
+    <p class="contact">Phone: +91 90744 17293</p>
+    <p class="contact">Email: support@laundroswipe.com</p>
+  </div>
+</body>
+</html>`;
+  const w = window.open('', '_blank', 'noopener,noreferrer');
+  if (!w) {
+    alert('Please allow pop-ups to print or save the letter as PDF.');
+    return;
+  }
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  w.onafterprint = () => w.close();
+  setTimeout(() => {
+    try {
+      w.print();
+    } catch (_) {
+      w.close();
+    }
+  }, 200);
+}
+
 type OrderWithUser = OrderRow & { user?: string };
 type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'vendor' | 'gatepass' | 'settings';
 
@@ -235,6 +304,7 @@ export default function AdminPage() {
   const tokensGenerated = totalOrders;
   const convenienceFeeToPay = billsGenerated * CONVENIENCE_FEE;
   const totalBillAmount = bills.totalAmount;
+  const vitChennaiOrderCount = orders.filter((o) => users.find((u) => u.id === o.user_id)?.college_id === 'vit-chn').length;
 
   if (!loggedIn) {
     return (
@@ -278,24 +348,36 @@ export default function AdminPage() {
 
       <aside className={`admin-drawer ${menuOpen ? 'admin-drawer-open' : ''}`}>
         <div className="admin-drawer-head">
-          <span className="admin-drawer-title">Menu</span>
+          <span className="admin-drawer-title">LaundroSwipe Admin</span>
           <button type="button" className="admin-drawer-close" onClick={closeMenu} aria-label="Close menu">×</button>
         </div>
         <nav className="admin-drawer-nav">
-          <button type="button" onClick={() => { setTab('orders'); closeMenu(); }} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
-          <button type="button" onClick={() => { setTab('users'); closeMenu(); }} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
-          <Link href="/admin/vendor" className="admin-nav-link" onClick={closeMenu}>🧾 Vendor / Bill</Link>
-          <Link href="/admin/pickup" className="admin-nav-link" onClick={closeMenu}>📦 Pickup / Delivery</Link>
-          <Link href="/admin/bills" className="admin-nav-link" onClick={closeMenu}>📋 Saved bills</Link>
-          <button type="button" onClick={() => { setTab('colleges'); closeMenu(); }} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
-          <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
-          <button type="button" onClick={() => { setTab('notifications'); closeMenu(); }} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
-          <button type="button" onClick={() => { setTab('vendor'); closeMenu(); }} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
-          <button type="button" onClick={() => { setTab('gatepass'); closeMenu(); }} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>📄 Gate pass</button>
-          <button type="button" onClick={() => { setTab('settings'); closeMenu(); }} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
+          <div className="admin-drawer-section">
+            <span className="admin-drawer-section-label">Overview</span>
+            <button type="button" onClick={() => { setTab('orders'); closeMenu(); }} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
+            <button type="button" onClick={() => { setTab('users'); closeMenu(); }} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
+          </div>
+          <div className="admin-drawer-section">
+            <span className="admin-drawer-section-label">Vendor & Bills</span>
+            <Link href="/admin/vendor" className="admin-nav-link" onClick={closeMenu}>🧾 Vendor / Bill</Link>
+            <Link href="/admin/pickup" className="admin-nav-link" onClick={closeMenu}>📦 Pickup / Delivery</Link>
+            <Link href="/admin/bills" className="admin-nav-link" onClick={closeMenu}>📋 Saved bills</Link>
+            <button type="button" onClick={() => { setTab('vendor'); closeMenu(); }} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
+          </div>
+          <div className="admin-drawer-section">
+            <span className="admin-drawer-section-label">Campus</span>
+            <button type="button" onClick={() => { setTab('colleges'); closeMenu(); }} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
+            <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
+            <button type="button" onClick={() => { setTab('notifications'); closeMenu(); }} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
+            <button type="button" onClick={() => { setTab('gatepass'); closeMenu(); }} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>🏫 VIT Chennai</button>
+          </div>
+          <div className="admin-drawer-section">
+            <span className="admin-drawer-section-label">System</span>
+            <button type="button" onClick={() => { setTab('settings'); closeMenu(); }} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
+          </div>
         </nav>
         <div className="admin-drawer-foot">
-          <button type="button" className="btn bout" onClick={handleLogout} style={{ width: '100%' }}>Log out</button>
+          <button type="button" className="btn bout admin-drawer-logout" onClick={handleLogout}>Log out</button>
         </div>
       </aside>
 
@@ -706,8 +788,8 @@ export default function AdminPage() {
         )}
         {tab === 'gatepass' && (
           <div className="gatepass-tab">
-            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Gate pass</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Show or print this letter at the gate for vendor entry.</p>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>VIT Chennai</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Gate pass for VIT Chennai campus. Show or print this letter at the gate for vendor entry.</p>
             <div className="gatepass-letter">
               <header className="gatepass-letterhead">
                 <div className="gatepass-logo-text">LaundroSwipe</div>
@@ -715,16 +797,13 @@ export default function AdminPage() {
                 <div className="gatepass-website">www.laundroswipe.com</div>
                 <div className="gatepass-letterhead-rule" />
               </header>
-              <p className="gatepass-ref">To be shown at the gate</p>
+              <p className="gatepass-ref">To be shown at the gate (VIT Chennai)</p>
               <p className="gatepass-date">Date: {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <h2 className="gatepass-subject">Permission Letter for Campus Entry</h2>
               <div className="gatepass-body">
                 <p>To whom it may concern,</p>
-                <p style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <img src="/profab-logo.png" alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 8 }} />
-                  <span>This is to certify that <strong>{VENDOR.name}</strong> are official partners of <strong>LaundroSwipe</strong> (LaundroSwipe.com).</span>
-                </p>
-                <p>They have received <strong>{tokensGenerated} pickup order{tokensGenerated !== 1 ? 's' : ''}</strong> and are here to drop off the clothes of students. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
+                <p>This is to certify that <strong>{VENDOR.name}</strong> are official partners of <strong>LaundroSwipe</strong> (LaundroSwipe.com).</p>
+                <p>They have received <strong>{vitChennaiOrderCount} pickup order{vitChennaiOrderCount !== 1 ? 's' : ''}</strong> from students of <strong>VIT CHENNAI</strong> and are here to drop off the clothes of students. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
                 <p>Kindly extend your cooperation.</p>
               </div>
               <div className="gatepass-signoff">
@@ -735,7 +814,7 @@ export default function AdminPage() {
               </div>
             </div>
             <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => window.print()} className="btn bp">
+              <button type="button" onClick={() => printGatePassLetter(VENDOR.name, vitChennaiOrderCount)} className="btn bp">
                 🖨️ Print / Save as PDF
               </button>
             </div>

@@ -59,7 +59,7 @@ export default function AdminPickupPage() {
       <h1 style={{ fontFamily: 'var(--fd)', fontSize: 22, marginBottom: 8, color: 'var(--b)' }}>Pickup / Delivery</h1>
       <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 20 }}>Enter token to confirm delivery of that order.</p>
 
-      <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+      <div className="vendor-card">
         <form onSubmit={handleLookup}>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Token number</label>
@@ -77,7 +77,7 @@ export default function AdminPickupPage() {
       </div>
 
       {order && (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+        <div className="vendor-card">
           <div style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ts)', marginBottom: 16 }}>
             <p><strong style={{ color: 'var(--tx)' }}>Order:</strong> {order.order_number} &nbsp;|&nbsp; <strong>Token:</strong> #{order.token}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>

@@ -8,7 +8,7 @@ html{overflow-x:hidden;scroll-behavior:smooth}
   --sh:0 1px 2px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04);
   --sh-card:0 2px 4px rgba(0,0,0,.04),0 6px 16px rgba(0,0,0,.06);
   --sh-elevated:0 4px 12px rgba(0,0,0,.06),0 12px 24px rgba(0,0,0,.08);
-  --fd:'Fraunces',serif;--fb:'DM Sans',sans-serif;
+  --fd:'Outfit',sans-serif;--fb:'Source Sans 3',sans-serif;
   --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;
   --safe-inline:max(16px,env(safe-area-inset-left));
   --safe-inline-end:max(16px,env(safe-area-inset-right));
@@ -205,12 +205,35 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
   .ds .dn2{font-size:16px}
 }
 
-/* Admin: responsive + interactive */
-.admin-root{display:flex;min-height:100vh;flex-direction:row;background:var(--bg);overflow-x:hidden}
-.admin-sidebar{width:260px;background:var(--bg-card);border-right:1px solid var(--bd);padding:24px 0;display:flex;flex-direction:column;flex-shrink:0}
-.admin-main{flex:1;margin-left:0;padding:20px 16px;min-width:0;overflow-x:auto;overflow-y:visible}
-.admin-nav-btn,.admin-nav-link{width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--rs);border:none;background:transparent;color:var(--ts);font-weight:500;cursor:pointer;font-size:14px;text-align:left;transition:background .2s,color .2s;min-height:44px}
-.admin-nav-btn:hover,.admin-nav-link:hover{background:var(--bg);color:var(--tx)}
+/* Admin: hamburger menu + drawer */
+.admin-root{display:flex;flex-direction:column;min-height:100vh;background:var(--bg);overflow-x:hidden}
+.admin-header{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:16px;height:56px;padding:0 16px 0 8px;background:var(--bg-card);border-bottom:1px solid var(--bd);box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.admin-hamburger{display:flex;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;padding:10px;border:none;background:transparent;border-radius:var(--rs);cursor:pointer;transition:background .2s;-webkit-tap-highlight-color:transparent}
+.admin-hamburger:hover{background:var(--bg)}
+.admin-hamburger:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.admin-hamburger-bar{display:block;width:20px;height:2px;background:var(--tx);border-radius:1px;transition:transform .25s,opacity .25s}
+.admin-hamburger:hover .admin-hamburger-bar{background:var(--b)}
+.admin-hamburger-open .admin-hamburger-bar:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.admin-hamburger-open .admin-hamburger-bar:nth-child(2){opacity:0}
+.admin-hamburger-open .admin-hamburger-bar:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.admin-header-title{font-family:var(--fd);font-size:18px;font-weight:700;color:var(--b);margin:0;letter-spacing:-.02em}
+.admin-drawer-overlay{position:fixed;inset:0;z-index:298;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);animation:adminFadeIn .2s ease}
+.admin-drawer{position:fixed;top:0;left:0;z-index:299;width:min(280px,85vw);max-width:280px;height:100vh;background:var(--bg-card);border-right:1px solid var(--bd);box-shadow:0 0 0 rgba(0,0,0,0);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .25s ease,box-shadow .25s ease;overflow-y:auto}
+.admin-drawer-open{transform:translateX(0);box-shadow:8px 0 24px rgba(0,0,0,.12)}
+.admin-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--bd);flex-shrink:0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg-card) 100%)}
+.admin-drawer-title{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--b);letter-spacing:-.02em}
+.admin-drawer-close{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:var(--rs);font-size:24px;line-height:1;color:var(--ts);cursor:pointer;transition:background .2s,color .2s}
+.admin-drawer-close:hover{background:var(--bg);color:var(--tx)}
+.admin-drawer-close:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.admin-drawer-nav{flex:1;padding:16px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+.admin-drawer-section{display:flex;flex-direction:column;gap:4px}
+.admin-drawer-section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--tm);padding:4px 12px 8px;margin:0}
+.admin-drawer-foot{padding:16px;border-top:1px solid var(--bd);flex-shrink:0}
+.admin-drawer-logout{width:100%;justify-content:center}
+@keyframes adminFadeIn{from{opacity:0}to{opacity:1}}
+.admin-main{flex:1;padding:20px 16px;min-width:0;overflow-x:auto;overflow-y:visible}
+.admin-nav-btn,.admin-nav-link{width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:none;background:transparent;color:var(--tx);font-weight:500;cursor:pointer;font-size:14px;text-align:left;transition:background .2s,color .2s;min-height:42px}
+.admin-nav-btn:hover,.admin-nav-link:hover{background:var(--bg);color:var(--b)}
 .admin-nav-btn:focus-visible,.admin-nav-link:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 .admin-nav-btn.active{background:var(--bl);color:var(--b);font-weight:600}
 .admin-nav-link{text-decoration:none}
@@ -240,13 +263,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 .admin-advance-btn:hover{background:var(--b);color:#fff}
 .admin-advance-btn:active{transform:scale(.97)}
 @media(max-width:900px){
-  .admin-root{flex-direction:column;flex-wrap:nowrap}
-  .admin-sidebar{width:100%;border-right:none;border-bottom:1px solid var(--bd);padding:12px 16px;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center}
-  .admin-sidebar .admin-logo{padding:0 12px 0 0;margin-right:8px;border-bottom:none;border-right:1px solid var(--bd)}
-  .admin-sidebar nav{display:flex;flex:1;flex-wrap:wrap;gap:6px;padding:0;min-width:0}
-  .admin-sidebar .admin-foot{padding:0;border-top:none;margin-left:auto}
-  .admin-nav-btn,.admin-nav-link{padding:10px 14px;width:auto;min-height:44px;border-radius:8px}
-  .admin-main{padding:16px 12px;padding-bottom:24px;overflow-x:auto}
+  .admin-main{padding:16px 12px;padding-bottom:24px}
   .admin-main h1{font-size:clamp(18px,4vw,22px)}
   .admin-table-wrap{margin:0 -12px;border-radius:0;max-width:100vw}
   .admin-table-wrap table{min-width:520px}
@@ -289,10 +306,27 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
   .vendor-item-btn{min-height:58px}
 }
 
+/* Gate pass: official letter with letterhead (on-screen preview; print uses dedicated window) */
+.gatepass-letter{background:#fff;border-radius:14px;padding:0;max-width:600px;box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid var(--bd);overflow:hidden}
+.gatepass-letterhead{text-align:center;padding:32px 28px 24px;background:linear-gradient(180deg,#f8fafc 0%,#fff 100%);border-bottom:2px solid var(--b)}
+.gatepass-logo-text{font-family:var(--fd);font-size:26px;font-weight:800;color:var(--b);letter-spacing:-.02em;margin-bottom:6px}
+.gatepass-tagline{font-size:12px;color:var(--ts);font-weight:500;margin-bottom:8px}
+.gatepass-website{font-size:11px;color:var(--tm);letter-spacing:.02em}
+.gatepass-letterhead-rule{height:0;border-bottom:1px solid var(--bd);margin-top:18px}
+.gatepass-letter .gatepass-ref{font-size:11px;color:var(--tm);text-transform:uppercase;letter-spacing:.08em;margin:28px 28px 10px}
+.gatepass-letter .gatepass-date{font-size:13px;color:var(--ts);margin:0 28px 22px}
+.gatepass-letter .gatepass-subject{font-family:var(--fd);font-size:18px;font-weight:700;color:var(--tx);margin:0 28px 22px;padding:0}
+.gatepass-letter .gatepass-body{padding:0 28px;font-size:14px;line-height:1.8;color:var(--tx)}
+.gatepass-letter .gatepass-body p{margin:0 0 16px}
+.gatepass-letter .gatepass-signoff{margin-top:32px;padding:0 28px 36px 32px}
+.gatepass-letter .gatepass-regards{font-size:14px;font-weight:600;color:var(--tx);margin:0 0 8px}
+.gatepass-letter .gatepass-team{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--b);margin:0 0 12px}
+.gatepass-letter .gatepass-contact{font-size:13px;color:var(--ts);margin:4px 0}
 /* Gate pass: print only the letter */
 @media print{
-  .admin-sidebar,.admin-foot{display:none!important}
+  .admin-header,.admin-drawer-overlay,.admin-drawer{display:none!important}
   .admin-main{padding:0!important}
   .gatepass-tab h1,.gatepass-tab > p,.gatepass-tab .btn{display:none!important}
   .gatepass-letter{box-shadow:none!important;border:1px solid #333!important;max-width:100%!important}
+  .gatepass-letterhead{background:#fff!important;border-bottom-color:#333!important}
 }
