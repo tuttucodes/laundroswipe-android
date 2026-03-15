@@ -52,7 +52,9 @@ export default function AdminPrintersPage() {
 
   const handleAddPrinter = () => {
     try {
-      addPrinter(selectedModelId, newName.trim() || PRINTER_MODELS.find((m) => m.id === selectedModelId)?.name ?? '');
+      const model = PRINTER_MODELS.find((m) => m.id === selectedModelId);
+      const nameToUse = newName.trim() || model?.name || '';
+      addPrinter(selectedModelId, nameToUse);
       setNewName('');
       setAdding(false);
       refresh();
