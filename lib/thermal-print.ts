@@ -10,18 +10,22 @@ export interface PrinterPrintConfig {
   charsPerLine: number;
 }
 
-const DEFAULT_CONFIG: PrinterPrintConfig = { paperWidthMm: 68, charsPerLine: 40 };
+const DEFAULT_CONFIG: PrinterPrintConfig = { paperWidthMm: 78, charsPerLine: 46 };
+
+/** Printed content width on paper (68-70mm); paper can be 78mm. */
+const CONTENT_WIDTH_MM = 70;
+const contentWidth = `${CONTENT_WIDTH_MM}mm`;
 
 function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
-  /* Wider, non-condensed font: larger size and letter-spacing for 68mm receipt. */
+  /* Wider, non-condensed font. */
   const fontCss = `font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:18px;font-weight:700;letter-spacing:0.04em;line-height:1.5`;
   return `
 *{margin:0;padding:0}
-html,body{width:${w};max-width:${w};min-width:${w};${fontCss};padding:2mm 2mm;margin:0;background:#fff;color:#000;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
+html,body{width:${w};max-width:${w};min-width:${w};${fontCss};padding:2mm;margin:0;background:#fff;color:#000;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 body{overflow:visible}
-.receipt{width:100%;max-width:100%;margin:0;text-align:center;padding:0}
+.receipt{width:${contentWidth};max-width:${contentWidth};margin:0 auto;text-align:center;padding:0}
 h2{text-align:center;font-size:22px;font-weight:700;letter-spacing:0.04em;margin:0 0 3mm}
 .meta{text-align:center;font-size:17px;font-weight:700;letter-spacing:0.03em;margin:0 0 3mm}
 p{margin:3mm 0;font-size:18px;font-weight:700;letter-spacing:0.04em;word-break:break-word;text-align:center}
@@ -37,8 +41,8 @@ td{text-align:left}
 .no-print{}
 @media print{
   .escpos-hint,.no-print{display:none!important}
-  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:2mm 2mm!important;margin:0!important;background:#fff!important}
-  .receipt{width:100%!important;max-width:100%!important}
+  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:2mm!important;margin:0!important;background:#fff!important}
+  .receipt{width:${contentWidth}!important;max-width:${contentWidth}!important;margin:0 auto!important}
   @page{size:${paperWidthMm}mm auto;margin:0}
 }
 `;

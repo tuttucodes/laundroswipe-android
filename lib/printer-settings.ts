@@ -80,7 +80,7 @@ export function getPrinterConfigForPrint(): { paperWidthMm: number; charsPerLine
   const def = getDefaultPrinter();
   const model = def ? PRINTER_MODELS.find((m) => m.id === def.modelId) : null;
   const forceDialog = s.preferPrintDialog !== false;
-  if (!model) return forceDialog ? { paperWidthMm: 68, charsPerLine: 40, forceDialog } : null;
+  if (!model) return forceDialog ? { paperWidthMm: 78, charsPerLine: 46, forceDialog } : null;
   return { paperWidthMm: model.paperWidthMm, charsPerLine: model.charsPerLine, forceDialog };
 }
 
