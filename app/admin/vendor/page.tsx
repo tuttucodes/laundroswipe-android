@@ -100,19 +100,21 @@ export default function VendorPage() {
       : '<tr><td colspan="2">No items</td></tr>';
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
+    const dateStr = new Date().toLocaleString();
     return `
 <h2>LaundroSwipe</h2>
 <p class="meta">Vendor name: Pro Fab Power Laundry</p>
-<p><strong>Token:</strong> #${o?.token ?? ''} <strong>Ord:</strong> ${o?.order_number ?? ''}</p>
+<p><strong>Token:</strong> #${o?.token ?? ''} <strong>Order:</strong> ${o?.order_number ?? ''}</p>
 <p><strong>Customer:</strong> ${(u.full_name ?? u.email ?? '—').toString().slice(0, 20)}</p>
 <p><strong>Phone:</strong> ${(u.phone ?? '—').toString().slice(0, 14)}</p>
+<p><strong>Date:</strong> ${dateStr}</p>
 <table>
 <thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>
-<p class="right">Subtotal: ₹${subtotal}</p>
-<p class="right conv">Conv fee: ₹${CONVENIENCE_FEE}</p>
-<p class="total right">TOTAL: ₹${total}</p>
+<p class="right receipt-summary">Subtotal: ₹${subtotal}</p>
+<p class="right conv">Convenience fee: ₹${CONVENIENCE_FEE}</p>
+<p class="total right">Total: ₹${total}</p>
 <p class="foot">Thank you!</p>
 `;
   };

@@ -41,7 +41,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 
 .tn{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);height:64px;padding:0 var(--safe-inline);display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bd);min-height:64px}
 .tn-logo{flex-shrink:0;border-radius:10px;object-fit:contain}
-.tn h1{font-family:var(--fd);font-size:clamp(17px,4.5vw,20px);font-weight:700;color:var(--b);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tn h1{font-family:var(--fd);font-size:clamp(17px,4.5vw,20px);font-weight:700;color:var(--b);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;min-width:0}
+.tn-notif{margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;width:44px;height:44px;border:none;background:none;color:var(--b);font-size:20px;cursor:pointer;border-radius:12px;-webkit-tap-highlight-color:transparent}
+.tn-notif:hover{background:var(--bl)}
+.tn-notif:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.tn-notif-icon{font-size:22px;line-height:1}
+.tn-notif-badge{position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 4px;font-size:10px;font-weight:700;line-height:16px;text-align:center;color:#fff;background:var(--o);border-radius:8px;border:2px solid rgba(255,255,255,.94)}
 .bn{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:var(--bn-height);min-height:var(--bn-height);background:var(--bg-card);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-around;z-index:100;padding-bottom:var(--safe-bottom);padding-left:var(--safe-inline);padding-right:var(--safe-inline-end);box-shadow:0 -2px 12px rgba(0,0,0,.04)}
 .touch-target{min-height:44px;min-width:44px;touch-action:manipulation}
 .ni{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 16px;min-height:48px;justify-content:center;border-radius:12px;cursor:pointer;transition:color .2s,background .2s,transform .15s;border:none;background:none;color:var(--tm);font-size:11px;font-family:var(--fb);font-weight:500;-webkit-tap-highlight-color:transparent;touch-action:manipulation}

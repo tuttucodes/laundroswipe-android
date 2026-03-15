@@ -200,6 +200,7 @@ export default function LaundroApp() {
   const [editProfileSaving, setEditProfileSaving] = useState(false);
   const [notifications, setNotifications] = useState<UserNotificationRow[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [swipeProgress, setSwipeProgress] = useState(0);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlotRow[]>([]);
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
@@ -517,6 +518,17 @@ export default function LaundroApp() {
       })
       .finally(() => setNotificationsLoading(false));
   }, [screen]);
+
+  // Fetch unread count for header badge when user is on main screens
+  useEffect(() => {
+    if (!user?.sid || !LSApi.hasSupabase || !['home', 'schedule', 'orders', 'profile', 'order-detail', 'my-bills'].includes(screen)) return;
+    LSApi.fetchNotifications()
+      .then((list) => {
+        if (list) setUnreadNotificationCount(list.filter((n) => !n.read_at).length);
+        else setUnreadNotificationCount(0);
+      })
+      .catch(() => setUnreadNotificationCount(0));
+  }, [user?.sid, screen]);
 
   const handleObNext = () => {
     if (obSlide < 2) setObSlide((obSlide + 1) as 0 | 1 | 2);
@@ -1486,7 +1498,12 @@ export default function LaundroApp() {
                   border: '1px solid var(--bd)',
                 }}
                 onClick={() => {
-                  if (!n.read_at) LSApi.markNotificationRead(n.id).then(() => setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))));
+                  if (!n.read_at) {
+                    LSApi.markNotificationRead(n.id).then(() => {
+                      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
+                      setUnreadNotificationCount((c) => Math.max(0, c - 1));
+                    });
+                  }
                 }}
               >
                 <strong style={{ display: 'block', marginBottom: 4 }}>{n.title}</strong>
@@ -1525,6 +1542,17 @@ export default function LaundroApp() {
         <header className="tn">
           <img src="/icon-192.png" alt="" className="tn-logo" width={36} height={36} />
           <h1>LaundroSwipe</h1>
+          <button
+            type="button"
+            className="tn-notif touch-target"
+            onClick={() => go('notifications')}
+            aria-label={unreadNotificationCount > 0 ? `${unreadNotificationCount} unread notifications` : 'Notifications'}
+          >
+            <span className="tn-notif-icon" aria-hidden>🔔</span>
+            {unreadNotificationCount > 0 && (
+              <span className="tn-notif-badge" aria-hidden>{unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}</span>
+            )}
+          </button>
         </header>
         <main className="scr">
           <div className="si" key={screen}>

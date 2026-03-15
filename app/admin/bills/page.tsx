@@ -23,7 +23,7 @@ function billToHtml(b: VendorBillRow) {
       <thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <p class="right">Subtotal: ₹${b.subtotal}</p>
+    <p class="right receipt-summary">Subtotal: ₹${b.subtotal}</p>
     <p class="right conv">Convenience fee: ₹${b.convenience_fee}</p>
     <p class="total right">Total: ₹${b.total}</p>
     <p class="foot">Thank you!</p>

@@ -34,9 +34,11 @@ th,td{padding:2.5mm 2mm}
 th{font-weight:700;text-align:left}
 td{text-align:left}
 .right{text-align:right}
-.total{font-weight:700;font-size:20px;letter-spacing:0.04em;padding-top:3mm;margin-top:3mm;text-align:center}
-.conv{font-size:17px;font-weight:700;letter-spacing:0.03em;text-align:center}
-.foot{text-align:center;margin-top:4mm;font-size:17px;font-weight:700;letter-spacing:0.03em}
+.receipt-summary{display:block;margin-top:4mm}
+.receipt-divider{border-top:2px solid #000;margin:4mm 0 2mm;padding-top:3mm}
+.total{font-weight:700;font-size:20px;letter-spacing:0.04em;padding-top:2mm;margin-top:0;text-align:right;border-top:2px solid #000}
+.conv{font-size:17px;font-weight:700;letter-spacing:0.03em;text-align:right}
+.foot{text-align:center;margin-top:5mm;font-size:18px;font-weight:700;letter-spacing:0.03em}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
