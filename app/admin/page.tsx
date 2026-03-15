@@ -432,48 +432,52 @@ export default function AdminPage() {
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Orders</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Manage pickups and status</p>
-            <div className="admin-stat-grid">
-              <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--b)' }}>{totalOrders}</div>
-                <div className="admin-stat-label">Orders (tokens)</div>
+            {!loading && (
+              <div className="admin-stat-grid">
+                <div className="admin-stat-card">
+                  <div className="admin-stat-value" style={{ color: 'var(--b)' }}>{totalOrders}</div>
+                  <div className="admin-stat-label">Orders (tokens)</div>
+                </div>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-value" style={{ color: 'var(--t)' }}>{billsGenerated}</div>
+                  <div className="admin-stat-label">Bills generated</div>
+                </div>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-value" style={{ color: 'var(--b)' }}>₹{totalBillAmount.toFixed(0)}</div>
+                  <div className="admin-stat-label">Total bill amount</div>
+                </div>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{convenienceFeeToPay}</div>
+                  <div className="admin-stat-label">Convenience fee (bills × ₹{CONVENIENCE_FEE})</div>
+                </div>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-value" style={{ color: 'var(--ok)', fontSize: 20 }}>₹{(totalBillAmount + convenienceFeeToPay).toFixed(0)}</div>
+                  <div className="admin-stat-label">Total</div>
+                </div>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-value" style={{ color: 'var(--o)' }}>{active}</div>
+                  <div className="admin-stat-label">Active</div>
+                </div>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-value" style={{ color: 'var(--ok)' }}>{delivered}</div>
+                  <div className="admin-stat-label">Delivered</div>
+                </div>
               </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--t)' }}>{billsGenerated}</div>
-                <div className="admin-stat-label">Bills generated</div>
+            )}
+            {!loading && (
+              <div className="admin-filter-row">
+                {['all', 'scheduled', 'processing', 'delivered'].map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFilter(f)}
+                    className={`admin-filter-btn ${filter === f ? 'active' : ''}`}
+                  >
+                    {f === 'all' ? 'All' : statusLabel(f)}
+                  </button>
+                ))}
               </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--b)' }}>₹{totalBillAmount.toFixed(0)}</div>
-                <div className="admin-stat-label">Total bill amount</div>
-              </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{convenienceFeeToPay}</div>
-                <div className="admin-stat-label">Convenience fee (bills × ₹{CONVENIENCE_FEE})</div>
-              </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--ok)', fontSize: 20 }}>₹{(totalBillAmount + convenienceFeeToPay).toFixed(0)}</div>
-                <div className="admin-stat-label">Total</div>
-              </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--o)' }}>{active}</div>
-                <div className="admin-stat-label">Active</div>
-              </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-value" style={{ color: 'var(--ok)' }}>{delivered}</div>
-                <div className="admin-stat-label">Delivered</div>
-              </div>
-            </div>
-            <div className="admin-filter-row">
-              {['all', 'scheduled', 'processing', 'delivered'].map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => setFilter(f)}
-                  className={`admin-filter-btn ${filter === f ? 'active' : ''}`}
-                >
-                  {f === 'all' ? 'All' : statusLabel(f)}
-                </button>
-              ))}
-            </div>
+            )}
             {loading ? (
               <>
                 <div className="admin-stat-grid" aria-hidden>
