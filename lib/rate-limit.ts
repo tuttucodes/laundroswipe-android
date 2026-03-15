@@ -31,9 +31,9 @@ export function checkAdminRateLimit(request: Request): { ok: true } | { ok: fals
   if (!cleanupTimer) {
     cleanupTimer = setInterval(() => {
       const n = Date.now();
-      for (const [k, v] of store.entries()) {
+      Array.from(store.entries()).forEach(([k, v]) => {
         if (n >= v.resetAt) store.delete(k);
-      }
+      });
     }, CLEANUP_INTERVAL);
   }
   return { ok: true };
