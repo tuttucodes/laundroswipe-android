@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { Bell, Shirt, Sparkles, Flame, Zap, Footprints, type LucideIcon } from 'lucide-react';
 import {
   COLLEGES,
   SERVICES,
@@ -15,6 +16,15 @@ import {
 import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
+
+const SERVICE_ICONS: Record<string, LucideIcon> = {
+  wash_fold: Shirt,
+  wash_iron: Shirt,
+  dry_clean: Sparkles,
+  iron_only: Flame,
+  express: Zap,
+  shoe_clean: Footprints,
+};
 
 type Screen =
   | 'splash'
@@ -1548,7 +1558,7 @@ export default function LaundroApp() {
             onClick={() => go('notifications')}
             aria-label={unreadNotificationCount > 0 ? `${unreadNotificationCount} unread notifications` : 'Notifications'}
           >
-            <span className="tn-notif-icon" aria-hidden>🔔</span>
+            <Bell className="tn-notif-icon" size={22} aria-hidden />
             {unreadNotificationCount > 0 && (
               <span className="tn-notif-badge" aria-hidden>{unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}</span>
             )}
@@ -1568,17 +1578,22 @@ export default function LaundroApp() {
                 </div>
                 <p className="st">Services</p>
                 <div className="sg">
-                  {SERVICES.filter((s) => !s.comingSoon).map((s) => (
-                    <button
-                      type="button"
-                      key={s.id}
-                      className="sc"
-                      onClick={goToSchedule}
-                    >
-                      <span className="ic">{s.emoji}</span>
-                      <span className="nm">{s.name}</span>
-                    </button>
-                  ))}
+                  {SERVICES.filter((s) => !s.comingSoon).map((s) => {
+                    const Icon = SERVICE_ICONS[s.id] ?? Shirt;
+                    return (
+                      <button
+                        type="button"
+                        key={s.id}
+                        className="sc"
+                        onClick={goToSchedule}
+                      >
+                        <span className="ic sc-icon">
+                          <Icon size={28} strokeWidth={1.8} />
+                        </span>
+                        <span className="nm">{s.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
                 <p className="fn">LaundroSwipe — schedule pickup from your favorite laundry company in one swipe.</p>
                 <p className="st">Vendor</p>
