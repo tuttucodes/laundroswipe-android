@@ -27,13 +27,13 @@ th{text-align:left;font-weight:700}
 `;
 
 /**
- * Opens a new window with the receipt HTML and triggers print after a short delay
- * so older Android devices have time to render. User selects Bluetooth thermal
- * printer in the system print dialog.
+ * Opens a new window with the receipt HTML and triggers print. Window stays open
+ * so user can choose "Bluetooth printer" instead of "Save as PDF" in the dialog.
  */
 export function printThermalReceipt(title: string, bodyHtml: string): boolean {
   const w = window.open('', '_blank', 'width=320,height=480,menubar=no,toolbar=no');
   if (!w) return false;
+  const closeLink = '<p class="foot" style="margin-top:8px"><a href="#" onclick="window.close();return false" style="color:#666;font-size:10px">Close window after printing</a></p>';
   const doc = w.document;
   doc.open();
   doc.write(
@@ -43,20 +43,19 @@ export function printThermalReceipt(title: string, bodyHtml: string): boolean {
       '<title>' + escapeHtml(title) + '</title>' +
       '<style>' + THERMAL_STYLES + '</style></head><body><div class="receipt">' +
       bodyHtml +
+      closeLink +
       '</div></body></html>'
   );
   doc.close();
   w.focus();
-  // Delay so old Android WebView finishes layout before print dialog
   setTimeout(() => {
     try {
       w.print();
     } catch (_) {
       // ignore
     }
-    // Close after print dialog dismisses; user may need to select Bluetooth printer
-    setTimeout(() => w.close(), 500);
-  }, 600);
+    // Don't auto-close: user may need to change destination from PDF to Bluetooth printer
+  }, 500);
   return true;
 }
 

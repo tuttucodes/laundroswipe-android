@@ -116,6 +116,39 @@ export default function VendorPage() {
 `;
   };
 
+  const buildReceiptPlainText = () => {
+    const o = order as OrderRow | null;
+    const u = (user ?? {}) as Partial<UserRow>;
+    const lines = [
+      'LaundroSwipe',
+      'Vendor: Pro Fab Power Laundry',
+      `Token: #${o?.token ?? ''}  Order: ${o?.order_number ?? ''}`,
+      `Customer: ${(u.full_name ?? u.email ?? '—').toString().slice(0, 24)}`,
+      `Phone: ${(u.phone ?? '—').toString().slice(0, 14)}`,
+      '---',
+      ...lineItems.map((l) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`),
+      '---',
+      `Subtotal: ₹${subtotal}`,
+      `Conv fee: ₹${CONVENIENCE_FEE}`,
+      `TOTAL: ₹${total}`,
+      'Thank you!',
+    ];
+    return lines.join('\n');
+  };
+
+  const handleCopyReceipt = async () => {
+    if (lineItems.length === 0) {
+      showToast('Add at least one item', 'er');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(buildReceiptPlainText());
+      showToast('Copied. Paste in your printer app to print.', 'ok');
+    } catch {
+      showToast('Copy failed', 'er');
+    }
+  };
+
   const handleSaveBill = async () => {
     if (lineItems.length === 0) {
       showToast('Add at least one item', 'er');
@@ -293,6 +326,7 @@ export default function VendorPage() {
 
             <div className="vendor-action-row" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <button type="button" onClick={handlePrint} className="vendor-btn-primary" style={{ flex: '1 1 200px' }}>Print bill</button>
+              <button type="button" onClick={handleCopyReceipt} disabled={lineItems.length === 0} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>Copy receipt</button>
               <button
                 type="button"
                 onClick={handleSaveBill}
@@ -305,7 +339,7 @@ export default function VendorPage() {
               <button type="button" onClick={handleNewBill} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>New bill</button>
               <Link href="/admin/bills" className="vendor-btn-secondary" style={{ flex: '1 1 200px', textDecoration: 'none' }}>View saved bills</Link>
             </div>
-            <p style={{ marginTop: 10, fontSize: 12, color: 'var(--ts)' }}>2&quot; Bluetooth thermal: in the print dialog, select your printer. Works on older Android too.</p>
+            <p style={{ marginTop: 10, fontSize: 12, color: 'var(--ts)' }}>If it says &quot;Save as PDF&quot;, tap the destination and choose your Bluetooth printer. Or use Copy receipt and paste in your printer app.</p>
           </div>
         </div>
       )}

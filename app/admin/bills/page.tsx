@@ -29,10 +29,32 @@ function billToHtml(b: VendorBillRow) {
   `;
 }
 
+function billToPlainText(b: VendorBillRow): string {
+  const items = Array.isArray(b.line_items) && b.line_items.length
+    ? b.line_items.map((l: { label: string; qty: number; price: number }) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`)
+    : [];
+  return [
+    'LaundroSwipe',
+    'Vendor: Pro Fab Power Laundry',
+    `Token: #${b.order_token}  Order: ${b.order_number ?? '—'}`,
+    `Customer: ${b.customer_name ?? '—'}`,
+    `Phone: ${b.customer_phone ?? '—'}`,
+    `Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}`,
+    '---',
+    ...items,
+    '---',
+    `Subtotal: ₹${b.subtotal}`,
+    `Conv fee: ₹${b.convenience_fee}`,
+    `TOTAL: ₹${b.total}`,
+    'Thank you!',
+  ].join('\n');
+}
+
 export default function BillsPage() {
   const [bills, setBills] = useState<VendorBillRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewingBill, setViewingBill] = useState<VendorBillRow | null>(null);
+  const [copyMsg, setCopyMsg] = useState<string | null>(null);
 
   useEffect(() => {
     LSApi.fetchVendorBills().then((data) => {
@@ -76,6 +98,17 @@ export default function BillsPage() {
 
   const printBill = (b: VendorBillRow) => {
     printThermalReceipt(`Bill #${b.order_token}`, billToHtml(b));
+  };
+
+  const copyBill = async (b: VendorBillRow) => {
+    try {
+      await navigator.clipboard.writeText(billToPlainText(b));
+      setCopyMsg('Copied. Paste in your printer app to print.');
+      setTimeout(() => setCopyMsg(null), 3000);
+    } catch {
+      setCopyMsg('Copy failed');
+      setTimeout(() => setCopyMsg(null), 2000);
+    }
   };
 
   return (
@@ -147,8 +180,10 @@ export default function BillsPage() {
             </div>
             <style>{`.bill-view-content table{width:100%;border-collapse:collapse}.bill-view-content .right{text-align:right}.bill-view-content .total{font-weight:700;border-top:2px solid #000;padding-top:4px;margin-top:4px}.bill-view-content .conv{color:#666}.bill-view-content h2{text-align:center;margin:0 0 8px}.bill-view-content p{margin:4px 0}`}</style>
             <div className="bill-view-content" style={{ fontFamily: 'system-ui', fontSize: 13, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: billToHtml(viewingBill) }} />
+            {copyMsg && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--ok)' }}>{copyMsg}</p>}
             <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
               <button type="button" onClick={() => printBill(viewingBill)} className="vendor-btn-primary" style={{ flex: 1 }}>Print</button>
+              <button type="button" onClick={() => copyBill(viewingBill)} className="vendor-btn-secondary" style={{ flex: 1 }}>Copy receipt</button>
               <button type="button" onClick={() => setViewingBill(null)} className="vendor-btn-secondary" style={{ flex: 1 }}>Close</button>
             </div>
           </div>
