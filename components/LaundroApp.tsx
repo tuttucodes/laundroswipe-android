@@ -1520,7 +1520,7 @@ export default function LaundroApp() {
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingVendor(vendorProfile ?? DEFAULT_VENDOR_PROFILE); } }}
                 >
-                  <span className="ic" style={{ fontSize: 24 }}>🧺</span>
+                  <img src="/profab-logo.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 8, flexShrink: 0 }} />
                   <span className="nm" style={{ fontWeight: 600 }}>{vendorProfile?.name ?? DEFAULT_VENDOR_PROFILE.name}</span>
                 </div>
                 <div className="hiw">
@@ -1585,7 +1585,11 @@ export default function LaundroApp() {
                         role="button"
                         tabIndex={0}
                       >
-                        <span className="em">{v.emoji}</span>
+                        {v.id === 'profab' ? (
+                          <img src="/profab-logo.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
+                        ) : (
+                          <span className="em">{v.emoji}</span>
+                        )}
                         <div className="inf">
                           <div className="sn">{v.name}</div>
                           <div className="sd">{v.location}</div>
@@ -1947,8 +1951,11 @@ export default function LaundroApp() {
         {viewingVendor && (
           <div className="bill-popup-overlay" onClick={() => setViewingVendor(null)} role="dialog" aria-modal="true" aria-label="Vendor info">
             <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>{viewingVendor.name}</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <img src="/profab-logo.png" alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 10 }} />
+                  <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>{viewingVendor.name}</h3>
+                </div>
                 <button type="button" className="btn bout bsm" onClick={() => setViewingVendor(null)} aria-label="Close">Close</button>
               </div>
               {viewingVendor.brief && (

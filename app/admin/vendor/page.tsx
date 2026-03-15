@@ -98,7 +98,9 @@ export default function VendorPage() {
       : '<tr><td colspan="2">No items</td></tr>';
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
+    const logoUrl = typeof window !== 'undefined' ? window.location.origin + '/profab-logo.png' : '/profab-logo.png';
     return `
+<img src="${logoUrl}" alt="ProFab" style="height:40px;object-fit:contain;display:block;margin:0 auto 6px" />
 <h2>LaundroSwipe</h2>
 <p class="meta">Pro Fab Power Laundry</p>
 <p><strong>Token:</strong> #${o?.token ?? ''} <strong>Ord:</strong> ${o?.order_number ?? ''}</p>

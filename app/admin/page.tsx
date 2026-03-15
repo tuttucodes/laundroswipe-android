@@ -44,6 +44,9 @@ export default function AdminPage() {
   const [vendorPricing, setVendorPricing] = useState('');
   const [vendorProfileLoading, setVendorProfileLoading] = useState(false);
   const [vendorProfileSaving, setVendorProfileSaving] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('admin_logged') : null;
@@ -238,6 +241,7 @@ export default function AdminPage() {
       <div className="login-wrap">
         <div className="login-card">
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <img src="/profab-logo.png" alt="ProFab" style={{ height: 56, objectFit: 'contain', marginBottom: 12 }} />
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Admin</h1>
             <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 4 }}>Pro Fab Power Laundry</p>
           </div>
@@ -261,27 +265,40 @@ export default function AdminPage() {
 
   return (
     <div className="admin-root">
-      <aside className="admin-sidebar">
-        <div className="admin-logo" style={{ padding: '0 24px 24px', borderBottom: '1px solid var(--bd)' }}>
-          <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, color: 'var(--b)' }}>LaundroSwipe Admin</h2>
+      <header className="admin-header">
+        <button type="button" className={`admin-hamburger ${menuOpen ? 'admin-hamburger-open' : ''}`} onClick={() => setMenuOpen((o) => !o)} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>
+          <span className="admin-hamburger-bar" />
+          <span className="admin-hamburger-bar" />
+          <span className="admin-hamburger-bar" />
+        </button>
+        <h2 className="admin-header-title">LaundroSwipe Admin</h2>
+      </header>
+
+      {menuOpen && <div className="admin-drawer-overlay" onClick={closeMenu} aria-hidden />}
+
+      <aside className={`admin-drawer ${menuOpen ? 'admin-drawer-open' : ''}`}>
+        <div className="admin-drawer-head">
+          <span className="admin-drawer-title">Menu</span>
+          <button type="button" className="admin-drawer-close" onClick={closeMenu} aria-label="Close menu">×</button>
         </div>
-        <nav style={{ padding: 16, flex: 1 }}>
-          <button type="button" onClick={() => setTab('orders')} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
-          <button type="button" onClick={() => setTab('users')} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
-          <Link href="/admin/vendor" className="admin-nav-link">🧾 Vendor / Bill</Link>
-          <Link href="/admin/pickup" className="admin-nav-link">📦 Pickup / Delivery</Link>
-          <Link href="/admin/bills" className="admin-nav-link">📋 Saved bills</Link>
-          <button type="button" onClick={() => setTab('colleges')} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
-          <button type="button" onClick={() => setTab('schedule')} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
-          <button type="button" onClick={() => setTab('notifications')} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
-          <button type="button" onClick={() => setTab('vendor')} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
-          <button type="button" onClick={() => setTab('gatepass')} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>📄 Gate pass</button>
-          <button type="button" onClick={() => setTab('settings')} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
+        <nav className="admin-drawer-nav">
+          <button type="button" onClick={() => { setTab('orders'); closeMenu(); }} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
+          <button type="button" onClick={() => { setTab('users'); closeMenu(); }} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
+          <Link href="/admin/vendor" className="admin-nav-link" onClick={closeMenu}>🧾 Vendor / Bill</Link>
+          <Link href="/admin/pickup" className="admin-nav-link" onClick={closeMenu}>📦 Pickup / Delivery</Link>
+          <Link href="/admin/bills" className="admin-nav-link" onClick={closeMenu}>📋 Saved bills</Link>
+          <button type="button" onClick={() => { setTab('colleges'); closeMenu(); }} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
+          <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
+          <button type="button" onClick={() => { setTab('notifications'); closeMenu(); }} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
+          <button type="button" onClick={() => { setTab('vendor'); closeMenu(); }} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
+          <button type="button" onClick={() => { setTab('gatepass'); closeMenu(); }} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>📄 Gate pass</button>
+          <button type="button" onClick={() => { setTab('settings'); closeMenu(); }} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
         </nav>
-        <div className="admin-foot" style={{ padding: 16, borderTop: '1px solid var(--bd)' }}>
+        <div className="admin-drawer-foot">
           <button type="button" className="btn bout" onClick={handleLogout} style={{ width: '100%' }}>Log out</button>
         </div>
       </aside>
+
       <main className="admin-main">
         {tab === 'orders' && (
           <>
@@ -691,21 +708,31 @@ export default function AdminPage() {
           <div className="gatepass-tab">
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Gate pass</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Show or print this letter at the gate for vendor entry.</p>
-            <div className="gatepass-letter" style={{ background: '#fff', borderRadius: 14, padding: '32px 28px', maxWidth: 560, boxShadow: '0 2px 8px rgba(0,0,0,.06)', border: '1px solid var(--bd)' }}>
-              <p style={{ fontSize: 12, color: 'var(--tm)', marginBottom: 20 }}>To be shown at the gate</p>
-              <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, fontWeight: 700, color: 'var(--b)', marginBottom: 20 }}>Permission letter for campus entry</h2>
-              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--tx)', marginBottom: 16 }}>
-                This is to certify that <strong>{VENDOR.name}</strong> are official partners of <strong>LaundroSwipe.com</strong>.
-              </p>
-              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--tx)', marginBottom: 16 }}>
-                They have received <strong>{tokensGenerated} pickup order{tokensGenerated !== 1 ? 's' : ''}</strong> and are here to drop off the clothes of students. Please allow these vendors to pass through the gate so they can complete the deliveries and work properly.
-              </p>
-              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--tx)', marginBottom: 24 }}>
-                Kindly extend your cooperation.
-              </p>
-              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--tx)' }}>With regards,</p>
-              <p style={{ fontFamily: 'var(--fd)', fontSize: 16, fontWeight: 700, color: 'var(--b)' }}>Team LaundroSwipe</p>
-              <p style={{ fontSize: 12, color: 'var(--tm)', marginTop: 24 }}>LaundroSwipe.com · {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <div className="gatepass-letter">
+              <header className="gatepass-letterhead">
+                <div className="gatepass-logo-text">LaundroSwipe</div>
+                <div className="gatepass-tagline">Your Laundry Sorted in One Swipe</div>
+                <div className="gatepass-website">www.laundroswipe.com</div>
+                <div className="gatepass-letterhead-rule" />
+              </header>
+              <p className="gatepass-ref">To be shown at the gate</p>
+              <p className="gatepass-date">Date: {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <h2 className="gatepass-subject">Permission Letter for Campus Entry</h2>
+              <div className="gatepass-body">
+                <p>To whom it may concern,</p>
+                <p style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <img src="/profab-logo.png" alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 8 }} />
+                  <span>This is to certify that <strong>{VENDOR.name}</strong> are official partners of <strong>LaundroSwipe</strong> (LaundroSwipe.com).</span>
+                </p>
+                <p>They have received <strong>{tokensGenerated} pickup order{tokensGenerated !== 1 ? 's' : ''}</strong> and are here to drop off the clothes of students. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
+                <p>Kindly extend your cooperation.</p>
+              </div>
+              <div className="gatepass-signoff">
+                <p className="gatepass-regards">With regards,</p>
+                <p className="gatepass-team">Team LaundroSwipe</p>
+                <p className="gatepass-contact">Phone: +91 90744 17293</p>
+                <p className="gatepass-contact">Email: support@laundroswipe.com</p>
+              </div>
             </div>
             <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <button type="button" onClick={() => window.print()} className="btn bp">
@@ -719,7 +746,10 @@ export default function AdminPage() {
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Settings</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Vendor and app configuration</p>
             <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 600 }}>
-              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, marginBottom: 20 }}>Vendor Details</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+                <img src="/profab-logo.png" alt="" style={{ width: 56, height: 56, objectFit: 'contain', borderRadius: 10 }} />
+                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0 }}>Vendor Details</h3>
+              </div>
               <div style={{ marginBottom: 18 }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Vendor Name</label>
                 <input readOnly value={VENDOR.name} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />

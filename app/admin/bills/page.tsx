@@ -6,11 +6,12 @@ import { LSApi } from '@/lib/api';
 import type { VendorBillRow } from '@/lib/api';
 import { CONVENIENCE_FEE } from '@/lib/constants';
 
-function billToHtml(b: VendorBillRow) {
+function billToHtml(b: VendorBillRow, logoUrl: string = '/profab-logo.png') {
   const rows = Array.isArray(b.line_items) && b.line_items.length
     ? b.line_items.map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')
     : '<tr><td colspan="2">No items</td></tr>';
   return `
+    <img src="${logoUrl}" alt="ProFab" style="height:40px;object-fit:contain;display:block;margin:0 auto 6px" />
     <h2>LaundroSwipe</h2>
     <p class="meta">Pro Fab Power Laundry</p>
     <p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p>
@@ -74,11 +75,12 @@ export default function BillsPage() {
   };
 
   const printBill = (b: VendorBillRow) => {
-    const html = billToHtml(b);
+    const logoUrl = typeof window !== 'undefined' ? window.location.origin + '/profab-logo.png' : '/profab-logo.png';
+    const html = billToHtml(b, logoUrl);
     const w = window.open('', '_blank', 'width=320,height=480');
     if (!w) return;
     w.document.write(`
-      <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${b.order_token}</title>
+      <!DOCTYPE html><html><head><meta charset="UTF-8"><base href="${typeof window !== 'undefined' ? window.location.origin + '/' : ''}" /><title>Bill #${b.order_token}</title>
       <style>
       body{font-family:system-ui,sans-serif;font-size:11px;padding:8px;margin:0;width:58mm;max-width:58mm}
       table{width:100%;border-collapse:collapse;font-size:10px}
