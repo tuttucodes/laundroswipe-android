@@ -1138,6 +1138,9 @@ export default function LaundroApp() {
           {' · '}
           <Link href="/terms">Terms</Link>
         </p>
+        <p className="aft" style={{ marginTop: 12, fontSize: 13 }}>
+          <Link href="/admin" style={{ color: 'var(--ts)' }}>Admin login</Link>
+        </p>
       </div>
     );
   }
