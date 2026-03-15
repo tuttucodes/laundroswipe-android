@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Bell, Shirt, Sparkles, Flame, Zap, Footprints, type LucideIcon } from 'lucide-react';
+import { SwipeToConfirm } from '@/components/SwipeToConfirm';
 import {
   COLLEGES,
   SERVICES,
@@ -211,7 +212,6 @@ export default function LaundroApp() {
   const [notifications, setNotifications] = useState<UserNotificationRow[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
-  const [swipeProgress, setSwipeProgress] = useState(0);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlotRow[]>([]);
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
   const [scheduleConfigLoaded, setScheduleConfigLoaded] = useState(false);
@@ -219,7 +219,6 @@ export default function LaundroApp() {
   const [vendorProfile, setVendorProfile] = useState<VendorProfileRow | null>(null);
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
   const [ordersListLoading, setOrdersListLoading] = useState(false);
-  const swipeTrackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user?.sid && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.sid) === '1') {
@@ -436,67 +435,6 @@ export default function LaundroApp() {
     });
   }, [screen]);
 
-  useEffect(() => {
-    if (screen !== 'schedule' || sd.step !== 3) return;
-    const onMouseMove = (e: MouseEvent) => {
-      if (swipeStartRef.current) {
-        const start = swipeStartRef.current;
-        const p = Math.max(0, Math.min(100, ((e.clientX - start.left) / start.width) * 100));
-        if (p >= 80 && !swipeReached80Ref.current) {
-          swipeReached80Ref.current = true;
-          setSwipeAtThreshold(true);
-          if (navigator.vibrate) navigator.vibrate(10);
-        }
-        swipeProgressRef.current = p;
-        setSwipeProgress(p);
-      }
-    };
-    const onMouseUp = () => {
-      if (swipeStartRef.current) swipeEndRef.current();
-    };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-  }, [screen, sd.step]);
-
-  // Non-passive touch on swipe track so we can preventDefault and stop back/scroll
-  useEffect(() => {
-    const track = swipeTrackRef.current;
-    if (!track) return;
-    const onTouchMove = (e: TouchEvent) => {
-      if (swipeStartRef.current) {
-        e.preventDefault();
-        const start = swipeStartRef.current;
-        const clientX = e.touches[0].clientX;
-        const p = Math.max(0, Math.min(100, ((clientX - start.left) / start.width) * 100));
-        if (p >= 80 && !swipeReached80Ref.current) {
-          swipeReached80Ref.current = true;
-          setSwipeAtThresholdRef.current(true);
-          if (navigator.vibrate) navigator.vibrate(10);
-        }
-        swipeProgressRef.current = p;
-        setSwipeProgress(p);
-      }
-    };
-    const onTouchEnd = (e: TouchEvent) => {
-      if (swipeStartRef.current) {
-        e.preventDefault();
-        swipeEndRef.current();
-      }
-    };
-    track.addEventListener('touchmove', onTouchMove, { passive: false });
-    track.addEventListener('touchend', onTouchEnd, { passive: false });
-    track.addEventListener('touchcancel', onTouchEnd, { passive: false });
-    return () => {
-      track.removeEventListener('touchmove', onTouchMove);
-      track.removeEventListener('touchend', onTouchEnd);
-      track.removeEventListener('touchcancel', onTouchEnd);
-    };
-  }, [screen, sd.step]);
-
   // Once logged in, never show login again — redirect to home
   useEffect(() => {
     if (screen === 'login' && user) go('home');
@@ -517,14 +455,19 @@ export default function LaundroApp() {
     }
   }, [screen, user]);
 
-  // Load notifications when opening notifications screen
+  // Load notifications when opening notifications screen; sync header badge with fetched list
   useEffect(() => {
     if (screen !== 'notifications' || !LSApi.hasSupabase) return;
     setNotificationsLoading(true);
     LSApi.fetchNotifications()
       .then((list) => {
-        if (list) setNotifications(list);
-        else setNotifications([]);
+        if (list) {
+          setNotifications(list);
+          setUnreadNotificationCount(list.filter((n) => !n.read_at).length);
+        } else {
+          setNotifications([]);
+          setUnreadNotificationCount(0);
+        }
       })
       .finally(() => setNotificationsLoading(false));
   }, [screen]);
@@ -888,79 +831,6 @@ export default function LaundroApp() {
     }
     setOrderSubmitting(false);
   };
-
-  const swipeStartRef = useRef<{ left: number; width: number } | null>(null);
-  const swipeProgressRef = useRef(0);
-  const swipeReached80Ref = useRef(false);
-  const [swipeAnimating, setSwipeAnimating] = useState(false);
-  const [swipeSuccess, setSwipeSuccess] = useState(false);
-  const [swipeAtThreshold, setSwipeAtThreshold] = useState(false);
-  const handleConfirmOrderRef = useRef(handleConfirmOrder);
-  handleConfirmOrderRef.current = handleConfirmOrder;
-
-  const vibrate = useCallback((ms: number) => {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
-  }, []);
-
-  const handleSwipeStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    const track = swipeTrackRef.current;
-    if (!track || orderSubmitting) return;
-    if ('touches' in e) e.preventDefault();
-    e.stopPropagation();
-    const rect = track.getBoundingClientRect();
-    swipeStartRef.current = { left: rect.left, width: rect.width };
-    swipeReached80Ref.current = false;
-    setSwipeSuccess(false);
-    setSwipeAtThreshold(false);
-    setSwipeAnimating(false);
-    setSwipeProgress(0);
-    swipeProgressRef.current = 0;
-  }, [orderSubmitting]);
-  const handleSwipeMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    const start = swipeStartRef.current;
-    if (!start) return;
-    if ('touches' in e) e.preventDefault();
-    e.stopPropagation();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const raw = Math.max(0, Math.min(100, ((clientX - start.left) / start.width) * 100));
-    if (raw >= 80 && !swipeReached80Ref.current) {
-      swipeReached80Ref.current = true;
-      setSwipeAtThreshold(true);
-      vibrate(10);
-    }
-    swipeProgressRef.current = raw;
-    setSwipeProgress(raw);
-  }, [vibrate]);
-  const handleSwipeEnd = useCallback((e?: React.TouchEvent | React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-      if ('preventDefault' in e) e.preventDefault();
-    }
-    const progress = swipeProgressRef.current;
-    swipeStartRef.current = null;
-    if (progress >= 80) {
-      setSwipeSuccess(true);
-      setSwipeProgress(100);
-      swipeProgressRef.current = 100;
-      vibrate(15);
-      window.setTimeout(() => {
-        handleConfirmOrderRef.current();
-        setSwipeProgress(0);
-        swipeProgressRef.current = 0;
-        setSwipeSuccess(false);
-      }, 320);
-      return;
-    }
-    setSwipeAnimating(true);
-    setSwipeProgress(0);
-    swipeProgressRef.current = 0;
-    window.setTimeout(() => setSwipeAnimating(false), 280);
-  }, [vibrate]);
-
-  const swipeEndRef = useRef(handleSwipeEnd);
-  swipeEndRef.current = handleSwipeEnd;
-  const setSwipeAtThresholdRef = useRef(setSwipeAtThreshold);
-  setSwipeAtThresholdRef.current = setSwipeAtThreshold;
 
   const handleConfirmDelivery = async (orderId: string) => {
     setConfirmingDelivery(true);
@@ -1509,9 +1379,11 @@ export default function LaundroApp() {
                 }}
                 onClick={() => {
                   if (!n.read_at) {
-                    LSApi.markNotificationRead(n.id).then(() => {
-                      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
-                      setUnreadNotificationCount((c) => Math.max(0, c - 1));
+                    LSApi.markNotificationRead(n.id).then((ok) => {
+                      if (ok) {
+                        setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
+                        setUnreadNotificationCount((c) => Math.max(0, c - 1));
+                      }
                     });
                   }
                 }}
@@ -1795,44 +1667,12 @@ export default function LaundroApp() {
                       Pickup at {VENDOR.location} on {sd.date}. Keep your token ready.
                     </div>
                     <p className="vd" style={{ marginTop: 8, fontSize: 12 }}>Timings may vary.</p>
-                    <p className="vd" style={{ marginBottom: 12, fontWeight: 600 }}>Swipe to confirm order →</p>
-                    <div
-                      className="swipe-wrap"
-                      onClick={(e) => e.stopPropagation()}
-                      onTouchStart={(e) => e.stopPropagation()}
-                    >
-                      <div
-                        ref={swipeTrackRef}
-                        className={`swipe-track${swipeAnimating ? ' animating' : ''}${swipeSuccess ? ' success' : ''}`}
-                        onTouchStart={handleSwipeStart}
-                        onMouseDown={handleSwipeStart}
-                      >
-                        <div className="swipe-fill" style={{ width: `${swipeProgress}%` }} />
-                        <div
-                          className={`swipe-thumb${swipeAtThreshold && !swipeSuccess ? ' at-threshold' : ''}`}
-                          style={{
-                            left: `calc(24px + (100% - 48px) * ${swipeProgress / 100})`,
-                            transform: `translateX(-50%) translateZ(12px) scale(${swipeProgress >= 80 ? 1.08 : 1})`,
-                            boxShadow: swipeProgress >= 80
-                              ? '0 8px 24px rgba(23,70,162,.35), 0 2px 8px rgba(0,0,0,.15)'
-                              : `0 ${4 + (swipeProgress / 100) * 8}px ${12 + (swipeProgress / 100) * 16}px rgba(0,0,0,${0.15 + (swipeProgress / 100) * 0.1})`,
-                          }}
-                        >
-                          {swipeSuccess ? '✓' : swipeProgress >= 80 ? '✓' : '→'}
-                        </div>
-                        <span className="swipe-label">
-                          {orderSubmitting
-                            ? 'Placing…'
-                            : swipeSuccess
-                              ? 'Confirmed!'
-                              : swipeProgress >= 80
-                                ? 'Release to confirm'
-                                : swipeProgress >= 40
-                                  ? 'Almost there…'
-                                  : 'Swipe right to confirm'}
-                        </span>
-                      </div>
-                    </div>
+                    <p className="vd" style={{ marginBottom: 12, fontWeight: 600 }}>Swipe to confirm order</p>
+                    <SwipeToConfirm
+                      onConfirm={handleConfirmOrder}
+                      disabled={orderSubmitting}
+                      placing={orderSubmitting}
+                    />
                     <button type="button" className="btn bout bbl" style={{ marginTop: 16 }} onClick={() => setSd((s) => ({ ...s, step: 2 }))}>
                       Back
                     </button>
