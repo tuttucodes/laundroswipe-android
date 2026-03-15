@@ -209,6 +209,16 @@ export default function LaundroApp() {
     if (detail) setDd(detail);
   }, []);
 
+  const goToSchedule = useCallback(() => {
+    if (user && !user.ph?.trim()) {
+      go('complete-profile');
+      showToast('Add your phone number to place orders', 'er');
+      return;
+    }
+    setSd({ step: 0 });
+    go('schedule');
+  }, [user, go, showToast]);
+
   const showToast = useCallback((msg: string, type: 'ok' | 'er' | null = null) => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -794,6 +804,11 @@ export default function LaundroApp() {
 
   const handleConfirmOrder = async () => {
     if (!user || !sd.svc || !sd.date || !sd.ts) return;
+    if (!user.ph?.trim()) {
+      go('complete-profile');
+      showToast('Add your phone number to place orders', 'er');
+      return;
+    }
     const existingSameDay = orders.some(
       (o) => o.pd === sd.date && o.svc === sd.svc && o.status !== 'delivered'
     );
@@ -1457,7 +1472,7 @@ export default function LaundroApp() {
                 <div className="hh">
                   <p style={{ marginBottom: 8 }}>Hi, {user.fn || 'User'} 👋</p>
                   <p style={{ opacity: 0.9, fontSize: 14 }}>Schedule pickup from your favorite laundry company at ease.</p>
-                  <button type="button" className="scta" onClick={() => { setSd({ step: 0 }); go('schedule'); }}>
+                  <button type="button" className="scta" onClick={goToSchedule}>
                     Schedule pickup
                     <span className="aw">→</span>
                   </button>
@@ -1469,7 +1484,7 @@ export default function LaundroApp() {
                       type="button"
                       key={s.id}
                       className="sc"
-                      onClick={() => { setSd({ step: 0 }); go('schedule'); }}
+                      onClick={goToSchedule}
                     >
                       <span className="ic">{s.emoji}</span>
                       <span className="nm">{s.name}</span>
@@ -1854,7 +1869,7 @@ export default function LaundroApp() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
             Home
           </button>
-          <button type="button" className={`ni ${tab === 'schedule' ? 'ct a' : ''}`} onClick={() => { setSd({ step: 0 }); go('schedule'); }}>
+          <button type="button" className={`ni ${tab === 'schedule' ? 'ct a' : ''}`} onClick={goToSchedule}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
             Schedule
           </button>
