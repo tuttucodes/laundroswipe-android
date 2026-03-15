@@ -13,14 +13,16 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 
 .splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,var(--b),#0F3285,#0A2060);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s,transform .6s}
 .splash.h{opacity:0;transform:scale(1.1);pointer-events:none}
-.splash-logo{width:100px;height:100px;background:#fff;border-radius:24px;display:flex;align-items:center;justify-content:center;animation:bounceIn .8s;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.splash-logo{width:100px;height:100px;background:#fff;border-radius:24px;display:flex;align-items:center;justify-content:center;animation:bounceIn .8s;box-shadow:0 8px 40px rgba(0,0,0,.3);overflow:hidden}
+.splash-logo img{width:80px;height:80px;object-fit:contain}
 .splash-logo svg{width:60px;height:60px}
 .splash h2{margin-top:24px;font-family:var(--fd);font-size:28px;font-weight:700;color:#fff;animation:fadeUp .6s .3s both}
 .splash p{margin-top:8px;color:rgba(255,255,255,.7);font-size:14px;animation:fadeUp .6s .5s both}
 .splash-l{margin-top:40px;width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
 .splash-legal{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:12px;color:rgba(255,255,255,.7)}.splash-legal a{color:rgba(255,255,255,.9);text-decoration:underline}.splash-legal a:hover{color:#fff}
 
-.tn{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);height:64px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd)}
+.tn{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);height:64px;padding:0 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bd)}
+.tn-logo{flex-shrink:0;border-radius:10px;object-fit:contain}
 .tn h1{font-family:var(--fd);font-size:20px;font-weight:700;color:var(--b)}
 .bn{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:72px;background:#fff;border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-around;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
 .ni{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;border-radius:12px;cursor:pointer;transition:.25s;border:none;background:none;color:var(--tm);font-size:11px;font-family:var(--fb);font-weight:500}
@@ -65,7 +67,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 
 .as{min-height:100dvh;padding:24px;display:flex;flex-direction:column}
 .ah{margin-bottom:28px}.ah .lg{display:flex;align-items:center;gap:10px;margin-bottom:24px}
-.lgi{width:44px;height:44px;border-radius:12px;background:var(--b);display:flex;align-items:center;justify-content:center}
+.lgi{width:44px;height:44px;border-radius:12px;object-fit:contain;flex-shrink:0}
 .lgt{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--b)}
 .atl{font-family:var(--fd);font-size:28px;font-weight:700;line-height:1.2;margin-bottom:6px}
 .asu{color:var(--ts);font-size:15px}

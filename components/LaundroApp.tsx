@@ -945,9 +945,7 @@ export default function LaundroApp() {
     return (
       <div className="splash" id="splash">
         <div className="splash-logo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-          </svg>
+          <img src="/icon-192.png" alt="LaundroSwipe" width={80} height={80} />
         </div>
         <h2>LaundroSwipe</h2>
         <p>Your laundry sorted in one swipe</p>
@@ -1010,7 +1008,7 @@ export default function LaundroApp() {
       <div className="as">
         <div className="ah">
           <div className="lg">
-            <div className="lgi">🧺</div>
+            <img src="/icon-192.png" alt="" className="lgi" width={40} height={40} />
             <span className="lgt">LaundroSwipe</span>
           </div>
           <h1 className="atl">Sign in</h1>
@@ -1449,6 +1447,7 @@ export default function LaundroApp() {
     return (
       <>
         <header className="tn">
+          <img src="/icon-192.png" alt="" className="tn-logo" width={36} height={36} />
           <h1>LaundroSwipe</h1>
         </header>
         <main className="scr">
