@@ -195,7 +195,14 @@ export default function LaundroApp() {
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlotRow[]>([]);
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
   const [scheduleConfigLoaded, setScheduleConfigLoaded] = useState(false);
+  const [passwordAlreadySet, setPasswordAlreadySet] = useState(false);
   const swipeTrackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user?.id && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.id) === '1') {
+      setPasswordAlreadySet(true);
+    }
+  }, [user?.id]);
 
   const go = useCallback((s: Screen, detail?: DetailData) => {
     setScreen(s);
@@ -909,6 +916,10 @@ export default function LaundroApp() {
     }
     setProfilePw('');
     setProfilePwConfirm('');
+    if (user?.id && typeof window !== 'undefined') {
+      localStorage.setItem('ls_password_set_' + user.id, '1');
+      setPasswordAlreadySet(true);
+    }
     showToast('Password set. You can now sign in with email + password.', 'ok');
   };
 
@@ -1797,7 +1808,7 @@ export default function LaundroApp() {
                   <p className="vd">{user.em || ''}</p>
                   {user.ph && <p className="vd">{user.ph}</p>}
                 </div>
-                {LSApi.hasSupabase && (
+                {LSApi.hasSupabase && !passwordAlreadySet && (
                   <div className="oc" style={{ marginBottom: 16 }}>
                     <p className="st" style={{ marginBottom: 8 }}>Sign in with email</p>
                     <p className="vd" style={{ fontSize: 13, marginBottom: 12 }}>Set a password so you can also sign in with {user.em || 'your email'} and password (same account).</p>
