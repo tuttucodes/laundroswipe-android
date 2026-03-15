@@ -111,11 +111,21 @@ export default function AdminPage() {
     if (!loggedIn || tab !== 'vendor') return;
     setVendorProfileLoading(true);
     fetch('/api/admin/vendor-profile', { credentials: 'include', headers: adminAuthHeaders() })
-      .then((r) => r.json())
+      .then((r) => {
+        if (r.status === 401) {
+          sessionStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_logged');
+          setLoggedIn(false);
+          return null;
+        }
+        return r.json().catch(() => null);
+      })
       .then((data) => {
-        if (data?.name != null) setVendorName(data.name);
-        if (data?.brief != null) setVendorBrief(data.brief);
-        if (data?.pricing_details != null) setVendorPricing(data.pricing_details);
+        if (data && !data.error) {
+          setVendorName(data.name ?? '');
+          setVendorBrief(data.brief ?? '');
+          setVendorPricing(data.pricing_details ?? '');
+        }
       })
       .catch(() => {})
       .finally(() => setVendorProfileLoading(false));
@@ -654,7 +664,7 @@ export default function AdminPage() {
                         body: JSON.stringify({ name: vendorName.trim(), brief: vendorBrief.trim(), pricing_details: vendorPricing.trim() }),
                       });
                       const data = await res.json().catch(() => ({}));
-                      if (res.ok && data?.id) {
+                      if (res.ok) {
                         showToast('Vendor profile saved. Users will see the updated card on the home page.', 'ok');
                       } else {
                         if (res.status === 401) {

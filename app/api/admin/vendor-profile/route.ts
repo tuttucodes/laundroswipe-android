@@ -37,13 +37,20 @@ export async function POST(request: Request) {
   const name = body.name != null ? String(body.name).trim().slice(0, 200) : undefined;
   const brief = body.brief != null ? String(body.brief).trim().slice(0, 2000) : undefined;
   const pricing_details = body.pricing_details != null ? String(body.pricing_details).trim().slice(0, 5000) : undefined;
-  const updates: { name?: string; brief?: string; pricing_details?: string; updated_at: string } = {
-    updated_at: new Date().toISOString(),
+  const now = new Date().toISOString();
+  const { data: existing } = await supabase.from('vendor_profiles').select('name, brief, pricing_details').eq('slug', SLUG).maybeSingle();
+  const row = {
+    slug: SLUG,
+    name: name !== undefined ? name : (existing?.name ?? 'Vendor'),
+    brief: brief !== undefined ? brief : (existing?.brief ?? null),
+    pricing_details: pricing_details !== undefined ? pricing_details : (existing?.pricing_details ?? null),
+    updated_at: now,
   };
-  if (name !== undefined) updates.name = name;
-  if (brief !== undefined) updates.brief = brief;
-  if (pricing_details !== undefined) updates.pricing_details = pricing_details;
-  const { data, error } = await supabase.from('vendor_profiles').update(updates).eq('slug', SLUG).select().single();
+  const { data, error } = await supabase
+    .from('vendor_profiles')
+    .upsert(row, { onConflict: 'slug', ignoreDuplicates: false })
+    .select()
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json(data);
 }

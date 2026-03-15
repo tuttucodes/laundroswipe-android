@@ -415,13 +415,13 @@ export default function LaundroApp() {
     });
   }, [screen, scheduleConfigLoaded]);
 
-  // Load vendor profile when user is on home (for Vendor section)
+  // Load vendor profile when user is on home (refetch when entering home so admin updates show)
   useEffect(() => {
-    if (screen !== 'home' || !LSApi.hasSupabase || vendorProfile) return;
+    if (screen !== 'home' || !LSApi.hasSupabase) return;
     LSApi.fetchVendorProfile().then((p) => {
       if (p) setVendorProfile(p);
     });
-  }, [screen, vendorProfile]);
+  }, [screen]);
 
   useEffect(() => {
     if (screen !== 'schedule' || sd.step !== 3) return;
