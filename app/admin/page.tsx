@@ -646,7 +646,7 @@ export default function AdminPage() {
         {tab === 'notifications' && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Notifications</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Send in-app messages to users. Push notifications are sent automatically to the LaundroSwipe mobile app when you send a message (via Supabase webhook + Expo).</p>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Send in-app messages to users. Push notifications are sent automatically to the LaundroSwipe mobile app when you send a message.</p>
             <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 520, marginBottom: 24 }}>
               <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, marginBottom: 12 }}>In-app message</h3>
               <div className="fg" style={{ marginBottom: 12 }}>
@@ -845,7 +845,7 @@ export default function AdminPage() {
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Convenience Fee</label>
                 <input readOnly value={`₹${CONVENIENCE_FEE} per order`} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
               </div>
-              <div style={{ padding: '12px 16px', background: 'rgba(249,115,22,.08)', borderRadius: 8, fontSize: 13, color: 'var(--o)' }}>To change settings, update the code (e.g. lib/constants.ts) or Supabase directly.</div>
+              <div style={{ padding: '12px 16px', background: 'rgba(249,115,22,.08)', borderRadius: 8, fontSize: 13, color: 'var(--o)' }}>To change settings, update the code (e.g. lib/constants.ts) or the admin database.</div>
             </div>
           </>
         )}

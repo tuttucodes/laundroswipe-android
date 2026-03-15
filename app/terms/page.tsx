@@ -9,6 +9,9 @@ export default function TermsPage() {
         A convenience fee applies per order. Timings are subject to change with notice.
       </p>
       <p style={{ marginTop: 24 }}>
+        <strong>Contact:</strong> support@laundroswipe.com
+      </p>
+      <p style={{ marginTop: 24 }}>
         <Link href="/">← Back to LaundroSwipe</Link>
       </p>
     </div>

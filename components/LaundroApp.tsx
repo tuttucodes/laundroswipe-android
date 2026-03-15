@@ -539,7 +539,7 @@ export default function LaundroApp() {
       return;
     }
     if (!LSApi.hasSupabase) {
-      showToast('Service unavailable. Configure Supabase (see deployment).', 'er');
+      showToast('Service unavailable. Please try again later.', 'er');
       return;
     }
     setAuthLoading(true);
@@ -1489,8 +1489,8 @@ export default function LaundroApp() {
             {screen === 'home' && (
               <>
                 <div className="hh">
-                  <p style={{ marginBottom: 8 }}>Hi, {user.fn || 'User'} 👋</p>
-                  <p style={{ opacity: 0.9, fontSize: 14 }}>Schedule pickup from your favorite laundry company at ease.</p>
+                  <p>Hi, {user.fn || 'User'} 👋</p>
+                  <p className="hh-sub">Schedule pickup from your favorite laundry company at ease.</p>
                   <button type="button" className="scta" onClick={goToSchedule}>
                     Schedule pickup
                     <span className="aw">→</span>
@@ -1510,18 +1510,18 @@ export default function LaundroApp() {
                     </button>
                   ))}
                 </div>
-                <p className="fn" style={{ marginTop: 8 }}>LaundroSwipe — schedule pickup from your favorite laundry company in one swipe.</p>
-                <p className="st" style={{ marginTop: 24, marginBottom: 12 }}>Vendor</p>
+                <p className="fn">LaundroSwipe — schedule pickup from your favorite laundry company in one swipe.</p>
+                <p className="st">Vendor</p>
                 <div
-                  className="oc"
-                  style={{ cursor: 'pointer', marginBottom: 16 }}
+                  className="oc oc-row"
+                  style={{ marginBottom: 16 }}
                   onClick={() => setViewingVendor(vendorProfile ?? DEFAULT_VENDOR_PROFILE)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingVendor(vendorProfile ?? DEFAULT_VENDOR_PROFILE); } }}
                 >
-                  <img src="/profab-logo.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 8, flexShrink: 0 }} />
-                  <span className="nm" style={{ fontWeight: 600 }}>{vendorProfile?.name ?? DEFAULT_VENDOR_PROFILE.name}</span>
+                  <img src="/profab-logo.png" alt="" className="oc-logo" />
+                  <span className="nm oc-vendor-name">{vendorProfile?.name ?? DEFAULT_VENDOR_PROFILE.name}</span>
                 </div>
                 <div className="hiw">
                   <div className="hiws">
@@ -1549,11 +1549,11 @@ export default function LaundroApp() {
                         role="button"
                         tabIndex={0}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="oc-row oc-head">
                           <span className="aotkv">#{o.tk}</span>
                           <span className={`vdb ${statusClass(o.status)}`}>{statusLabel(o.status)}</span>
                         </div>
-                        <div className="vd">{o.sl} · {o.pd}</div>
+                        <p className="vd">{o.sl} · {o.pd}</p>
                       </div>
                     ))}
                   </>
@@ -1763,11 +1763,11 @@ export default function LaundroApp() {
                       role="button"
                       tabIndex={0}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="oc-row oc-head">
                         <span className="aotkv">#{o.tk}</span>
                         <span className={`vdb ${statusClass(o.status)}`}>{statusLabel(o.status)}</span>
                       </div>
-                      <div className="vd">{o.sl} · {o.pd} · {o.ts}</div>
+                      <p className="vd">{o.sl} · {o.pd} · {o.ts}</p>
                     </div>
                   ))
                 )}
@@ -1878,7 +1878,7 @@ export default function LaundroApp() {
                 )}
                 <div className="oc" style={{ marginBottom: 16 }}>
                     <p className="st" style={{ marginBottom: 8 }}>Push notifications</p>
-                    <p className="vd" style={{ fontSize: 13 }}>Pickup reminders and updates are sent to the LaundroSwipe mobile app (Expo). Enable notifications in the app to receive them.</p>
+                    <p className="vd" style={{ fontSize: 13 }}>Pickup reminders and updates are sent to the LaundroSwipe mobile app. Enable notifications in the app to receive them.</p>
                   </div>
                 <div className="pmi" onClick={() => go('my-bills')}>
                   <div className="pmic bl2">🧾</div>

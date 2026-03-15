@@ -370,7 +370,7 @@ export const LSApi = {
   },
 
   async signInWithGoogle(redirectTo?: string): Promise<{ error?: { message: string }; data?: { url: string } }> {
-    if (!supabase) return { error: { message: 'Supabase not configured' } };
+    if (!supabase) return { error: { message: 'Sign-in not available' } };
     try {
       const base =
         typeof window !== 'undefined' && window.location?.origin
@@ -418,7 +418,7 @@ export const LSApi = {
   },
 
   async resetPasswordForEmail(email: string): Promise<{ error?: string }> {
-    if (!supabase) return { error: 'Not configured' };
+    if (!supabase) return { error: 'Service not available' };
     try {
       const redirectTo =
         typeof window !== 'undefined' && window.location?.origin
@@ -436,7 +436,7 @@ export const LSApi = {
   },
 
   async updatePassword(newPassword: string): Promise<{ error?: string }> {
-    if (!supabase) return { error: 'Not configured' };
+    if (!supabase) return { error: 'Service not available' };
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) return { error: error.message };

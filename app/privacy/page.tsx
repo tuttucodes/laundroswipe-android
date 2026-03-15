@@ -9,6 +9,9 @@ export default function PrivacyPage() {
         name, contact details, and order information. We do not sell your data.
       </p>
       <p style={{ marginTop: 24 }}>
+        <strong>Contact:</strong> support@laundroswipe.com
+      </p>
+      <p style={{ marginTop: 24 }}>
         <Link href="/">← Back to LaundroSwipe</Link>
       </p>
     </div>

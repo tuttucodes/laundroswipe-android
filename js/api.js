@@ -15,7 +15,7 @@
     }
   } else {
     if (typeof console !== 'undefined' && console.warn) {
-      console.warn('LaundroSwipe: Supabase config required. Set SUPABASE_URL and SUPABASE_ANON_KEY and run build (see deployment.md).');
+      console.warn('LaundroSwipe: Config required. Set environment and run build.');
     }
     sb = null;
   }
@@ -159,7 +159,7 @@
   }
 
   async function signInWithGoogle(redirectTo) {
-    if (!sb) return { error: { message: 'Supabase not configured' } };
+    if (!sb) return { error: { message: 'Sign-in not available' } };
     try {
       var base = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
       if (!base || base === 'null' || base === 'file://') base = 'https://laundroswipe.com';
