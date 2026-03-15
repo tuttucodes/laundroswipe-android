@@ -57,6 +57,23 @@ export function getAdminSessionCookie(request: Request): string | null {
   return match ? decodeURIComponent(match[1].trim()) : null;
 }
 
+/** Get admin token from cookie or Authorization: Bearer (so auth works when cookies are blocked). */
+export function getAdminTokenFromRequest(request: Request): string | null {
+  const fromCookie = getAdminSessionCookie(request);
+  if (fromCookie) return fromCookie;
+  const auth = request.headers.get('authorization');
+  if (!auth?.startsWith('Bearer ')) return null;
+  const token = auth.slice(7).trim();
+  return token || null;
+}
+
+/** Returns true if the request has a valid admin session (cookie or Bearer). */
+export function isAdminRequest(request: Request): boolean {
+  const token = getAdminTokenFromRequest(request);
+  return verifyAdminToken(token) !== null;
+}
+
 export function adminSessionCookieHeader(token: string): string {
-  return `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${MAX_AGE_SEC}`;
+  const isSecure = process.env.NODE_ENV === 'production';
+  return `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${MAX_AGE_SEC}${isSecure ? '; Secure' : ''}`;
 }

@@ -68,9 +68,15 @@ export default function AdminPage() {
   useEffect(() => {
     if (!loggedIn || tab !== 'schedule') return;
     setScheduleLoading(true);
-    fetch('/api/admin/schedule', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data) => {
+    fetch('/api/admin/schedule', { credentials: 'include', headers: adminAuthHeaders() })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (r.status === 401) {
+          sessionStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_logged');
+          setLoggedIn(false);
+          return;
+        }
         if (data.slots) setScheduleSlots(data.slots);
         if (data.dates) setScheduleDates(data.dates);
       })
@@ -81,9 +87,15 @@ export default function AdminPage() {
   useEffect(() => {
     if (!loggedIn || tab !== 'notifications') return;
     setAdminNotificationsLoading(true);
-    fetch('/api/admin/notifications', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data) => {
+    fetch('/api/admin/notifications', { credentials: 'include', headers: adminAuthHeaders() })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (r.status === 401) {
+          sessionStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_logged');
+          setLoggedIn(false);
+          return;
+        }
         if (data.notifications) setAdminNotifications(data.notifications);
       })
       .catch(() => setAdminNotifications([]))
@@ -107,7 +119,10 @@ export default function AdminPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
-        if (typeof window !== 'undefined') localStorage.setItem('admin_logged', 'true');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('admin_logged', 'true');
+          if (data.token) sessionStorage.setItem('admin_token', data.token);
+        }
         setLoggedIn(true);
       } else {
         setErr(data?.error || 'Invalid email or password');
@@ -121,7 +136,13 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('admin_logged');
+    sessionStorage.removeItem('admin_token');
     setLoggedIn(false);
+  };
+
+  const adminAuthHeaders = (): Record<string, string> => {
+    const t = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    return t ? { Authorization: `Bearer ${t}` } : {};
   };
 
   const advanceStatus = async (orderId: string) => {
@@ -470,9 +491,16 @@ export default function AdminPage() {
                 <button type="button" className="btn bp bbl" disabled={scheduleSaving} onClick={async () => {
                   setScheduleSaving(true);
                   try {
-                    const res = await fetch('/api/admin/schedule', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slots: scheduleSlots.filter((s) => s.id.trim()), dates: scheduleDates }) });
+                    const res = await fetch('/api/admin/schedule', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() }, body: JSON.stringify({ slots: scheduleSlots.filter((s) => s.id.trim()), dates: scheduleDates }) });
                     const data = await res.json().catch(() => ({}));
-                    if (res.ok && data.ok) { showToast('Schedule saved. Users will see updated dates and slots.', 'ok'); } else { showToast(data?.error || 'Save failed', 'er'); }
+                    if (res.ok && data.ok) { showToast('Schedule saved. Users will see updated dates and slots.', 'ok'); } else {
+                    if (res.status === 401) {
+                      sessionStorage.removeItem('admin_token');
+                      localStorage.removeItem('admin_logged');
+                      setLoggedIn(false);
+                      showToast('Session expired. Please log in again.', 'er');
+                    } else { showToast(data?.error || 'Save failed', 'er'); }
+                  }
                   } catch {
                     showToast('Save failed', 'er');
                   } finally {
@@ -488,9 +516,9 @@ export default function AdminPage() {
         {tab === 'notifications' && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Notifications</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Send or schedule messages to all users. They appear in the app under Profile → Notifications.</p>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Send in-app messages to users. Push notifications are sent automatically to the LaundroSwipe mobile app when you send a message (via Supabase webhook + Expo).</p>
             <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 520, marginBottom: 24 }}>
-              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, marginBottom: 12 }}>New message</h3>
+              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, marginBottom: 12 }}>In-app message</h3>
               <div className="fg" style={{ marginBottom: 12 }}>
                 <label className="fl">Title</label>
                 <input className="fi" placeholder="e.g. Pickup reminder" value={notifyTitle} onChange={(e) => setNotifyTitle(e.target.value)} />
@@ -514,7 +542,7 @@ export default function AdminPage() {
                     const res = await fetch('/api/admin/notifications', {
                       method: 'POST',
                       credentials: 'include',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
                       body: JSON.stringify({
                         title: notifyTitle.trim(),
                         body: notifyBody.trim() || undefined,
@@ -528,10 +556,17 @@ export default function AdminPage() {
                       setNotifyTitle('');
                       setNotifyBody('');
                       setNotifyScheduledAt('');
-                      const r = await fetch('/api/admin/notifications', { credentials: 'include' });
+                      const r = await fetch('/api/admin/notifications', { credentials: 'include', headers: adminAuthHeaders() });
                       const j = await r.json();
                       if (j.notifications) setAdminNotifications(j.notifications);
-                    } else showToast(data?.error || 'Failed', 'er');
+                    } else {
+                      if (res.status === 401) {
+                        sessionStorage.removeItem('admin_token');
+                        localStorage.removeItem('admin_logged');
+                        setLoggedIn(false);
+                        showToast('Session expired. Please log in again.', 'er');
+                      } else showToast(data?.error || 'Failed', 'er');
+                    }
                   } catch {
                     showToast('Failed', 'er');
                   }

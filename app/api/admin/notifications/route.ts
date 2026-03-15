@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getAdminSessionCookie, verifyAdminToken } from '@/lib/admin-session';
+import { isAdminRequest } from '@/lib/admin-session';
+import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
 
 function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
   if (!url || !key) return null;
   return createClient(url, key);
-}
-
-function isAdmin(request: Request): boolean {
-  const cookie = getAdminSessionCookie(request);
-  return verifyAdminToken(cookie) !== null;
 }
 
 /** Flush scheduled notifications: set sent_at = now() where scheduled_at <= now() and sent_at is null */
@@ -25,7 +21,7 @@ async function flushScheduled(supabase: ReturnType<typeof getServiceSupabase>) {
 }
 
 export async function GET(request: Request) {
-  if (!isAdmin(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isAdminRequest(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const supabase = getServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
   try {
@@ -51,7 +47,15 @@ type NotifyPayload = {
 };
 
 export async function POST(request: Request) {
-  if (!isAdmin(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isAdminRequest(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const rate = checkAdminRateLimit(request);
+  if (!rate.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
+    );
+  }
+  if (!checkBodySize(request)) return NextResponse.json({ error: 'Request too large' }, { status: 413 });
   const supabase = getServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
   let body: NotifyPayload;
@@ -62,6 +66,9 @@ export async function POST(request: Request) {
   }
   const title = String(body?.title ?? '').trim();
   if (!title) return NextResponse.json({ error: 'Title required' }, { status: 400 });
+  if (title.length > 200) return NextResponse.json({ error: 'Title too long' }, { status: 400 });
+  const bodyText = typeof body.body === 'string' ? body.body.trim() : '';
+  if (bodyText.length > 5000) return NextResponse.json({ error: 'Body too long' }, { status: 400 });
   const sendNow = body.send_now !== false;
   const scheduledAt = body.scheduled_at ? String(body.scheduled_at).trim() : null;
   const sentAt = sendNow && !scheduledAt ? new Date().toISOString() : null;
@@ -69,7 +76,7 @@ export async function POST(request: Request) {
     const { error } = await supabase.from('user_notifications').insert({
       user_id: null,
       title,
-      body: body.body?.trim() || null,
+      body: bodyText || null,
       sent_at: sentAt,
       scheduled_at: scheduledAt || null,
     });

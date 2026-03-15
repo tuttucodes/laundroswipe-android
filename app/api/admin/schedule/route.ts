@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getAdminSessionCookie, verifyAdminToken } from '@/lib/admin-session';
+import { isAdminRequest } from '@/lib/admin-session';
+import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
 import type { ScheduleSlotRow, ScheduleDateRow } from '@/lib/api';
 
 function getServiceSupabase() {
@@ -8,11 +9,6 @@ function getServiceSupabase() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
   if (!url || !key) return null;
   return createClient(url, key);
-}
-
-function isAdmin(request: Request): boolean {
-  const cookie = getAdminSessionCookie(request);
-  return verifyAdminToken(cookie) !== null;
 }
 
 export async function GET() {
@@ -56,8 +52,18 @@ type SchedulePayload = {
 };
 
 export async function POST(request: Request) {
-  if (!isAdmin(request)) {
+  if (!isAdminRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const rate = checkAdminRateLimit(request);
+  if (!rate.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } }
+    );
+  }
+  if (!checkBodySize(request)) {
+    return NextResponse.json({ error: 'Request too large' }, { status: 413 });
   }
   const supabase = getServiceSupabase();
   if (!supabase) {
@@ -69,12 +75,19 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }
+  if (body.slots && (!Array.isArray(body.slots) || body.slots.length > 100)) {
+    return NextResponse.json({ error: 'Invalid slots payload' }, { status: 400 });
+  }
+  if (body.dates && (!Array.isArray(body.dates) || body.dates.length > 500)) {
+    return NextResponse.json({ error: 'Invalid dates payload' }, { status: 400 });
+  }
 
   try {
     if (body.slots != null && Array.isArray(body.slots)) {
       for (const row of body.slots) {
         const id = String(row?.id ?? '').trim();
         if (!id) continue;
+        if (id.length > 64) return NextResponse.json({ error: 'Slot id too long' }, { status: 400 });
         const { error } = await supabase
           .from('schedule_slots')
           .upsert(
@@ -96,13 +109,15 @@ export async function POST(request: Request) {
       for (const row of body.dates) {
         const dateStr = String(row?.date ?? '').trim();
         if (!dateStr) continue;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
+        const slotIds = Array.isArray(row.slot_ids) ? row.slot_ids.filter((s): s is string => typeof s === 'string').slice(0, 20) : [];
         const { error } = await supabase
           .from('schedule_dates')
           .upsert(
             {
               date: dateStr,
               enabled: Boolean(row.enabled),
-              slot_ids: Array.isArray(row.slot_ids) ? row.slot_ids : [],
+              slot_ids: slotIds,
             },
             { onConflict: 'date' }
           );

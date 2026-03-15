@@ -367,6 +367,103 @@ Vercel auto-deploys from GitHub — your changes go live in ~30 seconds.
 
 ---
 
+## PWA / Add to Home Screen (iOS & Android)
+
+The app shows an **“Add to Home Screen”** prompt on phones so users can install it like an app. To get proper icons and install behaviour:
+
+### 1. Add icon files (recommended)
+
+Put these in the **`public/`** folder at the root of the project (create the folder if it doesn’t exist):
+
+| File | Size | Purpose |
+|------|------|--------|
+| `icon-192.png` | 192×192 px | Android home screen & manifest |
+| `icon-512.png` | 512×512 px | Android splash / install |
+| `apple-touch-icon.png` | 180×180 px (or 192×192) | iOS home screen icon |
+
+- Use the same design for all (e.g. your logo or the 🧺 basket).
+- Format: PNG, no transparency needed for Android; iOS can use transparency.
+- If you only add one, add **apple-touch-icon.png** for iOS; Android can fall back to the favicon.
+
+After adding the files, redeploy. The manifest and layout already point at `/icon-192.png`, `/icon-512.png`, and `/apple-touch-icon.png`.
+
+### 2. What users do
+
+- **iOS (Safari):** The prompt says: *Share icon (square with arrow) → “Add to Home Screen”.* No browser “Install” menu.
+- **Android (Chrome):** The prompt says: *Menu (⋮) → “Install app” or “Add to Home screen”.* Chrome may also show its own install banner if the site is installable (HTTPS + manifest + optional service worker).
+
+### 3. Optional: make the site “installable” on Android
+
+For Chrome to show **“Install app”** and treat the site as an app:
+
+- Serve the site over **HTTPS** (you already do on Vercel).
+- The **manifest** is already at `/manifest.webmanifest` (from `app/manifest.ts`).
+- Adding a **service worker** can help. You can use something like `next-pwa` or a minimal custom worker that caches the shell. Without it, the prompt still works and users can use “Add to Home screen” from the menu.
+
+### 4. Testing
+
+- **iOS:** Open the site in **Safari** on iPhone/iPad (Chrome on iOS uses Safari under the hood). Use Share → Add to Home Screen. The banner should appear on mobile; dismiss with “Not now” (it won’t show again for 7 days).
+- **Android:** Open in **Chrome**, use the menu → Add to Home screen (or Install app if shown). Same banner and dismiss behaviour.
+
+---
+
+## Push notifications (Expo + Supabase)
+
+Push is sent to the **LaundroSwipe mobile app** (Expo). When admin sends an **in-app message** (Admin → Notifications → In-app message → Send now / Schedule), a Supabase webhook triggers an Edge Function that sends the same message via Expo Push to all users who have the mobile app and have registered their Expo push token.
+
+### 1. Expo setup (for the mobile app)
+
+- Follow the [Expo Push Notifications Setup Guide](https://docs.expo.dev/push-notifications/overview/) to get credentials for Android and iOS.
+- This project uses Expo’s EAS build service. Install the EAS CLI and link this app to your Expo project:
+  ```bash
+  npm install --global eas-cli && eas init --id 575f1bf6-2f15-46e8-9f60-1232e57d4aab
+  ```
+  Then create a build for your device (e.g. `eas build --profile development --platform android`).
+- In the Expo app, after the user signs in with Supabase Auth, get the Expo push token and call **POST /api/push-subscribe** with `Authorization: Bearer <supabase_access_token>` and body `{ "expo_push_token": "<token>" }` to store it on `users.expo_push_token`.
+
+### 2. Enhanced security for push (recommended)
+
+- In [Expo Access Token Settings](https://expo.dev/accounts/[account]/settings/access-tokens), create a token for use in Supabase Edge Functions and turn on **Enhanced Security for Push Notifications**.
+
+### 3. Database: add Expo token column
+
+Run the migration so the Edge Function can read tokens:
+
+```bash
+# Apply supabase/migrations_expo_push.sql (adds users.expo_push_token)
+supabase db push
+# or run the SQL in the Supabase SQL editor
+```
+
+### 4. Deploy the Supabase Edge Function
+
+The function that sends push via Expo lives in `supabase/functions/push/index.ts`. Deploy it and set the Expo token as a secret:
+
+```bash
+supabase functions deploy push
+supabase secrets set EXPO_ACCESS_TOKEN=your-expo-access-token
+# Or from .env.local: supabase secrets set --env-file .env.local
+```
+
+### 5. Create the database webhook
+
+In the **Supabase Dashboard** → **Database** → **Webhooks**:
+
+- Create a new webhook.
+- **Table:** `user_notifications`. **Events:** tick **Insert**.
+- **Type:** Supabase Edge Functions → **push** (POST, timeout e.g. 1000 ms).
+- **HTTP Headers:** Add auth header with service key and `Content-Type: application/json`.
+- Save.
+
+### 6. Flow
+
+1. Admin sends an in-app message (or schedules one). That inserts a row into `user_notifications`.
+2. The webhook fires and calls the **push** Edge Function with the new row.
+3. The function reads `users.expo_push_token` (for that `user_id`, or all users if the notification is broadcast with `user_id` null) and sends to **https://exp.host/--/api/v2/push/send** with the title and body.
+4. Users with the mobile app and a registered token receive the push.
+
+---
+
 ## What's next (post-launch)
 
 - **Security:** Turn on Row Level Security (RLS) on `users` and `orders` in Supabase and add policies so customers only see their own data. Change the hardcoded admin password or move admin login to Supabase Auth.

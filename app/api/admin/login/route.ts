@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const password = String(body?.password ?? '');
   if (email === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
     const token = createAdminToken(email);
-    const res = NextResponse.json({ ok: true });
+    const res = NextResponse.json({ ok: true, token: token || undefined });
     if (token) {
       res.headers.set('Set-Cookie', adminSessionCookieHeader(token));
     }
