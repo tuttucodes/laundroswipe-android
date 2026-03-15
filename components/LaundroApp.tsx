@@ -220,6 +220,11 @@ export default function LaundroApp() {
     if (detail) setDd(detail);
   }, []);
 
+  const showToast = useCallback((msg: string, type: 'ok' | 'er' | null = null) => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
   const goToSchedule = useCallback(() => {
     if (user && !user.ph?.trim()) {
       go('complete-profile');
@@ -229,11 +234,6 @@ export default function LaundroApp() {
     setSd({ step: 0 });
     go('schedule');
   }, [user, go, showToast]);
-
-  const showToast = useCallback((msg: string, type: 'ok' | 'er' | null = null) => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  }, []);
 
   const saveUser = useCallback((u: User | null) => {
     if (u) localStorage.setItem('ls_u', JSON.stringify(u));
