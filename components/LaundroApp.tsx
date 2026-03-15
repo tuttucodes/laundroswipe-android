@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Bell, Shirt, Sparkles, Flame, Zap, Footprints, type LucideIcon } from 'lucide-react';
-import { HoldToConfirm } from '@/components/HoldToConfirm';
+import { SwipeToConfirm } from '@/components/SwipeToConfirm';
 import {
   COLLEGES,
   SERVICES,
@@ -1667,8 +1667,8 @@ export default function LaundroApp() {
                       Pickup at {VENDOR.location} on {sd.date}. Keep your token ready.
                     </div>
                     <p className="vd" style={{ marginTop: 8, fontSize: 12 }}>Timings may vary.</p>
-                    <p className="vd" style={{ marginBottom: 12, fontWeight: 600 }}>Hold to confirm your order</p>
-                    <HoldToConfirm
+                    <p className="vd" style={{ marginBottom: 12, fontWeight: 600 }}>Swipe to confirm order</p>
+                    <SwipeToConfirm
                       onConfirm={handleConfirmOrder}
                       disabled={orderSubmitting}
                       placing={orderSubmitting}
