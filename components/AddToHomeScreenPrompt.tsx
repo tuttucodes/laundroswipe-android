@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const DISMISS_KEY = 'ls_pwa_dismissed';
 const ADDED_KEY = 'ls_pwa_added'; // user tapped "I've added it" – don't show again
