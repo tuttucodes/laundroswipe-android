@@ -9,12 +9,12 @@ import type { OrderRow, UserRow } from '@/lib/api';
 const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered'];
 const STATUS_LABELS = ['Scheduled', 'Agent Assigned', 'Picked Up', 'Processing', 'Ready', 'Out for Delivery', 'Delivered'];
 
-/** Opens a new window with only the gate pass letter (LaundroSwipe letterhead, no ProFab) and triggers print so only the letter is printed/saved as PDF. */
-function printGatePassLetter(vendorName: string, orderCount: number) {
+/** Builds the gate pass letter HTML (LaundroSwipe letterhead only, no ProFab). */
+function getGatePassLetterHtml(vendorName: string, orderCount: number): string {
   const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   const ordersText = orderCount !== 1 ? `${orderCount} pickup orders` : '1 pickup order';
   const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><title>Permission Letter - VIT Chennai</title>
 <style>
@@ -60,22 +60,68 @@ function printGatePassLetter(vendorName: string, orderCount: number) {
   </div>
 </body>
 </html>`;
-  const w = window.open('', '_blank', 'noopener,noreferrer');
-  if (!w) {
-    alert('Please allow pop-ups to print or save the letter as PDF.');
+}
+
+/**
+ * Prints or saves as PDF the gate pass letter only (no admin UI).
+ * Uses a hidden iframe so it works without popups (PWA, mobile, strict browsers).
+ */
+function printGatePassLetter(vendorName: string, orderCount: number) {
+  const html = getGatePassLetterHtml(vendorName, orderCount);
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('title', 'Permission Letter - VIT Chennai');
+  iframe.style.position = 'fixed';
+  iframe.style.left = '-9999px';
+  iframe.style.top = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
+    document.body.removeChild(iframe);
+    alert('Unable to open print. Please try again or allow pop-ups for this site.');
     return;
   }
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  w.onafterprint = () => w.close();
-  setTimeout(() => {
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const printWindow = iframe.contentWindow;
+  if (!printWindow) {
+    document.body.removeChild(iframe);
+    return;
+  }
+
+  const cleanup = () => {
     try {
-      w.print();
-    } catch (_) {
-      w.close();
+      if (iframe.parentNode) document.body.removeChild(iframe);
+    } catch (_) {}
+  };
+
+  if (typeof printWindow.onafterprint !== 'undefined') {
+    printWindow.onafterprint = cleanup;
+  }
+
+  const doPrint = () => {
+    try {
+      printWindow.print();
+    } catch (e) {
+      cleanup();
+      alert('Print failed. Try allowing pop-ups for this site and use Print / Save as PDF again.');
     }
-  }, 200);
+  };
+
+  if (iframe.contentDocument?.readyState === 'complete') {
+    doPrint();
+  } else {
+    iframe.onload = () => {
+      doPrint();
+    };
+    setTimeout(doPrint, 500);
+  }
 }
 
 type OrderWithUser = OrderRow & { user?: string };
@@ -429,39 +475,71 @@ export default function AdminPage() {
               ))}
             </div>
             {loading ? (
-              <p style={{ color: 'var(--ts)' }}>Loading…</p>
+              <>
+                <div className="admin-stat-grid" aria-hidden>
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="skeleton admin-skeleton-stat" />
+                  ))}
+                </div>
+                <div className="skeleton admin-skeleton-row" />
+                <div className="skeleton admin-skeleton-row" />
+                <div className="skeleton admin-skeleton-row" />
+                <div className="skeleton admin-skeleton-row" />
+              </>
             ) : (
-              <div className="admin-table-wrap">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Order</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Token</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Customer</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Status</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((o) => (
-                      <tr key={o.id} style={{ borderBottom: '1px solid var(--bd)' }}>
-                        <td style={{ padding: '14px 16px', fontSize: 14 }}>{o.order_number}</td>
-                        <td style={{ padding: '14px 16px', fontFamily: 'var(--fd)', fontWeight: 800, color: 'var(--o)' }}>#{o.token}</td>
-                        <td style={{ padding: '14px 16px', fontSize: 14 }}>{o.user}</td>
-                        <td style={{ padding: '14px 16px' }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: statusBadge(o.status) === 'b-sch' ? '#FEF3C7' : statusBadge(o.status) === 'b-del' ? '#DCFCE7' : 'var(--bl)', color: statusBadge(o.status) === 'b-sch' ? '#92400E' : statusBadge(o.status) === 'b-del' ? 'var(--ok)' : 'var(--b)' }}>{statusLabel(o.status)}</span>
-                        </td>
-                        <td style={{ padding: '14px 16px' }}>
-                          {o.status !== 'delivered' && (
-                            <button type="button" onClick={() => advanceStatus(o.id)} className="admin-advance-btn">Advance</button>
-                          )}
-                        </td>
+              <>
+                <div className="admin-table-wrap">
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Order</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Token</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Customer</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Status</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {filtered.length === 0 && <p style={{ textAlign: 'center', padding: 48, color: 'var(--ts)' }}>No orders</p>}
-              </div>
+                    </thead>
+                    <tbody>
+                      {filtered.map((o) => (
+                        <tr key={o.id} style={{ borderBottom: '1px solid var(--bd)' }}>
+                          <td style={{ padding: '14px 16px', fontSize: 14 }}>{o.order_number}</td>
+                          <td style={{ padding: '14px 16px', fontFamily: 'var(--fd)', fontWeight: 800, color: 'var(--o)' }}>#{o.token}</td>
+                          <td style={{ padding: '14px 16px', fontSize: 14 }}>{o.user}</td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: statusBadge(o.status) === 'b-sch' ? '#FEF3C7' : statusBadge(o.status) === 'b-del' ? '#DCFCE7' : 'var(--bl)', color: statusBadge(o.status) === 'b-sch' ? '#92400E' : statusBadge(o.status) === 'b-del' ? 'var(--ok)' : 'var(--b)' }}>{statusLabel(o.status)}</span>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            {o.status !== 'delivered' && (
+                              <button type="button" onClick={() => advanceStatus(o.id)} className="admin-advance-btn">Advance</button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filtered.length === 0 && <p style={{ textAlign: 'center', padding: 48, color: 'var(--ts)' }}>No orders</p>}
+                </div>
+                <div className="admin-order-cards">
+                  {filtered.length === 0 ? (
+                    <p style={{ textAlign: 'center', padding: 24, color: 'var(--ts)', fontSize: 14 }}>No orders</p>
+                  ) : (
+                    filtered.map((o) => (
+                      <div key={o.id} className="admin-order-card">
+                        <div className="admin-order-card-head">
+                          <span className="admin-order-card-token">#{o.token}</span>
+                          <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: statusBadge(o.status) === 'b-sch' ? '#FEF3C7' : statusBadge(o.status) === 'b-del' ? '#DCFCE7' : 'var(--bl)', color: statusBadge(o.status) === 'b-sch' ? '#92400E' : statusBadge(o.status) === 'b-del' ? 'var(--ok)' : 'var(--b)' }}>{statusLabel(o.status)}</span>
+                        </div>
+                        <div className="admin-order-card-meta">{o.order_number} · {o.user}</div>
+                        {o.status !== 'delivered' && (
+                          <div className="admin-order-card-actions">
+                            <button type="button" onClick={() => advanceStatus(o.id)} className="admin-advance-btn">Advance</button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
             )}
           </>
         )}
@@ -477,47 +555,71 @@ export default function AdminPage() {
               </button>
             </div>
             {loading ? (
-              <p style={{ color: 'var(--ts)' }}>Loading…</p>
+              <>
+                <div className="skeleton admin-skeleton-row" />
+                <div className="skeleton admin-skeleton-row" />
+                <div className="skeleton admin-skeleton-row" />
+                <div className="skeleton admin-skeleton-row" />
+                <div className="skeleton admin-skeleton-row" />
+              </>
             ) : (
-              <div className="admin-table-wrap">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>ID</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>User</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Email</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Phone</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Type</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>College</th>
-                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Reg No</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(users ?? []).map((u) => {
-                      const ini = (u.full_name ?? '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+              <>
+                <div className="admin-table-wrap">
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>ID</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>User</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Email</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Phone</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Type</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>College</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Reg No</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(users ?? []).map((u) => {
+                        const ini = (u.full_name ?? '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+                        const collegeName = u.college_id ? (COLLEGES.find((c) => c.id === u.college_id)?.name ?? u.college_id) : '—';
+                        const displayId = u.display_id ?? '—';
+                        return (
+                          <tr key={u.id} style={{ borderBottom: '1px solid var(--bd)' }}>
+                            <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontWeight: 600, color: 'var(--b)' }}>{displayId}</td>
+                            <td style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--b)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, fontFamily: 'var(--fd)' }}>{ini}</div>
+                              <span style={{ fontWeight: 600 }}>{u.full_name ?? '—'}</span>
+                            </td>
+                            <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.email ?? '—'}</td>
+                            <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.phone ?? '—'}</td>
+                            <td style={{ padding: '14px 16px' }}>
+                              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: u.user_type === 'student' ? 'var(--ol)' : 'var(--bl)', color: u.user_type === 'student' ? 'var(--o)' : 'var(--b)' }}>{u.user_type === 'student' ? '🎓 Student' : 'General'}</span>
+                            </td>
+                            <td style={{ padding: '14px 16px', fontSize: 14 }}>{collegeName}</td>
+                            <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.reg_no ?? '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {(!users || users.length === 0) && <p style={{ textAlign: 'center', padding: 48, color: 'var(--ts)' }}>No users yet. Users appear when they register.</p>}
+                </div>
+                <div className="admin-user-cards">
+                  {(!users || users.length === 0) ? (
+                    <p style={{ textAlign: 'center', padding: 24, color: 'var(--ts)', fontSize: 14 }}>No users yet. Users appear when they register.</p>
+                  ) : (
+                    (users ?? []).map((u) => {
                       const collegeName = u.college_id ? (COLLEGES.find((c) => c.id === u.college_id)?.name ?? u.college_id) : '—';
-                      const displayId = u.display_id ?? '—';
                       return (
-                        <tr key={u.id} style={{ borderBottom: '1px solid var(--bd)' }}>
-                          <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontWeight: 600, color: 'var(--b)' }}>{displayId}</td>
-                          <td style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--b)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, fontFamily: 'var(--fd)' }}>{ini}</div>
-                            <span style={{ fontWeight: 600 }}>{u.full_name ?? '—'}</span>
-                          </td>
-                          <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.email ?? '—'}</td>
-                          <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.phone ?? '—'}</td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: u.user_type === 'student' ? 'var(--ol)' : 'var(--bl)', color: u.user_type === 'student' ? 'var(--o)' : 'var(--b)' }}>{u.user_type === 'student' ? '🎓 Student' : 'General'}</span>
-                          </td>
-                          <td style={{ padding: '14px 16px', fontSize: 14 }}>{collegeName}</td>
-                          <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.reg_no ?? '—'}</td>
-                        </tr>
+                        <div key={u.id} className="admin-user-card">
+                          <div className="admin-user-card-name">{u.full_name ?? '—'}</div>
+                          <div className="admin-user-card-email">{u.email ?? '—'}</div>
+                          <div className="admin-user-card-extra">{u.phone ?? '—'} · {u.user_type === 'student' ? 'Student' : 'General'} · {collegeName}</div>
+                        </div>
                       );
-                    })}
-                  </tbody>
-                </table>
-                {(!users || users.length === 0) && <p style={{ textAlign: 'center', padding: 48, color: 'var(--ts)' }}>No users yet. Users appear when they register.</p>}
-              </div>
+                    })
+                  )}
+                </div>
+              </>
             )}
           </>
         )}
