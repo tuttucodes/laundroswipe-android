@@ -408,6 +408,7 @@ export default function AdminPage() {
             <Link href="/admin/vendor" className="admin-nav-link" onClick={closeMenu}>🧾 Vendor / Bill</Link>
             <Link href="/admin/pickup" className="admin-nav-link" onClick={closeMenu}>📦 Pickup / Delivery</Link>
             <Link href="/admin/bills" className="admin-nav-link" onClick={closeMenu}>📋 Saved bills</Link>
+            <Link href="/admin/printers" className="admin-nav-link" onClick={closeMenu}>🖨️ Printers</Link>
             <button type="button" onClick={() => { setTab('vendor'); closeMenu(); }} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
           </div>
           <div className="admin-drawer-section">

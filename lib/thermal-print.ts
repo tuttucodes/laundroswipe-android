@@ -1,15 +1,24 @@
 /**
- * Open a print dialog for 2" (58mm) Bluetooth thermal receipt printers.
- * Uses window.open + simple HTML/CSS for maximum compatibility with older Android
- * devices and Bluetooth POS thermal printers.
- *
- * Paper: 58mm width (2" thermal roll). Print area ~48mm; layout kept within 58mm.
+ * Thermal receipt printing for 58mm and 79mm Bluetooth/USB printers.
+ * - Tries direct print via Web Serial (Chrome 117+ desktop, Bluetooth SPP) or
+ *   Web Bluetooth (BLE printers), then falls back to system print dialog.
+ * - Paper width and chars per line come from printer settings (e.g. Epson M80 79mm).
  */
-const THERMAL_STYLES = `
+
+export interface PrinterPrintConfig {
+  paperWidthMm: number;
+  charsPerLine: number;
+}
+
+const DEFAULT_CONFIG: PrinterPrintConfig = { paperWidthMm: 58, charsPerLine: 32 };
+
+function getThermalStyles(paperWidthMm: number): string {
+  const w = `${paperWidthMm}mm`;
+  return `
 *{margin:0;padding:0}
-html,body{width:58mm;max-width:58mm;min-width:58mm;font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.35;padding:3mm;margin:0;background:#fff;color:#000}
+html,body{width:${w};max-width:${w};min-width:${w};font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.35;padding:3mm;margin:0;background:#fff;color:#000}
 body{overflow:visible}
-.receipt{width:58mm;max-width:58mm}
+.receipt{width:${w};max-width:${w}}
 h2{text-align:center;font-size:11px;font-weight:700;margin:0 0 1mm}
 .meta{text-align:center;font-size:9px;margin:0 0 2mm}
 p{margin:1mm 0;font-size:9px;word-break:break-word}
@@ -21,18 +30,175 @@ th{text-align:left;font-weight:700}
 .conv{font-size:8px}
 .foot{text-align:center;margin-top:3mm;font-size:9px}
 @media print{
-  html,body{width:58mm!important;max-width:58mm!important;min-width:58mm!important;padding:0!important;margin:0!important;background:#fff!important}
-  @page{size:58mm auto;margin:2mm}
+  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:0!important;margin:0!important;background:#fff!important}
+  @page{size:${paperWidthMm}mm auto;margin:2mm}
 }
 `;
+}
+
+// ESC/POS: init, line feed, full cut
+const ESC_INIT = new Uint8Array([0x1b, 0x40]);
+const LF = new Uint8Array([0x0a]);
+const CUT_FULL = new Uint8Array([0x1d, 0x56, 0x00]);
+
+function buildEscPosBytes(plainText: string, charsPerLine: number = DEFAULT_CONFIG.charsPerLine): Uint8Array {
+  const lines = plainText.split(/\r?\n/);
+  const parts: Uint8Array[] = [ESC_INIT];
+  const encoder = new TextEncoder();
+  for (const line of lines) {
+    let rest = line;
+    while (rest.length > 0) {
+      const chunk = rest.length <= charsPerLine ? rest : rest.slice(0, charsPerLine);
+      rest = rest.length <= charsPerLine ? '' : rest.slice(charsPerLine);
+      parts.push(encoder.encode(chunk));
+      parts.push(LF);
+    }
+  }
+  parts.push(LF, CUT_FULL);
+  const totalLen = parts.reduce((s, p) => s + p.length, 0);
+  const out = new Uint8Array(totalLen);
+  let offset = 0;
+  for (const p of parts) {
+    out.set(p, offset);
+    offset += p.length;
+  }
+  return out;
+}
+
+// Minimal type for Web Serial API (Chrome 117+); not in default DOM libs
+interface SerialPortLike {
+  open(options: { baudRate: number }): Promise<void>;
+  writable: WritableStream<Uint8Array>;
+  close(): Promise<void>;
+}
+
+// Web Bluetooth types (not in all DOM libs)
+interface BLECharacteristicLike {
+  writeValue(data: Uint8Array): Promise<void>;
+}
+interface BLEServiceLike {
+  getCharacteristic(uuid: number): Promise<BLECharacteristicLike>;
+}
+interface BLEServerLike {
+  getPrimaryService(uuid: number): Promise<BLEServiceLike>;
+}
+interface BLEDeviceLike {
+  gatt?: { connected?: boolean; connect(): Promise<BLEServerLike> };
+}
+
+// Session cache: reuse same port/device so second print is one-click
+let cachedSerialPort: SerialPortLike | null = null;
+let cachedBleDevice: BLEDeviceLike | null = null;
+
+function isSerialSupported(): boolean {
+  return typeof navigator !== 'undefined' && 'serial' in navigator && typeof (navigator as unknown as { serial?: { requestPort: (o?: unknown) => Promise<SerialPortLike> } }).serial?.requestPort === 'function';
+}
+
+function isBluetoothSupported(): boolean {
+  return typeof navigator !== 'undefined' && 'bluetooth' in navigator && typeof (navigator as unknown as { bluetooth?: { requestDevice: (o: unknown) => Promise<BLEDeviceLike> } }).bluetooth?.requestDevice === 'function';
+}
+
+// Nordic UART Service (common for BLE thermal printers)
+const BLE_SERVICE_UUID = 0xffe0;
+const BLE_CHAR_UUID = 0xffe1;
+const BLE_CHUNK_SIZE = 20;
+
+async function writeToSerialPort(port: SerialPortLike, data: Uint8Array, keepOpen: boolean): Promise<void> {
+  try {
+    await port.open({ baudRate: 9600 });
+  } catch (e) {
+    if ((e as Error).name !== 'InvalidStateError') throw e;
+    // already open (reuse)
+  }
+  const writer = port.writable.getWriter();
+  try {
+    await writer.write(data);
+  } finally {
+    writer.releaseLock();
+    if (!keepOpen) await port.close();
+  }
+}
+
+async function writeToBleCharacteristic(characteristic: BLECharacteristicLike, data: Uint8Array): Promise<void> {
+  for (let i = 0; i < data.length; i += BLE_CHUNK_SIZE) {
+    const chunk = data.subarray(i, Math.min(i + BLE_CHUNK_SIZE, data.length));
+    await characteristic.writeValue(chunk);
+  }
+}
+
+export type DirectPrintResult = 'serial' | 'ble' | 'dialog' | 'blocked';
 
 /**
- * Opens a new window with the receipt HTML and triggers print. Window stays open
- * so user can choose "Bluetooth printer" instead of "Save as PDF" in the dialog.
+ * Try to print directly to a Bluetooth thermal printer (Web Serial or Web Bluetooth),
+ * then fall back to system print dialog. Returns which method was used.
+ * Call from a user gesture (e.g. button click).
  */
-export function printThermalReceipt(title: string, bodyHtml: string): boolean {
+export async function printThermalReceiptDirect(
+  title: string,
+  bodyHtml: string,
+  plainText: string,
+  options?: { forceDialog?: boolean; printer?: PrinterPrintConfig }
+): Promise<DirectPrintResult> {
+  const forceDialog = options?.forceDialog === true;
+  const config = options?.printer ?? DEFAULT_CONFIG;
+  const escPosBytes = buildEscPosBytes(plainText, config.charsPerLine);
+
+  if (!forceDialog && isSerialSupported()) {
+    try {
+      let port = cachedSerialPort;
+      if (!port) {
+        const nav = navigator as unknown as { serial: { requestPort: (opts?: { filters?: unknown[] }) => Promise<SerialPortLike> } };
+        port = await nav.serial.requestPort({});
+        cachedSerialPort = port;
+      }
+      await writeToSerialPort(port, escPosBytes, true);
+      return 'serial';
+    } catch (e) {
+      if ((e as Error).name === 'NotFoundError') {
+        cachedSerialPort = null;
+      }
+      // fall through to BLE or dialog
+    }
+  }
+
+  if (!forceDialog && isBluetoothSupported()) {
+    try {
+      let device = cachedBleDevice;
+      if (!device || !device.gatt?.connected) {
+        const nav = navigator as unknown as { bluetooth: { requestDevice: (o: { filters?: { services?: number[] }[]; optionalServices?: number[] }) => Promise<BLEDeviceLike> } };
+        device = await nav.bluetooth.requestDevice({
+          filters: [{ services: [BLE_SERVICE_UUID] }],
+          optionalServices: [BLE_SERVICE_UUID],
+        });
+        cachedBleDevice = device;
+      }
+      const server = await device.gatt!.connect();
+      const service = await server.getPrimaryService(BLE_SERVICE_UUID);
+      const characteristic = await service.getCharacteristic(BLE_CHAR_UUID);
+      await writeToBleCharacteristic(characteristic, escPosBytes);
+      return 'ble';
+    } catch (e) {
+      if ((e as Error).name === 'NotFoundError') {
+        cachedBleDevice = null;
+      }
+      // fall through to dialog
+    }
+  }
+
+  // Fallback: open print window and show system print dialog
+  const ok = printThermalReceipt(title, bodyHtml, config.paperWidthMm);
+  return ok ? 'dialog' : 'blocked';
+}
+
+/**
+ * Opens a new window with the receipt HTML and triggers the system print dialog.
+ * Use when direct print is not available (e.g. Android with Classic-only printer).
+ * paperWidthMm defaults to 58 if not provided.
+ */
+export function printThermalReceipt(title: string, bodyHtml: string, paperWidthMm: number = DEFAULT_CONFIG.paperWidthMm): boolean {
   const w = window.open('', '_blank', 'width=320,height=480,menubar=no,toolbar=no');
   if (!w) return false;
+  const styles = getThermalStyles(paperWidthMm);
   const closeLink = '<p class="foot" style="margin-top:8px"><a href="#" onclick="window.close();return false" style="color:#666;font-size:10px">Close window after printing</a></p>';
   const doc = w.document;
   doc.open();
@@ -41,7 +207,7 @@ export function printThermalReceipt(title: string, bodyHtml: string): boolean {
       '<meta charset="UTF-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<title>' + escapeHtml(title) + '</title>' +
-      '<style>' + THERMAL_STYLES + '</style></head><body><div class="receipt">' +
+      '<style>' + styles + '</style></head><body><div class="receipt">' +
       bodyHtml +
       closeLink +
       '</div></body></html>'
@@ -54,7 +220,6 @@ export function printThermalReceipt(title: string, bodyHtml: string): boolean {
     } catch (_) {
       // ignore
     }
-    // Don't auto-close: user may need to change destination from PDF to Bluetooth printer
   }, 500);
   return true;
 }

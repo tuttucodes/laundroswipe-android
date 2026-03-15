@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
-import { printThermalReceipt } from '@/lib/thermal-print';
+import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
+import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { VENDOR_BILL_ITEMS, CONVENIENCE_FEE } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
 
@@ -177,10 +178,16 @@ export default function VendorPage() {
     }
   };
 
-  const doPrint = () => {
-    const ok = printThermalReceipt(`Bill #${order?.token ?? ''}`, buildReceiptHtml());
-    if (!ok) {
+  const doPrint = async () => {
+    const title = `Bill #${order?.token ?? ''}`;
+    const config = getPrinterConfigForPrint();
+    const result = await printThermalReceiptDirect(title, buildReceiptHtml(), buildReceiptPlainText(), { printer: config ?? undefined });
+    if (result === 'blocked') {
       showToast('Allow pop-ups to print, or try again', 'er');
+    } else if (result === 'dialog') {
+      showToast('Choose your printer in the dialog', 'ok');
+    } else {
+      showToast('Sent to printer', 'ok');
     }
   };
 
@@ -191,8 +198,8 @@ export default function VendorPage() {
     }
     const fingerprint = billFingerprint();
     if (lastSavedBillFingerprintRef.current === fingerprint) {
-      doPrint();
       showToast('Printing…', 'ok');
+      await doPrint();
       return;
     }
     showToast('Saving & printing…', 'ok');
@@ -210,8 +217,8 @@ export default function VendorPage() {
       total,
     });
     if (result) lastSavedBillFingerprintRef.current = fingerprint;
-    doPrint();
     showToast(result ? 'Bill saved. Printing…' : 'Printing…', result ? 'ok' : 'er');
+    await doPrint();
   };
 
   const handleNewBill = () => {
@@ -339,7 +346,7 @@ export default function VendorPage() {
               <button type="button" onClick={handleNewBill} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>New bill</button>
               <Link href="/admin/bills" className="vendor-btn-secondary" style={{ flex: '1 1 200px', textDecoration: 'none' }}>View saved bills</Link>
             </div>
-            <p style={{ marginTop: 10, fontSize: 12, color: 'var(--ts)' }}>If it says &quot;Save as PDF&quot;, tap the destination and choose your Bluetooth printer. Or use Copy receipt and paste in your printer app.</p>
+            <p style={{ marginTop: 10, fontSize: 12, color: 'var(--ts)' }}>Set your printer in <Link href="/admin/printers" style={{ color: 'var(--b)', fontWeight: 600 }}>Admin → Printers</Link> (e.g. Epson M80 79mm). On Android: install <strong>ESCPOS Bluetooth Print Service</strong> if needed, then pair and choose it in the print dialog.</p>
           </div>
         </div>
       )}

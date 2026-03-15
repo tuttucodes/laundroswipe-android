@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
-import { printThermalReceipt } from '@/lib/thermal-print';
+import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
+import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import type { VendorBillRow } from '@/lib/api';
 import { CONVENIENCE_FEE } from '@/lib/constants';
 
@@ -96,8 +97,17 @@ export default function BillsPage() {
     URL.revokeObjectURL(a.href);
   };
 
-  const printBill = (b: VendorBillRow) => {
-    printThermalReceipt(`Bill #${b.order_token}`, billToHtml(b));
+  const printBill = async (b: VendorBillRow) => {
+    const config = getPrinterConfigForPrint();
+    const result = await printThermalReceiptDirect(
+      `Bill #${b.order_token}`,
+      billToHtml(b),
+      billToPlainText(b),
+      { printer: config ?? undefined }
+    );
+    if (result === 'dialog') {
+      printThermalReceipt(`Bill #${b.order_token}`, billToHtml(b), config?.paperWidthMm ?? 58);
+    }
   };
 
   const copyBill = async (b: VendorBillRow) => {
@@ -117,6 +127,8 @@ export default function BillsPage() {
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Dashboard</Link>
         {' · '}
         <Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>Vendor Bill</Link>
+        {' · '}
+        <Link href="/admin/printers" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>Printers</Link>
       </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <div>

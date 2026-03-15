@@ -479,10 +479,40 @@ In the **Supabase Dashboard** → **Database** → **Webhooks**:
 
 ---
 
+## Bluetooth 2" thermal printer on Android (e.g. Galaxy Tab A)
+
+The vendor bill page uses the browser’s **Print** dialog. On Android (e.g. Samsung Galaxy Tab A 2017), the default destination is often **Save as PDF**, and a Bluetooth POS thermal printer (2", ESC/POS over Bluetooth) usually **does not appear** in the list because Android’s built-in print services don’t support Bluetooth SPP thermal printers.
+
+### Option A: Use a print-service app (recommended)
+
+1. **Install a print service** that registers your Bluetooth thermal printer with Android so it appears in the Print dialog:
+   - **ESCPOS Bluetooth Print Service** (Looped Labs) – [Google Play](https://play.google.com/store/apps/details?id=com.loopedlabs.escposprintservice). Shows up in the browser’s print menu; supports most 2" Bluetooth thermal (ESC/POS) printers. Free trial (e.g. 26 prints), then premium.
+   - Or **Bluetooth Mini Thermal Printer (Thermer)** – [Google Play](https://play.google.com/store/apps/details?id=mate.bluetoothprint) – use “Copy receipt” in the app and paste into Thermer to print.
+
+2. **On the tablet:** Open **Settings → Connections → Printing** (or **More connection settings → Printing**). Ensure the new print service is **enabled**.
+
+3. **In the print-service app:** Pair and select your 2" Bluetooth thermal printer (put the printer in pairing mode if needed).
+
+4. **When printing from the vendor bill page:** Tap **Print bill** → in the print dialog, tap the **destination** (where it says “Save as PDF”) → choose **ESCPOS Bluetooth Print Service** (or your thermal printer). Then tap the print button. The receipt will go to the thermal printer instead of PDF.
+
+### Option B: Copy receipt and paste into a printer app
+
+1. On the vendor bill page, tap **Copy receipt**.
+2. Open an app that can print from clipboard to your Bluetooth thermal printer (e.g. **Bluetooth Mini Thermal Printer / Thermer**, or **Quick Printer**).
+3. Paste and print.
+
+### If the printer doesn’t appear in the print-service app
+
+- Ensure the printer is in **Bluetooth Classic** (SPP) mode, not BLE-only (many thermal printers use Classic for printing).
+- In **Settings → Bluetooth**, pair the printer with the tablet first, then open the print-service app and select that paired device.
+- On Android 12+, grant **Nearby devices** (and if asked, **Location**) to the print-service app so it can discover/use the printer.
+
+---
+
 ## What's next (post-launch)
 
 - **Security:** Turn on Row Level Security (RLS) on `users` and `orders` in Supabase and add policies so customers only see their own data. Change the hardcoded admin password or move admin login to Supabase Auth.
-- **Vendor bill:** Use **Admin → Vendor / Bill** (`/admin/vendor.html`) to look up orders by token, add line items, and print the 2" thermal receipt (choose your Bluetooth printer in the print dialog).
+- **Vendor bill:** Use **Admin → Vendor / Bill** (`/admin/vendor`) to look up orders by token, add line items, and print the 2" thermal receipt. On Android, install **ESCPOS Bluetooth Print Service** (see section above) so the printer appears in the print dialog instead of only “Save as PDF”.
 - **Data:** Orders and users are stored in Supabase; admin and vendor pages read from the same database.
 
 ---
