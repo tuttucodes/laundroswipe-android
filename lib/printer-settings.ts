@@ -3,7 +3,7 @@
  * Stored in localStorage so the same device uses the chosen printer for receipts.
  */
 
-export type PrinterModelId = 'generic-58' | 'generic-78' | 'epson-m80';
+export type PrinterModelId = 'generic-58' | 'generic-68' | 'generic-78' | 'epson-m80';
 
 export interface PrinterModel {
   id: PrinterModelId;
@@ -16,6 +16,7 @@ export interface PrinterModel {
 /** Known printer models (like "add printer" lists in other apps). */
 export const PRINTER_MODELS: PrinterModel[] = [
   { id: 'generic-58', name: 'Generic 2" (58mm)', paperWidthMm: 58, charsPerLine: 32, description: 'Most Bluetooth thermal receipt printers' },
+  { id: 'generic-68', name: '68mm thermal', paperWidthMm: 68, charsPerLine: 40, description: 'Standard 68mm receipt printers' },
   { id: 'generic-78', name: '78mm thermal', paperWidthMm: 78, charsPerLine: 46, description: 'Standard 78mm receipt printers' },
   { id: 'epson-m80', name: 'Epson M80 / TM-P80 (79mm)', paperWidthMm: 79, charsPerLine: 48, description: 'Epson TM-P80, TM-P80II; Bluetooth or USB' },
 ];
@@ -79,7 +80,7 @@ export function getPrinterConfigForPrint(): { paperWidthMm: number; charsPerLine
   const def = getDefaultPrinter();
   const model = def ? PRINTER_MODELS.find((m) => m.id === def.modelId) : null;
   const forceDialog = s.preferPrintDialog !== false;
-  if (!model) return forceDialog ? { paperWidthMm: 78, charsPerLine: 46, forceDialog } : null;
+  if (!model) return forceDialog ? { paperWidthMm: 68, charsPerLine: 40, forceDialog } : null;
   return { paperWidthMm: model.paperWidthMm, charsPerLine: model.charsPerLine, forceDialog };
 }
 

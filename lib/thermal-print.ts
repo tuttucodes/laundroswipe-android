@@ -1,8 +1,8 @@
 /**
- * Thermal receipt printing for 58mm and 79mm Bluetooth/USB printers.
+ * Thermal receipt printing for 58mm, 68mm, and 79mm Bluetooth/USB printers.
  * - Tries direct print via Web Serial (Chrome 117+ desktop, Bluetooth SPP) or
  *   Web Bluetooth (BLE printers), then falls back to system print dialog.
- * - Paper width and chars per line come from printer settings (e.g. Epson M80 79mm).
+ * - Paper width and chars per line come from printer settings (e.g. 68mm, Epson M80 79mm).
  */
 
 export interface PrinterPrintConfig {
@@ -10,32 +10,34 @@ export interface PrinterPrintConfig {
   charsPerLine: number;
 }
 
-const DEFAULT_CONFIG: PrinterPrintConfig = { paperWidthMm: 78, charsPerLine: 46 };
+const DEFAULT_CONFIG: PrinterPrintConfig = { paperWidthMm: 68, charsPerLine: 40 };
 
 function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
+  /* Wider, non-condensed font: larger size and letter-spacing for 68mm receipt. */
+  const fontCss = `font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:18px;font-weight:700;letter-spacing:0.04em;line-height:1.5`;
   return `
 *{margin:0;padding:0}
-html,body{width:${w};max-width:${w};min-width:${w};font-family:Arial,sans-serif;font-size:16px;font-weight:700;line-height:1.45;padding:2mm 1mm;margin:0;background:#fff;color:#000;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
+html,body{width:${w};max-width:${w};min-width:${w};${fontCss};padding:2mm 2mm;margin:0;background:#fff;color:#000;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 body{overflow:visible}
 .receipt{width:100%;max-width:100%;margin:0;text-align:center;padding:0}
-h2{text-align:center;font-size:20px;font-weight:700;margin:0 0 3mm}
-.meta{text-align:center;font-size:15px;font-weight:700;margin:0 0 3mm}
-p{margin:3mm 0;font-size:16px;font-weight:700;word-break:break-word;text-align:center}
-table{width:100%;border-collapse:collapse;font-size:16px;font-weight:700;margin:3mm 0}
+h2{text-align:center;font-size:22px;font-weight:700;letter-spacing:0.04em;margin:0 0 3mm}
+.meta{text-align:center;font-size:17px;font-weight:700;letter-spacing:0.03em;margin:0 0 3mm}
+p{margin:3mm 0;font-size:18px;font-weight:700;letter-spacing:0.04em;word-break:break-word;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:18px;font-weight:700;letter-spacing:0.04em;margin:3mm 0}
 th,td{padding:2.5mm 2mm}
 th{font-weight:700;text-align:left}
 td{text-align:left}
 .right{text-align:right}
-.total{font-weight:700;font-size:18px;padding-top:3mm;margin-top:3mm;text-align:center}
-.conv{font-size:15px;font-weight:700;text-align:center}
-.foot{text-align:center;margin-top:4mm;font-size:15px;font-weight:700}
+.total{font-weight:700;font-size:20px;letter-spacing:0.04em;padding-top:3mm;margin-top:3mm;text-align:center}
+.conv{font-size:17px;font-weight:700;letter-spacing:0.03em;text-align:center}
+.foot{text-align:center;margin-top:4mm;font-size:17px;font-weight:700;letter-spacing:0.03em}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
   .escpos-hint,.no-print{display:none!important}
-  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:2mm 1mm!important;margin:0!important;background:#fff!important}
+  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:2mm 2mm!important;margin:0!important;background:#fff!important}
   .receipt{width:100%!important;max-width:100%!important}
   @page{size:${paperWidthMm}mm auto;margin:0}
 }

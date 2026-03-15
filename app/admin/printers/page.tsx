@@ -38,7 +38,7 @@ function getTestReceiptPlain(): string {
 export default function AdminPrintersPage() {
   const [settings, setSettings] = useState(getPrinterSettings());
   const [adding, setAdding] = useState(false);
-  const [selectedModelId, setSelectedModelId] = useState<PrinterModelId>('generic-78');
+  const [selectedModelId, setSelectedModelId] = useState<PrinterModelId>('generic-68');
   const [newName, setNewName] = useState('');
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [testing, setTesting] = useState(false);
@@ -132,7 +132,7 @@ export default function AdminPrintersPage() {
       </p>
       <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 8, color: 'var(--b)' }}>Printers</h1>
       <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>
-        Add your receipt printer (e.g. Epson M80 79mm). Set a default so bills print with the correct paper width. Use &quot;Pair printer&quot; to connect via Bluetooth/Serial for one-tap printing where supported.
+        Add your receipt printer (e.g. 68mm or Epson M80 79mm). Set a default so bills print with the correct paper width. Use &quot;Pair printer&quot; to connect via Bluetooth/Serial for one-tap printing where supported.
       </p>
 
       {/* Known printer models */}
@@ -202,7 +202,7 @@ export default function AdminPrintersPage() {
           </ul>
         )}
         {!hasPrinters && !adding && (
-          <p style={{ color: 'var(--ts)', fontSize: 14 }}>No printers added yet. Add one to set paper width (58mm or 79mm) for receipts.</p>
+          <p style={{ color: 'var(--ts)', fontSize: 14 }}>No printers added yet. Add one to set paper width (58mm, 68mm, or 79mm) for receipts.</p>
         )}
       </section>
 
