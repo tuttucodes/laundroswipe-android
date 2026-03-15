@@ -11,9 +11,9 @@ function billToHtml(b: VendorBillRow, logoUrl: string = '/profab-logo.png') {
     ? b.line_items.map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')
     : '<tr><td colspan="2">No items</td></tr>';
   return `
-    <img src="${logoUrl}" alt="ProFab" style="height:40px;object-fit:contain;display:block;margin:0 auto 6px" />
+    <img src="${logoUrl}" alt="LaundroSwipe" style="height:40px;object-fit:contain;display:block;margin:0 auto 6px" />
     <h2>LaundroSwipe</h2>
-    <p class="meta">Pro Fab Power Laundry</p>
+    <p class="meta">Vendor name: Pro Fab Power Laundry</p>
     <p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p>
     <p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p>
     <p><strong>Phone:</strong> ${b.customer_phone ?? '—'}</p>

@@ -242,7 +242,7 @@ function buildReceiptHtml() {
   if (!rows) rows = '<tr><td colspan="2">No items</td></tr>';
   return `
     <h2>LaundroSwipe</h2>
-    <p class="meta">Pro Fab Power Laundry</p>
+    <p class="meta">Vendor name: Pro Fab Power Laundry</p>
     <p><strong>Order:</strong> ${order.order_number || order.on} &nbsp; <strong>Token:</strong> #${order.token}</p>
     <p><strong>Customer:</strong> ${user.full_name || user.fn || '—'}</p>
     <p><strong>Phone:</strong> ${user.phone || user.ph || '—'}</p>

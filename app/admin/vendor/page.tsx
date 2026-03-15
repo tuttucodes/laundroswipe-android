@@ -100,9 +100,9 @@ export default function VendorPage() {
     const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
     const logoUrl = typeof window !== 'undefined' ? window.location.origin + '/profab-logo.png' : '/profab-logo.png';
     return `
-<img src="${logoUrl}" alt="ProFab" style="height:40px;object-fit:contain;display:block;margin:0 auto 6px" />
+<img src="${logoUrl}" alt="LaundroSwipe" style="height:40px;object-fit:contain;display:block;margin:0 auto 6px" />
 <h2>LaundroSwipe</h2>
-<p class="meta">Pro Fab Power Laundry</p>
+<p class="meta">Vendor name: Pro Fab Power Laundry</p>
 <p><strong>Token:</strong> #${o?.token ?? ''} <strong>Ord:</strong> ${o?.order_number ?? ''}</p>
 <p><strong>Customer:</strong> ${(u.full_name ?? u.email ?? '—').toString().slice(0, 20)}</p>
 <p><strong>Phone:</strong> ${(u.phone ?? '—').toString().slice(0, 14)}</p>
