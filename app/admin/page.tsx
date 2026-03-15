@@ -10,7 +10,7 @@ const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'rea
 const STATUS_LABELS = ['Scheduled', 'Agent Assigned', 'Picked Up', 'Processing', 'Ready', 'Out for Delivery', 'Delivered'];
 
 type OrderWithUser = OrderRow & { user?: string };
-type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'vendor' | 'settings';
+type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'vendor' | 'gatepass' | 'settings';
 
 type ScheduleSlot = { id: string; label: string; time_from: string; time_to: string; sort_order: number; active: boolean };
 type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
@@ -235,8 +235,8 @@ export default function AdminPage() {
 
   if (!loggedIn) {
     return (
-      <div className="login-wrap" style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'linear-gradient(135deg,#0F3285,var(--b),#2558C4)' }}>
-        <div className="login-card" style={{ background: '#fff', borderRadius: 20, padding: '32px 24px', maxWidth: 400, width: '100%' }}>
+      <div className="login-wrap">
+        <div className="login-card">
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Admin</h1>
             <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 4 }}>Pro Fab Power Laundry</p>
@@ -254,7 +254,7 @@ export default function AdminPage() {
             <button type="submit" className="btn bp bbl" style={{ marginTop: 8, width: '100%' }} disabled={authLoading}>{authLoading ? 'Checking…' : 'Log In'}</button>
           </form>
         </div>
-        {toast && <div className={`toast ${toast.type}`} style={{ position: 'fixed', top: 20, right: 20 }}>{toast.msg}</div>}
+        {toast && <div className={`toast toast-dashboard ${toast.type}`}>{toast.msg}</div>}
       </div>
     );
   }
@@ -275,6 +275,7 @@ export default function AdminPage() {
           <button type="button" onClick={() => setTab('schedule')} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
           <button type="button" onClick={() => setTab('notifications')} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
           <button type="button" onClick={() => setTab('vendor')} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
+          <button type="button" onClick={() => setTab('gatepass')} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>📄 Gate pass</button>
           <button type="button" onClick={() => setTab('settings')} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
         </nav>
         <div className="admin-foot" style={{ padding: 16, borderTop: '1px solid var(--bd)' }}>
@@ -331,7 +332,7 @@ export default function AdminPage() {
             {loading ? (
               <p style={{ color: 'var(--ts)' }}>Loading…</p>
             ) : (
-              <div className="admin-table-wrap" style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+              <div className="admin-table-wrap">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
@@ -379,7 +380,7 @@ export default function AdminPage() {
             {loading ? (
               <p style={{ color: 'var(--ts)' }}>Loading…</p>
             ) : (
-              <div className="admin-table-wrap" style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+              <div className="admin-table-wrap">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
@@ -425,7 +426,7 @@ export default function AdminPage() {
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Colleges</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Manage campus availability</p>
-            <div className="admin-table-wrap" style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+            <div className="admin-table-wrap">
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -637,7 +638,7 @@ export default function AdminPage() {
             {vendorProfileLoading ? (
               <p style={{ color: 'var(--ts)' }}>Loading…</p>
             ) : (
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 520 }}>
+              <div className="vendor-card" style={{ maxWidth: 520 }}>
                 <div className="fg" style={{ marginBottom: 12 }}>
                   <label className="fl">Display name</label>
                   <input className="fi" value={vendorName} onChange={(e) => setVendorName(e.target.value)} placeholder="e.g. Pro Fab Power Launders" />
@@ -686,6 +687,33 @@ export default function AdminPage() {
             )}
           </>
         )}
+        {tab === 'gatepass' && (
+          <div className="gatepass-tab">
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Gate pass</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Show or print this letter at the gate for vendor entry.</p>
+            <div className="gatepass-letter" style={{ background: '#fff', borderRadius: 14, padding: '32px 28px', maxWidth: 560, boxShadow: '0 2px 8px rgba(0,0,0,.06)', border: '1px solid var(--bd)' }}>
+              <p style={{ fontSize: 12, color: 'var(--tm)', marginBottom: 20 }}>To be shown at the gate</p>
+              <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, fontWeight: 700, color: 'var(--b)', marginBottom: 20 }}>Permission letter for campus entry</h2>
+              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--tx)', marginBottom: 16 }}>
+                This is to certify that <strong>{VENDOR.name}</strong> are official partners of <strong>LaundroSwipe.com</strong>.
+              </p>
+              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--tx)', marginBottom: 16 }}>
+                They have received <strong>{tokensGenerated} pickup order{tokensGenerated !== 1 ? 's' : ''}</strong> and are here to drop off the clothes of students. Please allow these vendors to pass through the gate so they can complete the deliveries and work properly.
+              </p>
+              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--tx)', marginBottom: 24 }}>
+                Kindly extend your cooperation.
+              </p>
+              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--tx)' }}>With regards,</p>
+              <p style={{ fontFamily: 'var(--fd)', fontSize: 16, fontWeight: 700, color: 'var(--b)' }}>Team LaundroSwipe</p>
+              <p style={{ fontSize: 12, color: 'var(--tm)', marginTop: 24 }}>LaundroSwipe.com · {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
+            <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <button type="button" onClick={() => window.print()} className="btn bp">
+                🖨️ Print / Save as PDF
+              </button>
+            </div>
+          </div>
+        )}
         {tab === 'settings' && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Settings</h1>
@@ -713,7 +741,7 @@ export default function AdminPage() {
           </>
         )}
       </main>
-      {toast && <div className={`toast ${toast.type}`} style={{ position: 'fixed', top: 20, right: 20 }}>{toast.msg}</div>}
+      {toast && <div className={`toast toast-dashboard ${toast.type}`}>{toast.msg}</div>}
     </div>
   );
 }
