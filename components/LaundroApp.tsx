@@ -431,18 +431,17 @@ export default function LaundroApp() {
       if (swipeStartRef.current) {
         const start = swipeStartRef.current;
         const p = Math.max(0, Math.min(100, ((e.clientX - start.left) / start.width) * 100));
+        if (p >= 80 && !swipeReached80Ref.current) {
+          swipeReached80Ref.current = true;
+          setSwipeAtThreshold(true);
+          if (navigator.vibrate) navigator.vibrate(10);
+        }
         swipeProgressRef.current = p;
         setSwipeProgress(p);
       }
     };
     const onMouseUp = () => {
-      if (swipeStartRef.current) {
-        const progress = swipeProgressRef.current;
-        swipeStartRef.current = null;
-        if (progress >= 80) handleConfirmOrderRef.current();
-        setSwipeProgress(0);
-        swipeProgressRef.current = 0;
-      }
+      if (swipeStartRef.current) swipeEndRef.current();
     };
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
@@ -462,6 +461,11 @@ export default function LaundroApp() {
         const start = swipeStartRef.current;
         const clientX = e.touches[0].clientX;
         const p = Math.max(0, Math.min(100, ((clientX - start.left) / start.width) * 100));
+        if (p >= 80 && !swipeReached80Ref.current) {
+          swipeReached80Ref.current = true;
+          setSwipeAtThresholdRef.current(true);
+          if (navigator.vibrate) navigator.vibrate(10);
+        }
         swipeProgressRef.current = p;
         setSwipeProgress(p);
       }
@@ -469,11 +473,7 @@ export default function LaundroApp() {
     const onTouchEnd = (e: TouchEvent) => {
       if (swipeStartRef.current) {
         e.preventDefault();
-        const progress = swipeProgressRef.current;
-        swipeStartRef.current = null;
-        if (progress >= 80) handleConfirmOrderRef.current();
-        setSwipeProgress(0);
-        swipeProgressRef.current = 0;
+        swipeEndRef.current();
       }
     };
     track.addEventListener('touchmove', onTouchMove, { passive: false });
@@ -869,8 +869,17 @@ export default function LaundroApp() {
 
   const swipeStartRef = useRef<{ left: number; width: number } | null>(null);
   const swipeProgressRef = useRef(0);
+  const swipeReached80Ref = useRef(false);
+  const [swipeAnimating, setSwipeAnimating] = useState(false);
+  const [swipeSuccess, setSwipeSuccess] = useState(false);
+  const [swipeAtThreshold, setSwipeAtThreshold] = useState(false);
   const handleConfirmOrderRef = useRef(handleConfirmOrder);
   handleConfirmOrderRef.current = handleConfirmOrder;
+
+  const vibrate = useCallback((ms: number) => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
+  }, []);
+
   const handleSwipeStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     const track = swipeTrackRef.current;
     if (!track || orderSubmitting) return;
@@ -878,6 +887,10 @@ export default function LaundroApp() {
     e.stopPropagation();
     const rect = track.getBoundingClientRect();
     swipeStartRef.current = { left: rect.left, width: rect.width };
+    swipeReached80Ref.current = false;
+    setSwipeSuccess(false);
+    setSwipeAtThreshold(false);
+    setSwipeAnimating(false);
     setSwipeProgress(0);
     swipeProgressRef.current = 0;
   }, [orderSubmitting]);
@@ -887,10 +900,15 @@ export default function LaundroApp() {
     if ('touches' in e) e.preventDefault();
     e.stopPropagation();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const p = Math.max(0, Math.min(100, ((clientX - start.left) / start.width) * 100));
-    swipeProgressRef.current = p;
-    setSwipeProgress(p);
-  }, []);
+    const raw = Math.max(0, Math.min(100, ((clientX - start.left) / start.width) * 100));
+    if (raw >= 80 && !swipeReached80Ref.current) {
+      swipeReached80Ref.current = true;
+      setSwipeAtThreshold(true);
+      vibrate(10);
+    }
+    swipeProgressRef.current = raw;
+    setSwipeProgress(raw);
+  }, [vibrate]);
   const handleSwipeEnd = useCallback((e?: React.TouchEvent | React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
@@ -898,10 +916,29 @@ export default function LaundroApp() {
     }
     const progress = swipeProgressRef.current;
     swipeStartRef.current = null;
-    if (progress >= 80) handleConfirmOrderRef.current();
+    if (progress >= 80) {
+      setSwipeSuccess(true);
+      setSwipeProgress(100);
+      swipeProgressRef.current = 100;
+      vibrate(15);
+      window.setTimeout(() => {
+        handleConfirmOrderRef.current();
+        setSwipeProgress(0);
+        swipeProgressRef.current = 0;
+        setSwipeSuccess(false);
+      }, 320);
+      return;
+    }
+    setSwipeAnimating(true);
     setSwipeProgress(0);
     swipeProgressRef.current = 0;
-  }, []);
+    window.setTimeout(() => setSwipeAnimating(false), 280);
+  }, [vibrate]);
+
+  const swipeEndRef = useRef(handleSwipeEnd);
+  swipeEndRef.current = handleSwipeEnd;
+  const setSwipeAtThresholdRef = useRef(setSwipeAtThreshold);
+  setSwipeAtThresholdRef.current = setSwipeAtThreshold;
 
   const handleConfirmDelivery = async (orderId: string) => {
     setConfirmingDelivery(true);
@@ -1720,13 +1757,13 @@ export default function LaundroApp() {
                     >
                       <div
                         ref={swipeTrackRef}
-                        className="swipe-track"
+                        className={`swipe-track${swipeAnimating ? ' animating' : ''}${swipeSuccess ? ' success' : ''}`}
                         onTouchStart={handleSwipeStart}
                         onMouseDown={handleSwipeStart}
                       >
                         <div className="swipe-fill" style={{ width: `${swipeProgress}%` }} />
                         <div
-                          className="swipe-thumb"
+                          className={`swipe-thumb${swipeAtThreshold && !swipeSuccess ? ' at-threshold' : ''}`}
                           style={{
                             left: `calc(24px + (100% - 48px) * ${swipeProgress / 100})`,
                             transform: `translateX(-50%) translateZ(12px) scale(${swipeProgress >= 80 ? 1.08 : 1})`,
@@ -1735,10 +1772,18 @@ export default function LaundroApp() {
                               : `0 ${4 + (swipeProgress / 100) * 8}px ${12 + (swipeProgress / 100) * 16}px rgba(0,0,0,${0.15 + (swipeProgress / 100) * 0.1})`,
                           }}
                         >
-                          {swipeProgress >= 80 ? '✓' : '→'}
+                          {swipeSuccess ? '✓' : swipeProgress >= 80 ? '✓' : '→'}
                         </div>
                         <span className="swipe-label">
-                          {orderSubmitting ? 'Placing…' : swipeProgress >= 80 ? 'Release to confirm' : 'Swipe right'}
+                          {orderSubmitting
+                            ? 'Placing…'
+                            : swipeSuccess
+                              ? 'Confirmed!'
+                              : swipeProgress >= 80
+                                ? 'Release to confirm'
+                                : swipeProgress >= 40
+                                  ? 'Almost there…'
+                                  : 'Swipe right to confirm'}
                         </span>
                       </div>
                     </div>

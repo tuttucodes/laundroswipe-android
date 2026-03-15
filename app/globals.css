@@ -144,13 +144,21 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 .ts2-dis{opacity:.5;cursor:not-allowed}.ts2-dis:hover{border-color:var(--bd)}
 .ssc.coming-soon{opacity:.7;cursor:not-allowed}.ssc.coming-soon:hover{border-color:var(--bd)}
 .ssc.vendor-card{cursor:pointer}
+@keyframes swipeThumbPop{0%{transform:translateX(-50%) translateZ(12px) scale(1)}40%{transform:translateX(-50%) translateZ(12px) scale(1.15)}70%{transform:translateX(-50%) translateZ(12px) scale(1.08)}100%{transform:translateX(-50%) translateZ(12px) scale(1.08)}}
+@keyframes swipeSuccessPulse{0%{opacity:1;transform:scale(1)}50%{opacity:.95;transform:scale(1.02)}100%{opacity:1;transform:scale(1)}}
 .swipe-wrap{touch-action:none;margin-top:8px;-webkit-tap-highlight-color:transparent;perspective:120px}
 .swipe-track{position:relative;height:56px;background:linear-gradient(180deg,var(--bd) 0%,#d5dce6 100%);border-radius:28px;overflow:visible;cursor:grab;user-select:none;touch-action:none;margin:0;transform-style:preserve-3d;border:1px solid rgba(0,0,0,.06);box-shadow:inset 0 1px 2px rgba(255,255,255,.5),0 2px 8px rgba(0,0,0,.06)}
 .swipe-track:active{cursor:grabbing}
+.swipe-track.animating .swipe-fill{transition:width .25s cubic-bezier(.25,.46,.45,.94)}
+.swipe-track.animating .swipe-thumb{transition:left .25s cubic-bezier(.25,.46,.45,.94),transform .25s cubic-bezier(.25,.46,.45,.94),box-shadow .25s ease}
+.swipe-track.success .swipe-fill{background:linear-gradient(90deg,var(--ok),#16a34a);box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.swipe-track.success .swipe-thumb{color:var(--ok);border-color:rgba(22,163,74,.25);animation:swipeSuccessPulse .4s ease}
 .swipe-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--b),var(--bm));border-radius:28px 0 0 28px;transition:width .08s ease-out;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);pointer-events:none}
 .swipe-thumb{position:absolute;top:4px;width:48px;height:48px;border-radius:50%;background:linear-gradient(180deg,#fff 0%,#f0f2f5 100%);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--b);transition:box-shadow .12s ease;pointer-events:none;transform-style:preserve-3d;border:1px solid rgba(23,70,162,.12);will-change:left,transform}
-.swipe-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--ts);pointer-events:none;transition:color .15s}
+.swipe-thumb.at-threshold{animation:swipeThumbPop .25s ease-out}
+.swipe-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--ts);pointer-events:none;transition:color .2s,opacity .2s}
 .swipe-track:active .swipe-label{color:var(--tx)}
+.swipe-track.success .swipe-label{color:var(--ok);font-weight:700}
 
 .tnb{background:linear-gradient(135deg,var(--o),#E86207);border-radius:var(--r);padding:20px;display:inline-block;margin-bottom:24px;box-shadow:0 4px 24px rgba(249,115,22,.3)}
 .token-success-page{justify-content:center;padding:24px 16px}
