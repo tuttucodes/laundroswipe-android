@@ -60,64 +60,24 @@ export default function AddToHomeScreenPrompt() {
 
   return (
     <div
+      className="pwa-prompt"
       role="dialog"
       aria-label="Add to Home Screen"
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: 'linear-gradient(135deg, #1746A2, #2558C4)',
-        color: '#fff',
-        padding: 16,
-        paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-        boxShadow: '0 -4px 20px rgba(0,0,0,.2)',
-        zIndex: 99999,
-        fontSize: 14,
-      }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <span style={{ fontSize: 28 }}>🧺</span>
+      <div className="pwa-prompt-inner">
+        <span style={{ fontSize: 28, flexShrink: 0 }} aria-hidden>🧺</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <strong>Add LaundroSwipe to your home screen</strong>
-          <p style={{ margin: '4px 0 0', opacity: 0.95 }}>
+          <p>
             {isIos
               ? 'In Safari: tap the Share icon (square with arrow) at the bottom, then scroll and tap "Add to Home Screen".'
               : 'In Chrome: tap the menu (⋮) at the top right, then "Install app" or "Add to Home screen".'}
           </p>
-          <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={markAdded}
-              aria-label="I've added it"
-              style={{
-                background: 'rgba(255,255,255,.25)',
-                border: 'none',
-                color: '#fff',
-                padding: '6px 12px',
-                borderRadius: 8,
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: 13,
-              }}
-            >
+          <div className="pwa-prompt-btns">
+            <button type="button" onClick={markAdded} aria-label="I've added it">
               I&apos;ve added it
             </button>
-            <button
-              type="button"
-              onClick={dismiss}
-              aria-label="Dismiss"
-              style={{
-                background: 'rgba(255,255,255,.2)',
-                border: 'none',
-                color: '#fff',
-                padding: '6px 12px',
-                borderRadius: 8,
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: 13,
-              }}
-            >
+            <button type="button" onClick={dismiss} aria-label="Dismiss">
               Not now
             </button>
           </div>

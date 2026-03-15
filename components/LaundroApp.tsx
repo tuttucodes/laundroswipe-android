@@ -207,6 +207,7 @@ export default function LaundroApp() {
   const [passwordAlreadySet, setPasswordAlreadySet] = useState(false);
   const [vendorProfile, setVendorProfile] = useState<VendorProfileRow | null>(null);
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
+  const [ordersListLoading, setOrdersListLoading] = useState(false);
   const swipeTrackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -395,13 +396,14 @@ export default function LaundroApp() {
   // Refetch orders when user views Orders or order-detail so vendor status updates (picked_up, delivered) show
   useEffect(() => {
     if ((screen === 'orders' || screen === 'order-detail') && user?.sid) {
+      setOrdersListLoading(true);
       LSApi.fetchOrdersForUser(user.sid).then((ords) => {
         if (ords && ords.length >= 0) {
           const mapped = ords.map(rowToOrder);
           setOrders(mapped);
           saveO(mapped);
         }
-      });
+      }).finally(() => setOrdersListLoading(false));
     }
   }, [screen, user?.sid, saveO]);
 
@@ -1485,7 +1487,7 @@ export default function LaundroApp() {
           <h1>LaundroSwipe</h1>
         </header>
         <main className="scr">
-          <div className="si">
+          <div className="si" key={screen}>
             {screen === 'home' && (
               <>
                 <div className="hh">
@@ -1751,7 +1753,13 @@ export default function LaundroApp() {
             {screen === 'orders' && (
               <>
                 <p className="st">Your orders</p>
-                {orders.length === 0 ? (
+                {ordersListLoading ? (
+                  <>
+                    <div className="skeleton skeleton-card" />
+                    <div className="skeleton skeleton-card" />
+                    <div className="skeleton skeleton-card" />
+                  </>
+                ) : orders.length === 0 ? (
                   <p className="fn">No orders yet. Schedule a pickup from Home.</p>
                 ) : (
                   orders.map((o) => (
@@ -1830,7 +1838,10 @@ export default function LaundroApp() {
                 <p className="st">My bills</p>
                 <p className="vd" style={{ marginBottom: 16 }}>Bills generated for your orders.</p>
                 {myBillsLoading ? (
-                  <p className="vd">Loading…</p>
+                  <>
+                    <div className="skeleton skeleton-card" />
+                    <div className="skeleton skeleton-card" />
+                  </>
                 ) : myBills.length === 0 ? (
                   <p className="vd">No bills yet. Bills appear here after a vendor generates one for your order.</p>
                 ) : (
