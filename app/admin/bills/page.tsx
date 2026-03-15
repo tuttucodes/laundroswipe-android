@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
+import { printThermalReceipt } from '@/lib/thermal-print';
 import type { VendorBillRow } from '@/lib/api';
 import { CONVENIENCE_FEE } from '@/lib/constants';
 
@@ -74,26 +75,7 @@ export default function BillsPage() {
   };
 
   const printBill = (b: VendorBillRow) => {
-    const html = billToHtml(b);
-    const w = window.open('', '_blank', 'width=320,height=480');
-    if (!w) return;
-    w.document.write(`
-      <!DOCTYPE html><html><head><meta charset="UTF-8"><base href="${typeof window !== 'undefined' ? window.location.origin + '/' : ''}" /><title>Bill #${b.order_token}</title>
-      <style>
-      body{font-family:system-ui,sans-serif;font-size:11px;padding:8px;margin:0;width:58mm;max-width:58mm}
-      table{width:100%;border-collapse:collapse;font-size:10px}
-      th,td{padding:2px 0}
-      .right{text-align:right}
-      .total{font-weight:700;font-size:12px;border-top:2px solid #000;padding-top:4px;margin-top:4px}
-      .conv{font-size:10px;color:#666}
-      h2{text-align:center;font-size:13px;margin:0 0 2px}
-      p{margin:2px 0;font-size:10px}
-      @media print{body{width:58mm!important;max-width:58mm!important}}
-      </style></head><body>${html}</body></html>
-    `);
-    w.document.close();
-    w.focus();
-    setTimeout(() => { w.print(); w.close(); }, 300);
+    printThermalReceipt(`Bill #${b.order_token}`, billToHtml(b));
   };
 
   return (

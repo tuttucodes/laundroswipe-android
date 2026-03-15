@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
+import { printThermalReceipt } from '@/lib/thermal-print';
 import { VENDOR_BILL_ITEMS, CONVENIENCE_FEE } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
 
@@ -144,55 +145,10 @@ export default function VendorPage() {
   };
 
   const doPrint = () => {
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = 'none';
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow?.document;
-    if (!doc) {
-      document.body.removeChild(iframe);
-      return;
+    const ok = printThermalReceipt(`Bill #${order?.token ?? ''}`, buildReceiptHtml());
+    if (!ok) {
+      showToast('Allow pop-ups to print, or try again', 'er');
     }
-    doc.open();
-    doc.write(`
-<!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=58mm">
-<title>Bill #${order?.token ?? ''}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:58mm;max-width:58mm;min-width:58mm;font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.3;padding:2mm;margin:0;background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{overflow:visible}
-.receipt{width:58mm;max-width:58mm}
-h2{text-align:center;font-size:11px;font-weight:700;margin:0 0 1mm;letter-spacing:0}
-.meta{text-align:center;font-size:9px;margin:0 0 2mm}
-p{margin:1mm 0;font-size:9px;word-break:break-word}
-table{width:100%;border-collapse:collapse;font-size:9px;margin:2mm 0}
-th,td{padding:1mm 0;border-bottom:1px dotted #000}
-th{text-align:left;font-weight:700}
-.right{text-align:right}
-.total{border-top:2px solid #000;font-weight:700;font-size:10px;padding-top:2mm;margin-top:2mm}
-.conv{font-size:8px}
-.foot{text-align:center;margin-top:3mm;font-size:9px}
-@media print{
-  html,body{width:58mm!important;max-width:58mm!important;min-width:58mm!important;padding:0!important;margin:0!important;background:#fff!important}
-  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  @page{size:58mm auto;margin:2mm}
-}
-</style>
-</head><body><div class="receipt">
-${buildReceiptHtml()}
-</div></body></html>
-    `);
-    doc.close();
-    iframe.contentWindow?.focus();
-    iframe.contentWindow?.print();
-    setTimeout(() => document.body.removeChild(iframe), 1000);
   };
 
   const handlePrint = async () => {
@@ -349,6 +305,7 @@ ${buildReceiptHtml()}
               <button type="button" onClick={handleNewBill} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>New bill</button>
               <Link href="/admin/bills" className="vendor-btn-secondary" style={{ flex: '1 1 200px', textDecoration: 'none' }}>View saved bills</Link>
             </div>
+            <p style={{ marginTop: 10, fontSize: 12, color: 'var(--ts)' }}>2&quot; Bluetooth thermal: in the print dialog, select your printer. Works on older Android too.</p>
           </div>
         </div>
       )}
