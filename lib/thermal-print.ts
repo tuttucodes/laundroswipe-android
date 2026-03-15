@@ -16,24 +16,26 @@ function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
   return `
 *{margin:0;padding:0}
-html,body{width:${w};max-width:${w};min-width:${w};font-family:Arial,sans-serif;font-size:12px;font-weight:600;line-height:1.4;padding:3mm;margin:0;background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+html,body{width:100%;max-width:${w};min-width:${w};font-family:Arial,sans-serif;font-size:14px;font-weight:600;line-height:1.5;padding:2mm 1.5mm;margin:0 auto;background:#fff;color:#000;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
 body{overflow:visible}
-.receipt{width:${w};max-width:${w}}
-h2{text-align:center;font-size:14px;font-weight:700;margin:0 0 2mm}
-.meta{text-align:center;font-size:11px;font-weight:600;margin:0 0 2mm}
-p{margin:2mm 0;font-size:12px;font-weight:600;word-break:break-word}
-table{width:100%;border-collapse:collapse;font-size:12px;font-weight:600;margin:2mm 0}
-th,td{padding:2mm 0}
-th{text-align:left;font-weight:700}
+.receipt{width:100%;max-width:${w};margin:0 auto;text-align:center}
+h2{text-align:center;font-size:18px;font-weight:700;margin:0 0 3mm}
+.meta{text-align:center;font-size:13px;font-weight:600;margin:0 0 3mm}
+p{margin:3mm 0;font-size:14px;font-weight:600;word-break:break-word;text-align:center}
+table{width:100%;max-width:100%;border-collapse:collapse;font-size:14px;font-weight:600;margin:3mm auto}
+th,td{padding:2.5mm 1mm}
+th{font-weight:700;text-align:left}
+td{text-align:left}
 .right{text-align:right}
-.total{font-weight:700;font-size:13px;padding-top:2mm;margin-top:2mm}
-.conv{font-size:11px;font-weight:600}
-.foot{text-align:center;margin-top:3mm;font-size:11px;font-weight:600}
+.total{font-weight:700;font-size:16px;padding-top:3mm;margin-top:3mm;text-align:center}
+.conv{font-size:13px;font-weight:600;text-align:center}
+.foot{text-align:center;margin-top:4mm;font-size:13px;font-weight:600}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 @media print{
   .escpos-hint{display:none!important}
-  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:0!important;margin:0!important;background:#fff!important}
-  @page{size:${paperWidthMm}mm auto;margin:2mm}
+  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:2mm 1.5mm!important;margin:0 auto!important;background:#fff!important}
+  @page{size:${paperWidthMm}mm auto;margin:1.5mm}
 }
 `;
 }
