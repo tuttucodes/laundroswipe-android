@@ -181,11 +181,11 @@ export default function VendorPage() {
   const doPrint = async () => {
     const title = `Bill #${order?.token ?? ''}`;
     const config = getPrinterConfigForPrint();
-    const result = await printThermalReceiptDirect(title, buildReceiptHtml(), buildReceiptPlainText(), { printer: config ?? undefined });
+    const result = await printThermalReceiptDirect(title, buildReceiptHtml(), buildReceiptPlainText(), { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true });
     if (result === 'blocked') {
       showToast('Allow pop-ups to print, or try again', 'er');
     } else if (result === 'dialog') {
-      showToast('Choose your printer in the dialog', 'ok');
+      showToast('Select ESCPOS Bluetooth Print Service in the print dialog', 'ok');
     } else {
       showToast('Sent to printer', 'ok');
     }

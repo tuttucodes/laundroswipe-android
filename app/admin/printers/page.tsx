@@ -8,9 +8,10 @@ import {
   addPrinter,
   removePrinter,
   setDefaultPrinter,
+  setPreferPrintDialog,
   type PrinterModelId,
 } from '@/lib/printer-settings';
-import { printThermalReceiptDirect, printThermalReceipt } from '@/lib/thermal-print';
+import { printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 
 function getTestReceiptHtml(): string {
@@ -84,16 +85,13 @@ export default function AdminPrintersPage() {
         'Printer test',
         getTestReceiptHtml(),
         getTestReceiptPlain(),
-        { printer: config ?? undefined }
+        { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true }
       );
-      if (result === 'dialog') {
-        printThermalReceipt('Printer test', getTestReceiptHtml(), config?.paperWidthMm ?? 58);
-      }
       if (result === 'blocked') {
         showToast('Allow pop-ups to open print window', 'er');
         return;
       }
-      showToast(result === 'serial' || result === 'ble' ? 'Sent to printer' : 'Print dialog opened', 'ok');
+      showToast(result === 'serial' || result === 'ble' ? 'Sent to printer' : 'Select ESCPOS in the print dialog', 'ok');
     } catch (e) {
       showToast((e as Error).message || 'Print failed', 'er');
     } finally {
@@ -109,11 +107,11 @@ export default function AdminPrintersPage() {
         'Pair printer',
         getTestReceiptHtml(),
         getTestReceiptPlain(),
-        { printer: config ?? undefined }
+        { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true }
       );
       if (result === 'serial') showToast('Serial/Bluetooth printer selected. Future prints will use it.', 'ok');
       else if (result === 'ble') showToast('BLE printer selected. Future prints will use it.', 'ok');
-      else if (result === 'dialog') showToast('Choose your printer in the print dialog (e.g. ESCPOS Print Service).', 'ok');
+      else if (result === 'dialog') showToast('Select ESCPOS Bluetooth Print Service in the print dialog', 'ok');
       else showToast('Allow pop-ups or try again', 'er');
     } catch (e) {
       showToast((e as Error).message || 'Pairing failed', 'er');
@@ -212,8 +210,16 @@ export default function AdminPrintersPage() {
       <section>
         <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Pair &amp; test</h2>
         <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 12 }}>
-          Pair: connect this device to your Bluetooth/Serial printer so &quot;Print bill&quot; can send directly. On Android, if your printer doesn’t appear, install <strong>ESCPOS Bluetooth Print Service</strong> from Play Store and choose it in the print dialog.
+          Pair: connect this device to your Bluetooth/Serial printer so &quot;Print bill&quot; can send directly. On Android, install <strong>ESCPOS Bluetooth Print Service</strong> from Play Store, then select it in the print dialog every time you print.
         </p>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={settings.preferPrintDialog !== false}
+            onChange={(e) => setPreferPrintDialog(e.target.checked)}
+          />
+          <span style={{ fontSize: 14 }}>Always use print dialog (select ESCPOS Bluetooth Print Service)</span>
+        </label>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <button type="button" onClick={handlePairPrinter} disabled={pairing} className="btn bp">
             {pairing ? 'Opening…' : 'Pair printer'}

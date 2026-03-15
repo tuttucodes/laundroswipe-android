@@ -29,7 +29,9 @@ th{text-align:left;font-weight:700}
 .total{border-top:2px solid #000;font-weight:700;font-size:10px;padding-top:2mm;margin-top:2mm}
 .conv{font-size:8px}
 .foot{text-align:center;margin-top:3mm;font-size:9px}
+.escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 @media print{
+  .escpos-hint{display:none!important}
   html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:0!important;margin:0!important;background:#fff!important}
   @page{size:${paperWidthMm}mm auto;margin:2mm}
 }
@@ -141,9 +143,10 @@ export async function printThermalReceiptDirect(
 ): Promise<DirectPrintResult> {
   const forceDialog = options?.forceDialog === true;
   const config = options?.printer ?? DEFAULT_CONFIG;
+  const effectiveForceDialog = forceDialog || (config && 'forceDialog' in config && config.forceDialog === true);
   const escPosBytes = buildEscPosBytes(plainText, config.charsPerLine);
 
-  if (!forceDialog && isSerialSupported()) {
+  if (!effectiveForceDialog && isSerialSupported()) {
     try {
       let port = cachedSerialPort;
       if (!port) {
@@ -161,7 +164,7 @@ export async function printThermalReceiptDirect(
     }
   }
 
-  if (!forceDialog && isBluetoothSupported()) {
+  if (!effectiveForceDialog && isBluetoothSupported()) {
     try {
       let device = cachedBleDevice;
       if (!device || !device.gatt?.connected) {
@@ -199,6 +202,7 @@ export function printThermalReceipt(title: string, bodyHtml: string, paperWidthM
   const w = window.open('', '_blank', 'width=320,height=480,menubar=no,toolbar=no');
   if (!w) return false;
   const styles = getThermalStyles(paperWidthMm);
+  const escposHint = '<p class="escpos-hint"><strong>In the print dialog, select: ESCPOS Bluetooth Print Service</strong> (then choose your printer if asked).</p>';
   const closeLink = '<p class="foot" style="margin-top:8px"><a href="#" onclick="window.close();return false" style="color:#666;font-size:10px">Close window after printing</a></p>';
   const doc = w.document;
   doc.open();
@@ -207,7 +211,9 @@ export function printThermalReceipt(title: string, bodyHtml: string, paperWidthM
       '<meta charset="UTF-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<title>' + escapeHtml(title) + '</title>' +
-      '<style>' + styles + '</style></head><body><div class="receipt">' +
+      '<style>' + styles + '</style></head><body>' +
+      escposHint +
+      '<div class="receipt">' +
       bodyHtml +
       closeLink +
       '</div></body></html>'

@@ -30,6 +30,8 @@ export interface SavedPrinter {
 export interface PrinterSettings {
   printers: SavedPrinter[];
   defaultPrinterId: string | null;
+  /** When true, always open system print dialog (e.g. choose ESCPOS Bluetooth Print Service on Android). */
+  preferPrintDialog: boolean;
 }
 
 const STORAGE_KEY = 'laundroswipe_printer_settings';
@@ -37,6 +39,7 @@ const STORAGE_KEY = 'laundroswipe_printer_settings';
 const defaultSettings: PrinterSettings = {
   printers: [],
   defaultPrinterId: null,
+  preferPrintDialog: true,
 };
 
 function load(): PrinterSettings {
@@ -44,10 +47,10 @@ function load(): PrinterSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultSettings;
-    const parsed = JSON.parse(raw) as PrinterSettings;
+    const parsed = JSON.parse(raw) as Partial<PrinterSettings>;
     if (!Array.isArray(parsed.printers)) parsed.printers = [];
     if (typeof parsed.defaultPrinterId !== 'string' && parsed.defaultPrinterId !== null) parsed.defaultPrinterId = null;
-    return parsed;
+    return { ...defaultSettings, ...parsed };
   } catch {
     return defaultSettings;
   }
@@ -70,12 +73,22 @@ export function getDefaultPrinter(): SavedPrinter | null {
   return s.printers.find((p) => p.id === s.defaultPrinterId) ?? null;
 }
 
-export function getPrinterConfigForPrint(): { paperWidthMm: number; charsPerLine: number } | null {
+export function getPrinterConfigForPrint(): { paperWidthMm: number; charsPerLine: number; forceDialog?: boolean } | null {
+  const s = load();
   const def = getDefaultPrinter();
-  if (!def) return null;
-  const model = PRINTER_MODELS.find((m) => m.id === def.modelId);
-  if (!model) return null;
-  return { paperWidthMm: model.paperWidthMm, charsPerLine: model.charsPerLine };
+  const model = def ? PRINTER_MODELS.find((m) => m.id === def.modelId) : null;
+  const forceDialog = s.preferPrintDialog !== false;
+  if (!model) return forceDialog ? { paperWidthMm: 58, charsPerLine: 32, forceDialog } : null;
+  return { paperWidthMm: model.paperWidthMm, charsPerLine: model.charsPerLine, forceDialog };
+}
+
+export function getPreferPrintDialog(): boolean {
+  return load().preferPrintDialog !== false;
+}
+
+export function setPreferPrintDialog(value: boolean): void {
+  const s = load();
+  save({ ...s, preferPrintDialog: value });
 }
 
 /** Add a new printer (model + display name). */
@@ -94,11 +107,11 @@ export function addPrinter(modelId: PrinterModelId, name: string): SavedPrinter 
   };
   const printers = settings.printers.map((p) => ({ ...p, isDefault: false }));
   printers.push(printer);
-  const newSettings: PrinterSettings = {
+  save({
+    ...settings,
     printers,
     defaultPrinterId: isDefault ? id : settings.defaultPrinterId,
-  };
-  save(newSettings);
+  });
   return printer;
 }
 
@@ -110,7 +123,7 @@ export function removePrinter(printerId: string): void {
     settings.defaultPrinterId === printerId
       ? printers[0]?.id ?? null
       : settings.defaultPrinterId;
-  save({ printers, defaultPrinterId });
+  save({ ...settings, printers, defaultPrinterId });
 }
 
 /** Set default printer for receipts. */
@@ -118,7 +131,7 @@ export function setDefaultPrinter(printerId: string): void {
   const settings = load();
   if (!settings.printers.some((p) => p.id === printerId)) return;
   const printers = settings.printers.map((p) => ({ ...p, isDefault: p.id === printerId }));
-  save({ printers, defaultPrinterId: printerId });
+  save({ ...settings, printers, defaultPrinterId: printerId });
 }
 
 /** Update display name of a printer. */

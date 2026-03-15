@@ -99,15 +99,12 @@ export default function BillsPage() {
 
   const printBill = async (b: VendorBillRow) => {
     const config = getPrinterConfigForPrint();
-    const result = await printThermalReceiptDirect(
+    await printThermalReceiptDirect(
       `Bill #${b.order_token}`,
       billToHtml(b),
       billToPlainText(b),
-      { printer: config ?? undefined }
+      { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true }
     );
-    if (result === 'dialog') {
-      printThermalReceipt(`Bill #${b.order_token}`, billToHtml(b), config?.paperWidthMm ?? 58);
-    }
   };
 
   const copyBill = async (b: VendorBillRow) => {
