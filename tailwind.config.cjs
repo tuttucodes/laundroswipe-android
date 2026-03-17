@@ -20,6 +20,13 @@ module.exports = {
           teal: '#0D9488',
           orange: '#F97316',
         },
+        // Tokens used by the new homepage
+        primary: '#3B82F6',
+        accentBlue: '#06B6D4',
+        dark: '#0A0E1A',
+        'dark-card': '#111827',
+        'dark-border': '#1F2937',
+        glow: '#3B82F680',
       },
       boxShadow: {
         'soft-xl': '0 20px 80px rgba(15, 52, 133, 0.35)',
