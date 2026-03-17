@@ -66,7 +66,7 @@ async function getTestimonials(): Promise<Testimonial[]> {
 
   try {
     const { data, error } = await supabase
-      .from<RawTestimonial>('homepage_testimonials')
+      .from('homepage_testimonials')
       .select('*')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
