@@ -1,591 +1,762 @@
+/**
+ * Premium LaundroSwipe homepage (marketing only).
+ * Dashboard and auth flows (LaundroApp, /dashboard, admin) remain untouched.
+ */
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { MapPin, Package, CheckCircle2, Instagram, Twitter, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-type LocationStatus = 'idle' | 'checking' | 'serviceable' | 'unserviceable' | 'error' | 'denied';
+const stats = [
+  { label: 'Years Operational', value: 2 },
+  { label: 'Verified Partners', value: 500 },
+  { label: 'Cities & Growing', value: 3 },
+  { label: 'Orders Delivered', value: 10000 },
+];
 
-type DemandRequestState = 'idle' | 'submitting' | 'success' | 'error';
+const howSteps = [
+  {
+    icon: MapPin,
+    title: '📍 Enter Your Location',
+    description: "Tell us where you are. We'll find the best laundry partners near you.",
+  },
+  {
+    icon: Package,
+    title: '👕 Schedule a Pickup',
+    description: 'Choose your items, pick a time slot, and we handle the rest.',
+  },
+  {
+    icon: CheckCircle2,
+    title: '✅ Fresh Clothes, Delivered',
+    description: 'Your clothes come back cleaned, ironed, and delivered to your door.',
+  },
+];
 
-const VIT_CHENNAI_COORDS = {
-  lat: 12.8406,
-  lng: 80.1531,
-};
+const features = [
+  {
+    title: 'Verified Partners Only',
+    description: 'Every vendor is background-checked and quality-rated.',
+  },
+  {
+    title: 'Real-Time Tracking',
+    description: 'Know exactly where your clothes are.',
+  },
+  {
+    title: 'Transparent Pricing',
+    description: 'No hidden fees, ever.',
+  },
+  {
+    title: 'Multi-Location Support',
+    description: 'Homes, offices, hostels, PGs — we serve everywhere.',
+  },
+  {
+    title: 'Eco-Friendly Options',
+    description: 'Choose green-certified cleaners.',
+  },
+  {
+    title: '24/7 Support',
+    description: "We're always a message away.",
+  },
+];
 
-const SERVICE_RADIUS_KM = 10;
+const testimonials = [
+  {
+    quote:
+      'LaundroSwipe saved me so much time. I just schedule and forget!',
+    name: 'Anjali R.',
+    role: 'Kochi',
+  },
+  {
+    quote: 'Finally a laundry service that actually delivers on time.',
+    name: 'Rahul M.',
+    role: 'Bangalore',
+  },
+  {
+    quote:
+      'The quality is consistent and prices are transparent. Love it.',
+    name: 'Priya S.',
+    role: 'Ernakulam',
+  },
+];
 
-function toRad(v: number) {
-  return (v * Math.PI) / 180;
+function Counter({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    const duration = 800;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      setDisplay(Math.round(value * progress));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+  }, [value]);
+
+  return (
+    <span>
+      {display.toLocaleString()}
+      {suffix}
+    </span>
+  );
 }
 
-function distanceInKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-  const R = 6371;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const la1 = toRad(a.lat);
-  const la2 = toRad(b.lat);
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLng = Math.sin(dLng / 2);
-  const h = sinDLat * sinDLat + Math.cos(la1) * Math.cos(la2) * sinDLng * sinDLng;
-  const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-  return R * c;
+function GlassCard(props: { className?: string; children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5 }}
+      className={`rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200 shadow-[0_20px_80px_rgba(15,23,42,0.9)] ${props.className ?? ''}`}
+    >
+      {props.children}
+    </motion.div>
+  );
+}
+
+function WashingMachine() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.96 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.6 }}
+      className="relative h-full min-h-[260px] rounded-3xl border border-white/10 bg-slate-950/70 p-4 shadow-[0_28px_90px_rgba(15,23,42,1)]"
+    >
+      <div className="absolute inset-0 -z-10 rounded-3xl bg-[radial-gradient(circle_at_0_0,rgba(96,165,250,0.5),transparent_55%),radial-gradient(circle_at_100%_100%,rgba(56,189,248,0.5),transparent_55%)] opacity-70 blur-xl" />
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[0.7rem] uppercase tracking-[0.16em] text-slate-400">
+            LaundroSwipe App
+          </div>
+          <div className="text-sm font-semibold text-white">
+            Schedule pickup in one swipe
+          </div>
+        </div>
+        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+          Live
+        </span>
+      </div>
+      <div className="relative grid grid-cols-1 gap-3 rounded-2xl bg-slate-900/80 p-4 text-xs text-slate-200">
+        <div className="flex items-center justify-between">
+          <span>Pickup slot</span>
+          <span className="text-[0.7rem] text-emerald-300">Today · 4–6 PM</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span>Service</span>
+          <span className="text-[0.7rem] text-sky-300">Wash &amp; Fold</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span>Status</span>
+          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.7rem] text-emerald-300">
+            Rider on the way
+          </span>
+        </div>
+      </div>
+      <div className="mt-4 rounded-2xl border border-sky-500/30 bg-gradient-to-r from-sky-500/20 to-cyan-500/10 px-4 py-3 text-xs text-slate-100">
+        <div className="text-[0.7rem] uppercase tracking-[0.18em] text-slate-300">
+          Why customers love us
+        </div>
+        <p className="mt-1 text-[0.8rem] text-slate-100">
+          Single dashboard for pickups, tokens, and bills. No more chasing laundry slips.
+        </p>
+      </div>
+      <motion.div
+        className="absolute -right-4 bottom-6 h-20 w-20 rounded-full border border-sky-400/40 bg-sky-500/10 text-3xl shadow-[0_0_30px_rgba(56,189,248,0.6)]"
+        animate={{ rotate: [0, 12, -8, 4, 0] }}
+        transition={{ duration: 6, repeat: Infinity, repeatType: 'mirror' }}
+      >
+        <div className="flex h-full w-full items-center justify-center">🧺</div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function TestimonialCarousel() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(
+      () => setIndex((prev) => (prev + 1) % testimonials.length),
+      6000,
+    );
+    return () => clearInterval(id);
+  }, []);
+
+  const current = testimonials[index];
+
+  return (
+    <GlassCard className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-cyan-900/60 p-6">
+      <motion.div
+        key={index}
+        initial={{ opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -16 }}
+        transition={{ duration: 0.4 }}
+      >
+        <p className="text-sm text-slate-100 md:text-base">&ldquo;{current.quote}&rdquo;</p>
+        <div className="mt-4 flex items-center justify-between text-xs text-slate-300">
+          <div>
+            <div className="font-semibold text-white">{current.name}</div>
+            <div className="text-[0.7rem] uppercase tracking-[0.16em] text-slate-400">
+              {current.role}
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex text-amber-400">
+              {'★★★★★'}
+            </div>
+            <div className="flex gap-2">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Go to testimonial ${i + 1}`}
+                  onClick={() => setIndex(i)}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === index ? 'w-4 bg-sky-400' : 'w-2 bg-slate-600'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </GlassCard>
+  );
 }
 
 export default function HomePage() {
   const router = useRouter();
-  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [demandState, setDemandState] = useState<DemandRequestState>('idle');
-  const [demandError, setDemandError] = useState<string | null>(null);
-  const [locationText, setLocationText] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
-
-  const isServiceable = locationStatus === 'serviceable';
-
-  const distanceFromVit = useMemo(() => {
-    if (!coords) return null;
-    return distanceInKm(coords, VIT_CHENNAI_COORDS);
-  }, [coords]);
-
-  const handleGoToDashboard = useCallback(() => {
-    router.push('/dashboard');
-  }, [router]);
-
-  const handleManualVitSelect = useCallback(() => {
-    setLocationStatus('serviceable');
-  }, []);
-
-  const handleCheckAvailability = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus('error');
-      return;
-    }
-    setLocationStatus('checking');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const current = { lat: latitude, lng: longitude };
-        setCoords(current);
-        const d = distanceInKm(current, VIT_CHENNAI_COORDS);
-        if (Number.isFinite(d) && d <= SERVICE_RADIUS_KM) {
-          setLocationStatus('serviceable');
-        } else {
-          setLocationStatus('unserviceable');
-        }
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setLocationStatus('denied');
-        } else {
-          setLocationStatus('error');
-        }
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 15000,
-        maximumAge: 60_000,
-      },
-    );
-  }, []);
-
-  const handleSubmitDemand = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!locationText.trim()) {
-        setDemandError('Please tell us your college, area, or city.');
-        return;
-      }
-      setDemandError(null);
-      setDemandState('submitting');
-      try {
-        const res = await fetch('/api/location-requests', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            locationText: locationText.trim(),
-            lat: coords?.lat ?? null,
-            lng: coords?.lng ?? null,
-            contactEmail: contactEmail.trim() || null,
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data?.ok) {
-          setDemandState('error');
-          setDemandError(data?.error || 'Something went wrong. Please try again.');
-          return;
-        }
-        setDemandState('success');
-        setLocationText('');
-        setContactEmail('');
-      } catch {
-        setDemandState('error');
-        setDemandError('Could not submit your request. Please try again.');
-      }
-    },
-    [coords?.lat, coords?.lng, locationText, contactEmail],
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [waitlistState, setWaitlistState] = useState<'idle' | 'loading' | 'success' | 'error'>(
+    'idle',
   );
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
+  const [waitlistForm, setWaitlistForm] = useState({ name: '', email: '', city: '' });
 
   useEffect(() => {
-    setDemandError(null);
-  }, [locationText, contactEmail]);
+    const onScroll = () => {
+      setNavScrolled(window.scrollY > 10);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWaitlistState('loading');
+    setWaitlistError(null);
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(waitlistForm),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        setWaitlistState('error');
+        setWaitlistError(data?.error || 'Something went wrong. Please try again.');
+        return;
+      }
+      setWaitlistState('success');
+      setWaitlistForm({ name: '', email: '', city: '' });
+    } catch {
+      setWaitlistState('error');
+      setWaitlistError('Network error. Please try again.');
+    }
+  };
 
   return (
-    <main className="ls-home">
-      <div className="relative mx-auto max-w-6xl px-4 pt-4 pb-10 md:px-6 lg:px-8">
-        <header className="ls-home-header mb-4 rounded-2xl border border-slate-800/60 bg-slate-950/70 px-4 py-3 shadow-[0_18px_45px_rgba(15,23,42,0.75)]">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="relative h-10 w-10 overflow-hidden rounded-2xl bg-slate-900/80 ring-1 ring-slate-700/70">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(96,165,250,0.5),transparent_55%),radial-gradient(circle_at_90%_100%,rgba(56,189,248,0.55),transparent_55%)]" />
-                <img
-                  src="/icon-192.png"
-                  alt="LaundroSwipe logo"
-                  className="relative z-10 h-full w-full object-contain p-1.5"
-                />
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Kerala-based startup
-                </p>
-                <p className="text-sm font-semibold text-slate-100">
-                  LaundroSwipe · Laundry in one swipe
-                </p>
-              </div>
-            </div>
+    <main className="min-h-screen bg-[#050816] text-white">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -left-40 top-[-10%] h-80 w-80 rounded-full bg-sky-500/30 blur-3xl" />
+        <div className="absolute -right-40 top-1/3 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
+        <div className="absolute inset-x-0 bottom-[-20%] h-[320px] bg-[radial-gradient(circle_at_50%_0,rgba(56,189,248,0.25),transparent_60%)]" />
+      </div>
 
-            <div className="hidden items-center gap-2 md:flex">
-              <Button
-                variant="ghost"
-                size="pill"
-                onClick={handleCheckAvailability}
-                disabled={locationStatus === 'checking'}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
-                {locationStatus === 'checking'
-                  ? 'Checking availability…'
-                  : 'Check availability'}
-              </Button>
-              <Button
-                size="pill"
-                variant="subtle"
-                onClick={handleGoToDashboard}
-              >
-                Login / Dashboard
-              </Button>
+      <motion.header
+        initial={false}
+        animate={{
+          backdropFilter: navScrolled ? 'blur(22px)' : 'blur(16px)',
+          backgroundColor: navScrolled ? 'rgba(15,23,42,0.9)' : 'rgba(15,23,42,0.7)',
+          borderBottomColor: navScrolled ? 'rgba(148,163,184,0.35)' : 'rgba(15,23,42,0.7)',
+        }}
+        className="sticky top-0 z-30 border-b border-white/5"
+      >
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-8">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-slate-900/90 ring-1 ring-slate-700/80">
+              <div className="absolute inset-0 bg-[conic-gradient(from_140deg_at_10%_0%,rgba(59,130,246,0.7),rgba(6,182,212,0.9),transparent_55%)] opacity-70" />
+              <img
+                src="/icon-192.png"
+                alt="LaundroSwipe"
+                className="relative z-10 h-6 w-6 object-contain"
+              />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                LaundroSwipe
+              </p>
+              <p className="text-xs text-slate-300">Laundry, simplified.</p>
             </div>
           </div>
-        </header>
 
-        <section className="ls-home-hero">
-          <div className="space-y-6 animate-fade-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-200 shadow-[0_18px_45px_rgba(16,185,129,0.4)]">
+          <nav className="hidden items-center gap-6 text-xs font-medium text-slate-300 md:flex">
+            <a href="#hero" className="hover:text-white">
+              Home
+            </a>
+            <a href="#how" className="hover:text-white">
+              How It Works
+            </a>
+            <a href="#locations" className="hover:text-white">
+              Locations
+            </a>
+            <a href="#contact" className="hover:text-white">
+              Contact
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden border border-white/10 bg-transparent text-xs text-slate-200 hover:bg-white/5 md:inline-flex"
+              onClick={() => router.push('/dashboard')}
+            >
+              Login
+            </Button>
+            <Button
+              size="sm"
+              className="relative overflow-hidden bg-primary px-4 text-xs shadow-[0_0_20px_rgba(59,130,246,0.8)]"
+              onClick={() => router.push('/dashboard')}
+            >
+              <span className="absolute inset-0 bg-[radial-gradient(circle_at_0_0,rgba(59,130,246,0.8),transparent_55%),radial-gradient(circle_at_100%_0,rgba(6,182,212,0.7),transparent_55%)] opacity-70" />
+              <span className="relative z-10">Get Started</span>
+            </Button>
+          </div>
+        </div>
+      </motion.header>
+
+      <main className="mx-auto max-w-6xl px-4 pb-20 pt-10 md:px-8">
+        <section id="hero" className="grid gap-8 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-500/40 bg-sky-500/10 px-3 py-1 text-[0.7rem] font-medium text-sky-200 shadow-[0_18px_45px_rgba(56,189,248,0.4)]">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
-              <span>Live for VIT Chennai · Expanding to more campuses</span>
+              <span>Kerala-based · Trusted partners · Fast pickups</span>
             </div>
-
-            <div className="space-y-3">
-              <h1 className="text-balance font-display text-3xl font-semibold leading-tight text-slate-50 sm:text-4xl md:text-5xl">
-                Campus-ready laundry pickup &amp; delivery, done in one swipe.
+            <div className="space-y-4">
+              <h1 className="text-balance text-3xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl">
+                Your Laundry, Picked Up &amp; Delivered — Like Magic ✨
               </h1>
               <p className="max-w-xl text-sm leading-relaxed text-slate-300 md:text-base">
-                LaundroSwipe connects students and busy professionals to trusted laundry
-                partners. Schedule pickups, track your clothes, and get fresh laundry back
-                without ever leaving your room.
+                We connect you with verified dry cleaners &amp; laundry pros near you. Schedule
+                a pickup in 30 seconds and get your clothes back fresh, folded, and right on
+                time.
               </p>
             </div>
-
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 size="lg"
-                onClick={handleCheckAvailability}
-                disabled={locationStatus === 'checking'}
-                className="shadow-soft-xl animate-pulse-soft"
+                className="shadow-[0_0_30px_rgba(59,130,246,0.9)]"
+                onClick={() => router.push('/dashboard')}
               >
-                {locationStatus === 'checking'
-                  ? 'Checking your location…'
-                  : 'Check availability near me'}
+                Get Started — It&apos;s Free
               </Button>
               <Button
                 variant="outline"
                 size="lg"
-                onClick={handleGoToDashboard}
-                className="border-slate-600/70 bg-slate-900/60 text-slate-100 hover:bg-slate-900 hover:border-slate-400"
+                className="border-slate-500/60 bg-transparent text-slate-100 hover:bg-white/5"
+                onClick={() => {
+                  const el = document.getElementById('how');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
               >
-                Login / Go to dashboard
+                See How It Works
               </Button>
             </div>
+            <div className="grid grid-cols-2 gap-3 pt-2 text-xs md:grid-cols-4">
+              {stats.map((s) => (
+                <GlassCard key={s.label} className="py-3 text-center">
+                  <div className="text-lg font-semibold text-white md:text-xl">
+                    <Counter
+                      value={s.value}
+                      suffix={s.label === 'Years Operational' ? '+' : s.label === 'Orders Delivered' ? '+' : ''}
+                    />
+                  </div>
+                  <div className="mt-1 text-[0.7rem] uppercase tracking-[0.14em] text-slate-400">
+                    {s.label}
+                  </div>
+                </GlassCard>
+              ))}
+            </div>
+          </motion.div>
 
-            <p className="text-xs text-slate-400">
-              Kerala-based, operating for 2+ years across residential communities, corporate
-              offices, and educational campuses.
+          <WashingMachine />
+        </section>
+
+        <section id="how" className="mt-20 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-2xl font-semibold text-white md:text-3xl">How It Works</h2>
+            <p className="mt-2 max-w-xl text-sm text-slate-300">
+              From tap to doorstep, LaundroSwipe streamlines everything between you and your
+              favorite laundry partners.
             </p>
+          </motion.div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {howSteps.map((step, idx) => (
+              <GlassCard key={step.title} className="h-full">
+                <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-sky-500/60 to-cyan-400/60 text-slate-900 shadow-lg shadow-sky-500/40">
+                  <step.icon size={18} />
+                </div>
+                <div className="mb-1 text-sm font-semibold text-white">{step.title}</div>
+                <p className="text-xs text-slate-300">{step.description}</p>
+              </GlassCard>
+            ))}
           </div>
+        </section>
 
-          <div className="ls-home-hero-card animate-float-slow">
-            <div className="ls-home-hero-card-inner">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h2>How LaundroSwipe works</h2>
-                <span className="rounded-full bg-slate-900/70 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                  Partner-powered platform
+        <section className="mt-20 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-2xl font-semibold text-white md:text-3xl">Why LaundroSwipe</h2>
+            <p className="mt-2 max-w-xl text-sm text-slate-300">
+              A partner-first, customer-obsessed platform built in Kerala for the way modern
+              India does laundry.
+            </p>
+          </motion.div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {features.map((f) => (
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                whileHover={{ y: -4, boxShadow: '0 0 40px rgba(59,130,246,0.6)' }}
+                transition={{ duration: 0.35 }}
+                className="group rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-slate-900/80 p-4 text-xs text-slate-300"
+              >
+                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-500/60 to-cyan-400/60 text-[0.8rem] text-slate-900 shadow-lg shadow-sky-500/40">
+                  ✦
+                </div>
+                <div className="mb-1 text-sm font-semibold text-white">{f.title}</div>
+                <p>{f.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section id="locations" className="mt-20 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-2xl font-semibold text-white md:text-3xl">Where We Operate</h2>
+            <p className="mt-2 max-w-xl text-sm text-slate-300">
+              Currently serving customers across Kerala, Kochi, and Bangalore. More cities
+              coming soon.
+            </p>
+          </motion.div>
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+            <GlassCard className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0,rgba(59,130,246,0.4),transparent_55%),radial-gradient(circle_at_80%_100%,rgba(6,182,212,0.4),transparent_55%)] opacity-80" />
+              <div className="relative z-10 space-y-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-300">
+                  India Coverage (Stylized)
+                </p>
+                <div className="relative mt-2 h-56 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80">
+                  <div className="absolute left-1/3 top-6 h-40 w-40 rounded-full border border-sky-500/30 bg-sky-500/5 blur-3xl" />
+                  <div className="absolute left-2/3 top-10 h-32 w-32 rounded-full border border-cyan-500/30 bg-cyan-500/5 blur-2xl" />
+                  <div className="absolute inset-8 rounded-2xl border border-dashed border-slate-700/80" />
+                  <div className="absolute left-[28%] top-[40%]">
+                    <div className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.9)]" />
+                    <div className="mt-1 text-[0.7rem] text-slate-200">Kochi</div>
+                  </div>
+                  <div className="absolute left-[48%] top-[55%]">
+                    <div className="h-2 w-2 rounded-full bg-sky-400 shadow-[0_0_16px_rgba(56,189,248,0.9)]" />
+                    <div className="mt-1 text-[0.7rem] text-slate-200">Bangalore</div>
+                  </div>
+                  <div className="absolute left-[52%] top-[35%]">
+                    <div className="h-2 w-2 rounded-full bg-slate-200 shadow-[0_0_10px_rgba(148,163,184,0.8)]" />
+                    <div className="mt-1 text-[0.7rem] text-slate-400">Chennai</div>
+                  </div>
+                  <div className="absolute left-[60%] top-[30%]">
+                    <div className="relative flex h-4 w-4 items-center justify-center">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/60" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                    </div>
+                    <div className="mt-1 text-[0.7rem] text-amber-300">Hyderabad · Soon</div>
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+
+            <div className="space-y-3 text-xs">
+              <GlassCard className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">Kochi</div>
+                  <div className="text-[0.75rem] text-slate-300">Core operations · 50+ partners</div>
+                </div>
+                <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                  Active
                 </span>
-              </div>
-              <ol>
-                <li>
-                  <strong>We partner with verified laundries.</strong> In each city we work
-                  with reliable dry cleaners and laundry providers so you don&apos;t have to
-                  keep searching or negotiating with new shops.
-                </li>
-                <li>
-                  <strong>You book in a few taps.</strong> Pick your service, choose a pickup
-                  slot, and share simple instructions from your phone or laptop.
-                </li>
-                <li>
-                  <strong>Pickup, processing, and delivery.</strong> Our partners collect,
-                  wash, iron, and deliver your clothes back to you, while you track everything
-                  through your dashboard.
-                </li>
-                <li>
-                  <strong>Transparent status.</strong> Tokens, statuses, and bills stay in one
-                  place, so you always know what&apos;s happening with your laundry.
-                </li>
-              </ol>
-            </div>
-          </div>
-        </section>
-
-        <section className="ls-home-about" aria-labelledby="about-heading">
-          <div className="ls-home-section-inner grid gap-8 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1.2fr)]">
-            <div className="ls-home-about-text space-y-4 animate-fade-up">
-              <h2
-                id="about-heading"
-                className="font-display text-xl font-semibold text-slate-50 md:text-2xl"
-              >
-                Built in Kerala, serving modern India&apos;s laundry needs
-              </h2>
-              <p className="text-sm leading-relaxed text-slate-300 md:text-[0.95rem]">
-                LaundroSwipe is a Kerala-based startup with offices in Kochi and Bangalore.
-                For over two years, we&apos;ve been helping customers across residential
-                areas, corporate offices, and educational institutions get their laundry done
-                without friction.
-              </p>
-              <p className="text-sm leading-relaxed text-slate-300 md:text-[0.95rem]">
-                Our platform brings together carefully vetted dry cleaners and laundry service
-                providers, so you don&apos;t have to worry about quality or reliability. We
-                handle discovery, scheduling, coordination, and communication — you just choose
-                a service and a time that works for you.
-              </p>
-            </div>
-
-            <div className="ls-home-stats">
-              <div className="ls-home-stat-card animate-fade-up">
-                <span className="ls-home-stat-label">Operational</span>
-                <span className="ls-home-stat-value">2+ years</span>
-              </div>
-              <div className="ls-home-stat-card animate-fade-up">
-                <span className="ls-home-stat-label">Offices</span>
-                <span className="ls-home-stat-value">Kochi &amp; Bangalore</span>
-              </div>
-              <div className="ls-home-stat-card animate-fade-up">
-                <span className="ls-home-stat-label">Use cases</span>
-                <span className="ls-home-stat-value">Homes • Corporates • Campuses</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="ls-home-vit" aria-labelledby="vit-heading">
-          <div className="ls-home-section-inner grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)]">
-            <div className="space-y-4 animate-fade-up">
-              <h2
-                id="vit-heading"
-                className="font-display text-xl font-semibold text-slate-50 md:text-2xl"
-              >
-                Focused experience for VIT Chennai students
-              </h2>
-              <p className="text-sm leading-relaxed text-slate-300 md:text-[0.95rem]">
-                The current web app is optimized for VIT Chennai. Students can book campus
-                pickups on specific days, get a digital token, and track their orders from
-                pickup to delivery — all in one place.
-              </p>
-              <p className="text-sm leading-relaxed text-slate-300 md:text-[0.95rem]">
-                Once you&apos;re within the VIT Chennai service radius, you&apos;ll see a
-                dedicated dashboard with campus-aware slots, vendor details, and transparent
-                pricing powered by our local partner.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <Button
-                  size="lg"
-                  variant="default"
-                  onClick={handleCheckAvailability}
-                  disabled={locationStatus === 'checking'}
-                  className="shadow-soft-xl"
-                >
-                  {locationStatus === 'checking'
-                    ? 'Checking your location…'
-                    : "Check if I'm in VIT Chennai"}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleManualVitSelect}
-                  className="border-slate-600/70 bg-slate-900/60 text-slate-100 hover:bg-slate-900 hover:border-slate-400"
-                >
-                  I&apos;m a VIT Chennai student
-                </Button>
-              </div>
-
-              <p className="text-xs text-slate-400">
-                Already use LaundroSwipe?{' '}
-                <button
-                  type="button"
-                  className="ls-home-link-button"
-                  onClick={handleGoToDashboard}
-                >
-                  Go to dashboard
-                </button>
-              </p>
-            </div>
-
-            <div className="space-y-4 animate-fade-up">
-              <div className="ls-home-availability space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-300">
-                  Availability near you
-                </h3>
-                {locationStatus === 'idle' && (
-                  <p className="text-xs text-slate-400">
-                    Tap &quot;Check availability&quot; to see if we&apos;re live in your area.
-                  </p>
-                )}
-                {locationStatus === 'checking' && (
-                  <p className="text-xs text-slate-300">
-                    Checking if you&apos;re near VIT Chennai…
-                  </p>
-                )}
-                {isServiceable && (
-                  <div className="ls-home-availability-card ls-home-availability-ok space-y-3">
-                    <h4 className="text-sm font-semibold text-emerald-200">
-                      Good news — we&apos;re serving your area
-                    </h4>
-                    <p className="text-xs text-emerald-100/90">
-                      You&apos;re within our VIT Chennai service radius. Continue to the
-                      dashboard to log in, schedule pickups, and manage your orders.
-                    </p>
-                    <Button
-                      size="lg"
-                      variant="default"
-                      onClick={handleGoToDashboard}
-                      className="bg-emerald-500 hover:bg-emerald-600 shadow-soft-xl"
-                    >
-                      Continue to VIT Chennai dashboard
-                    </Button>
-                    {distanceFromVit != null && (
-                      <p className="ls-home-distance">
-                        Approximate distance from VIT Chennai: {distanceFromVit.toFixed(1)} km
-                      </p>
-                    )}
+              </GlassCard>
+              <GlassCard className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">Bangalore</div>
+                  <div className="text-[0.75rem] text-slate-300">
+                    Enterprise &amp; residential clusters · 200+ partners
                   </div>
-                )}
-                {(locationStatus === 'unserviceable' ||
-                  locationStatus === 'error' ||
-                  locationStatus === 'denied') && (
-                  <div className="ls-home-availability-card ls-home-availability-soon space-y-3">
-                    <h4 className="text-sm font-semibold text-amber-200">
-                      We&apos;re not in your area yet
-                    </h4>
-                    <p className="text-xs text-slate-300">
-                      LaundroSwipe is expanding to more campuses and neighbourhoods. Tell us
-                      where you&apos;d like to see us next and we&apos;ll use that to plan new
-                      launches.
-                    </p>
-                    {locationStatus === 'denied' && (
-                      <p className="ls-home-availability-hint text-xs text-amber-200/90">
-                        Location permission was blocked. You can still let us know your college
-                        or area below.
-                      </p>
-                    )}
-                    {locationStatus === 'error' && (
-                      <p className="ls-home-availability-hint text-xs text-amber-200/90">
-                        We couldn&apos;t detect your location automatically. You can share your
-                        college or area below.
-                      </p>
-                    )}
-                    {distanceFromVit != null && (
-                      <p className="ls-home-distance">
-                        Approximate distance from VIT Chennai: {distanceFromVit.toFixed(1)} km
-                      </p>
-                    )}
-                    <form
-                      className="ls-home-demand-form space-y-3"
-                      onSubmit={handleSubmitDemand}
-                    >
-                      <label className="ls-home-field flex flex-col gap-1 text-xs text-slate-300">
-                        <span>Your college / area / city</span>
-                        <input
-                          type="text"
-                          value={locationText}
-                          onChange={(e) => setLocationText(e.target.value)}
-                          placeholder="e.g. College name, locality, city"
-                          required
-                          className="rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 outline-none ring-0 transition focus:border-brand focus:ring-1 focus:ring-brand/70"
-                        />
-                      </label>
-                      <label className="ls-home-field flex flex-col gap-1 text-xs text-slate-300">
-                        <span>Email (optional, for follow-up)</span>
-                        <input
-                          type="email"
-                          value={contactEmail}
-                          onChange={(e) => setContactEmail(e.target.value)}
-                          placeholder="you@example.com"
-                          className="rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 outline-none ring-0 transition focus:border-brand focus:ring-1 focus:ring-brand/70"
-                        />
-                      </label>
-                      {demandError && <p className="ls-home-error">{demandError}</p>}
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="lg"
-                        disabled={demandState === 'submitting'}
-                        className="w-full border-slate-600/80 bg-slate-900/70 text-slate-100 hover:bg-slate-900 hover:border-slate-400"
-                      >
-                        {demandState === 'submitting'
-                          ? 'Sending your request…'
-                          : 'Request LaundroSwipe in my area'}
-                      </Button>
-                      {demandState === 'success' && (
-                        <p className="ls-home-success">
-                          Thanks for your interest! We&apos;ve recorded your request.
-                        </p>
-                      )}
-                    </form>
-                  </div>
-                )}
-              </div>
+                </div>
+                <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                  Active
+                </span>
+              </GlassCard>
+              <GlassCard className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">Chennai</div>
+                  <div className="text-[0.75rem] text-slate-300">Campus-focused pilots in progress</div>
+                </div>
+                <span className="rounded-full bg-amber-500/15 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                  Limited
+                </span>
+              </GlassCard>
+              <GlassCard className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">Hyderabad</div>
+                  <div className="text-[0.75rem] text-slate-300">High-demand corridor · Launching soon</div>
+                </div>
+                <span className="rounded-full bg-slate-500/15 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                  Coming Soon
+                </span>
+              </GlassCard>
             </div>
           </div>
         </section>
 
-        <section className="ls-home-how" aria-labelledby="how-heading">
-          <div className="ls-home-section-inner space-y-4">
-            <h2
-              id="how-heading"
-              className="font-display text-xl font-semibold text-slate-50 md:text-2xl"
-            >
-              Why customers choose LaundroSwipe
+        <section id="waitlist" className="mt-20 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-2xl font-semibold text-white md:text-3xl">
+              We&apos;re Not In Your Area Yet?
             </h2>
-            <div className="ls-home-how-grid">
-              <article className="ls-home-how-card animate-fade-up">
-                <h3 className="mb-2 text-sm font-semibold text-slate-100">
-                  Reliable partners
-                </h3>
-                <p className="text-xs leading-relaxed text-slate-300">
-                  We onboard only verified dry cleaners and laundry providers. That means
-                  predictable quality, clear pricing, and better consistency than negotiating
-                  with new shops every time.
+            <p className="mt-2 max-w-xl text-sm text-slate-300">
+              Don&apos;t worry — we&apos;re expanding fast. Drop your details and we&apos;ll
+              notify you when we launch near you.
+            </p>
+          </motion.div>
+          <GlassCard className="max-w-xl rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+            <form className="space-y-4" onSubmit={handleWaitlistSubmit}>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-200">Name</label>
+                <input
+                  className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white outline-none ring-0 transition focus:border-primary focus:ring-1 focus:ring-primary/60"
+                  value={waitlistForm.name}
+                  onChange={(e) =>
+                    setWaitlistForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  placeholder="Your name"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-200">Email</label>
+                <input
+                  type="email"
+                  className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white outline-none ring-0 transition focus:border-primary focus:ring-1 focus:ring-primary/60"
+                  value={waitlistForm.email}
+                  onChange={(e) =>
+                    setWaitlistForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-200">City</label>
+                <input
+                  className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white outline-none ring-0 transition focus:border-primary focus:ring-1 focus:ring-primary/60"
+                  value={waitlistForm.city}
+                  onChange={(e) =>
+                    setWaitlistForm((f) => ({ ...f, city: e.target.value }))
+                  }
+                  placeholder="Kochi, Bangalore, Hyderabad..."
+                  required
+                />
+              </div>
+              {waitlistState === 'error' && (
+                <p className="text-xs text-red-400">{waitlistError}</p>
+              )}
+              {waitlistState === 'success' && (
+                <p className="text-xs text-emerald-400">
+                  You&apos;re on the list! 🎉 We&apos;ll email you when we launch near you.
                 </p>
-              </article>
-              <article className="ls-home-how-card animate-fade-up">
-                <h3 className="mb-2 text-sm font-semibold text-slate-100">
-                  One place for everything
-                </h3>
-                <p className="text-xs leading-relaxed text-slate-300">
-                  Discovery, pickup slots, order tracking, tokens, and bills — everything lives
-                  in one dashboard instead of scattered across calls and messages.
-                </p>
-              </article>
-              <article className="ls-home-how-card animate-fade-up">
-                <h3 className="mb-2 text-sm font-semibold text-slate-100">
-                  Designed for campuses
-                </h3>
-                <p className="text-xs leading-relaxed text-slate-300">
-                  For institutions like VIT Chennai, we optimize for real-life student
-                  schedules, pickup windows, and hostel logistics so that laundry fits around
-                  classes, not the other way around.
-                </p>
-              </article>
+              )}
+              <Button
+                type="submit"
+                disabled={waitlistState === 'loading'}
+                className="mt-1 w-full rounded-full bg-primary shadow-[0_0_24px_rgba(59,130,246,0.9)]"
+              >
+                {waitlistState === 'loading' ? 'Submitting...' : 'Notify Me'}
+              </Button>
+            </form>
+          </GlassCard>
+        </section>
+
+        <section id="testimonials" className="mt-20 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-2xl font-semibold text-white md:text-3xl">
+              Loved by busy people
+            </h2>
+            <p className="mt-2 max-w-xl text-sm text-slate-300">
+              From students and young professionals to busy families, people rely on
+              LaundroSwipe to take laundry off their mental load.
+            </p>
+          </motion.div>
+          <TestimonialCarousel />
+        </section>
+
+        <section id="cta" className="mt-20 overflow-hidden rounded-3xl border border-sky-500/40 bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500 p-[1px] shadow-[0_0_45px_rgba(59,130,246,0.9)]">
+          <div className="flex flex-col items-start justify-between gap-4 rounded-[22px] bg-slate-950/90 px-6 py-6 text-left md:flex-row md:items-center md:px-8 md:py-7">
+            <div>
+              <h2 className="text-xl font-semibold text-white md:text-2xl">
+                Ready to Never Worry About Laundry Again?
+              </h2>
+              <p className="mt-2 max-w-xl text-sm text-slate-200">
+                Create your account in seconds and see how easy it is to schedule your next
+                pickup.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                size="lg"
+                className="bg-white px-5 text-sm font-semibold text-sky-700 hover:bg-slate-100"
+                onClick={() => router.push('/dashboard')}
+              >
+                Get Started
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-white/40 bg-transparent text-sm text-white hover:bg-white/10"
+                onClick={() => router.push('/contact')}
+              >
+                Contact Us
+              </Button>
             </div>
           </div>
         </section>
+      </main>
 
-        <footer className="ls-home-footer">
-          <div className="ls-home-section-inner ls-home-footer-inner">
-            <div className="space-y-2">
-              <span className="ls-home-brand text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">
-                LaundroSwipe
-              </span>
-              <p className="max-w-md text-xs leading-relaxed text-slate-300">
-                Kerala-based laundry technology company connecting trusted service partners to
-                customers across homes, offices, and campuses.
-              </p>
+      <footer
+        id="contact"
+        className="border-t border-white/5 bg-slate-950/90 py-8 text-xs text-slate-400"
+      >
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 md:flex-row md:justify-between md:px-8">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-white">LaundroSwipe</span>
+              <span className="text-[0.7rem] text-slate-400">Laundry, simplified.</span>
             </div>
-            <div className="ls-home-footer-columns">
-              <div className="ls-home-footer-col space-y-2 text-xs text-slate-300">
-                <h3 className="text-sm font-semibold text-slate-100">Contact</h3>
-                <p>
-                  Email:{' '}
-                  <a
-                    href="mailto:support@laundroswipe.com"
-                    className="font-semibold text-sky-200 hover:text-sky-100"
-                  >
+            <p className="max-w-xs text-[0.75rem] text-slate-400">
+              Kerala-based laundry technology platform connecting trusted service partners to
+              customers across homes, offices, and campuses.
+            </p>
+            <div className="flex gap-3 text-slate-400">
+              <Link href="#" aria-label="Instagram" className="hover:text-white">
+                <Instagram size={16} />
+              </Link>
+              <Link href="#" aria-label="Twitter" className="hover:text-white">
+                <Twitter size={16} />
+              </Link>
+              <Link href="#" aria-label="LinkedIn" className="hover:text-white">
+                <Linkedin size={16} />
+              </Link>
+            </div>
+          </div>
+          <div className="grid flex-1 grid-cols-2 gap-6 md:grid-cols-3">
+            <div className="space-y-2">
+              <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-300">
+                Company
+              </div>
+              <ul className="space-y-1 text-[0.75rem]">
+                <li>
+                  <Link href="/privacy" className="hover:text-slate-200">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="hover:text-slate-200">
+                    Terms of Service
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-300">
+                Support
+              </div>
+              <ul className="space-y-1 text-[0.75rem]">
+                <li>
+                  <a href="mailto:support@laundroswipe.com" className="hover:text-slate-200">
                     support@laundroswipe.com
                   </a>
-                  <br />
-                  Phone:{' '}
-                  <a
-                    href="tel:+919074417293"
-                    className="font-semibold text-sky-200 hover:text-sky-100"
-                  >
-                    +91 90744 17293
+                </li>
+                <li>
+                  <a href="tel:+917736429562" className="hover:text-slate-200">
+                    +91 7736429562
                   </a>
-                </p>
-              </div>
-              <div className="ls-home-footer-col text-xs text-slate-300">
-                <h3 className="mb-2 text-sm font-semibold text-slate-100">Links</h3>
-                <ul className="space-y-1.5">
-                  <li>
-                    <Link
-                      href="/privacy"
-                      className="text-sky-200 hover:text-sky-100 hover:underline"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/terms"
-                      className="text-sky-200 hover:text-sky-100 hover:underline"
-                    >
-                      Terms &amp; Conditions
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/admin"
-                      className="text-sky-200 hover:text-sky-100 hover:underline"
-                    >
-                      Admin
-                    </Link>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      className="ls-home-link-button"
-                      onClick={handleGoToDashboard}
-                    >
-                      Go to dashboard
-                    </button>
-                  </li>
-                </ul>
-              </div>
+                </li>
+              </ul>
             </div>
-            <p className="ls-home-footer-copy text-[0.7rem] text-slate-500">
-              © {new Date().getFullYear()} LaundroSwipe. All rights reserved.
-            </p>
+            <div className="space-y-2">
+              <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-300">
+                Offices
+              </div>
+              <p className="text-[0.75rem] text-slate-400">
+                Kochi · F223 DLF NTH SEAPORT AIRPORT ROAD KOCHI 682030
+              </p>
+              <p className="text-[0.75rem] text-slate-400">Offices in Kochi &amp; Bangalore</p>
+            </div>
           </div>
-        </footer>
-      </div>
+        </div>
+        <div className="mt-6 text-center text-[0.7rem] text-slate-500">
+          © {new Date().getFullYear()} LaundroSwipe. Made with ❤️ in Kerala.
+        </div>
+      </footer>
     </main>
   );
 }
