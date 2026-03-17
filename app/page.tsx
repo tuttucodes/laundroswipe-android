@@ -12,10 +12,10 @@ import { MapPin, Package, CheckCircle2, Instagram, Twitter, Linkedin } from 'luc
 import { Button } from '@/components/ui/button';
 
 const stats = [
-  { label: 'Years Operational', value: 2 },
-  { label: 'Verified Partners', value: 500 },
-  { label: 'Cities & Growing', value: 3 },
-  { label: 'Orders Delivered', value: 10000 },
+  { label: 'Orders Delivered', value: 10000, suffix: '+' },
+  { label: 'Verified Partners', value: 500, suffix: '+' },
+  { label: 'Cities Live', value: 3, suffix: '' },
+  { label: 'Avg. Rating', value: 4.7, suffix: '/5' },
 ];
 
 const howSteps = [
@@ -98,6 +98,7 @@ const staggerChildren = {
 };
 
 function Counter({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const isDecimal = !Number.isInteger(value);
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
@@ -106,7 +107,8 @@ function Counter({ value, suffix = '' }: { value: number; suffix?: string }) {
 
     const tick = (now: number) => {
       const progress = Math.min(1, (now - start) / duration);
-      setDisplay(Math.round(value * progress));
+      const next = value * progress;
+      setDisplay(isDecimal ? parseFloat(next.toFixed(1)) : Math.round(next));
       if (progress < 1) requestAnimationFrame(tick);
     };
 
@@ -299,7 +301,7 @@ export default function HomePage() {
           backgroundColor: navScrolled ? 'rgba(15,23,42,0.9)' : 'rgba(15,23,42,0.7)',
           borderBottomColor: navScrolled ? 'rgba(148,163,184,0.35)' : 'rgba(15,23,42,0.7)',
         }}
-        className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70"
+        className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/80"
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-8">
           <div className="flex items-center gap-3">
@@ -349,13 +351,13 @@ export default function HomePage() {
               onClick={() => router.push('/dashboard')}
             >
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_0_0,rgba(59,130,246,0.8),transparent_55%),radial-gradient(circle_at_100%_0,rgba(6,182,212,0.7),transparent_55%)] opacity-70" />
-              <span className="relative z-10">Get Started</span>
+              <span className="relative z-10">Start Washing</span>
             </Button>
           </div>
         </div>
       </motion.header>
 
-      <main className="mx-auto max-w-7xl px-4 pb-24 pt-16 md:px-10">
+      <main className="mx-auto max-w-7xl px-4 pb-28 pt-14 md:px-10">
         <motion.section
           id="hero"
           className="grid items-center gap-10 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
@@ -364,58 +366,72 @@ export default function HomePage() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.5 }}
         >
-          <motion.div variants={fadeInUp} className="space-y-6">
+          <motion.div variants={fadeInUp} className="space-y-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-500/40 bg-sky-500/10 px-3 py-1 text-[0.7rem] font-medium text-sky-200 shadow-[0_18px_45px_rgba(56,189,248,0.4)]">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
-              <span>Kerala-based · Trusted partners · Fast pickups</span>
+              <span>Live in Kochi · Bangalore · Chennai pilots</span>
             </div>
             <div className="space-y-4">
               <h1 className="text-balance text-3xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl">
-                Your Laundry, Picked Up &amp; Delivered — Like Magic ✨
+                Laundry from your doorstep to done — in one swipe.
               </h1>
               <p className="max-w-xl text-sm leading-relaxed text-slate-300 md:text-base">
-                We connect you with verified dry cleaners &amp; laundry pros near you. Schedule
-                a pickup in 30 seconds and get your clothes back fresh, folded, and right on
-                time.
+                Enter your location to see trusted laundries near you. We handle pickup,
+                tracking, and on‑time delivery — you just swipe and relax.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                size="lg"
-                className="shadow-[0_0_30px_rgba(59,130,246,0.9)]"
-                onClick={() => router.push('/dashboard')}
-              >
-                Get Started — It&apos;s Free
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-slate-500/60 bg-transparent text-slate-100 hover:bg-white/5"
-                onClick={() => {
-                  const el = document.getElementById('how');
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-              >
-                See How It Works
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 pt-2 text-xs md:grid-cols-4">
-              {stats.map((s) => (
-                <GlassCard
-                  key={s.label}
-                  className="py-3 text-center transition hover:-translate-y-1 hover:border-sky-400/60 hover:bg-sky-500/10"
-                >
-                  <div className="text-lg font-semibold text-white md:text-xl">
-                    <Counter
-                      value={s.value}
-                      suffix={s.label === 'Years Operational' ? '+' : s.label === 'Orders Delivered' ? '+' : ''}
-                    />
-                  </div>
-                  <div className="mt-1 text-[0.7rem] uppercase tracking-[0.14em] text-slate-400">
-                    {s.label}
-                  </div>
-                </GlassCard>
-              ))}
+            <div className="space-y-3">
+              <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-[0_22px_70px_rgba(15,23,42,0.9)] sm:flex-row sm:items-center sm:p-4">
+                <div className="flex flex-1 items-center gap-3 rounded-xl bg-slate-950/90 px-3 py-2.5 ring-1 ring-slate-700/70">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/15 text-sky-300">
+                    <MapPin size={16} />
+                  </span>
+                  <input
+                    placeholder="Enter delivery location (e.g. Kakkanad, HSR Layout)"
+                    className="w-full bg-transparent text-xs text-slate-100 placeholder:text-slate-500 outline-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        router.push('/dashboard');
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col gap-2 sm:w-auto">
+                  <Button
+                    size="lg"
+                    className="w-full shadow-[0_0_28px_rgba(59,130,246,0.9)] sm:min-w-[170px]"
+                    onClick={() => router.push('/dashboard')}
+                  >
+                    Find laundries near me
+                  </Button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center gap-1 text-[0.75rem] font-medium text-slate-300 hover:text-white"
+                    onClick={() => {
+                      const el = document.getElementById('how');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
+                    30–45 min average pickup time
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-1 text-xs md:grid-cols-4">
+                {stats.map((s) => (
+                  <GlassCard
+                    key={s.label}
+                    className="py-3 text-center transition hover:-translate-y-1 hover:border-sky-400/60 hover:bg-sky-500/10"
+                  >
+                    <div className="text-lg font-semibold text-white md:text-xl">
+                      <Counter value={s.value} suffix={s.suffix} />
+                    </div>
+                    <div className="mt-1 text-[0.7rem] uppercase tracking-[0.14em] text-slate-400">
+                      {s.label}
+                    </div>
+                  </GlassCard>
+                ))}
+              </div>
             </div>
           </motion.div>
 
@@ -446,7 +462,7 @@ export default function HomePage() {
               favorite laundry partners.
             </p>
           </motion.div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+          <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {howSteps.map((step, idx) => (
               <GlassCard
                 key={step.title}
@@ -479,7 +495,7 @@ export default function HomePage() {
               India does laundry.
             </p>
           </motion.div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+          <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
               <motion.div
                 key={f.title}
@@ -513,7 +529,7 @@ export default function HomePage() {
               coming soon.
             </p>
           </motion.div>
-          <div className="grid gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-start">
+          <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
             <GlassCard className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0,rgba(59,130,246,0.4),transparent_55%),radial-gradient(circle_at_80%_100%,rgba(6,182,212,0.4),transparent_55%)] opacity-80" />
               <div className="relative z-10 space-y-4">
@@ -547,7 +563,7 @@ export default function HomePage() {
               </div>
             </GlassCard>
 
-            <div className="space-y-3 text-xs max-w-md w-full mx-auto md:mx-0">
+            <div className="mx-auto w-full max-w-md space-y-3 text-xs md:mx-0">
               <GlassCard className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
                 <div>
                   <div className="text-sm font-semibold text-white">Kochi</div>
@@ -801,6 +817,23 @@ export default function HomePage() {
           © {new Date().getFullYear()} LaundroSwipe. Made with ❤️ in Kerala.
         </div>
       </footer>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 shadow-[0_-18px_60px_rgba(15,23,42,1)] md:hidden">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+          <div className="text-[0.7rem] leading-snug text-slate-300">
+            <div className="font-semibold text-slate-100">Already using LaundroSwipe?</div>
+            <div className="text-[0.7rem] text-slate-400">
+              Open your dashboard to see pickups and tokens.
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="shrink-0 bg-primary px-3 text-[0.7rem] shadow-[0_0_20px_rgba(59,130,246,0.9)]"
+            onClick={() => router.push('/dashboard')}
+          >
+            Open dashboard
+          </Button>
+        </div>
+      </div>
     </main>
   );
 }
