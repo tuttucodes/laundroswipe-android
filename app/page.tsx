@@ -95,41 +95,35 @@ export default async function HomePage() {
   const testimonials = await getTestimonials();
 
   return (
-    <main className="ls-home">
-      {/* Top navigation / chrome */}
-      <header className="ls-home-header">
-        <div className="ls-home-section-inner flex items-center justify-between py-5">
+    <main className="min-h-screen bg-slate-950 text-slate-50">
+      <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 md:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white shadow-md">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-400 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/40">
               LS
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold tracking-wide text-slate-900">
-                LaundroSwipe
-              </span>
-              <span className="text-[0.65rem] uppercase tracking-[0.18em] text-slate-500">
+              <span className="text-sm font-semibold tracking-wide">LaundroSwipe</span>
+              <span className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
                 Kerala · Kochi · Bangalore
               </span>
             </div>
           </div>
-          <nav className="hidden items-center gap-8 text-xs font-medium text-slate-600 md:flex">
-            <a href="#services" className="hover:text-slate-900">
-              Services
+          <nav className="hidden items-center gap-7 text-xs font-medium text-slate-300 md:flex">
+            <a href="#how" className="hover:text-white">
+              How it works
             </a>
-            <a href="#ecosystem" className="hover:text-slate-900">
-              Ecosystem
+            <a href="#segments" className="hover:text-white">
+              For whom
             </a>
-            <a href="#testimonials" className="hover:text-slate-900">
-              Testimonials
-            </a>
-            <a href="#contact" className="hover:text-slate-900">
-              Contact
+            <a href="#testimonials" className="hover:text-white">
+              Stories
             </a>
           </nav>
           <Button
             asChild
             size="pill"
-            className="hidden rounded-full bg-slate-900 px-6 text-xs font-semibold tracking-wide md:inline-flex"
+            className="hidden rounded-full bg-emerald-400 px-5 text-xs font-semibold text-slate-950 shadow-md shadow-emerald-500/40 hover:bg-emerald-300 md:inline-flex"
           >
             <a href="#contact">
               Talk to our team
@@ -139,29 +133,30 @@ export default async function HomePage() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="ls-home-hero">
-        <div className="ls-home-section-inner flex flex-col items-center gap-10 pb-16 pt-10 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-2xl space-y-6">
-            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Kerala-based · Kochi SEZ &amp; Bangalore
+      <section className="border-b border-slate-800/60 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/40">
+        <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-10 md:flex-row md:items-center md:px-6 md:pb-20 md:pt-14">
+          <div className="flex-1 space-y-6">
+            <p className="inline-flex items-center gap-2 rounded-full bg-slate-900/80 px-3 py-1 text-[0.7rem] font-medium text-slate-300 ring-1 ring-emerald-400/40">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-[0.55rem] font-bold text-slate-950">
+                ●
+              </span>
+              2+ years of on-ground operations
             </p>
-            <h1 className="text-center text-[2.6rem] font-semibold leading-[1.05] tracking-tight text-slate-900 md:text-left md:text-[3.4rem]">
-              FORGING A{' '}
-              <span className="bg-gradient-to-r from-slate-900 via-slate-900 to-rose-600 bg-clip-text text-transparent">
-                NETWORK
+            <h1 className="text-balance text-3xl font-semibold leading-[1.08] tracking-tight sm:text-[2.5rem] md:text-[3rem]">
+              Swiping away the{' '}
+              <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-amber-300 bg-clip-text text-transparent">
+                friction
               </span>{' '}
-              OF LAUNDRY EXPERIENCES
+              from laundry in Kerala.
             </h1>
-            <p className="max-w-xl text-center text-sm text-slate-600 md:text-left md:text-[0.95rem]">
-              LaundroSwipe connects customers to verified dry cleaners and laundry partners – much
-              like Swiggy or Zomato – with one modern interface that works across residential
-              communities, corporate offices, and campuses.
+            <p className="max-w-xl text-sm text-slate-300 md:text-[0.95rem]">
+              LaundroSwipe works like a Swiggy or Zomato layer for laundry – connecting customers to
+              a vetted network of dry cleaners and partners across homes, offices, and campuses.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 size="lg"
-                className="rounded-full bg-slate-900 px-7 text-sm font-semibold tracking-wide"
+                className="rounded-full bg-emerald-400 px-6 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/40 hover:bg-emerald-300"
               >
                 <a href="/dashboard" className="flex items-center gap-2">
                   Open customer app
@@ -169,200 +164,261 @@ export default async function HomePage() {
                 </a>
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="pill"
-                className="rounded-full border-slate-300 bg-white px-5 text-xs"
+                className="rounded-full border border-slate-700 bg-slate-900/60 px-5 text-xs text-slate-200 hover:bg-slate-800"
               >
-                <a href="#contact" className="flex items-center gap-2">
-                  Talk to team
-                  <Sparkles className="h-4 w-4 text-amber-400" />
+                <a href="#segments" className="flex items-center gap-2">
+                  Explore for properties
+                  <Sparkles className="h-4 w-4 text-amber-300" />
                 </a>
               </Button>
             </div>
-            <p className="text-center text-xs text-slate-500 md:text-left">
-              2+ years operational · Multi-location coverage · Built for Kerala first.
-            </p>
+            <div className="mt-4 grid grid-cols-3 gap-3 text-xs text-slate-300 sm:max-w-md">
+              <div className="rounded-2xl bg-slate-900/60 p-3 ring-1 ring-slate-800">
+                <p className="text-[0.6rem] uppercase tracking-[0.18em] text-slate-400">Footprint</p>
+                <p className="mt-1 text-sm font-semibold text-slate-50">
+                  Kochi SEZ &amp; Bangalore
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-900/60 p-3 ring-1 ring-slate-800">
+                <p className="text-[0.6rem] uppercase tracking-[0.18em] text-slate-400">Model</p>
+                <p className="mt-1 text-sm font-semibold text-slate-50">Platform-first</p>
+              </div>
+              <div className="rounded-2xl bg-slate-900/60 p-3 ring-1 ring-slate-800">
+                <p className="text-[0.6rem] uppercase tracking-[0.18em] text-slate-400">Segments</p>
+                <p className="mt-1 text-sm font-semibold text-slate-50">Homes · Offices · Campus</p>
+              </div>
+            </div>
           </div>
 
-          <div className="w-full max-w-md rounded-3xl bg-slate-900 text-slate-100 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 text-[0.75rem] uppercase tracking-[0.2em] text-slate-300">
-              <span>The LaundroSwipe flow</span>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-[0.65rem] text-slate-100">
-                Kochi · Bangalore
-              </span>
+          <div className="flex-1">
+            <div className="mx-auto max-w-sm rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-1 shadow-[0_24px_80px_rgba(8,47,73,0.9)]">
+              <div className="rounded-[1.35rem] bg-slate-950/80 p-4">
+                <div className="mb-4 flex items-center justify-between text-[0.7rem] text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    Live pickup lanes
+                  </div>
+                  <span className="rounded-full bg-slate-900 px-3 py-1 text-[0.65rem] text-slate-200">
+                    Swiggy-style cards
+                  </span>
+                </div>
+                <div className="mb-3 flex gap-2 text-xs">
+                  <button className="flex-1 rounded-2xl bg-slate-900 px-3 py-2 text-left font-semibold text-slate-100 ring-1 ring-emerald-400/70">
+                    Residential
+                  </button>
+                  <button className="flex-1 rounded-2xl bg-slate-900/40 px-3 py-2 text-left text-slate-300 ring-1 ring-slate-800">
+                    Campus
+                  </button>
+                  <button className="flex-1 rounded-2xl bg-slate-900/40 px-3 py-2 text-left text-slate-300 ring-1 ring-slate-800">
+                    Offices
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex gap-3 rounded-2xl bg-slate-900/80 p-3 ring-1 ring-slate-800">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-sm font-semibold text-slate-950">
+                      LS
+                    </div>
+                    <div className="flex-1 text-xs">
+                      <p className="font-semibold text-slate-50">Skyline Heights · Block C</p>
+                      <p className="text-[0.7rem] text-slate-400">
+                        Daily pickups · Ironing · Wash &amp; fold
+                      </p>
+                    </div>
+                    <span className="self-center rounded-full bg-emerald-500/10 px-2 py-1 text-[0.65rem] font-semibold text-emerald-300">
+                      32 mins
+                    </span>
+                  </div>
+                  <div className="flex gap-3 rounded-2xl bg-slate-900/60 p-3 ring-1 ring-slate-800/80">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-emerald-300">
+                      DC
+                    </div>
+                    <div className="flex-1 text-xs">
+                      <p className="font-semibold text-slate-50">Premium Dryclean Partner</p>
+                      <p className="text-[0.7rem] text-slate-400">
+                        Blazers · Sarees · Wedding outfits
+                      </p>
+                    </div>
+                    <span className="self-center rounded-full bg-slate-800 px-2 py-1 text-[0.65rem] font-semibold text-slate-200">
+                      1.2 km
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[0.7rem] text-slate-400">
+                    This is how LaundroSwipe cards appear inside the app – every card is a verified
+                    partner or location.
+                  </p>
+                </div>
+              </div>
             </div>
-            <ol className="space-y-4 px-6 py-5 text-sm text-slate-100/90">
-              <li>
-                <span className="font-semibold text-white">01 · Customer request</span>
-                <p className="mt-1 text-xs text-slate-200/80">
-                  Pickup scheduled in the LaundroSwipe app – slot, preferences, and special notes.
-                </p>
-              </li>
-              <li>
-                <span className="font-semibold text-white">02 · Intelligent routing</span>
-                <p className="mt-1 text-xs text-slate-200/80">
-                  We connect the order to the right partner based on pin-code, capacity, and SLAs.
-                </p>
-              </li>
-              <li>
-                <span className="font-semibold text-white">03 · Partner execution</span>
-                <p className="mt-1 text-xs text-slate-200/80">
-                  Pickup, processing, and delivery handled end-to-end with live status updates.
-                </p>
-              </li>
-              <li>
-                <span className="font-semibold text-white">04 · One relationship</span>
-                <p className="mt-1 text-xs text-slate-200/80">
-                  Properties and customers talk to one LaundroSwipe team, even when vendors change.
-                </p>
-              </li>
-            </ol>
           </div>
         </div>
       </section>
 
-      {/* Ecosystem strip */}
-      <section id="ecosystem" className="ls-home-ecosystem">
-        <div className="ls-home-section-inner">
-          <div className="ls-home-ecosystem-bar">
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
-              THE LAUNDROSWIPE ECOSYSTEM
-            </span>
-            <div className="ls-home-ecosystem-tags">
-              <span>Resident programs</span>
-              <span>Campus laundry</span>
-              <span>Corporate convenience</span>
-              <span>Verified partner network</span>
-              <span>Pickup &amp; delivery</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* What we do / services */}
-      <section id="services" className="ls-home-services">
-        <div className="ls-home-section-inner space-y-8 py-14">
+      <section id="how" className="border-b border-slate-800/60 bg-slate-950/60">
+        <div className="mx-auto max-w-5xl px-4 py-12 md:px-6">
           <div className="space-y-2">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-sky-300">
-              What we do
+              How LaundroSwipe works
             </p>
-            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-[2.1rem]">
-              Engineering the everyday laundry experience.
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-50 md:text-[2rem]">
+              A Swiggy-style layer, built for laundry.
             </h2>
-            <p className="max-w-2xl text-sm text-slate-600 md:text-[0.95rem]">
-              From individual users in apartment buildings to thousands of students on a campus, we
-              design the pickup–to–delivery loop so that laundry feels like a background task, not a
-              weekly project.
+            <p className="max-w-2xl text-sm text-slate-300 md:text-[0.95rem]">
+              We sit between customers and local laundry businesses, standardising discovery,
+              logistics, payments, and support – while keeping work with neighbourhood partners.
             </p>
           </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-4">
+            <div className="rounded-2xl bg-slate-900/80 p-4 ring-1 ring-slate-800">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                01 · Request
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-50">Customer places an order</p>
+              <p className="mt-2 text-xs text-slate-300">
+                From app or web, with pickup slot, preferences, and property details.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-900/80 p-4 ring-1 ring-slate-800">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                02 · Smart routing
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-50">
+                We match to the right partner
+              </p>
+              <p className="mt-2 text-xs text-slate-300">
+                Based on pin-code, capacity, promised TAT, and services supported.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-900/80 p-4 ring-1 ring-slate-800">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                03 · Execution
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-50">Pickup to delivery</p>
+              <p className="mt-2 text-xs text-slate-300">
+                End-to-end handled by our partner network, with updates and quality checks.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-900/80 p-4 ring-1 ring-slate-800">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                04 · Single window
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-50">One team to talk to</p>
+              <p className="mt-2 text-xs text-slate-300">
+                For properties and users, LaundroSwipe is the only helpdesk they need.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <div className="grid gap-5 md:grid-cols-3">
-            <div className="ls-home-service-card">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-1 text-[0.7rem] font-medium text-white">
+      <section id="segments" className="border-b border-slate-800/60 bg-slate-950">
+        <div className="mx-auto max-w-5xl px-4 py-12 md:px-6">
+          <div className="mb-6 flex flex-col gap-2">
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-sky-300">
+              Where we plug in
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-50 md:text-[2rem]">
+              One network, multiple property types.
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 p-4 ring-1 ring-slate-800">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-[0.7rem] text-emerald-200">
                 <Home className="h-3.5 w-3.5" />
                 Residential communities
               </div>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-slate-50">
                 Apartment complexes, gated societies &amp; hostels.
               </p>
-              <p className="mt-2 text-xs text-slate-600">
-                Centralised pickups, shared drop points, and configurable pricing per society. We
-                remove the friction of residents chasing individual vendors.
+              <p className="mt-2 text-xs text-slate-300">
+                Fixed pickup windows, society-level pricing, and shared drop points that feel
+                natural to residents.
               </p>
             </div>
-            <div className="ls-home-service-card">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-1 text-[0.7rem] font-medium text-white">
+            <div className="rounded-2xl bg-slate-900 p-4 ring-1 ring-slate-800">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-[0.7rem] text-amber-200">
                 <Building2 className="h-3.5 w-3.5" />
                 Corporate offices
               </div>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-slate-50">
                 Workplace experience &amp; admin teams.
               </p>
-              <p className="mt-2 text-xs text-slate-600">
-                Convenience programs for employees, executive laundry, and recurring corporate
-                requirements with a single LaundroSwipe account and consolidated reporting.
+              <p className="mt-2 text-xs text-slate-300">
+                Employee convenience programs, executive laundry, and recurring corporate needs –
+                all with one LaundroSwipe account.
               </p>
             </div>
-            <div className="ls-home-service-card">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-1 text-[0.7rem] font-medium text-white">
+            <div className="rounded-2xl bg-slate-900 p-4 ring-1 ring-slate-800">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-sky-500/10 px-3 py-1 text-[0.7rem] text-sky-200">
                 <GraduationCap className="h-3.5 w-3.5" />
                 Colleges &amp; institutions
               </div>
-              <p className="text-sm font-semibold text-slate-900">
-                Campus-wide laundry that actually scales.
-              </p>
-              <p className="mt-2 text-xs text-slate-600">
-                Integrated pickups for hostels, student apartments, and staff quarters – with
-                configured collection points and fixed turnaround times.
-              </p>
-            </div>
-          </div>
-
-          <div className="ls-home-stats">
-            <div className="ls-home-stat-card">
-              <p className="ls-home-stat-label">Years operational</p>
-              <span className="ls-home-stat-value">2+ years</span>
-              <p className="ls-home-stat-copy">
-                LaundroSwipe has been live across multiple localities in Kerala and Bangalore.
-              </p>
-            </div>
-            <div className="ls-home-stat-card">
-              <p className="ls-home-stat-label">Service model</p>
-              <span className="ls-home-stat-value">Platform-first</span>
-              <p className="ls-home-stat-copy">
-                A Swiggy / Zomato style layer between end-users and verified laundry partners.
-              </p>
-            </div>
-            <div className="ls-home-stat-card">
-              <p className="ls-home-stat-label">Partner promise</p>
-              <span className="ls-home-stat-value">Verified &amp; supported</span>
-              <p className="ls-home-stat-copy">
-                Every partner is onboarded, trained, and supported by the LaundroSwipe operations
-                team.
+              <p className="text-sm font-semibold text-slate-50">Campus-wide laundry at scale.</p>
+              <p className="mt-2 text-xs text-slate-300">
+                Hostels, student apartments, staff quarters – with predictable turnaround and clear
+                communication across cohorts.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials (Supabase-backed) */}
-      <section id="testimonials" className="ls-home-testimonials">
-        <div className="ls-home-section-inner space-y-8 py-16">
-          <div className="space-y-2">
+      <section id="testimonials" className="border-b border-slate-800/60 bg-slate-900/80">
+        <div className="mx-auto max-w-5xl px-4 py-12 md:px-6">
+          <div className="mb-6 flex flex-col gap-2">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-sky-300">
               Why clients stay with us
             </p>
-            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-[2.1rem]">
-              What partners say about LaundroSwipe.
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-50 md:text-[2rem]">
+              Real stories from properties and partners.
             </h2>
-            <p className="max-w-xl text-xs text-slate-600 md:text-[0.85rem]">
-              Testimonials are stored in Supabase so the stories you see here can be updated without
-              touching the codebase.
+            <p className="max-w-xl text-xs text-slate-300 md:text-[0.85rem]">
+              Testimonials live in Supabase, so this section can evolve as our network grows – no
+              code changes required.
             </p>
           </div>
-
-          <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-stretch">
-            <div className="ls-home-testimonial-metrics">
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-stretch">
+            <div className="flex flex-col justify-between rounded-2xl bg-slate-950 p-5 ring-1 ring-slate-800">
               <div>
-                <p className="ls-home-metric-label">Completed orders</p>
-                <p className="ls-home-metric-value">55K+</p>
+                <p className="text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Snapshot
+                </p>
+                <p className="mt-2 text-sm text-slate-200">
+                  We&apos;ve engineered LaundroSwipe to reduce escalation load for property teams
+                  while keeping end-users delighted.
+                </p>
               </div>
-              <div>
-                <p className="ls-home-metric-label">Satisfaction</p>
-                <p className="ls-home-metric-value">99%</p>
-              </div>
-              <div>
-                <p className="ls-home-metric-label">Growth</p>
-                <p className="ls-home-metric-value">300%</p>
+              <div className="mt-6 grid grid-cols-3 gap-3 text-center text-xs">
+                <div className="rounded-2xl bg-slate-900 p-3">
+                  <p className="text-[0.65rem] uppercase tracking-[0.16em] text-slate-400">
+                    Completed orders
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-50">55K+</p>
+                </div>
+                <div className="rounded-2xl bg-slate-900 p-3">
+                  <p className="text-[0.65rem] uppercase tracking-[0.16em] text-slate-400">
+                    Satisfaction
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-50">99%</p>
+                </div>
+                <div className="rounded-2xl bg-slate-900 p-3">
+                  <p className="text-[0.65rem] uppercase tracking-[0.16em] text-slate-400">
+                    Growth
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-50">300%</p>
+                </div>
               </div>
             </div>
-
-            <div className="ls-home-testimonial-carousel">
+            <div className="grid gap-4 md:grid-cols-2">
               {testimonials.map((t) => (
-                <article key={t.id} className="ls-home-testimonial-card">
-                  <p className="text-sm text-slate-900">&ldquo;{t.quote}&rdquo;</p>
-                  <div className="mt-4 space-y-1 text-xs text-slate-600">
-                    <p className="font-semibold text-slate-900">{t.name}</p>
+                <article
+                  key={t.id}
+                  className="flex flex-col justify-between rounded-2xl bg-slate-950/90 p-4 ring-1 ring-slate-800"
+                >
+                  <p className="text-sm text-slate-100">&ldquo;{t.quote}&rdquo;</p>
+                  <div className="mt-4 space-y-1 text-xs text-slate-300">
+                    <p className="font-semibold text-slate-50">{t.name}</p>
                     {(t.title || t.company) && (
                       <p>
                         {t.title}
@@ -370,7 +426,7 @@ export default async function HomePage() {
                         {t.company}
                       </p>
                     )}
-                    {t.segment && <p className="text-[0.7rem] text-slate-500">{t.segment}</p>}
+                    {t.segment && <p className="text-[0.7rem] text-slate-400">{t.segment}</p>}
                   </div>
                 </article>
               ))}
@@ -379,25 +435,23 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Footer / Contact */}
-      <footer id="contact" className="ls-home-footer">
-        <div className="ls-home-section-inner ls-home-footer-inner">
-          <div className="ls-home-footer-columns">
+      <footer id="contact" className="bg-slate-950">
+        <div className="mx-auto max-w-5xl px-4 py-10 md:px-6">
+          <div className="grid gap-8 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
             <div className="space-y-4">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-sky-300">
                 Let&apos;s explore your property
               </p>
-              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-50">
                 See how LaundroSwipe can plug into your ecosystem.
               </h2>
-              <p className="max-w-md text-xs text-slate-600 md:text-[0.85rem]">
+              <p className="max-w-md text-xs text-slate-300 md:text-[0.85rem]">
                 Whether you&apos;re running a residential complex, office, or campus in Kerala or
-                Bangalore, we can design a laundry experience that feels effortless for your
-                people.
+                Bangalore, we can design a laundry experience that feels effortless for your people.
               </p>
-              <div className="space-y-2 text-xs text-slate-600">
+              <div className="space-y-2 text-xs text-slate-300">
                 <p className="flex items-start gap-2">
-                  <MapPin className="mt-[2px] h-3.5 w-3.5 text-rose-500" />
+                  <MapPin className="mt-[2px] h-3.5 w-3.5 text-emerald-300" />
                   <span>
                     F223 DLF NTH SEAPORT AIRPORT ROAD,
                     <br />
@@ -406,7 +460,7 @@ export default async function HomePage() {
                 </p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-3.5 w-3.5 text-emerald-300" />
-                  <a href="tel:+917736429562" className="underline decoration-slate-600">
+                  <a href="tel:+917736429562" className="underline decoration-slate-500">
                     +91 77364 29562
                   </a>
                 </p>
@@ -416,20 +470,18 @@ export default async function HomePage() {
                   </span>
                   <a
                     href="mailto:support@laundroswipe.com"
-                    className="underline decoration-slate-600"
+                    className="underline decoration-slate-500"
                   >
                     support@laundroswipe.com
                   </a>
                 </p>
               </div>
             </div>
-
             <div>
               <HomeContactForm />
             </div>
           </div>
-
-          <div className="mt-4 flex flex-col items-start justify-between gap-3 border-t border-slate-200 pt-4 text-[0.7rem] text-slate-500 md:flex-row md:items-center">
+          <div className="mt-6 flex flex-col items-start justify-between gap-3 border-t border-slate-800 pt-4 text-[0.7rem] text-slate-500 md:flex-row md:items-center">
             <p>© {new Date().getFullYear()} LaundroSwipe. All rights reserved.</p>
             <div className="flex flex-wrap gap-3">
               <a href="/privacy" className="ls-home-link-button">
