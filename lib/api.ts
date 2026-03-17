@@ -376,7 +376,9 @@ export const LSApi = {
         typeof window !== 'undefined' && window.location?.origin
           ? window.location.origin
           : '';
-      const to = redirectTo || (base ? base + (base.endsWith('/') ? '' : '/') : '');
+      // Default Google OAuth redirect should land users on the dashboard,
+      // not the marketing homepage.
+      const to = redirectTo || (base ? `${base}/dashboard` : '');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: to || undefined },
