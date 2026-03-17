@@ -83,6 +83,20 @@ const testimonials = [
   },
 ];
 
+const fadeInUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const staggerChildren = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
+
 function Counter({ value, suffix = '' }: { value: number; suffix?: string }) {
   const [display, setDisplay] = useState(0);
 
@@ -114,7 +128,7 @@ function GlassCard(props: { className?: string; children: React.ReactNode }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5 }}
-      className={`rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200 shadow-[0_20px_80px_rgba(15,23,42,0.9)] ${props.className ?? ''}`}
+      className={`rounded-3xl border border-white/10 bg-white/5 p-5 text-sm text-slate-200 shadow-[0_22px_90px_rgba(15,23,42,0.95)] backdrop-blur-2xl ${props.className ?? ''}`}
     >
       {props.children}
     </motion.div>
@@ -276,12 +290,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white">
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-40 top-[-10%] h-80 w-80 rounded-full bg-sky-500/30 blur-3xl" />
-        <div className="absolute -right-40 top-1/3 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute inset-x-0 bottom-[-20%] h-[320px] bg-[radial-gradient(circle_at_50%_0,rgba(56,189,248,0.25),transparent_60%)]" />
-      </div>
+    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
 
       <motion.header
         initial={false}
@@ -290,7 +299,7 @@ export default function HomePage() {
           backgroundColor: navScrolled ? 'rgba(15,23,42,0.9)' : 'rgba(15,23,42,0.7)',
           borderBottomColor: navScrolled ? 'rgba(148,163,184,0.35)' : 'rgba(15,23,42,0.7)',
         }}
-        className="sticky top-0 z-30 border-b border-white/5"
+        className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70"
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-8">
           <div className="flex items-center gap-3">
@@ -346,15 +355,16 @@ export default function HomePage() {
         </div>
       </motion.header>
 
-      <main className="mx-auto max-w-6xl px-4 pb-20 pt-10 md:px-8">
-        <section id="hero" className="grid gap-8 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-6"
-          >
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-16 md:px-10">
+        <motion.section
+          id="hero"
+          className="grid items-center gap-10 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
+          variants={staggerChildren}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+        >
+          <motion.div variants={fadeInUp} className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-500/40 bg-sky-500/10 px-3 py-1 text-[0.7rem] font-medium text-sky-200 shadow-[0_18px_45px_rgba(56,189,248,0.4)]">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
               <span>Kerala-based · Trusted partners · Fast pickups</span>
@@ -391,7 +401,10 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 gap-3 pt-2 text-xs md:grid-cols-4">
               {stats.map((s) => (
-                <GlassCard key={s.label} className="py-3 text-center">
+                <GlassCard
+                  key={s.label}
+                  className="py-3 text-center transition hover:-translate-y-1 hover:border-sky-400/60 hover:bg-sky-500/10"
+                >
                   <div className="text-lg font-semibold text-white md:text-xl">
                     <Counter
                       value={s.value}
@@ -406,14 +419,25 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          <WashingMachine />
-        </section>
-
-        <section id="how" className="mt-20 space-y-6">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
+            variants={fadeInUp}
+            className="relative"
+            whileHover={{ y: -4, rotate: -0.6, transition: { duration: 0.4 } }}
+          >
+            <WashingMachine />
+          </motion.div>
+        </motion.section>
+
+        <motion.section
+          id="how"
+          className="mt-20 space-y-6"
+          variants={staggerChildren}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          <motion.div
+            variants={fadeInUp}
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-2xl font-semibold text-white md:text-3xl">How It Works</h2>
@@ -422,9 +446,12 @@ export default function HomePage() {
               favorite laundry partners.
             </p>
           </motion.div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
             {howSteps.map((step, idx) => (
-              <GlassCard key={step.title} className="h-full">
+              <GlassCard
+                key={step.title}
+                className="h-full transition hover:-translate-y-1.5 hover:border-sky-400/60 hover:bg-slate-900/70"
+              >
                 <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-sky-500/60 to-cyan-400/60 text-slate-900 shadow-lg shadow-sky-500/40">
                   <step.icon size={18} />
                 </div>
@@ -433,13 +460,17 @@ export default function HomePage() {
               </GlassCard>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        <section className="mt-20 space-y-6">
+        <motion.section
+          className="mt-20 space-y-6"
+          variants={staggerChildren}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
+            variants={fadeInUp}
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-2xl font-semibold text-white md:text-3xl">Why LaundroSwipe</h2>
@@ -448,14 +479,12 @@ export default function HomePage() {
               India does laundry.
             </p>
           </motion.div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
             {features.map((f) => (
               <motion.div
                 key={f.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
                 whileHover={{ y: -4, boxShadow: '0 0 40px rgba(59,130,246,0.6)' }}
+                variants={fadeInUp}
                 transition={{ duration: 0.35 }}
                 className="group rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-slate-900/80 p-4 text-xs text-slate-300"
               >
@@ -467,22 +496,24 @@ export default function HomePage() {
               </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        <section id="locations" className="mt-20 space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5 }}
-          >
+        <motion.section
+          id="locations"
+          className="mt-20 space-y-6"
+          variants={staggerChildren}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          <motion.div variants={fadeInUp} transition={{ duration: 0.5 }}>
             <h2 className="text-2xl font-semibold text-white md:text-3xl">Where We Operate</h2>
             <p className="mt-2 max-w-xl text-sm text-slate-300">
               Currently serving customers across Kerala, Kochi, and Bangalore. More cities
               coming soon.
             </p>
           </motion.div>
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-start">
             <GlassCard className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0,rgba(59,130,246,0.4),transparent_55%),radial-gradient(circle_at_80%_100%,rgba(6,182,212,0.4),transparent_55%)] opacity-80" />
               <div className="relative z-10 space-y-4">
@@ -516,7 +547,7 @@ export default function HomePage() {
               </div>
             </GlassCard>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3 text-xs max-w-md w-full mx-auto md:mx-0">
               <GlassCard className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
                 <div>
                   <div className="text-sm font-semibold text-white">Kochi</div>
@@ -557,15 +588,17 @@ export default function HomePage() {
               </GlassCard>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section id="waitlist" className="mt-20 space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5 }}
-          >
+        <motion.section
+          id="waitlist"
+          className="mt-20 space-y-6"
+          variants={staggerChildren}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          <motion.div variants={fadeInUp} transition={{ duration: 0.5 }}>
             <h2 className="text-2xl font-semibold text-white md:text-3xl">
               We&apos;re Not In Your Area Yet?
             </h2>
@@ -629,15 +662,17 @@ export default function HomePage() {
               </Button>
             </form>
           </GlassCard>
-        </section>
+        </motion.section>
 
-        <section id="testimonials" className="mt-20 space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5 }}
-          >
+        <motion.section
+          id="testimonials"
+          className="mt-20 space-y-6"
+          variants={staggerChildren}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          <motion.div variants={fadeInUp} transition={{ duration: 0.5 }}>
             <h2 className="text-2xl font-semibold text-white md:text-3xl">
               Loved by busy people
             </h2>
@@ -647,10 +682,19 @@ export default function HomePage() {
             </p>
           </motion.div>
           <TestimonialCarousel />
-        </section>
+        </motion.section>
 
-        <section id="cta" className="mt-20 overflow-hidden rounded-3xl border border-sky-500/40 bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500 p-[1px] shadow-[0_0_45px_rgba(59,130,246,0.9)]">
-          <div className="flex flex-col items-start justify-between gap-4 rounded-[22px] bg-slate-950/90 px-6 py-6 text-left md:flex-row md:items-center md:px-8 md:py-7">
+        <motion.section
+          id="cta"
+          className="mt-20 overflow-hidden rounded-3xl border border-sky-500/40 bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500 p-[1px] shadow-[0_0_45px_rgba(59,130,246,0.9)]"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          <motion.div
+            variants={fadeInUp}
+            className="flex flex-col items-start justify-between gap-4 rounded-[22px] bg-slate-950/90 px-6 py-6 text-left md:flex-row md:items-center md:px-8 md:py-7"
+          >
             <div>
               <h2 className="text-xl font-semibold text-white md:text-2xl">
                 Ready to Never Worry About Laundry Again?
@@ -677,8 +721,8 @@ export default function HomePage() {
                 Contact Us
               </Button>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
       </main>
 
       <footer
