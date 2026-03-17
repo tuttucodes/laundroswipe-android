@@ -124,23 +124,23 @@ export default function AdminPrintersPage() {
   const hasPrinters = settings.printers.length > 0;
 
   return (
-    <div style={{ fontFamily: 'var(--fb)', background: 'var(--bg)', minHeight: '100vh', padding: 24 }}>
-      <p style={{ marginBottom: 16 }}>
+    <div className="vendor-page" style={{ fontFamily: 'var(--fb)', background: 'var(--bg)' }}>
+      <p style={{ marginBottom: 16, fontSize: 14 }}>
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Dashboard</Link>
         {' · '}
         <Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>Vendor Bill</Link>
       </p>
-      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 8, color: 'var(--b)' }}>Printers</h1>
-      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>
+      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>Printers</h1>
+      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 28 }}>
         Add your receipt printer (e.g. 68mm or Epson M80 79mm). Set a default so bills print with the correct paper width. Use &quot;Pair printer&quot; to connect via Bluetooth/Serial for one-tap printing where supported.
       </p>
 
       {/* Known printer models */}
-      <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Printer models</h2>
+      <section className="vendor-card" style={{ marginBottom: 24 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 14, color: 'var(--tx)' }}>Printer models</h2>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {PRINTER_MODELS.map((m) => (
-            <li key={m.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--bor)' }}>
+            <li key={m.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--bd)' }}>
               <strong>{m.name}</strong>
               <span style={{ color: 'var(--ts)', fontSize: 13, marginLeft: 8 }}>{m.paperWidthMm}mm · {m.charsPerLine} chars/line</span>
               {m.description && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ts)' }}>{m.description}</p>}
@@ -150,33 +150,35 @@ export default function AdminPrintersPage() {
       </section>
 
       {/* Add printer */}
-      <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Your printers</h2>
+      <section style={{ marginBottom: 28 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 14, color: 'var(--tx)' }}>Your printers</h2>
         {!adding ? (
           <button type="button" onClick={() => setAdding(true)} className="btn bp" style={{ marginBottom: 16 }}>
             + Add printer
           </button>
         ) : (
-          <div style={{ background: 'var(--card)', padding: 16, borderRadius: 12, marginBottom: 16, border: '1px solid var(--bor)' }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Model</label>
+          <div className="vendor-card">
+            <label className="fl" style={{ display: 'block', marginBottom: 8 }}>Model</label>
             <select
               value={selectedModelId}
               onChange={(e) => setSelectedModelId(e.target.value as PrinterModelId)}
-              style={{ width: '100%', maxWidth: 320, padding: '8px 12px', marginBottom: 12, borderRadius: 8, border: '1px solid var(--bor)' }}
+              className="fi"
+              style={{ width: '100%', maxWidth: 320, marginBottom: 14 }}
             >
               {PRINTER_MODELS.map((m) => (
                 <option key={m.id} value={m.id}>{m.name}</option>
               ))}
             </select>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Display name (optional)</label>
+            <label className="fl" style={{ display: 'block', marginBottom: 8 }}>Display name (optional)</label>
             <input
               type="text"
+              className="fi"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={PRINTER_MODELS.find((m) => m.id === selectedModelId)?.name}
-              style={{ width: '100%', maxWidth: 320, padding: '8px 12px', marginBottom: 12, borderRadius: 8, border: '1px solid var(--bor)' }}
+              style={{ width: '100%', maxWidth: 320, marginBottom: 16 }}
             />
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button type="button" onClick={handleAddPrinter} className="btn bp">Add</button>
               <button type="button" onClick={() => { setAdding(false); setNewName(''); }} className="btn bout">Cancel</button>
             </div>
@@ -188,7 +190,7 @@ export default function AdminPrintersPage() {
             {settings.printers.map((p) => {
               const model = PRINTER_MODELS.find((m) => m.id === p.modelId);
               return (
-                <li key={p.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--bor)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                <li key={p.id} className="vendor-card" style={{ padding: '14px 20px', marginBottom: 10, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontWeight: 500 }}>{p.name}</span>
                   {model && <span style={{ color: 'var(--ts)', fontSize: 12 }}>{model.paperWidthMm}mm</span>}
                   {p.isDefault && <span style={{ background: 'var(--b)', color: '#fff', fontSize: 11, padding: '2px 8px', borderRadius: 6 }}>Default</span>}
@@ -207,9 +209,9 @@ export default function AdminPrintersPage() {
       </section>
 
       {/* Pair & Test */}
-      <section>
-        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Pair &amp; test</h2>
-        <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 12 }}>
+      <section className="vendor-card">
+        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 14, color: 'var(--tx)' }}>Pair &amp; test</h2>
+        <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 14, lineHeight: 1.6 }}>
           Pair: connect this device to your Bluetooth/Serial printer so &quot;Print bill&quot; can send directly. On Android, install <strong>ESCPOS Bluetooth Print Service</strong> from Play Store, then select it in the print dialog every time you print.
         </p>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, cursor: 'pointer' }}>

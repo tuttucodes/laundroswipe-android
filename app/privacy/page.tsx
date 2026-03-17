@@ -8,10 +8,10 @@ export default function PrivacyPage() {
         LaundroSwipe respects your privacy. We collect only what is needed to provide laundry pickup and delivery:
         name, contact details, and order information. We do not sell your data.
       </p>
-      <p style={{ marginTop: 24 }}>
+      <p style={{ marginTop: 28 }}>
         <strong>Contact:</strong> support@laundroswipe.com
       </p>
-      <p style={{ marginTop: 24 }}>
+      <p className="legal-back">
         <Link href="/">← Back to LaundroSwipe</Link>
       </p>
     </div>

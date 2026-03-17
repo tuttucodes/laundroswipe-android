@@ -236,13 +236,13 @@ export default function VendorPage() {
 
   return (
     <div className="vendor-page" style={{ fontFamily: 'var(--fb)', background: 'var(--bg)' }}>
-      <p style={{ marginBottom: 12 }}>
+      <p style={{ marginBottom: 16, fontSize: 14 }}>
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Back to Dashboard</Link>
       </p>
-      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 22, marginBottom: 8, color: 'var(--b)' }}>Vendor Bill</h1>
-      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 20 }}>Enter token to load order, add line items, then print bill.</p>
+      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>Vendor Bill</h1>
+      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enter token to load order, add line items, then print bill.</p>
 
-      <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+      <div className="vendor-card">
         <form onSubmit={handleLookup}>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Token number</label>
@@ -263,7 +263,7 @@ export default function VendorPage() {
       </div>
 
       {order && billAlreadyGenerated && !showAnyway && (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+        <div className="vendor-card">
           <div style={{ padding: '12px 16px', background: '#FEF3C7', borderRadius: 8, marginBottom: 12, fontSize: 13, color: '#92400E' }}>
             <strong>A bill was already generated for this token.</strong> If you need to add more items (e.g. few missed), click Continue below.
           </div>
@@ -272,7 +272,7 @@ export default function VendorPage() {
       )}
 
       {order && (showAnyway || !billAlreadyGenerated) && (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+        <div className="vendor-card">
           {billAlreadyGenerated && showAnyway && (
             <div style={{ padding: '12px 16px', background: '#FEF3C7', borderRadius: 8, marginBottom: 16, fontSize: 13, color: '#92400E' }}>
               Adding another bill for same token (e.g. missed items).

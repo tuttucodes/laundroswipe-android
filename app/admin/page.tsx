@@ -356,10 +356,10 @@ export default function AdminPage() {
     return (
       <div className="login-wrap">
         <div className="login-card">
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <img src="/profab-logo.png" alt="ProFab" style={{ height: 56, objectFit: 'contain', marginBottom: 12 }} />
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <img src="/profab-logo.png" alt="ProFab" style={{ height: 56, objectFit: 'contain', marginBottom: 14 }} />
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Admin</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 4 }}>Pro Fab Power Laundry</p>
+            <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Pro Fab Power Laundry</p>
           </div>
           <form onSubmit={handleLogin}>
             <div className="fg">
@@ -371,7 +371,7 @@ export default function AdminPage() {
               <input className="fi" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             {err && <p style={{ color: 'var(--er)', fontSize: 13, marginTop: 8 }}>{err}</p>}
-            <button type="submit" className="btn bp bbl" style={{ marginTop: 8, width: '100%' }} disabled={authLoading}>{authLoading ? 'Checking…' : 'Log In'}</button>
+            <button type="submit" className="btn bp bbl" style={{ marginTop: 12, width: '100%' }} disabled={authLoading}>{authLoading ? 'Checking…' : 'Log In'}</button>
           </form>
         </div>
         {toast && <div className={`toast toast-dashboard ${toast.type}`}>{toast.msg}</div>}

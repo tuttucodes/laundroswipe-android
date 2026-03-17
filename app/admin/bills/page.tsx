@@ -120,16 +120,16 @@ export default function BillsPage() {
 
   return (
     <div className="vendor-page" style={{ fontFamily: 'var(--fb)', background: 'var(--bg)' }}>
-      <p style={{ marginBottom: 12 }}>
+      <p style={{ marginBottom: 16, fontSize: 14 }}>
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Dashboard</Link>
         {' · '}
         <Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>Vendor Bill</Link>
         {' · '}
         <Link href="/admin/printers" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>Printers</Link>
       </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--fd)', fontSize: 22, marginBottom: 8, color: 'var(--b)' }}>Saved bills</h1>
+          <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>Saved bills</h1>
           <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>View and re-print past bills.</p>
         </div>
         <button type="button" onClick={exportBillsToCsv} disabled={loading || bills.length === 0} className="vendor-btn-secondary" style={{ marginLeft: 'auto' }}>
@@ -140,32 +140,19 @@ export default function BillsPage() {
       {loading ? (
         <p style={{ color: 'var(--ts)' }}>Loading…</p>
       ) : bills.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 32, textAlign: 'center', color: 'var(--ts)' }}>
-          <p>No saved bills yet.</p>
-          <p style={{ marginTop: 8 }}><Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600 }}>Create a bill</Link> and click &quot;Save bill&quot; to see it here.</p>
+        <div className="vendor-card" style={{ padding: 32, textAlign: 'center', color: 'var(--ts)' }}>
+          <p style={{ marginBottom: 8 }}>No saved bills yet.</p>
+          <p style={{ margin: 0 }}><Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600 }}>Create a bill</Link> and click &quot;Save bill&quot; to see it here.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {bills.map((b) => (
-            <div
-              key={b.id}
-              style={{
-                background: '#fff',
-                borderRadius: 14,
-                padding: 16,
-                boxShadow: '0 1px 4px rgba(0,0,0,.06)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 12,
-              }}
-            >
+            <div key={b.id} className="vendor-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
               <div style={{ flex: '1 1 200px' }}>
-                <div style={{ fontWeight: 700, color: 'var(--b)' }}>#{b.order_token} · {b.order_number ?? '—'}</div>
-                <div style={{ fontSize: 13, color: 'var(--ts)' }}>{b.customer_name ?? '—'} · {b.customer_phone ?? '—'}</div>
-                <div style={{ fontSize: 12, color: 'var(--tm)' }}>{b.created_at ? new Date(b.created_at).toLocaleString() : ''}</div>
-                <div style={{ fontSize: 13, marginTop: 4 }}>₹{b.total}</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--b)' }}>#{b.order_token} · {b.order_number ?? '—'}</div>
+                <div style={{ fontSize: 13, color: 'var(--ts)', marginTop: 4 }}>{b.customer_name ?? '—'} · {b.customer_phone ?? '—'}</div>
+                <div style={{ fontSize: 12, color: 'var(--tm)', marginTop: 2 }}>{b.created_at ? new Date(b.created_at).toLocaleString() : ''}</div>
+                <div style={{ fontSize: 14, marginTop: 6, fontWeight: 600 }}>₹{b.total}</div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button type="button" onClick={() => setViewingBill(b)} className="vendor-btn-secondary">
@@ -181,11 +168,11 @@ export default function BillsPage() {
       )}
 
       {viewingBill && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setViewingBill(null)}>
-          <div style={{ background: '#fff', borderRadius: 14, padding: 24, maxWidth: 360, width: '100%', maxHeight: '90vh', overflow: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,.2)' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div className="bill-popup-overlay" onClick={() => setViewingBill(null)}>
+          <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0 }}>Bill #{viewingBill.order_token}</h3>
-              <button type="button" onClick={() => setViewingBill(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--ts)' }} aria-label="Close">×</button>
+              <button type="button" onClick={() => setViewingBill(null)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--ts)', lineHeight: 1, padding: 4 }} aria-label="Close">×</button>
             </div>
             <style>{`.bill-view-content table{width:100%;border-collapse:collapse}.bill-view-content .right{text-align:right}.bill-view-content .total{font-weight:700;border-top:2px solid #000;padding-top:4px;margin-top:4px}.bill-view-content .conv{color:#666}.bill-view-content h2{text-align:center;margin:0 0 8px}.bill-view-content p{margin:4px 0}`}</style>
             <div className="bill-view-content" style={{ fontFamily: 'system-ui', fontSize: 13, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: billToHtml(viewingBill) }} />

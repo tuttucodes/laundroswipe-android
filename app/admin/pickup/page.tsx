@@ -53,16 +53,16 @@ export default function AdminPickupPage() {
 
   return (
     <div className="vendor-page" style={{ fontFamily: 'var(--fb)', background: 'var(--bg)' }}>
-      <p style={{ marginBottom: 12 }}>
+      <p style={{ marginBottom: 16, fontSize: 14 }}>
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Back to Dashboard</Link>
       </p>
-      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 22, marginBottom: 8, color: 'var(--b)' }}>Pickup / Delivery</h1>
-      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 20 }}>Enter token to confirm delivery of that order.</p>
+      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>Pickup / Delivery</h1>
+      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enter token to confirm delivery of that order.</p>
 
       <div className="vendor-card">
         <form onSubmit={handleLookup}>
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Token number</label>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Token number</label>
             <input
               type="text"
               className="vendor-input"
@@ -78,7 +78,7 @@ export default function AdminPickupPage() {
 
       {order && (
         <div className="vendor-card">
-          <div style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ts)', marginBottom: 16 }}>
+          <div style={{ fontSize: 14, lineHeight: 1.75, color: 'var(--ts)', marginBottom: 18 }}>
             <p><strong style={{ color: 'var(--tx)' }}>Order:</strong> {order.order_number} &nbsp;|&nbsp; <strong>Token:</strong> #{order.token}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Service:</strong> {order.service_name} &nbsp;|&nbsp; <strong>Date:</strong> {order.pickup_date}</p>

@@ -8,10 +8,10 @@ export default function TermsPage() {
         By using LaundroSwipe you agree to our terms of service. Schedule pickups in good faith.
         A convenience fee applies per order. Timings are subject to change with notice.
       </p>
-      <p style={{ marginTop: 24 }}>
+      <p style={{ marginTop: 28 }}>
         <strong>Contact:</strong> support@laundroswipe.com
       </p>
-      <p style={{ marginTop: 24 }}>
+      <p className="legal-back">
         <Link href="/">← Back to LaundroSwipe</Link>
       </p>
     </div>
