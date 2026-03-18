@@ -128,8 +128,8 @@ export default async function HomePage() {
       {/* Footer / Contact (Dark Mode) */}
       <footer id="contact" className="bg-slate-950 text-white pb-12">
         <div className="mx-auto max-w-6xl px-4 py-20 md:px-8">
-          <div className="grid gap-12 md:grid-cols-[1.5fr_1fr] items-center">
-            <div className="space-y-8 pr-0 md:pr-12">
+          <div className="grid gap-12 lg:grid-cols-[1.5fr_1fr] items-center">
+            <div className="space-y-8 lg:pr-12">
               <h2 className="text-5xl font-extrabold tracking-tighter sm:text-6xl max-w-sm leading-[1.1]">
                 Ready to plug into LaundroSwipe?
               </h2>

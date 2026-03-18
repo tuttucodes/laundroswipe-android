@@ -44,16 +44,16 @@ export function SegmentTabs() {
         </div>
       </div>
 
-      {/* Horizontal Scroll Area */}
-      <div className="flex gap-6 overflow-x-auto pb-12 pt-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 md:-mx-8 md:px-8">
+      {/* Responsive Cards Area */}
+      <div className="flex lg:grid lg:grid-cols-3 gap-6 overflow-x-auto lg:overflow-visible pb-10 pt-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 md:mx-0 md:px-0 mt-4">
         {tabs.map((segment, i) => (
           <motion.div
             key={segment.id}
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="group relative flex min-h-[420px] w-[85vw] max-w-[400px] flex-1 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[2.5rem] bg-zinc-900 border border-zinc-800 p-8 text-white shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(230,57,70,0.15)] hover:border-zinc-700 md:min-w-[400px] md:p-10 cursor-grab active:cursor-grabbing"
+            className="group relative flex min-h-[400px] w-[85vw] md:w-[380px] lg:w-auto flex-1 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[2.5rem] bg-zinc-900 border border-zinc-800 p-8 text-white shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(230,57,70,0.15)] hover:border-zinc-700 md:p-10 cursor-grab active:cursor-grabbing lg:cursor-default"
           >
             {/* Background Hint */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#E63946]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
