@@ -13,7 +13,7 @@ export function Footer() {
               THE LAUNDROSWIPE 🧺
             </h3>
             <p className="font-sans text-zinc-500 max-w-sm">
-              Simplifying campus laundry through smart scheduling and unified administration systems.
+              Choose your favorite laundry partner and schedule a pickup in a swipe.
             </p>
             
             <div className="flex gap-4 mt-8">
@@ -29,7 +29,7 @@ export function Footer() {
           <div className="w-full lg:w-1/2 grid grid-cols-2 gap-8 lg:bg-transparent">
             <div className="flex flex-col gap-4">
               <span className="font-sans text-sm font-bold text-zinc-900 mb-2">⚡ Explore</span>
-              {['How It Works', 'Features', 'For Campuses'].map(link => (
+              {['How It Works', 'Features', 'For Institutions'].map(link => (
                 <a key={link} href={`#${link.toLowerCase().replace(/\s+/g, '-')}`} className="font-sans text-sm text-zinc-500 hover:text-[#E8523F] transition-colors">{link}</a>
               ))}
             </div>

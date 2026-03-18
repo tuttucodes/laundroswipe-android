@@ -4,6 +4,57 @@ import { useState } from 'react';
 
 export function ContactSection() {
   const [userRole, setUserRole] = useState('Student');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<{ type: 'ok' | 'error'; message: string } | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus(null);
+
+    const payload = {
+      role: userRole,
+      name: name.trim(),
+      email: email.trim(),
+      institution: institution.trim(),
+      message: message.trim(),
+      subject: `Homepage inquiry (${userRole})`,
+    };
+
+    if (!payload.name || !payload.email || !payload.message) {
+      setStatus({ type: 'error', message: 'Please fill name, email, and message.' });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+
+      if (!res.ok || !data?.ok) {
+        setStatus({ type: 'error', message: data?.error || 'Failed to send message.' });
+        return;
+      }
+
+      setStatus({ type: 'ok', message: 'Sent! We’ll get back to you shortly.' });
+      setName('');
+      setEmail('');
+      setInstitution('');
+      setMessage('');
+      setUserRole('Student');
+    } catch {
+      setStatus({ type: 'error', message: 'Network error. Please try again.' });
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <section id="contact" className="w-full bg-[#0A0A0A] text-white pt-24 pb-24 px-4 md:px-8 relative overflow-hidden">
@@ -24,7 +75,7 @@ export function ContactSection() {
             Get<br/>Started
           </h2>
           <p className="text-[#9CA3AF] text-lg font-sans mb-12 max-w-md leading-relaxed">
-            Bring LaundroSwipe to your campus. Whether you&apos;re a student, vendor, or campus admin — let&apos;s simplify laundry together.
+            LaundroSwipe is a platform where you select your favorite laundry partner and schedule a pickup in a swipe. Whether you&apos;re a student, vendor, or institution admin — let&apos;s simplify laundry together.
           </p>
 
           <div className="flex flex-col gap-2 border-l-2 border-white/10 pl-6">
@@ -43,7 +94,7 @@ export function ContactSection() {
         {/* Right Side (60%) */}
         <div className="w-full lg:w-[60%] flex items-center justify-end">
           <form 
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={onSubmit}
             className="w-full max-w-[600px] bg-[#111111] rounded-[32px] p-8 md:p-12 border border-white/[0.06] shadow-2xl relative overflow-hidden group"
           >
             {/* Subtle glow */}
@@ -55,7 +106,7 @@ export function ContactSection() {
               </span>
               
               <div className="flex flex-wrap gap-3 mb-10">
-                {['Student', 'Vendor', 'Campus Admin'].map((role) => (
+                {['Student', 'Vendor', 'Institution Admin'].map((role) => (
                   <button
                     key={role}
                     type="button"
@@ -75,27 +126,55 @@ export function ContactSection() {
                 <input 
                   type="text" 
                   placeholder="YOUR NAME" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
                   className="w-full bg-transparent border-b border-white/10 pb-4 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8523F] transition-colors text-sm font-bold tracking-widest uppercase"
                 />
                 <input 
                   type="email" 
                   placeholder="YOUR EMAIL" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   className="w-full bg-transparent border-b border-white/10 pb-4 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8523F] transition-colors text-sm font-bold tracking-widest uppercase"
                 />
                 <input 
                   type="text" 
-                  placeholder="YOUR CAMPUS" 
+                  placeholder="YOUR INSTITUTION" 
+                  value={institution}
+                  onChange={(e) => setInstitution(e.target.value)}
                   className="w-full bg-transparent border-b border-white/10 pb-4 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8523F] transition-colors text-sm font-bold tracking-widest uppercase"
                 />
                 <textarea 
                   placeholder="MESSAGE" 
                   rows={3}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   className="w-full bg-transparent border-b border-white/10 pb-4 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8523F] transition-colors text-sm font-bold tracking-widest uppercase resize-none mt-2"
                 />
               </div>
 
-              <button className="w-full mt-12 bg-[#E8523F] text-white py-5 rounded-full font-bold text-sm tracking-widest uppercase hover:bg-[#c24231] hover:shadow-[0_0_30px_rgba(232,82,63,0.3)] transition-all active:scale-[0.98]">
-                Submit
+              {status && (
+                <div
+                  className={`mt-8 rounded-2xl border px-5 py-4 text-sm font-semibold ${
+                    status.type === 'ok'
+                      ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-200'
+                      : 'border-rose-500/20 bg-rose-500/10 text-rose-200'
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {status.message}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full mt-8 bg-[#E8523F] text-white py-5 rounded-full font-bold text-sm tracking-widest uppercase hover:bg-[#c24231] hover:shadow-[0_0_30px_rgba(232,82,63,0.3)] transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Sending…' : 'Submit'}
               </button>
             </div>
           </form>

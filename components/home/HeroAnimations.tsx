@@ -37,7 +37,7 @@ export function HeroAnimations() {
         transition={{ delay: 0.15 }}
         className="mx-auto mt-8 max-w-2xl text-[1.1rem] font-medium text-zinc-400 sm:text-xl px-4"
       >
-        The only laundry partner you&apos;ll ever need. We connect you to a vetted network of premium dry cleaners for your home, office, or campus.
+        The only laundry partner you&apos;ll ever need. We connect you to a vetted network of premium dry cleaners for your home, office, or institution.
       </motion.p>
 
       <motion.div 

@@ -30,7 +30,7 @@ export function FloatingNav() {
 
         {/* Desktop Navigation Links */}
         <div className="hidden lg:flex items-center gap-6">
-          {['How It Works', 'Features', 'For Campuses', 'Pricing'].map((item) => (
+          {['How It Works', 'Features', 'For Institutions'].map((item) => (
             <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, '-')}`} className="text-[13px] font-semibold text-black hover:text-[#E8523F] transition-colors uppercase tracking-[0.08em] whitespace-nowrap">
               {item}
             </a>
@@ -38,9 +38,15 @@ export function FloatingNav() {
         </div>
 
         {/* Desktop CTA */}
-        <div className="hidden lg:block shrink-0">
+        <div className="hidden lg:flex shrink-0 items-center gap-2">
           <a
-            href="#contact"
+            href="/dashboard"
+            className="flex items-center justify-center rounded-full bg-transparent px-5 py-3 text-[13px] font-bold text-black transition-colors hover:bg-black/5 active:scale-95 whitespace-nowrap"
+          >
+            Login
+          </a>
+          <a
+            href="/dashboard"
             className="flex items-center justify-center rounded-full bg-black px-6 py-3 text-[13px] font-bold text-white transition-transform hover:scale-105 active:scale-95 shadow-md whitespace-nowrap"
           >
             Get Started
@@ -67,18 +73,27 @@ export function FloatingNav() {
             className="absolute top-16 w-[calc(100%-2rem)] max-w-[1200px] overflow-hidden rounded-3xl bg-white shadow-2xl border border-black/5 lg:hidden"
           >
             <div className="flex flex-col space-y-2 p-6">
-              {['How It Works', 'Features', 'For Campuses', 'Pricing'].map((item) => (
+              {['How It Works', 'Features', 'For Institutions'].map((item) => (
                 <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, '-')}`} onClick={() => setIsOpen(false)} className="text-lg font-bold text-black hover:text-[#E8523F] py-2 uppercase tracking-tight">
                   {item}
                 </a>
               ))}
-              <a
-                href="#contact"
-                onClick={() => setIsOpen(false)}
-                className="mt-4 flex w-full justify-center rounded-full bg-[#E8523F] py-4 text-[15px] font-bold text-white shadow-xl shadow-[#E8523F]/20 active:scale-95 transition-transform"
-              >
-                Get Started
-              </a>
+              <div className="mt-4 grid grid-cols-1 gap-3">
+                <a
+                  href="/dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className="flex w-full justify-center rounded-full border border-black/10 bg-white py-4 text-[15px] font-bold text-black active:scale-95 transition-transform"
+                >
+                  Login
+                </a>
+                <a
+                  href="/dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className="flex w-full justify-center rounded-full bg-[#E8523F] py-4 text-[15px] font-bold text-white shadow-xl shadow-[#E8523F]/20 active:scale-95 transition-transform"
+                >
+                  Get Started
+                </a>
+              </div>
             </div>
           </motion.div>
         )}

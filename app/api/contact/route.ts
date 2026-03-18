@@ -20,7 +20,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Database not configured' }, { status: 503 });
   }
 
-  let body: { name?: string; email?: string; subject?: string; message?: string };
+  let body: {
+    name?: string;
+    email?: string;
+    subject?: string;
+    message?: string;
+    role?: string;
+    institution?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -31,6 +38,9 @@ export async function POST(request: Request) {
   const email = typeof body.email === 'string' ? body.email.trim().slice(0, 320) : '';
   const subject = typeof body.subject === 'string' ? body.subject.trim().slice(0, 250) : '';
   const message = typeof body.message === 'string' ? body.message.trim().slice(0, 4000) : '';
+  const role = typeof body.role === 'string' ? body.role.trim().slice(0, 60) : '';
+  const institution =
+    typeof body.institution === 'string' ? body.institution.trim().slice(0, 250) : '';
 
   if (!name || !email || !message) {
     return NextResponse.json(
@@ -45,6 +55,9 @@ export async function POST(request: Request) {
       email,
       subject: subject || null,
       message,
+      role: role || null,
+      institution: institution || null,
+      source: 'web_homepage',
     });
 
     if (error) {

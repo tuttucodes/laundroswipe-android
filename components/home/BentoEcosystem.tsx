@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 
 export function BentoEcosystem() {
   return (
-    <section className="w-full bg-[#0A0A0A] text-white pt-32 pb-32 px-4 md:px-8">
+    <section id="features" className="w-full bg-[#0A0A0A] text-white pt-32 pb-32 px-4 md:px-8">
       <div className="max-w-[1200px] w-full mx-auto">
         
         {/* Bento Grid */}
@@ -46,7 +46,7 @@ export function BentoEcosystem() {
                 {'{ PLATFORM }'}
               </span>
               <h2 className="font-playfair text-4xl md:text-5xl font-bold mb-2 tracking-tight">LaundroSwipe</h2>
-              <p className="text-[#9CA3AF] font-sans text-sm md:text-base">Simplifying Campus Laundry</p>
+              <p className="text-[#9CA3AF] font-sans text-sm md:text-base">Simplifying laundry pickups</p>
             </div>
           </motion.div>
 
@@ -58,7 +58,7 @@ export function BentoEcosystem() {
             {'{ THE LAUNDROSWIPE ECOSYSTEM }'}
           </span>
           <h2 className="font-playfair text-4xl md:text-5xl lg:text-[64px] font-bold tracking-tight mb-16 text-center md:text-left">
-            Simplifying Campus Laundry
+            Simplifying Laundry Pickups
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4 lg:gap-12">
@@ -70,7 +70,7 @@ export function BentoEcosystem() {
               viewport={{ once: true }}
               className="group"
             >
-              <h3 className="text-xl font-bold font-sans mb-4 group-hover:text-[#E8523F] transition-colors">laundroswipe campus</h3>
+              <h3 className="text-xl font-bold font-sans mb-4 group-hover:text-[#E8523F] transition-colors">laundroswipe institutions</h3>
               <ul className="space-y-3 text-[#9CA3AF] text-[15px]">
                 <li className="flex items-start gap-2"><span className="text-white/20 mt-0.5">•</span> Scheduling</li>
                 <li className="flex items-start gap-2"><span className="text-white/20 mt-0.5">•</span> Real-time Machine Status</li>
@@ -104,8 +104,8 @@ export function BentoEcosystem() {
             >
               <h3 className="text-xl font-bold font-sans mb-4 group-hover:text-[#E8523F] transition-colors">laundroswipe admin</h3>
               <ul className="space-y-3 text-[#9CA3AF] text-[15px]">
-                <li className="flex items-start gap-2"><span className="text-white/20 mt-0.5">•</span> Campus Analytics</li>
-                <li className="flex items-start gap-2"><span className="text-white/20 mt-0.5">•</span> Multi-campus Support</li>
+                <li className="flex items-start gap-2"><span className="text-white/20 mt-0.5">•</span> Institution Analytics</li>
+                <li className="flex items-start gap-2"><span className="text-white/20 mt-0.5">•</span> Multi-institution Support</li>
                 <li className="flex items-start gap-2"><span className="text-white/20 mt-0.5">•</span> Admin Controls</li>
               </ul>
             </motion.div>

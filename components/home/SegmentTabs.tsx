@@ -22,11 +22,11 @@ const tabs = [
     }
   },
   {
-    id: 'campus',
-    title: 'CAMPUS',
+    id: 'institutions',
+    title: 'INSTITUTIONS',
     content: {
-      headline: 'Campus-wide laundry at scale.',
-      desc: 'Hostels, student apartments, staff quarters – with predictable turnaround and clear communication.',
+      headline: 'Institution-wide laundry at scale.',
+      desc: 'Hostels, staff quarters, and student housing — with predictable turnaround and clear communication.',
       features: ['Bulk wash', 'Semester plans', 'Predictable TAT'],
     }
   }

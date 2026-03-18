@@ -10,6 +10,7 @@ export function FeatureTabs() {
 
   return (
     <section id="how-it-works" className="w-full bg-white text-black pt-32 pb-24 px-4 md:px-8 relative overflow-hidden">
+      <div id="for-institutions" className="absolute top-0" aria-hidden />
       
       {/* Ghost Watermark */}
       <div className="absolute top-0 left-[-5%] text-[150px] md:text-[250px] font-bold text-black/5 pointer-events-none select-none whitespace-nowrap z-0 font-playfair tracking-normal mt-10">
@@ -60,14 +61,14 @@ export function FeatureTabs() {
               {/* Left Side: Text Details */}
               <div className="w-full md:w-5/12 p-8 md:p-12 lg:p-16 flex flex-col justify-center">
                 <h3 className="text-[#E8523F] font-playfair text-3xl md:text-4xl font-bold mb-6">
-                  #{activeTab === 'STUDENTS' ? 'ForStudents' : activeTab === 'VENDORS' ? 'ForVendors' : activeTab === 'ADMINS' ? 'ForAdmins' : 'ForCampuses'}
+                  #{activeTab === 'STUDENTS' ? 'ForStudents' : activeTab === 'VENDORS' ? 'ForVendors' : activeTab === 'ADMINS' ? 'ForAdmins' : 'ForInstitutions'}
                 </h3>
                 
                 <p className="text-[#9CA3AF] text-lg font-sans mb-10 leading-relaxed">
                   {activeTab === 'STUDENTS' && "No more waiting in line or guessing which machine is free. Book your laundry slot in 3 taps, get notified when it's done."}
                   {activeTab === 'VENDORS' && "Manage your entire fleet of machines gracefully. Track revenue, optimize cycles, and handle maintenance seamlessly."}
-                  {activeTab === 'ADMINS' && "Oversee everything across multiple dorms. View analytics, reduce wait complaints, and keep standard campus flows."}
-                  {activeTab === 'CAMPUSES' && "Transform your boring laundry rooms into smart, connected hubs that students actually boast about."}
+                  {activeTab === 'ADMINS' && "Oversee everything across multiple dorms. View analytics, reduce wait complaints, and keep standard institution flows."}
+                  {activeTab === 'CAMPUSES' && "Bring smart laundry scheduling to your institution with real-time visibility and smooth pickup flows."}
                 </p>
 
                 <ul className="space-y-4 font-sans text-sm tracking-wide">
