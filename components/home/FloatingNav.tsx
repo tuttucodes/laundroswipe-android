@@ -9,24 +9,24 @@ export function FloatingNav() {
 
   return (
     <div className="fixed top-6 z-50 flex w-full justify-center px-4 md:px-8">
-      <nav className="relative flex w-full max-w-6xl items-center justify-between rounded-full bg-white/80 px-6 py-4 shadow-[0_12px_40px_rgb(0,0,0,0.08)] backdrop-blur-xl border border-zinc-200/50">
+      <nav className="relative flex w-full max-w-5xl items-center justify-between rounded-full bg-white/90 px-6 py-3.5 shadow-xl shadow-black/5 backdrop-blur-xl border border-zinc-200/40">
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <span className="text-xl md:text-2xl font-extrabold tracking-tight text-[#E63946]">LaundroSwipe</span>
+        <div className="flex items-center gap-2 pl-2 md:pl-0">
+          <span className="text-xl md:text-[1.35rem] font-black tracking-[-.02em] text-[#E63946] leading-none">LaundroSwipe</span>
         </div>
 
         {/* Desktop Links */}
-        <div className="hidden items-center gap-8 text-sm font-semibold text-slate-500 md:flex">
-          <a href="#how" className="hover:text-black transition-colors">How it works</a>
-          <a href="#segments" className="hover:text-black transition-colors">Segments</a>
-          <a href="#testimonials" className="hover:text-black transition-colors">Stories</a>
+        <div className="hidden items-center gap-10 text-[15px] font-bold text-slate-600 md:flex">
+          <a href="#how" className="hover:text-[#E63946] transition-colors">How it works</a>
+          <a href="#segments" className="hover:text-[#E63946] transition-colors">Segments</a>
+          <a href="#testimonials" className="hover:text-[#E63946] transition-colors">Stories</a>
         </div>
 
         {/* CTA */}
-        <div className="hidden md:block">
+        <div className="hidden md:block pr-1 md:pr-0">
           <a
             href="#contact"
-            className="flex items-center justify-center rounded-full bg-black px-6 py-2.5 text-sm font-medium text-white transition-all hover:scale-105 active:scale-95"
+            className="flex items-center justify-center rounded-full bg-[#E63946] px-7 py-3 text-[15px] font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-md shadow-[#E63946]/20 hover:bg-[#E63946]/90"
           >
             Contact
           </a>
@@ -52,13 +52,13 @@ export function FloatingNav() {
             className="absolute top-16 w-[calc(100%-2rem)] max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl md:hidden"
           >
             <div className="flex flex-col space-y-4 p-6">
-              <a href="#how" onClick={() => setIsOpen(false)} className="text-lg font-semibold text-slate-800">How it works</a>
-              <a href="#segments" onClick={() => setIsOpen(false)} className="text-lg font-semibold text-slate-800">Segments</a>
-              <a href="#testimonials" onClick={() => setIsOpen(false)} className="text-lg font-semibold text-slate-800">Stories</a>
+              <a href="#how" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-800 hover:text-[#E63946]">How it works</a>
+              <a href="#segments" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-800 hover:text-[#E63946]">Segments</a>
+              <a href="#testimonials" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-800 hover:text-[#E63946]">Stories</a>
               <a
                 href="#contact"
                 onClick={() => setIsOpen(false)}
-                className="mt-4 flex w-full justify-center rounded-full bg-black py-3 font-medium text-white"
+                className="mt-4 flex w-full justify-center rounded-full bg-[#E63946] py-3.5 text-[15px] font-bold text-white shadow-md shadow-[#E63946]/20"
               >
                 Contact
               </a>
