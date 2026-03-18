@@ -57,10 +57,10 @@ export function HomeContactForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-[2rem] border border-slate-800/80 bg-slate-900/60 p-6 md:p-8 backdrop-blur"
+      className="space-y-5 rounded-[2.5rem] border border-white/[0.08] bg-black/40 p-8 md:p-10 backdrop-blur-3xl shadow-2xl"
     >
       <div className="space-y-1">
-        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 pl-4">
           Name
         </label>
         <input
@@ -68,11 +68,11 @@ export function HomeContactForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
-          className="h-14 w-full rounded-full border border-slate-700/50 bg-slate-900/50 px-6 text-sm text-slate-50 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E63946] focus-visible:border-transparent transition-all"
+          className="h-14 w-full rounded-full border border-white/10 bg-white/5 px-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 pl-4">
+        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 pl-4">
           Work email
         </label>
         <input
@@ -81,11 +81,11 @@ export function HomeContactForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@company.com"
-          className="h-14 w-full rounded-full border border-slate-700/50 bg-slate-900/50 px-6 text-sm text-slate-50 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E63946] focus-visible:border-transparent transition-all"
+          className="h-14 w-full rounded-full border border-white/10 bg-white/5 px-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
         />
       </div>
       <div className="space-y-1">
-        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 pl-4">
           What do you have in mind?
         </label>
         <textarea
@@ -94,7 +94,7 @@ export function HomeContactForm() {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Tell us briefly about your requirement, property type, and expected volume."
           rows={3}
-          className="w-full rounded-3xl border border-slate-700/50 bg-slate-900/50 p-6 text-sm text-slate-50 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E63946] focus-visible:border-transparent transition-all"
+          className="w-full rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
         />
       </div>
       {error && <p className="text-xs text-rose-400 pl-4">{error}</p>}
@@ -105,13 +105,13 @@ export function HomeContactForm() {
         <Button
           type="submit"
           size="lg"
-          className="w-full rounded-full h-14 bg-[#E63946] hover:bg-[#E63946]/90 text-white shadow-lg shadow-[#E63946]/20 transition-all font-bold text-base hover:-translate-y-1 active:scale-95"
+          className="w-full rounded-full h-14 bg-white hover:bg-zinc-200 text-black shadow-lg shadow-white/10 transition-all font-bold text-[15px] hover:-translate-y-1 active:scale-95"
           disabled={status === 'submitting'}
         >
           {status === 'submitting' ? 'Sending…' : 'Talk to our team'}
         </Button>
       </div>
-      <p className="text-[0.65rem] text-slate-500">
+      <p className="text-[11px] font-medium text-zinc-500 text-center">
         By submitting, you agree to be contacted by the LaundroSwipe team over phone or email.
       </p>
     </form>

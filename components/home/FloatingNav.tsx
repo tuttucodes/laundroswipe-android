@@ -9,24 +9,24 @@ export function FloatingNav() {
 
   return (
     <div className="fixed top-6 z-50 flex w-full justify-center px-4 md:px-8">
-      <nav className="relative flex w-full max-w-5xl items-center justify-between rounded-full bg-white/90 px-6 py-3.5 shadow-xl shadow-black/5 backdrop-blur-xl border border-zinc-200/40">
+      <nav className="relative flex w-full max-w-5xl items-center justify-between rounded-full bg-zinc-950/60 px-6 py-3.5 shadow-2xl shadow-black backdrop-blur-xl border border-white/10">
         {/* Logo */}
         <div className="flex items-center gap-2 pl-2 md:pl-0">
-          <span className="text-xl md:text-[1.35rem] font-black tracking-[-.02em] text-[#E63946] leading-none">LaundroSwipe</span>
+          <span className="text-xl md:text-[1.35rem] font-bold tracking-tight text-white leading-none">LaundroSwipe</span>
         </div>
 
         {/* Desktop Links */}
-        <div className="hidden items-center gap-10 text-[15px] font-bold text-slate-600 md:flex">
-          <a href="#how" className="hover:text-[#E63946] transition-colors">How it works</a>
-          <a href="#segments" className="hover:text-[#E63946] transition-colors">Segments</a>
-          <a href="#testimonials" className="hover:text-[#E63946] transition-colors">Stories</a>
+        <div className="hidden items-center gap-10 text-[14px] font-medium text-zinc-400 md:flex">
+          <a href="#how" className="hover:text-white transition-colors">How it works</a>
+          <a href="#segments" className="hover:text-white transition-colors">Segments</a>
+          <a href="#testimonials" className="hover:text-white transition-colors">Stories</a>
         </div>
 
         {/* CTA */}
         <div className="hidden md:block pr-1 md:pr-0">
           <a
             href="#contact"
-            className="flex items-center justify-center rounded-full bg-[#E63946] px-7 py-3 text-[15px] font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-md shadow-[#E63946]/20 hover:bg-[#E63946]/90"
+            className="flex items-center justify-center rounded-full bg-white px-7 py-2.5 text-[14px] font-semibold text-black transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]"
           >
             Contact
           </a>
@@ -34,7 +34,7 @@ export function FloatingNav() {
 
         {/* Mobile Menu Toggle */}
         <button 
-          className="text-black md:hidden" 
+          className="text-white md:hidden" 
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
         >
@@ -49,16 +49,16 @@ export function FloatingNav() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-16 w-[calc(100%-2rem)] max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl md:hidden"
+            className="absolute top-16 w-[calc(100%-2rem)] max-w-5xl overflow-hidden rounded-2xl bg-zinc-950/95 border border-white/10 shadow-2xl backdrop-blur-xl md:hidden"
           >
             <div className="flex flex-col space-y-4 p-6">
-              <a href="#how" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-800 hover:text-[#E63946]">How it works</a>
-              <a href="#segments" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-800 hover:text-[#E63946]">Segments</a>
-              <a href="#testimonials" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-800 hover:text-[#E63946]">Stories</a>
+              <a href="#how" onClick={() => setIsOpen(false)} className="text-lg font-medium text-zinc-300 hover:text-white">How it works</a>
+              <a href="#segments" onClick={() => setIsOpen(false)} className="text-lg font-medium text-zinc-300 hover:text-white">Segments</a>
+              <a href="#testimonials" onClick={() => setIsOpen(false)} className="text-lg font-medium text-zinc-300 hover:text-white">Stories</a>
               <a
                 href="#contact"
                 onClick={() => setIsOpen(false)}
-                className="mt-4 flex w-full justify-center rounded-full bg-[#E63946] py-3.5 text-[15px] font-bold text-white shadow-md shadow-[#E63946]/20"
+                className="mt-4 flex w-full justify-center rounded-full bg-white py-3.5 text-[15px] font-semibold text-black shadow-lg shadow-white/10"
               >
                 Contact
               </a>

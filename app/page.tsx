@@ -92,11 +92,11 @@ export default async function HomePage() {
   const testimonials = await getTestimonials();
 
   return (
-    <main className="min-h-screen bg-white font-sans selection:bg-[#E63946] selection:text-white pb-0">
+    <main className="min-h-screen bg-[#09090b] selection:bg-white/20 selection:text-white">
       <FloatingNav />
 
-      {/* Hero Section (Light Mode) */}
-      <section className="relative z-0 bg-white" id="how">
+      {/* Hero Section */}
+      <section className="relative z-10 bg-[#09090b]" id="how">
          <HeroAnimations />
       </section>
 
@@ -110,14 +110,16 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials Section (Light Mode/White background) */}
-      <section id="testimonials" className="bg-zinc-50 py-24 md:py-32">
+      {/* Testimonials Section (Dark Mode) */}
+      <section id="testimonials" className="bg-[#09090b] py-24 md:py-32 relative">
+        <div className="absolute top-0 inset-x-0 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
         <div className="mx-auto max-w-6xl px-4 md:px-8">
+          <div className="absolute inset-0 z-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
           <div className="mb-16 text-center">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#E63946] mb-4">
-              {'{'} WHY CLIENTS LOVE US {'}'}
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-zinc-400 mb-4">
+              [ WHY CLIENTS LOVE US ]
             </p>
-            <h2 className="text-5xl font-extrabold tracking-tighter text-slate-950 md:text-7xl">
+            <h2 className="text-5xl font-extrabold tracking-tighter text-white md:text-7xl">
               Testimonials
             </h2>
           </div>
@@ -126,7 +128,7 @@ export default async function HomePage() {
       </section>
 
       {/* Footer / Contact (Dark Mode) */}
-      <footer id="contact" className="bg-slate-950 text-white pb-12">
+      <footer id="contact" className="bg-[#09090b] text-white pb-12 relative border-t border-white/5 pt-12">
         <div className="mx-auto max-w-6xl px-4 py-20 md:px-8">
           <div className="grid gap-16 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.2fr_1fr] items-center">
             <div className="space-y-8 lg:pr-8">
