@@ -57,7 +57,7 @@ export function HomeContactForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-[2.5rem] border border-white/[0.08] bg-black/40 p-8 md:p-10 backdrop-blur-3xl shadow-2xl"
+      className="space-y-5 rounded-2xl border border-white/[0.08] bg-black/40 p-8 md:p-10 backdrop-blur-3xl shadow-2xl"
     >
       <div className="space-y-1">
         <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 pl-4">
@@ -68,7 +68,7 @@ export function HomeContactForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
-          className="h-14 w-full rounded-full border border-white/10 bg-white/5 px-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
+          className="h-14 w-full rounded-lg border border-white/10 bg-white/5 px-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
         />
       </div>
       <div className="space-y-1.5">
@@ -81,7 +81,7 @@ export function HomeContactForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@company.com"
-          className="h-14 w-full rounded-full border border-white/10 bg-white/5 px-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
+          className="h-14 w-full rounded-lg border border-white/10 bg-white/5 px-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
         />
       </div>
       <div className="space-y-1">
@@ -92,9 +92,9 @@ export function HomeContactForm() {
           required
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Tell us briefly about your requirement, property type, and expected volume."
+          placeholder="Tell us briefly about your requirement."
           rows={3}
-          className="w-full rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
+          className="w-full rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:border-transparent transition-all"
         />
       </div>
       {error && <p className="text-xs text-rose-400 pl-4">{error}</p>}
@@ -105,7 +105,7 @@ export function HomeContactForm() {
         <Button
           type="submit"
           size="lg"
-          className="w-full rounded-full h-14 bg-white hover:bg-zinc-200 text-black shadow-lg shadow-white/10 transition-all font-bold text-[15px] hover:-translate-y-1 active:scale-95"
+          className="w-full rounded-lg h-14 bg-white hover:bg-zinc-200 text-black shadow-lg shadow-white/10 transition-all font-bold text-[15px] hover:-translate-y-1 active:scale-95"
           disabled={status === 'submitting'}
         >
           {status === 'submitting' ? 'Sending…' : 'Talk to our team'}

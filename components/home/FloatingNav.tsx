@@ -8,25 +8,25 @@ export function FloatingNav() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="fixed top-6 z-50 flex w-full justify-center px-4 md:px-8">
-      <nav className="relative flex w-full max-w-5xl items-center justify-between rounded-full bg-zinc-950/60 px-6 py-3.5 shadow-2xl shadow-black backdrop-blur-xl border border-white/10">
+    <div className="fixed top-0 left-0 w-full z-50 flex justify-center border-b border-white/[0.08] bg-[#09090b]/80 backdrop-blur-xl">
+      <nav className="relative flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-8">
         {/* Logo */}
-        <div className="flex items-center gap-2 pl-2 md:pl-0">
+        <div className="flex items-center gap-2">
           <span className="text-xl md:text-[1.35rem] font-bold tracking-tight text-white leading-none">LaundroSwipe</span>
         </div>
 
         {/* Desktop Links */}
-        <div className="hidden items-center gap-10 text-[14px] font-medium text-zinc-400 md:flex">
+        <div className="hidden items-center gap-8 text-[14px] font-medium text-zinc-400 md:flex">
           <a href="#how" className="hover:text-white transition-colors">How it works</a>
           <a href="#segments" className="hover:text-white transition-colors">Segments</a>
           <a href="#testimonials" className="hover:text-white transition-colors">Stories</a>
         </div>
 
         {/* CTA */}
-        <div className="hidden md:block pr-1 md:pr-0">
+        <div className="hidden md:block">
           <a
             href="#contact"
-            className="flex items-center justify-center rounded-full bg-white px-7 py-2.5 text-[14px] font-semibold text-black transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]"
+            className="flex items-center justify-center rounded-md bg-white px-6 py-2 text-[13px] font-semibold text-black transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.25)]"
           >
             Contact
           </a>
@@ -58,7 +58,7 @@ export function FloatingNav() {
               <a
                 href="#contact"
                 onClick={() => setIsOpen(false)}
-                className="mt-4 flex w-full justify-center rounded-full bg-white py-3.5 text-[15px] font-semibold text-black shadow-lg shadow-white/10"
+                className="mt-4 flex w-full justify-center rounded-lg bg-white py-3 text-[14px] font-semibold text-black shadow-lg shadow-white/5"
               >
                 Contact
               </a>

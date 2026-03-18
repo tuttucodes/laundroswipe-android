@@ -24,7 +24,7 @@ export function TestimonialCarousel({ testimonials }: { testimonials: Testimonia
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
       {/* Stats Card */}
-      <div className="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] bg-[#111113]/80 border border-white/[0.08] p-8 text-white shadow-2xl backdrop-blur-3xl md:p-12 group">
+      <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#111113]/80 border border-white/[0.08] p-8 text-white shadow-2xl backdrop-blur-3xl md:p-12 group">
         <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
         <div className="space-y-12 relative z-10">
           <div>
@@ -43,7 +43,7 @@ export function TestimonialCarousel({ testimonials }: { testimonials: Testimonia
       </div>
 
       {/* Review Card */}
-      <div className="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] bg-[#0a0a0c]/80 backdrop-blur-3xl border border-white/[0.08] p-8 text-white md:p-12 min-h-[450px] shadow-2xl">
+      <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#0a0a0c]/80 backdrop-blur-3xl border border-white/[0.08] p-8 text-white md:p-12 min-h-[450px] shadow-2xl">
         {/* Background Image Setup (Simulated with a dark gradient and floating subtle patterns) */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
         

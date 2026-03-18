@@ -53,13 +53,13 @@ export function SegmentTabs() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="group relative flex min-h-[420px] w-[85vw] md:w-[400px] lg:w-full flex-1 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[2.5rem] bg-[#111113]/80 border border-white/[0.08] p-8 text-white shadow-2xl backdrop-blur-3xl transition-all duration-300 hover:-translate-y-2 hover:border-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] md:p-10 cursor-grab active:cursor-grabbing lg:cursor-default"
+            className="group relative flex min-h-[420px] w-[85vw] md:w-[400px] lg:w-full flex-1 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-2xl bg-[#111113]/80 border border-white/[0.08] p-8 text-white shadow-2xl backdrop-blur-3xl transition-all duration-300 hover:-translate-y-2 hover:border-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] md:p-10 cursor-grab active:cursor-grabbing lg:cursor-default"
           >
             {/* Inner Glow Hint */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
 
             <div className="relative z-10">
-              <span className="mb-6 inline-block rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-black tracking-widest text-zinc-300 ring-1 ring-white/10 shadow-sm">
+              <span className="mb-6 inline-block rounded-md bg-zinc-900 px-4 py-1.5 text-xs font-black tracking-widest text-zinc-300 ring-1 ring-white/10 shadow-sm">
                 {segment.title}
               </span>
               <h3 className="text-2xl font-bold md:text-3xl lg:text-4xl leading-[1.2] tracking-tight mb-4">
