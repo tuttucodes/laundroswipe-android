@@ -41,10 +41,7 @@ export function FloatingNav() {
               aria-hidden
               className="absolute inset-y-[-8px] -inset-x-3 rounded-full bg-white/60 blur-md"
             />
-            <span
-              aria-hidden
-              className="absolute inset-y-[-10px] -inset-x-4 rounded-full bg-[#E8523F]/20 blur-lg"
-            />
+            <span aria-hidden className="absolute inset-y-[-12px] -inset-x-5 rounded-full bg-white/40 blur-xl" />
             <span className="relative text-xl font-bold tracking-tight text-[#E8523F] leading-none mix-blend-normal">
               LaundroSwipe
             </span>
