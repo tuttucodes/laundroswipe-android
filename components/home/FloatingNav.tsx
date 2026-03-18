@@ -19,10 +19,21 @@ export function FloatingNav() {
       <nav 
         className={`relative flex w-full max-w-[1200px] items-center justify-between rounded-[50px] px-5 sm:px-6 py-3 transition-all duration-300 ${
           scrolled 
-            ? 'bg-white/55 backdrop-blur-2xl saturate-150 shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-black/10 ring-1 ring-white/40' 
-            : 'bg-white/70 backdrop-blur-xl saturate-150 shadow-[0_6px_24px_rgba(0,0,0,0.06)] border border-black/10 ring-1 ring-white/50'
+            ? 'bg-white/30 backdrop-blur-3xl saturate-200 shadow-[0_14px_50px_rgba(0,0,0,0.10)] border border-white/30 ring-1 ring-black/5'
+            : 'bg-white/22 backdrop-blur-2xl saturate-200 shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-white/25 ring-1 ring-black/5'
         }`}
       >
+        {/* glass highlight */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 rounded-[50px] transition-opacity duration-300 ${
+            scrolled
+              ? 'opacity-100 bg-gradient-to-b from-white/55 via-white/25 to-white/10'
+              : 'opacity-90 bg-gradient-to-b from-white/45 via-white/18 to-white/8'
+          }`}
+        />
+        {/* content */}
+        <div className="relative z-10 flex w-full items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
           <span className="text-xl font-bold tracking-tight text-[#E8523F] leading-none mix-blend-normal">LaundroSwipe</span>
@@ -61,6 +72,7 @@ export function FloatingNav() {
         >
           {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
+        </div>
       </nav>
 
       {/* Mobile Menu Dropdown */}
