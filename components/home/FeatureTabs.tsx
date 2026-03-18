@@ -9,10 +9,10 @@ export function FeatureTabs() {
   const [activeTab, setActiveTab] = useState('STUDENTS');
 
   return (
-    <section id="how-it-works" className="w-full bg-white text-black pt-24 pb-16 px-4 md:px-8 relative overflow-hidden">
+    <section id="how-it-works" className="w-full bg-white text-black pt-32 pb-24 px-4 md:px-8 relative overflow-hidden">
       
       {/* Ghost Watermark */}
-      <div className="absolute top-[10%] left-[-5%] text-[250px] font-bold text-black/5 pointer-events-none select-none whitespace-nowrap z-0 font-playfair tracking-tighter">
+      <div className="absolute top-0 left-[-5%] text-[150px] md:text-[250px] font-bold text-black/5 pointer-events-none select-none whitespace-nowrap z-0 font-playfair tracking-normal mt-10">
         LaundroSwipe
       </div>
 

@@ -29,19 +29,19 @@ export function FloatingNav() {
         </div>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden lg:flex items-center gap-10">
+        <div className="hidden lg:flex items-center gap-6">
           {['How It Works', 'Features', 'For Campuses', 'Pricing'].map((item) => (
-            <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, '-')}`} className="text-[14px] font-semibold text-black hover:text-[#E8523F] transition-colors uppercase tracking-tight">
+            <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, '-')}`} className="text-[14px] font-semibold text-black hover:text-[#E8523F] transition-colors uppercase tracking-tight whitespace-nowrap">
               {item}
             </a>
           ))}
         </div>
 
         {/* Desktop CTA */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block shrink-0">
           <a
             href="#contact"
-            className="flex items-center justify-center rounded-full bg-black px-6 py-2.5 text-[13px] font-bold text-white transition-transform hover:scale-105 active:scale-95 shadow-md"
+            className="flex items-center justify-center rounded-full bg-black px-6 py-3 text-[13px] font-bold text-white transition-transform hover:scale-105 active:scale-95 shadow-md whitespace-nowrap"
           >
             Get Started
           </a>

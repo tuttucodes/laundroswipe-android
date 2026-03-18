@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 
 export function BentoEcosystem() {
   return (
-    <section className="w-full bg-[#0A0A0A] text-white pt-24 pb-16 px-4 md:px-8">
+    <section className="w-full bg-[#0A0A0A] text-white pt-32 pb-32 px-4 md:px-8">
       <div className="max-w-[1200px] w-full mx-auto">
         
         {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-24 min-h-[500px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-32 min-h-[400px]">
           
           {/* Card 1: Notifications */}
           <motion.div 
@@ -53,7 +53,7 @@ export function BentoEcosystem() {
         </div>
 
         {/* The Ecosystem 3-Column Layout */}
-        <div className="mb-20">
+        <div className="mb-8">
           <span className="text-[#E8523F] font-sans text-xs uppercase tracking-[0.15em] font-bold mb-4 block text-center md:text-left">
             {'{ THE LAUNDROSWIPE ECOSYSTEM }'}
           </span>
