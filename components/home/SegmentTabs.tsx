@@ -36,7 +36,7 @@ export function SegmentTabs() {
   return (
     <div className="w-full">
       <div className="mb-12 flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
-        <div>
+        <div className="pl-4 md:pl-0">
           <h2 className="text-4xl font-black tracking-tight text-white uppercase sm:text-5xl text-left">
             WHAT WE DO
           </h2>
@@ -45,7 +45,7 @@ export function SegmentTabs() {
       </div>
 
       {/* Responsive Cards Area */}
-      <div className="flex lg:grid lg:grid-cols-3 gap-6 overflow-x-auto lg:overflow-visible pb-10 pt-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 md:mx-0 md:px-0 mt-4">
+      <div className="flex lg:grid lg:grid-cols-3 gap-6 md:gap-8 overflow-x-auto lg:overflow-visible pb-12 pt-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-4 md:px-0">
         {tabs.map((segment, i) => (
           <motion.div
             key={segment.id}
@@ -53,7 +53,7 @@ export function SegmentTabs() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="group relative flex min-h-[400px] w-[85vw] md:w-[380px] lg:w-auto flex-1 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[2.5rem] bg-zinc-900 border border-zinc-800 p-8 text-white shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(230,57,70,0.15)] hover:border-zinc-700 md:p-10 cursor-grab active:cursor-grabbing lg:cursor-default"
+            className="group relative flex min-h-[420px] w-[85vw] md:w-[400px] lg:w-full flex-1 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[2.5rem] bg-zinc-900 border border-zinc-800 p-8 text-white shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(230,57,70,0.15)] hover:border-zinc-700 md:p-10 cursor-grab active:cursor-grabbing lg:cursor-default"
           >
             {/* Background Hint */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#E63946]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export function HeroAnimations() {
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[100dvh] pt-28 pb-20 text-center px-4 md:px-8 z-10 w-full">
+    <div className="relative flex flex-col items-center pt-48 md:pt-56 lg:pt-[220px] pb-20 md:pb-32 text-center px-4 md:px-8 z-10 w-full">
       {/* Background Gradient Blob */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[400px] bg-gradient-to-tr from-[#E63946]/10 via-orange-500/5 to-transparent blur-[100px] -z-10 rounded-full pointer-events-none" />
 
