@@ -4,6 +4,28 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const TABS = ['STUDENTS', 'VENDORS', 'ADMINS', 'CAMPUSES'];
+const TAB_MEDIA: Record<string, { src: string; alt: string }> = {
+  STUDENTS:
+    {
+      src: 'https://images.unsplash.com/photo-1512314889357-e157c22f938d?q=80&w=1200&auto=format&fit=crop',
+      alt: 'Student booking on phone',
+    },
+  VENDORS:
+    {
+      src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop',
+      alt: 'Laundry operations dashboard',
+    },
+  ADMINS:
+    {
+      src: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=1200&auto=format&fit=crop',
+      alt: 'Admin workflow and analytics',
+    },
+  CAMPUSES:
+    {
+      src: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1200&auto=format&fit=crop',
+      alt: 'Institution campus area',
+    },
+};
 
 export function FeatureTabs() {
   const [activeTab, setActiveTab] = useState('STUDENTS');
@@ -82,14 +104,31 @@ export function FeatureTabs() {
               {/* Right Side: Media/Video embedded mock */}
               <div className="w-full md:w-7/12 p-4 md:p-8 flex items-center justify-center bg-black/50 relative">
                  <div className="w-full h-full min-h-[300px] md:min-h-[400px] rounded-2xl bg-zinc-900 border border-white/10 relative overflow-hidden group">
-                   <img src="https://images.unsplash.com/photo-1556910103-1c02745a872f?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover opacity-50" alt="App Mockup" />
+                   <img
+                     src={TAB_MEDIA[activeTab]?.src}
+                     className="w-full h-full object-cover opacity-55"
+                     alt={TAB_MEDIA[activeTab]?.alt ?? 'App preview'}
+                   />
                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                     {/* Play button */}
-                     <button className="w-16 h-16 rounded-full bg-[#E8523F] flex items-center justify-center text-white pl-1 hover:scale-110 transition-transform shadow-[0_0_30px_rgba(232,82,63,0.5)]">
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M8 5v14l11-7z"/></svg>
-                     </button>
-                     <div className="text-white font-bold tracking-widest text-lg">
-                       #{activeTab === 'STUDENTS' ? 'AgencyLabs' : 'BuildWithLanes'}
+                     <div className="rounded-2xl bg-black/45 backdrop-blur-md border border-white/10 px-6 py-5 text-center shadow-2xl">
+                       <div className="text-white font-bold tracking-widest text-lg">
+                         {activeTab === 'STUDENTS'
+                           ? 'Book in seconds'
+                           : activeTab === 'VENDORS'
+                             ? 'Partner dashboard'
+                             : activeTab === 'ADMINS'
+                               ? 'Institution controls'
+                               : 'Campus-wide scheduling'}
+                       </div>
+                       <div className="mt-2 text-white/70 text-sm font-semibold">
+                         {activeTab === 'STUDENTS'
+                           ? 'Pick a partner. Schedule pickup. Get updates.'
+                           : activeTab === 'VENDORS'
+                             ? 'Manage orders, capacity, and turnaround.'
+                             : activeTab === 'ADMINS'
+                               ? 'Visibility across buildings and users.'
+                               : 'Operations-ready, scalable workflows.'}
+                       </div>
                      </div>
                    </div>
                  </div>

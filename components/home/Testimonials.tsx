@@ -1,8 +1,43 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 export function Testimonials() {
+  const testimonials = [
+    {
+      quote:
+        'LaundroSwipe literally saved my hostel life. No more fights over machines. Just book, wash, done.',
+      name: 'Priya Menon',
+      meta: '3rd Year, SRM KTR',
+    },
+    {
+      quote:
+        'Picking my preferred laundry partner and scheduling pickups is insanely convenient. The reminders are clutch.',
+      name: 'Aditya Nair',
+      meta: 'Student, Kochi',
+    },
+    {
+      quote:
+        'As an admin, having a single place to track pickups and reduce complaints makes operations much smoother.',
+      name: 'Ritika Sharma',
+      meta: 'Institution Admin, Bangalore',
+    },
+    {
+      quote:
+        'We onboarded quickly and started seeing consistent orders. The vendor view keeps everything organized.',
+      name: 'Sahil Kumar',
+      meta: 'Laundry Partner, Chennai',
+    },
+  ];
+
+  const [index, setIndex] = useState(0);
+  const total = testimonials.length;
+  const current = testimonials[index];
+
+  const prev = () => setIndex((i) => (i - 1 + total) % total);
+  const next = () => setIndex((i) => (i + 1) % total);
+
   return (
     <section className="w-full bg-white text-black pt-24 pb-16 px-4 md:px-8 relative overflow-hidden">
       
@@ -53,25 +88,45 @@ export function Testimonials() {
 
             {/* Counter */}
             <div className="relative z-10 text-white/50 font-mono text-sm tracking-widest uppercase">
-              01 / 03
+              {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
             </div>
 
             {/* Quote content */}
             <div className="relative z-10 mt-auto">
-              <h3 className="font-playfair text-3xl md:text-5xl lg:text-[56px] font-bold text-white leading-[1.1] mb-8 lg:max-w-3xl">
-                &ldquo;LaundroSwipe literally saved my hostel life. No more fights over machines. Just book, wash, done.&rdquo;
-              </h3>
+              <motion.h3
+                key={current.quote}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+                className="font-playfair text-3xl md:text-5xl lg:text-[56px] font-bold text-white leading-[1.1] mb-8 lg:max-w-3xl"
+              >
+                &ldquo;{current.quote}&rdquo;
+              </motion.h3>
               
               <div className="flex items-center justify-between mt-auto">
                 <div className="flex flex-col">
-                  <span className="text-white font-bold font-sans text-lg">Priya Menon</span>
-                  <span className="text-zinc-400 font-sans text-sm">3rd Year, SRM KTR</span>
+                  <span className="text-white font-bold font-sans text-lg">{current.name}</span>
+                  <span className="text-zinc-400 font-sans text-sm">{current.meta}</span>
                 </div>
                 
                 {/* Arrow Navigation */}
                 <div className="flex gap-3">
-                  <button className="w-12 h-12 rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors">←</button>
-                  <button className="w-12 h-12 rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors">→</button>
+                  <button
+                    type="button"
+                    onClick={prev}
+                    aria-label="Previous testimonial"
+                    className="w-12 h-12 rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    onClick={next}
+                    aria-label="Next testimonial"
+                    className="w-12 h-12 rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors"
+                  >
+                    →
+                  </button>
                 </div>
               </div>
             </div>

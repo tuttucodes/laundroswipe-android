@@ -1,6 +1,20 @@
 'use client';
 
 export function Footer() {
+  const socials: Array<{ label: string; href: string; short: string }> = [
+    { label: 'Twitter', href: 'https://twitter.com/laundroswipe', short: 'Tw' },
+    { label: 'GitHub', href: 'https://github.com/tuttucodes/laundroswipe', short: 'Gh' },
+    { label: 'Instagram', href: 'https://instagram.com/laundroswipe', short: 'In' },
+  ];
+
+  const companyLinks: Array<{ label: string; href: string }> = [
+    { label: 'About Us', href: '#features' },
+    { label: 'Careers', href: 'mailto:support@laundroswipe.com?subject=Careers%20at%20LaundroSwipe' },
+    { label: 'Contact', href: '#contact' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+  ];
+
   return (
     <footer className="w-full bg-[#f8fafc] text-black pt-20 relative overflow-hidden">
       <div className="max-w-[1200px] w-full mx-auto px-4 md:px-8 relative z-10 flex flex-col">
@@ -17,11 +31,17 @@ export function Footer() {
             </p>
             
             <div className="flex gap-4 mt-8">
-              {['Twitter', 'GitHub', 'Instagram'].map(social => (
-                <button key={social} className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center text-zinc-500 hover:text-black hover:border-black/30 transition-colors">
-                   <div className="w-4 h-4 rounded-full bg-current opacity-20 hidden"></div>
-                   <span className="text-[10px] font-bold uppercase">{social.slice(0, 2)}</span>
-                </button>
+              {socials.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={social.label}
+                  className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center text-zinc-500 hover:text-black hover:border-black/30 transition-colors"
+                >
+                  <span className="text-[10px] font-bold uppercase">{social.short}</span>
+                </a>
               ))}
             </div>
           </div>
@@ -36,8 +56,10 @@ export function Footer() {
             
             <div className="flex flex-col gap-4">
               <span className="font-sans text-sm font-bold text-zinc-900 mb-2">🏢 Company</span>
-              {['About Us', 'Careers', 'Contact', 'Privacy Policy', 'Terms of Service'].map(link => (
-                <a key={link} href="#" className="font-sans text-sm text-zinc-500 hover:text-[#E8523F] transition-colors">{link}</a>
+              {companyLinks.map((link) => (
+                <a key={link.label} href={link.href} className="font-sans text-sm text-zinc-500 hover:text-[#E8523F] transition-colors">
+                  {link.label}
+                </a>
               ))}
             </div>
           </div>

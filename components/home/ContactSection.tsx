@@ -85,7 +85,12 @@ export function ContactSection() {
             <a href="tel:+917736429562" className="text-white hover:text-[#E8523F] font-sans font-bold text-lg transition-colors">
               +91 7736429562
             </a>
-            <a href="#" className="text-zinc-500 hover:text-white font-sans text-sm mt-2 transition-colors">
+            <a
+              href="https://wa.me/917736429562?text=Hi%20LaundroSwipe%2C%20I%27d%20like%20to%20get%20started."
+              target="_blank"
+              rel="noreferrer"
+              className="text-zinc-500 hover:text-white font-sans text-sm mt-2 transition-colors"
+            >
               WhatsApp Us →
             </a>
           </div>
