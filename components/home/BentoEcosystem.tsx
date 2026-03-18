@@ -107,12 +107,13 @@ export function BentoEcosystem() {
               <div className="w-full md:w-[520px]">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { title: 'Sparkle Clean', badge: '45 min ETA', tone: 'bg-emerald-500/10 text-emerald-200 ring-emerald-500/20' },
-                    { title: 'CampusCare', badge: 'Best value', tone: 'bg-white/5 text-white/80 ring-white/10' },
-                    { title: 'QuickFold', badge: 'Same-day', tone: 'bg-[#E8523F]/10 text-[#ffb2aa] ring-[#E8523F]/25' },
+                    { title: 'Jos Brothers', badge: 'Trusted', tone: 'bg-emerald-500/10 text-emerald-200 ring-emerald-500/20' },
+                    { title: 'TumbleDry', badge: 'Same-day', tone: 'bg-[#E8523F]/10 text-[#ffb2aa] ring-[#E8523F]/25' },
+                    { title: 'QuickFold', badge: 'Best value', tone: 'bg-white/5 text-white/80 ring-white/10' },
                   ].map((p) => (
-                    <div
+                    <a
                       key={p.title}
+                      href="/dashboard"
                       className="rounded-2xl bg-black/35 ring-1 ring-white/10 border border-white/5 px-4 py-4 transition-transform duration-300 hover:-translate-y-1"
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -125,9 +126,9 @@ export function BentoEcosystem() {
                         <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-[#E8523F] to-white/20" />
                       </div>
                       <div className="mt-3 text-[11px] font-semibold text-white/60">
-                        Tap to schedule pickup
+                        Click to schedule pickup →
                       </div>
-                    </div>
+                    </a>
                   ))}
                 </div>
               </div>
