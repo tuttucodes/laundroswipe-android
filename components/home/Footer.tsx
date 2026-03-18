@@ -2,7 +2,6 @@
 
 export function Footer() {
   const socials: Array<{ label: string; href: string; short: string }> = [
-    { label: 'Twitter', href: 'https://twitter.com/laundroswipe', short: 'Tw' },
     { label: 'GitHub', href: 'https://github.com/tuttucodes/laundroswipe', short: 'Gh' },
     { label: 'Instagram', href: 'https://instagram.com/laundroswipe', short: 'In' },
   ];
