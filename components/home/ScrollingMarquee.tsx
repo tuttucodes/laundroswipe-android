@@ -10,18 +10,18 @@ export function ScrollingMarquee() {
   const duplicatedWords = [...words, ...words, ...words, ...words];
 
   return (
-    <div className="relative flex w-full overflow-hidden bg-[#E63946] py-3 md:py-4">
+    <div className="relative z-20 flex w-full overflow-hidden bg-[#E63946] py-4 shadow-[0_-15px_40px_rgba(230,57,70,0.15)] -mt-2">
       <motion.div
-        className="flex shrink-0 items-center gap-8 md:gap-12"
+        className="flex shrink-0 items-center gap-10 md:gap-16"
         animate={{ x: "-50%" }}
         transition={{ repeat: Infinity, ease: "linear", duration: 30 }}
       >
         {duplicatedWords.map((word, i) => (
-          <div key={i} className="flex shrink-0 items-center gap-8 md:gap-12">
-            <span className="text-sm font-bold uppercase tracking-[0.2em] text-white md:text-lg">
+          <div key={i} className="flex shrink-0 items-center gap-10 md:gap-16">
+            <span className="text-xs font-black uppercase tracking-[0.25em] text-white/95 md:text-sm">
               {word}
             </span>
-            <span className="h-1.5 w-1.5 rounded-full bg-white/50" />
+            <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
           </div>
         ))}
       </motion.div>

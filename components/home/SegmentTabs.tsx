@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 
 const tabs = [
   {
@@ -33,66 +33,58 @@ const tabs = [
 ];
 
 export function SegmentTabs() {
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
-
-  const activeContent = tabs.find(t => t.id === activeTab)?.content;
-
   return (
     <div className="w-full">
-      <div className="mb-12 flex flex-col items-center justify-between gap-8 md:flex-row md:items-end">
-        <h2 className="text-5xl font-extrabold tracking-tighter text-white uppercase md:text-7xl lg:text-8xl">
-          WHAT WE DO
-        </h2>
-        
-        <div className="flex gap-2 border-b-2 border-zinc-800 pb-2 overflow-x-auto w-full md:w-auto mt-4 md:mt-0 px-2 [&::-webkit-scrollbar]:hidden">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative whitespace-nowrap px-4 py-2 text-xs md:text-sm font-bold tracking-widest transition-colors ${
-                activeTab === tab.id ? 'text-[#E63946]' : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {tab.title}
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="activeTabIndicator"
-                  className="absolute bottom-[-10px] left-0 h-1 w-full bg-[#E63946]"
-                />
-              )}
-            </button>
-          ))}
+      <div className="mb-12 flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between px-2">
+        <div>
+          <h2 className="text-4xl font-black tracking-tight text-white uppercase sm:text-5xl text-left">
+            WHAT WE DO
+          </h2>
+          <p className="mt-3 text-zinc-400 text-lg font-medium">Swipe to explore our tailored laundry solutions.</p>
         </div>
       </div>
 
-      <div className="relative mt-12 min-h-[320px] overflow-hidden rounded-[2rem] bg-zinc-900 border border-zinc-800 p-8 md:p-12 text-white shadow-2xl">
-         {/* Background gradient hint */}
-         <div className="absolute inset-0 bg-gradient-to-br from-[#E63946]/5 to-transparent pointer-events-none" />
-         
-         <AnimatePresence mode="wait">
-           <motion.div
-             key={activeTab}
-             initial={{ opacity: 0, y: 15 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -15 }}
-             transition={{ duration: 0.3 }}
-             className="relative z-10 h-full flex flex-col"
-           >
-             <h3 className="text-3xl font-bold md:text-4xl lg:text-5xl max-w-2xl leading-[1.15] tracking-tight">
-               {activeContent?.headline}
-             </h3>
-             <p className="mt-6 text-zinc-400 text-base md:text-lg max-w-xl leading-relaxed">
-               {activeContent?.desc}
-             </p>
-             <div className="mt-auto pt-10 flex flex-wrap gap-3">
-               {activeContent?.features.map((feat, i) => (
-                 <span key={i} className="rounded-full bg-zinc-950 px-5 py-2.5 text-xs font-bold tracking-wide text-zinc-300 ring-1 ring-zinc-800 shadow-sm">
-                   {feat}
-                 </span>
-               ))}
-             </div>
-           </motion.div>
-         </AnimatePresence>
+      {/* Horizontal Scroll Area */}
+      <div className="flex gap-6 overflow-x-auto pb-12 pt-4 px-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {tabs.map((segment, i) => (
+          <motion.div
+            key={segment.id}
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ delay: i * 0.1, duration: 0.5 }}
+            className="group relative flex h-[460px] min-w-[340px] max-w-[420px] flex-1 shrink-0 snap-center flex-col justify-between overflow-hidden rounded-[2.5rem] bg-zinc-900 border border-zinc-800 p-8 text-white shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(230,57,70,0.15)] hover:border-zinc-700 md:min-w-[420px] md:p-10 cursor-grab active:cursor-grabbing"
+          >
+            {/* Background Hint */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#E63946]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
+
+            <div className="relative z-10">
+              <span className="mb-8 inline-block rounded-full bg-zinc-950 px-5 py-2 text-xs font-black tracking-widest text-[#E63946] ring-1 ring-zinc-800 shadow-sm">
+                {segment.title}
+              </span>
+              <h3 className="text-3xl font-bold md:text-4xl leading-[1.15] tracking-tight mb-5">
+                {segment.content.headline}
+              </h3>
+              <p className="text-zinc-400 text-base md:text-lg leading-relaxed line-clamp-3">
+                {segment.content.desc}
+              </p>
+            </div>
+
+            <div className="relative z-10 mt-auto">
+               <div className="flex flex-wrap gap-2.5 mb-8">
+                 {segment.content.features.map((feat, j) => (
+                   <span key={j} className="rounded-full bg-zinc-950/80 px-4 py-2 text-xs font-bold tracking-wide text-zinc-300 ring-1 ring-zinc-800 backdrop-blur-sm">
+                     {feat}
+                   </span>
+                 ))}
+               </div>
+               
+               <button className="flex items-center gap-2.5 text-sm font-bold uppercase tracking-widest text-white transition-colors hover:text-[#E63946]">
+                 Learn more <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+               </button>
+            </div>
+          </motion.div>
+        ))}
       </div>
     </div>
   );

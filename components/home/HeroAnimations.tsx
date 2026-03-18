@@ -3,53 +3,58 @@ import { motion } from 'framer-motion';
 
 export function HeroAnimations() {
   return (
-    <div className="flex flex-col items-center pt-40 pb-20 text-center px-4 md:px-6">
+    <div className="relative flex flex-col items-center pt-48 md:pt-56 pb-32 text-center px-4 md:px-6 z-10">
+      {/* Background Gradient Blob */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[400px] bg-gradient-to-tr from-[#E63946]/10 via-orange-500/5 to-transparent blur-[100px] -z-10 rounded-full pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-1.5 shadow-sm"
+      >
+        <span className="flex h-2 w-2 rounded-full bg-[#E63946]"></span>
+        <span className="text-xs font-semibold tracking-wide text-zinc-600 uppercase">
+          Now delivering in Kochi & Bangalore
+        </span>
+      </motion.div>
+
       <motion.h1 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-6xl text-[12vw] leading-[0.85] font-black tracking-tighter text-slate-950 md:text-[8rem] lg:text-[10rem] uppercase"
+        className="mx-auto max-w-5xl text-6xl font-black tracking-[-.04em] text-slate-950 px-2 sm:text-7xl md:text-[5.5rem] leading-[1.05]"
       >
-        <div className="flex justify-center items-center flex-wrap gap-x-4 md:gap-x-6">
-          <span>SWIPING</span>
-          <span className="text-zinc-300">AWAY</span>
-        </div>
-        <div className="flex justify-center items-center flex-wrap gap-x-4 md:gap-x-6">
-          <span className="text-zinc-300">THE</span>
-          <span className="relative inline-flex h-[0.65em] w-[1.4em] items-center justify-center overflow-hidden rounded-full bg-slate-900 border-[6px] border-white align-baseline shadow-xl">
-             {/* A stylish play-button pill inside the text */}
-             <div className="h-full w-full bg-slate-900 flex items-center justify-center">
-                <div className="h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-white ml-1" />
-             </div>
-          </span>
-          <span className="text-[#E63946]">FRICTION</span>
-        </div>
-        <div className="flex justify-center items-center flex-wrap gap-x-4 md:gap-x-6">
-          <span className="text-zinc-300">OF</span>
-          <span>LAUNDRY</span>
-        </div>
+        Laundry done <br className="hidden sm:block" />
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E63946] to-orange-500">
+          in a single swipe.
+        </span>
       </motion.h1>
 
       <motion.p 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="mx-auto mt-12 max-w-xl text-lg font-medium text-slate-500"
+        transition={{ delay: 0.15 }}
+        className="mx-auto mt-8 max-w-2xl text-lg font-medium text-slate-500 sm:text-xl px-4"
       >
-        The only laundry partner you'll ever need. Connecting customers to a vetted network across homes, offices, and campuses.
+        The only laundry partner you'll ever need. We connect you to a vetted network of premium dry cleaners for your home, office, or campus.
       </motion.p>
 
       <motion.div 
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="mt-12"
+        transition={{ delay: 0.3 }}
+        className="mt-14 mb-10 flex flex-col sm:flex-row items-center gap-6"
       >
         <a 
           href="/dashboard" 
-          className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-6 py-3 text-sm font-bold tracking-[0.15em] text-[#E63946] shadow-sm transition-all hover:bg-zinc-50 hover:shadow-md hover:-translate-y-0.5"
+          className="w-full sm:w-auto inline-flex justify-center items-center gap-2 rounded-full bg-[#E63946] px-10 py-5 text-lg font-bold text-white shadow-[0_8px_30px_rgba(230,57,70,0.3)] transition-all hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(230,57,70,0.4)] active:scale-95"
         >
-          <span className="text-xl leading-none">✨</span>
-          OPEN CUSTOMER APP
+          Open Customer App
+        </a>
+        <a 
+          href="#segments" 
+          className="w-full sm:w-auto inline-flex justify-center items-center gap-2 rounded-full bg-white px-10 py-5 text-lg font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 hover:-translate-y-1 active:scale-95"
+        >
+          Explore Segments
         </a>
       </motion.div>
     </div>

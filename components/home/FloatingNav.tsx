@@ -8,11 +8,11 @@ export function FloatingNav() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="fixed top-4 z-50 flex w-full justify-center px-4 md:px-8">
-      <nav className="relative flex w-full max-w-5xl items-center justify-between rounded-full bg-white/95 px-6 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] backdrop-blur-md">
+    <div className="fixed top-6 z-50 flex w-full justify-center px-4 md:px-8">
+      <nav className="relative flex w-full max-w-6xl items-center justify-between rounded-full bg-white/80 px-6 py-4 shadow-[0_12px_40px_rgb(0,0,0,0.08)] backdrop-blur-xl border border-zinc-200/50">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <span className="text-lg md:text-xl font-extrabold tracking-tight text-[#E63946]">LaundroSwipe</span>
+          <span className="text-xl md:text-2xl font-extrabold tracking-tight text-[#E63946]">LaundroSwipe</span>
         </div>
 
         {/* Desktop Links */}
