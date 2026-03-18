@@ -21,6 +21,8 @@ export const SERVICES = [
 
 export const VENDORS = [
   { id: 'profab', name: 'Pro Fab Power Laundry Services', location: 'VIT Chennai Campus', emoji: '🧺' },
+  { id: 'jos-brothers', name: 'Jos Brothers', location: 'Kochi', emoji: '🧼' },
+  { id: 'tumbledry', name: 'TumbleDry', location: 'Bangalore · Chennai', emoji: '🌀' },
 ] as const;
 
 export const VENDOR = {

@@ -246,6 +246,16 @@ export default function LaundroApp() {
     go('schedule');
   }, [user, go, showToast]);
 
+  const goToScheduleWithVendor = useCallback((vendorId: string) => {
+    if (user && !user.ph?.trim()) {
+      go('complete-profile');
+      showToast('Add your phone number to place orders', 'er');
+      return;
+    }
+    setSd({ step: 1, vendorId });
+    go('schedule');
+  }, [user, go, showToast]);
+
   const saveUser = useCallback((u: User | null) => {
     if (u) localStorage.setItem('ls_u', JSON.stringify(u));
     else localStorage.removeItem('ls_u');
@@ -1448,6 +1458,27 @@ export default function LaundroApp() {
                     <span className="aw">→</span>
                   </button>
                 </div>
+
+                <p className="st">Pick a partner</p>
+                <p className="vd" style={{ marginBottom: 12 }}>
+                  Choose a laundry partner to schedule your pickup.
+                </p>
+                <div className="dss" aria-label="Laundry partners" role="list">
+                  {VENDORS.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      className="ds"
+                      onClick={() => goToScheduleWithVendor(v.id)}
+                      aria-label={`Schedule with ${v.name}`}
+                    >
+                      <span style={{ fontSize: 18, lineHeight: 1 }}>{v.emoji}</span>
+                      <span className="dy" style={{ marginTop: 2 }}>{v.name}</span>
+                      <span className="mo">{v.location}</span>
+                    </button>
+                  ))}
+                </div>
+
                 <p className="st">Services</p>
                 <div className="sg">
                   {SERVICES.filter((s) => !s.comingSoon).map((s) => {
