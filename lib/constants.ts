@@ -1,5 +1,5 @@
 export const COLLEGES = [
-  { id: 'vit-chn', name: 'VIT Chennai', code: 'VIT_CHN', active: true },
+  { id: 'vit-chn', name: 'Chennai Institution', code: 'VIT_CHN', active: true },
   { id: 'vit-vlr', name: 'VIT Vellore', code: 'VIT_VLR', active: false },
   { id: 'vit-ap', name: 'VIT AP', code: 'VIT_AP', active: false },
   { id: 'vit-bpl', name: 'VIT Bhopal', code: 'VIT_BPL', active: false },
@@ -23,7 +23,7 @@ export const VENDORS = [
   {
     id: 'profab',
     name: 'Pro Fab Power Laundry Services',
-    location: 'VIT Chennai Campus',
+    location: 'On-campus pickup point',
     emoji: '🧺',
     availability: { type: 'nearby', lat: 12.8406, lng: 80.1533, radiusKm: 18 },
   },
@@ -34,7 +34,7 @@ export const VENDORS = [
 export const VENDOR = {
   name: 'Pro Fab Power Laundry Services',
   days: ['Tuesday', 'Saturday', 'Sunday'],
-  location: 'VIT Chennai Campus',
+  location: 'On-campus pickup point',
 } as const;
 
 export const CONVENIENCE_FEE = 20;

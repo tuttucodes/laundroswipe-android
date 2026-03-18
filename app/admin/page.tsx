@@ -16,7 +16,7 @@ function getGatePassLetterHtml(vendorName: string, orderCount: number): string {
   const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Permission Letter - VIT Chennai</title>
+<head><meta charset="utf-8"><title>Permission Letter</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Georgia,'Times New Roman',serif;background:#fff;color:#1e293b;padding:32px;max-width:600px;margin:0 auto;font-size:14px}
@@ -43,13 +43,13 @@ function getGatePassLetterHtml(vendorName: string, orderCount: number): string {
     <div class="website">www.laundroswipe.com</div>
     <div class="rule"></div>
   </header>
-  <p class="ref">To be shown at the gate (VIT Chennai)</p>
+  <p class="ref">To be shown at the gate</p>
   <p class="date">Date: ${esc(date)}</p>
   <h2 class="subject">Permission Letter for Campus Entry</h2>
   <div class="body">
     <p>To whom it may concern,</p>
     <p>This is to certify that <strong>${esc(vendorName)}</strong> are official partners of <strong>LaundroSwipe</strong> (LaundroSwipe.com).</p>
-    <p>They have received <strong>${ordersText}</strong> from students of <strong>VIT CHENNAI</strong> and are here to drop off the clothes of students. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
+    <p>They have received <strong>${ordersText}</strong> from students and are here to drop off the clothes. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
     <p>Kindly extend your cooperation.</p>
   </div>
   <div class="signoff">
@@ -69,7 +69,7 @@ function getGatePassLetterHtml(vendorName: string, orderCount: number): string {
 function printGatePassLetter(vendorName: string, orderCount: number) {
   const html = getGatePassLetterHtml(vendorName, orderCount);
   const iframe = document.createElement('iframe');
-  iframe.setAttribute('title', 'Permission Letter - VIT Chennai');
+  iframe.setAttribute('title', 'Permission Letter');
   iframe.style.position = 'fixed';
   iframe.style.left = '-9999px';
   iframe.style.top = '0';
@@ -416,7 +416,7 @@ export default function AdminPage() {
             <button type="button" onClick={() => { setTab('colleges'); closeMenu(); }} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
             <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
             <button type="button" onClick={() => { setTab('notifications'); closeMenu(); }} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
-            <button type="button" onClick={() => { setTab('gatepass'); closeMenu(); }} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>🏫 VIT Chennai</button>
+            <button type="button" onClick={() => { setTab('gatepass'); closeMenu(); }} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>🏫 Gate pass</button>
           </div>
           <div className="admin-drawer-section">
             <span className="admin-drawer-section-label">System</span>
@@ -895,8 +895,8 @@ export default function AdminPage() {
         )}
         {tab === 'gatepass' && (
           <div className="gatepass-tab">
-            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>VIT Chennai</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Gate pass for VIT Chennai campus. Show or print this letter at the gate for vendor entry.</p>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Gate pass</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Show or print this letter at the gate for vendor entry.</p>
             <div className="gatepass-letter">
               <header className="gatepass-letterhead">
                 <div className="gatepass-logo-text">LaundroSwipe</div>
@@ -904,13 +904,13 @@ export default function AdminPage() {
                 <div className="gatepass-website">www.laundroswipe.com</div>
                 <div className="gatepass-letterhead-rule" />
               </header>
-              <p className="gatepass-ref">To be shown at the gate (VIT Chennai)</p>
+              <p className="gatepass-ref">To be shown at the gate</p>
               <p className="gatepass-date">Date: {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <h2 className="gatepass-subject">Permission Letter for Campus Entry</h2>
               <div className="gatepass-body">
                 <p>To whom it may concern,</p>
                 <p>This is to certify that <strong>{VENDOR.name}</strong> are official partners of <strong>LaundroSwipe</strong> (LaundroSwipe.com).</p>
-                <p>They have received <strong>{vitChennaiOrderCount} pickup order{vitChennaiOrderCount !== 1 ? 's' : ''}</strong> from students of <strong>VIT CHENNAI</strong> and are here to drop off the clothes of students. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
+                <p>They have received <strong>{vitChennaiOrderCount} pickup order{vitChennaiOrderCount !== 1 ? 's' : ''}</strong> from students and are here to drop off the clothes. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
                 <p>Kindly extend your cooperation.</p>
               </div>
               <div className="gatepass-signoff">
