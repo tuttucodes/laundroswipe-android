@@ -110,7 +110,7 @@ export function FloatingNav() {
                 <a
                   href="/dashboard"
                   onClick={() => setIsOpen(false)}
-                  className="flex w-full justify-center rounded-full bg-[#E8523F] py-4 text-[15px] font-bold text-white shadow-xl shadow-[#E8523F]/20 active:scale-95 transition-transform"
+                  className="flex w-full justify-center rounded-full bg-[#E8523F] py-4 text-[15px] font-bold text-white shadow-xl shadow-black/10 active:scale-95 transition-transform"
                 >
                   Get Started
                 </a>
