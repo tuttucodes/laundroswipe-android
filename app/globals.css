@@ -524,3 +524,13 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 @media(max-width:700px){.ls-home-footer-columns{grid-template-columns:repeat(1,minmax(0,1fr));}}
 .ls-home-link-button{padding:0;background:none;border:none;color:#64748b;text-decoration:underline;cursor:pointer;font-size:.8rem;}
 .ls-home-link-button:hover{color:#0f172a;}
+
+/* Lanes aesthetic utilities */
+.text-watermark {
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+}
+.upside-down {
+  transform: rotate(180deg) scaleX(-1);
+}
