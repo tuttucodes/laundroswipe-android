@@ -36,7 +36,19 @@ export function FloatingNav() {
         <div className="relative z-10 flex w-full items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <span className="text-xl font-bold tracking-tight text-[#E8523F] leading-none mix-blend-normal">LaundroSwipe</span>
+          <span className="relative inline-flex items-center">
+            <span
+              aria-hidden
+              className="absolute inset-y-[-8px] -inset-x-3 rounded-full bg-white/60 blur-md"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-y-[-10px] -inset-x-4 rounded-full bg-[#E8523F]/20 blur-lg"
+            />
+            <span className="relative text-xl font-bold tracking-tight text-[#E8523F] leading-none mix-blend-normal">
+              LaundroSwipe
+            </span>
+          </span>
         </div>
 
         {/* Desktop Navigation Links */}
