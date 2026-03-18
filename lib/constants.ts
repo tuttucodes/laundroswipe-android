@@ -20,9 +20,15 @@ export const SERVICES = [
 ] as const;
 
 export const VENDORS = [
-  { id: 'profab', name: 'Pro Fab Power Laundry Services', location: 'VIT Chennai Campus', emoji: '🧺' },
-  { id: 'jos-brothers', name: 'Jos Brothers', location: 'Kochi', emoji: '🧼' },
-  { id: 'tumbledry', name: 'TumbleDry', location: 'Bangalore · Chennai', emoji: '🌀' },
+  {
+    id: 'profab',
+    name: 'Pro Fab Power Laundry Services',
+    location: 'VIT Chennai Campus',
+    emoji: '🧺',
+    availability: { type: 'nearby', lat: 12.8406, lng: 80.1533, radiusKm: 18 },
+  },
+  { id: 'jos-brothers', name: 'Jos Brothers', location: 'Kochi', emoji: '🧼', comingSoon: true },
+  { id: 'tumbledry', name: 'TumbleDry', location: 'Bangalore · Chennai', emoji: '🌀', comingSoon: true },
 ] as const;
 
 export const VENDOR = {

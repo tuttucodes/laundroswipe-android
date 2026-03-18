@@ -76,6 +76,8 @@ type Order = {
   deliveryComments?: string | null;
 };
 
+type LatLng = { lat: number; lng: number };
+
 type ScheduleData = {
   step: number;
   vendorId?: string;
@@ -219,6 +221,7 @@ export default function LaundroApp() {
   const [vendorProfile, setVendorProfile] = useState<VendorProfileRow | null>(null);
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
   const [ordersListLoading, setOrdersListLoading] = useState(false);
+  const [geo, setGeo] = useState<{ status: 'idle' | 'loading' | 'ok' | 'denied' | 'error'; coords?: LatLng }>({ status: 'idle' });
 
   useEffect(() => {
     if (user?.sid && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.sid) === '1') {
@@ -255,6 +258,55 @@ export default function LaundroApp() {
     setSd({ step: 1, vendorId });
     go('schedule');
   }, [user, go, showToast]);
+
+  const haversineKm = useCallback((a: LatLng, b: LatLng) => {
+    const R = 6371;
+    const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+    const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const lat1 = (a.lat * Math.PI) / 180;
+    const lat2 = (b.lat * Math.PI) / 180;
+    const s1 = Math.sin(dLat / 2);
+    const s2 = Math.sin(dLng / 2);
+    const h = s1 * s1 + Math.cos(lat1) * Math.cos(lat2) * s2 * s2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }, []);
+
+  const isVendorAvailable = useCallback((vendor: (typeof VENDORS)[number]) => {
+    if ((vendor as { comingSoon?: boolean }).comingSoon) return { ok: false, reason: 'Coming soon' };
+    const availability = (vendor as { availability?: { type: string; lat: number; lng: number; radiusKm: number } }).availability;
+    if (!availability) return { ok: true, reason: '' };
+    if (availability.type === 'nearby') {
+      if (!geo.coords) return { ok: false, reason: 'Enable location to check availability' };
+      const d = haversineKm(geo.coords, { lat: availability.lat, lng: availability.lng });
+      return d <= availability.radiusKm ? { ok: true, reason: '' } : { ok: false, reason: 'Not available in your region' };
+    }
+    return { ok: true, reason: '' };
+  }, [geo.coords, haversineKm]);
+
+  useEffect(() => {
+    // Only ask for location when user is in the booking flow surfaces.
+    if (!user) return;
+    if (!['home', 'schedule'].includes(screen)) return;
+    if (geo.status !== 'idle') return;
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeo({ status: 'error' });
+      return;
+    }
+    setGeo({ status: 'loading' });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeo({
+          status: 'ok',
+          coords: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+        });
+      },
+      (err) => {
+        if (err?.code === 1) setGeo({ status: 'denied' });
+        else setGeo({ status: 'error' });
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 }
+    );
+  }, [geo.status, screen, user]);
 
   const saveUser = useCallback((u: User | null) => {
     if (u) localStorage.setItem('ls_u', JSON.stringify(u));
@@ -1468,13 +1520,14 @@ export default function LaundroApp() {
                     <button
                       key={v.id}
                       type="button"
-                      className="ds"
-                      onClick={() => goToScheduleWithVendor(v.id)}
+                      className={`ds ${isVendorAvailable(v).ok ? '' : 'dis'}`}
+                      onClick={() => isVendorAvailable(v).ok && goToScheduleWithVendor(v.id)}
                       aria-label={`Schedule with ${v.name}`}
+                      disabled={!isVendorAvailable(v).ok}
                     >
                       <span style={{ fontSize: 18, lineHeight: 1 }}>{v.emoji}</span>
                       <span className="dy" style={{ marginTop: 2 }}>{v.name}</span>
-                      <span className="mo">{v.location}</span>
+                      <span className="mo">{isVendorAvailable(v).ok ? v.location : isVendorAvailable(v).reason}</span>
                     </button>
                   ))}
                 </div>
@@ -1564,14 +1617,23 @@ export default function LaundroApp() {
                   <>
                     <p className="st">Select vendor</p>
                     <p className="vd" style={{ marginBottom: 16 }}>Choose your laundry partner for pickup & delivery.</p>
+                    {(geo.status === 'loading' || geo.status === 'denied' || geo.status === 'error') && (
+                      <div className="warn" style={{ marginBottom: 14 }}>
+                        {geo.status === 'loading'
+                          ? 'Checking your location for vendor availability…'
+                          : geo.status === 'denied'
+                            ? 'Location permission denied. Enable location to see vendors available near you.'
+                            : 'Unable to access location. Vendor availability may be limited.'}
+                      </div>
+                    )}
                     {VENDORS.map((v) => (
                       <div
                         key={v.id}
-                        className="ssc vendor-card"
-                        onClick={() => handleSelectVendor(v.id)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSelectVendor(v.id)}
+                        className={`ssc vendor-card ${isVendorAvailable(v).ok ? '' : 'coming-soon'}`}
+                        onClick={() => isVendorAvailable(v).ok && handleSelectVendor(v.id)}
+                        onKeyDown={(e) => e.key === 'Enter' && isVendorAvailable(v).ok && handleSelectVendor(v.id)}
                         role="button"
-                        tabIndex={0}
+                        tabIndex={isVendorAvailable(v).ok ? 0 : -1}
                       >
                         {v.id === 'profab' ? (
                           <img src="/profab-logo.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
@@ -1579,10 +1641,17 @@ export default function LaundroApp() {
                           <span className="em">{v.emoji}</span>
                         )}
                         <div className="inf">
-                          <div className="sn">{v.name}</div>
+                          <div className="sn">
+                            {v.name}{' '}
+                            {!isVendorAvailable(v).ok && (
+                              <span style={{ fontWeight: 700, color: 'var(--tm)' }}>
+                                ({isVendorAvailable(v).reason})
+                              </span>
+                            )}
+                          </div>
                           <div className="sd">{v.location}</div>
                         </div>
-                        <span className="aw" style={{ fontSize: 20 }}>→</span>
+                        <span className="aw" style={{ fontSize: 20, opacity: isVendorAvailable(v).ok ? 1 : 0.35 }}>→</span>
                       </div>
                     ))}
                     <button type="button" className="btn bout bbl" style={{ marginTop: 16 }} onClick={() => go('home')}>
