@@ -19,8 +19,8 @@ export function FloatingNav() {
       <nav 
         className={`relative flex w-full max-w-[1200px] items-center justify-between rounded-[50px] px-5 sm:px-6 py-3 transition-all duration-300 ${
           scrolled 
-            ? 'bg-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl border border-black/5' 
-            : 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-black/5'
+            ? 'bg-white/55 backdrop-blur-2xl saturate-150 shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-black/10 ring-1 ring-white/40' 
+            : 'bg-white/70 backdrop-blur-xl saturate-150 shadow-[0_6px_24px_rgba(0,0,0,0.06)] border border-black/10 ring-1 ring-white/50'
         }`}
       >
         {/* Logo */}
