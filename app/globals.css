@@ -26,8 +26,6 @@
 
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #060A14;
-    color: #ffffff;
     overflow-x: hidden;
     line-height: 1.6;
   }
@@ -94,8 +92,9 @@
   }
 }
 
-*{margin:0;padding:0;box-sizing:border-box}
-html{overflow-x:hidden;scroll-behavior:smooth}
+/* Duplicate reset removed (handled in @layer base above) */
+/* *{margin:0;padding:0;box-sizing:border-box} */
+/* html{overflow-x:hidden;scroll-behavior:smooth} */
 :root{
   --b:#1746A2;--bl:#E8EEFB;--bm:#3B6FD4;--t:#0D9488;--tl:#CCFBF1;--o:#F97316;--ol:#FFF7ED;
   --bg:#F2F4F8;--bg-card:#FFF;--c:#FFF;--tx:#1A1D2E;--ts:#475569;--tm:#94A3B8;
@@ -533,4 +532,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 }
 .upside-down {
   transform: rotate(180deg) scaleX(-1);
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Anchor links should land below the floating nav */
+  [id] { scroll-margin-top: 104px; }
 }

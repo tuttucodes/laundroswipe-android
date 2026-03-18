@@ -59,7 +59,7 @@ export function TestimonialCarousel({ testimonials }: { testimonials: Testimonia
             transition={{ duration: 0.5 }}
           >
             <p className="text-3xl font-bold leading-tight tracking-tight md:text-5xl text-white/95">
-              "{current.quote}"
+              &ldquo;{current.quote}&rdquo;
             </p>
             <div className="mt-8">
               <p className="font-bold text-white">{current.name}</p>

@@ -24,7 +24,7 @@ export function ContactSection() {
             Get<br/>Started
           </h2>
           <p className="text-[#9CA3AF] text-lg font-sans mb-12 max-w-md leading-relaxed">
-            Bring LaundroSwipe to your campus. Whether you're a student, vendor, or campus admin — let's simplify laundry together.
+            Bring LaundroSwipe to your campus. Whether you&apos;re a student, vendor, or campus admin — let&apos;s simplify laundry together.
           </p>
 
           <div className="flex flex-col gap-2 border-l-2 border-white/10 pl-6">

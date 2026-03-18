@@ -48,7 +48,7 @@ export function Footer() {
         <div className="w-full h-px bg-black/5 mb-8"></div>
 
         {/* Bottom Row */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 font-sans text-[13px] text-zinc-500 pb-32">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 font-sans text-[13px] text-zinc-500 pb-16">
           <span>LaundroSwipe Inc. Crafted with ❤️</span>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div> All systems operational</span>

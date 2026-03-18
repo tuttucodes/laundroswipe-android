@@ -59,7 +59,7 @@ export function Testimonials() {
             {/* Quote content */}
             <div className="relative z-10 mt-auto">
               <h3 className="font-playfair text-3xl md:text-5xl lg:text-[56px] font-bold text-white leading-[1.1] mb-8 lg:max-w-3xl">
-                "LaundroSwipe literally saved my hostel life. No more fights over machines. Just book, wash, done."
+                &ldquo;LaundroSwipe literally saved my hostel life. No more fights over machines. Just book, wash, done.&rdquo;
               </h3>
               
               <div className="flex items-center justify-between mt-auto">

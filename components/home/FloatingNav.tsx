@@ -15,9 +15,9 @@ export function FloatingNav() {
   }, []);
 
   return (
-    <div className="fixed top-4 left-0 right-0 z-[100] flex justify-center px-4 mix-blend-normal">
+    <div className="fixed top-4 left-0 right-0 z-[100] flex justify-center px-4 md:px-8 mix-blend-normal">
       <nav 
-        className={`relative flex w-full max-w-5xl items-center justify-between rounded-[50px] px-6 py-3 transition-all duration-300 ${
+        className={`relative flex w-full max-w-[1200px] items-center justify-between rounded-[50px] px-5 sm:px-6 py-3 transition-all duration-300 ${
           scrolled 
             ? 'bg-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl border border-black/5' 
             : 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-black/5'
@@ -31,7 +31,7 @@ export function FloatingNav() {
         {/* Desktop Navigation Links */}
         <div className="hidden lg:flex items-center gap-6">
           {['How It Works', 'Features', 'For Campuses', 'Pricing'].map((item) => (
-            <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, '-')}`} className="text-[14px] font-semibold text-black hover:text-[#E8523F] transition-colors uppercase tracking-tight whitespace-nowrap">
+            <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, '-')}`} className="text-[13px] font-semibold text-black hover:text-[#E8523F] transition-colors uppercase tracking-[0.08em] whitespace-nowrap">
               {item}
             </a>
           ))}
@@ -64,7 +64,7 @@ export function FloatingNav() {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute top-16 w-[calc(100%-2rem)] max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl border border-black/5 lg:hidden"
+            className="absolute top-16 w-[calc(100%-2rem)] max-w-[1200px] overflow-hidden rounded-3xl bg-white shadow-2xl border border-black/5 lg:hidden"
           >
             <div className="flex flex-col space-y-2 p-6">
               {['How It Works', 'Features', 'For Campuses', 'Pricing'].map((item) => (
