@@ -35,7 +35,7 @@ const tabs = [
 export function SegmentTabs() {
   return (
     <div className="w-full">
-      <div className="mb-12 flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between px-2">
+      <div className="mb-12 flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
         <div>
           <h2 className="text-4xl font-black tracking-tight text-white uppercase sm:text-5xl text-left">
             WHAT WE DO
@@ -45,7 +45,7 @@ export function SegmentTabs() {
       </div>
 
       {/* Horizontal Scroll Area */}
-      <div className="flex gap-6 overflow-x-auto pb-12 pt-4 px-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex gap-6 overflow-x-auto pb-12 pt-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 md:-mx-8 md:px-8">
         {tabs.map((segment, i) => (
           <motion.div
             key={segment.id}
@@ -53,19 +53,19 @@ export function SegmentTabs() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="group relative flex h-[460px] min-w-[340px] max-w-[420px] flex-1 shrink-0 snap-center flex-col justify-between overflow-hidden rounded-[2.5rem] bg-zinc-900 border border-zinc-800 p-8 text-white shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(230,57,70,0.15)] hover:border-zinc-700 md:min-w-[420px] md:p-10 cursor-grab active:cursor-grabbing"
+            className="group relative flex min-h-[420px] w-[85vw] max-w-[400px] flex-1 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[2.5rem] bg-zinc-900 border border-zinc-800 p-8 text-white shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(230,57,70,0.15)] hover:border-zinc-700 md:min-w-[400px] md:p-10 cursor-grab active:cursor-grabbing"
           >
             {/* Background Hint */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#E63946]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
 
             <div className="relative z-10">
-              <span className="mb-8 inline-block rounded-full bg-zinc-950 px-5 py-2 text-xs font-black tracking-widest text-[#E63946] ring-1 ring-zinc-800 shadow-sm">
+              <span className="mb-6 inline-block rounded-full bg-zinc-950 px-4 py-1.5 text-xs font-black tracking-widest text-[#E63946] ring-1 ring-zinc-800 shadow-sm">
                 {segment.title}
               </span>
-              <h3 className="text-3xl font-bold md:text-4xl leading-[1.15] tracking-tight mb-5">
+              <h3 className="text-2xl font-bold md:text-3xl lg:text-4xl leading-[1.2] tracking-tight mb-4">
                 {segment.content.headline}
               </h3>
-              <p className="text-zinc-400 text-base md:text-lg leading-relaxed line-clamp-3">
+              <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
                 {segment.content.desc}
               </p>
             </div>

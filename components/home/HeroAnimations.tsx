@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export function HeroAnimations() {
   return (
-    <div className="relative flex flex-col items-center pt-48 md:pt-56 pb-32 text-center px-4 md:px-6 z-10">
+    <div className="relative flex flex-col items-center pt-56 md:pt-64 lg:pt-[240px] pb-32 text-center px-4 md:px-6 z-10">
       {/* Background Gradient Blob */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[400px] bg-gradient-to-tr from-[#E63946]/10 via-orange-500/5 to-transparent blur-[100px] -z-10 rounded-full pointer-events-none" />
 
@@ -21,9 +21,9 @@ export function HeroAnimations() {
       <motion.h1 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-5xl text-6xl font-black tracking-[-.04em] text-slate-950 px-2 sm:text-7xl md:text-[5.5rem] leading-[1.05]"
+        className="mx-auto max-w-5xl text-[3.5rem] font-black tracking-tight text-slate-950 px-2 sm:text-7xl md:text-[5.5rem] leading-[1.05]"
       >
-        Laundry done <br className="hidden sm:block" />
+        Laundry done <br />
         <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E63946] to-orange-500">
           in a single swipe.
         </span>

@@ -105,14 +105,14 @@ export default async function HomePage() {
 
       {/* Segments/Tabs Section (Dark Mode) */}
       <section id="segments" className="bg-slate-950 py-24 md:py-32 overflow-hidden">
-        <div className="mx-auto max-w-[1400px] px-4 md:px-8">
+        <div className="mx-auto max-w-6xl px-4 md:px-8">
           <SegmentTabs />
         </div>
       </section>
 
       {/* Testimonials Section (Light Mode/White background) */}
       <section id="testimonials" className="bg-zinc-50 py-24 md:py-32">
-        <div className="mx-auto max-w-[1400px] px-4 md:px-8">
+        <div className="mx-auto max-w-6xl px-4 md:px-8">
           <div className="mb-16 text-center">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-[#E63946] mb-4">
               {'{'} WHY CLIENTS LOVE US {'}'}
@@ -127,7 +127,7 @@ export default async function HomePage() {
 
       {/* Footer / Contact (Dark Mode) */}
       <footer id="contact" className="bg-slate-950 text-white pb-12">
-        <div className="mx-auto max-w-[1400px] px-4 py-20 md:px-8">
+        <div className="mx-auto max-w-6xl px-4 py-20 md:px-8">
           <div className="grid gap-12 md:grid-cols-[1.5fr_1fr] items-center">
             <div className="space-y-8 pr-0 md:pr-12">
               <h2 className="text-5xl font-extrabold tracking-tighter sm:text-6xl max-w-sm leading-[1.1]">
