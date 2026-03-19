@@ -81,7 +81,7 @@ export function Footer() {
 
       {/* signature Lanes.gg style upside-down watermark footer */}
       <div className="absolute bottom-[-15%] md:-bottom-24 lg:-bottom-32 left-0 right-0 w-full overflow-hidden flex justify-center pointer-events-none select-none">
-         <div className="font-playfair font-black text-[15vw] md:text-[180px] lg:text-[220px] text-zinc-200/50 uppercase tracking-tighter leading-none whitespace-nowrap upside-down opacity-50">
+         <div className="font-playfair font-black text-[15vw] md:text-[180px] lg:text-[220px] text-zinc-400/80 uppercase tracking-tighter leading-none whitespace-nowrap upside-down">
            LAUNDROSWIPE
          </div>
       </div>
