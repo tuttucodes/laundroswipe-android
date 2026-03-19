@@ -70,7 +70,7 @@ export function Footer() {
 
         {/* Bottom Row */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 font-sans text-[13px] text-zinc-500 pb-16">
-          <span>LaundroSwipe Inc. Crafted with ❤️</span>
+          <span>2026 eshan u suck</span>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div> All systems operational</span>
             <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="hover:text-black transition-colors">Back to top ↗</button>
