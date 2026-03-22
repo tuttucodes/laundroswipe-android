@@ -138,7 +138,15 @@ export default function AdminPage() {
   const [err, setErr] = useState('');
   const [orders, setOrders] = useState<OrderWithUser[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [bills, setBills] = useState<{ totalAmount: number; count: number }>({ totalAmount: 0, count: 0 });
+  const [bills, setBills] = useState<{
+    count: number;
+    /** Sum of each bill’s final total (what customers paid). */
+    totalRevenue: number;
+    /** Sum of line-item amounts only (excludes convenience fee). */
+    subtotalExcludingFees: number;
+    /** Sum of convenience_fee across saved bills. */
+    totalConvenienceFee: number;
+  }>({ count: 0, totalRevenue: 0, subtotalExcludingFees: 0, totalConvenienceFee: 0 });
   const [tab, setTab] = useState<Tab>('orders');
   const [filter, setFilter] = useState('all');
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
@@ -182,8 +190,20 @@ export default function AdminPage() {
         }));
         setOrders(withUser);
         const bl = billList ?? [];
-        const totalAmount = bl.reduce((s, b) => s + Number(b.total), 0);
-        setBills({ totalAmount, count: bl.length });
+        const agg = bl.reduce(
+          (acc, b) => {
+            const sub = Number(b.subtotal) || 0;
+            const conv = Number(b.convenience_fee) || 0;
+            const tot = Number(b.total) || 0;
+            return {
+              subtotalExcludingFees: acc.subtotalExcludingFees + sub,
+              totalConvenienceFee: acc.totalConvenienceFee + conv,
+              totalRevenue: acc.totalRevenue + tot,
+            };
+          },
+          { subtotalExcludingFees: 0, totalConvenienceFee: 0, totalRevenue: 0 },
+        );
+        setBills({ count: bl.length, ...agg });
       })
       .finally(() => setLoading(false));
   }, [loggedIn]);
@@ -348,8 +368,7 @@ export default function AdminPage() {
   const delivered = orders.filter((o) => o.status === 'delivered').length;
   const billsGenerated = bills.count;
   const tokensGenerated = totalOrders;
-  const convenienceFeeToPay = billsGenerated * CONVENIENCE_FEE;
-  const totalBillAmount = bills.totalAmount;
+  const { totalRevenue, subtotalExcludingFees, totalConvenienceFee } = bills;
   const vitChennaiOrderCount = orders.filter((o) => users.find((u) => u.id === o.user_id)?.college_id === 'vit-chn').length;
 
   if (!loggedIn) {
@@ -444,16 +463,16 @@ export default function AdminPage() {
                   <div className="admin-stat-label">Bills generated</div>
                 </div>
                 <div className="admin-stat-card">
-                  <div className="admin-stat-value" style={{ color: 'var(--b)' }}>₹{totalBillAmount.toFixed(0)}</div>
-                  <div className="admin-stat-label">Total bill amount</div>
+                  <div className="admin-stat-value" style={{ color: 'var(--ok)', fontSize: 20 }}>₹{totalRevenue.toFixed(0)}</div>
+                  <div className="admin-stat-label">Total revenue (sum of bill totals)</div>
                 </div>
                 <div className="admin-stat-card">
-                  <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{convenienceFeeToPay}</div>
-                  <div className="admin-stat-label">Convenience fee (bills × ₹{CONVENIENCE_FEE})</div>
+                  <div className="admin-stat-value" style={{ color: 'var(--b)' }}>₹{subtotalExcludingFees.toFixed(0)}</div>
+                  <div className="admin-stat-label">After convenience fee (laundry subtotal)</div>
                 </div>
                 <div className="admin-stat-card">
-                  <div className="admin-stat-value" style={{ color: 'var(--ok)', fontSize: 20 }}>₹{(totalBillAmount + convenienceFeeToPay).toFixed(0)}</div>
-                  <div className="admin-stat-label">Total</div>
+                  <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{totalConvenienceFee.toFixed(0)}</div>
+                  <div className="admin-stat-label">Total convenience fee (on saved bills)</div>
                 </div>
                 <div className="admin-stat-card">
                   <div className="admin-stat-value" style={{ color: 'var(--o)' }}>{active}</div>
