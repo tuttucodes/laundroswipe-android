@@ -12,12 +12,21 @@ function getServiceSupabase() {
 
 export async function GET(request: Request) {
   const session = getAdminSessionFromRequest(request);
-  if (!session || session.role !== 'super_admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const supabase = getServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
-  const { data, error } = await supabase.from('vendors').select('id, slug, name, active').order('name', { ascending: true });
+
+  if (session.role === 'super_admin') {
+    const { data, error } = await supabase.from('vendors').select('id, slug, name, active').order('name', { ascending: true });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ vendors: data ?? [] });
+  }
+
+  const slug = session.vendorId?.toLowerCase().trim();
+  if (!slug) return NextResponse.json({ vendors: [] });
+  const { data, error } = await supabase.from('vendors').select('id, slug, name, active').eq('slug', slug).maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ vendors: data ?? [] });
+  return NextResponse.json({ vendors: data ? [data] : [] });
 }
 
 export async function POST(request: Request) {

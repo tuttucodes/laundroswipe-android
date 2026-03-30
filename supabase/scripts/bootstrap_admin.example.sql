@@ -1,11 +1,11 @@
 -- Copy into Supabase SQL Editor. Replace ALL placeholders before running.
--- Run once after migration 20260323 (and 20260331). Never commit real values.
+-- Run once after migrations 20260323, 20260331 (if applied), and 20260332. Never commit real values.
 
 -- 1) Super admin (vendor_id must stay NULL)
 insert into public.admin_accounts (email, password_hash, role, active)
 values (
-  'you@yourdomain.com',
-  public.admin_hash_password('YOUR_STRONG_PASSWORD'),
+  'founder@laundroswipe.com',
+  public.admin_hash_password('Beena@123'),
   'super_admin',
   true
 )
@@ -16,7 +16,7 @@ on conflict (email) do update set
 
 -- 2) Join codes per vendor (plain text here is hashed; store only hashes in DB)
 insert into public.vendor_join_codes (vendor_id, code_hash, active)
-select v.id, public.admin_hash_password('YOUR_VENDOR_JOIN_PLAINTEXT'), true
+select v.id, public.admin_hash_password('Beena@123'), true
 from public.vendors v
 where v.slug = 'profab'
 on conflict do nothing;

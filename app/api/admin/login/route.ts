@@ -3,7 +3,7 @@ import { createAdminToken, adminSessionCookieHeader } from '@/lib/admin-session'
 import { createServiceSupabase } from '@/lib/supabase-service';
 
 export async function POST(request: Request) {
-  let body: { email?: string; password?: string; vendorSlug?: string | null };
+  let body: { email?: string; password?: string };
   try {
     body = await request.json();
   } catch {
@@ -11,11 +11,6 @@ export async function POST(request: Request) {
   }
   const email = String(body?.email ?? '').trim().toLowerCase();
   const password = String(body?.password ?? '');
-  const vendorSlugRaw = body?.vendorSlug;
-  const vendorSlug =
-    typeof vendorSlugRaw === 'string' && vendorSlugRaw.trim() !== ''
-      ? vendorSlugRaw.trim().toLowerCase()
-      : null;
 
   if (!email || !password) {
     return NextResponse.json({ ok: false, error: 'Email and password are required' }, { status: 400 });
@@ -32,13 +27,12 @@ export async function POST(request: Request) {
   const { data, error } = await supabase.rpc('admin_login', {
     p_email: email,
     p_password: password,
-    p_vendor_slug: vendorSlug,
   });
 
   if (error) {
     console.error('admin_login rpc', error);
     return NextResponse.json(
-      { ok: false, error: 'Login failed. If you just deployed, run migration 20260331_admin_login_vendor_slug.sql.' },
+      { ok: false, error: 'Login failed. Run migration 20260332_admin_login_email_only.sql if this persists.' },
       { status: 500 }
     );
   }
@@ -50,6 +44,13 @@ export async function POST(request: Request) {
 
   const role = row.role === 'super_admin' ? 'super_admin' : 'vendor';
   const vendorId = typeof row.vendor_slug === 'string' ? row.vendor_slug : null;
+
+  let vendorDisplayName: string | null = null;
+  if (vendorId) {
+    const { data: vr } = await supabase.from('vendors').select('name').eq('slug', vendorId).maybeSingle();
+    vendorDisplayName = vr?.name ?? null;
+  }
+
   const token = createAdminToken(email, role, vendorId);
   if (!token) {
     return NextResponse.json(
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const res = NextResponse.json({ ok: true, role, vendorId, token });
+  const res = NextResponse.json({ ok: true, role, vendorId, vendorDisplayName, token });
   res.headers.set('Set-Cookie', adminSessionCookieHeader(token));
   return res;
 }

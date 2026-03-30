@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { COLLEGES, VENDOR, CONVENIENCE_FEE } from '@/lib/constants';
+import { COLLEGES, CONVENIENCE_FEE } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
 
 const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered'];
@@ -151,25 +151,18 @@ type LocationRequestRow = {
   contact_email: string | null;
   source: string | null;
 };
-const VENDOR_TITLES: Record<string, string> = {
-  profab: 'Pro Fab',
-  starwash: 'Star Wash',
-};
-
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [role, setRole] = useState<AdminRole>('vendor');
   const [vendorId, setVendorId] = useState<VendorId | null>(null);
   const [registerVendorEmail, setRegisterVendorEmail] = useState('');
   const [registerVendorPassword, setRegisterVendorPassword] = useState('');
-  const [registerVendorSlug, setRegisterVendorSlug] = useState<VendorId>('profab');
+  const [registerVendorSlug, setRegisterVendorSlug] = useState('');
   const [registerJoinCode, setRegisterJoinCode] = useState('');
   const [registerVendorSaving, setRegisterVendorSaving] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [adminLoginMode, setAdminLoginMode] = useState<'vendor' | 'super_admin'>('vendor');
-  const [loginVendors, setLoginVendors] = useState<{ slug: string; name: string }[]>([]);
-  const [loginVendorSlug, setLoginVendorSlug] = useState('');
+  const [vendorDisplayName, setVendorDisplayName] = useState('');
   const [err, setErr] = useState('');
   const [orders, setOrders] = useState<OrderWithUser[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -203,7 +196,7 @@ export default function AdminPage() {
   const [vendorName, setVendorName] = useState('');
   const [vendorBrief, setVendorBrief] = useState('');
   const [vendorPricing, setVendorPricing] = useState('');
-  const [vendorProfileSlug, setVendorProfileSlug] = useState<VendorId>('profab');
+  const [vendorProfileSlug, setVendorProfileSlug] = useState('');
   const [vendorProfileLoading, setVendorProfileLoading] = useState(false);
   const [vendorProfileSaving, setVendorProfileSaving] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -224,21 +217,15 @@ export default function AdminPage() {
   const [areaRequestsError, setAreaRequestsError] = useState<string | null>(null);
   const dashboardTitle = isSuperAdmin
     ? 'LaundroSwipe Super Admin'
-    : `${VENDOR_TITLES[vendorId ?? ''] ?? 'Vendor'} Dashboard`;
+    : `${vendorDisplayName || vendorsList.find((v) => v.slug === vendorId)?.name || vendorId || 'Vendor'} Dashboard`;
 
   const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
-    if (loggedIn) return;
-    fetch('/api/vendors/active')
-      .then((r) => r.json())
-      .then((d: { vendors?: { slug: string; name: string }[] }) => {
-        const list = d?.vendors ?? [];
-        setLoginVendors(list);
-        setLoginVendorSlug((prev) => (prev ? prev : list[0]?.slug ?? ''));
-      })
-      .catch(() => setLoginVendors([]));
-  }, [loggedIn]);
+    if (typeof window === 'undefined') return;
+    const n = localStorage.getItem('admin_vendor_name');
+    if (n) setVendorDisplayName(n);
+  }, []);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('admin_logged') : null;
@@ -297,11 +284,17 @@ export default function AdminPage() {
         }
         const data = await r.json().catch(() => ({}));
         if (!data?.orders || !data?.users) return null;
-        return data as { orders: OrderRow[] & { vendor_slug?: string | null }[]; users: UserRow[]; vendor_bills: any[] };
+        return data as {
+          orders: OrderRow[] & { vendor_slug?: string | null }[];
+          users: UserRow[];
+          vendor_bills: any[];
+          vendors?: VendorSummary[];
+        };
       })
       .then((data) => {
         if (!data) return;
-        const { orders: ords, users: us, vendor_bills: billList } = data;
+        const { orders: ords, users: us, vendor_bills: billList, vendors: vendorsFromOverview } = data;
+        if (Array.isArray(vendorsFromOverview)) setVendorsList(vendorsFromOverview);
 
         const userMap = new Map<string, UserRow>();
         (us ?? []).forEach((u) => userMap.set(u.id, u));
@@ -464,6 +457,16 @@ export default function AdminPage() {
       .catch(() => {});
   }, [loggedIn, isSuperAdmin]);
 
+  useEffect(() => {
+    if (vendorsList.length === 0) return;
+    setRegisterVendorSlug((prev) => (prev && vendorsList.some((v) => v.slug === prev) ? prev : vendorsList[0].slug));
+  }, [vendorsList]);
+
+  useEffect(() => {
+    if (!isSuperAdmin || vendorsList.length === 0) return;
+    setVendorProfileSlug((prev) => (prev && vendorsList.some((v) => v.slug === prev) ? prev : vendorsList[0].slug));
+  }, [isSuperAdmin, vendorsList]);
+
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -472,20 +475,12 @@ export default function AdminPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr('');
-    if (adminLoginMode === 'vendor' && !loginVendorSlug.trim()) {
-      setErr('Choose a vendor');
-      return;
-    }
     setAuthLoading(true);
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-          vendorSlug: adminLoginMode === 'vendor' ? loginVendorSlug.trim().toLowerCase() : null,
-        }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
@@ -494,6 +489,13 @@ export default function AdminPage() {
           localStorage.setItem('admin_role', data.role === 'super_admin' ? 'super_admin' : 'vendor');
           if (data.vendorId) localStorage.setItem('admin_vendor_id', data.vendorId);
           else localStorage.removeItem('admin_vendor_id');
+          if (typeof data.vendorDisplayName === 'string' && data.vendorDisplayName) {
+            localStorage.setItem('admin_vendor_name', data.vendorDisplayName);
+            setVendorDisplayName(data.vendorDisplayName);
+          } else {
+            localStorage.removeItem('admin_vendor_name');
+            setVendorDisplayName('');
+          }
           if (data.token) sessionStorage.setItem('admin_token', data.token);
         }
         setRole(data.role === 'super_admin' ? 'super_admin' : 'vendor');
@@ -513,7 +515,9 @@ export default function AdminPage() {
     localStorage.removeItem('admin_logged');
     localStorage.removeItem('admin_role');
     localStorage.removeItem('admin_vendor_id');
+    localStorage.removeItem('admin_vendor_name');
     sessionStorage.removeItem('admin_token');
+    setVendorDisplayName('');
     setLoggedIn(false);
   };
 
@@ -621,6 +625,20 @@ export default function AdminPage() {
   const { totalRevenue, subtotalExcludingFees, totalConvenienceFee } = bills;
   const vitChennaiOrderCount = vendorScopedForSuperAdmin.filter((o) => users.find((u) => u.id === o.user_id)?.college_id === 'vit-chn').length;
 
+  const gatePassVendorLabel =
+    !isSuperAdmin
+      ? vendorDisplayName || vendorsList.find((v) => v.slug === vendorId)?.name || vendorId || 'Laundry partner'
+      : superVendorFilter !== 'all'
+        ? vendorsList.find((v) => v.slug === superVendorFilter)?.name ?? superVendorFilter
+        : vendorsList.length > 0
+          ? vendorsList.map((v) => v.name).join(' and ')
+          : 'LaundroSwipe partner vendors';
+
+  const settingsVendorLabel =
+    !isSuperAdmin
+      ? vendorDisplayName || vendorsList.find((v) => v.slug === vendorId)?.name || vendorId || '—'
+      : vendorsList.find((v) => v.slug === vendorProfileSlug)?.name ?? vendorsList[0]?.name ?? '—';
+
   if (!loggedIn) {
     return (
       <div className="login-wrap">
@@ -628,50 +646,9 @@ export default function AdminPage() {
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <img src="/icon-192.png" alt="LaundroSwipe" style={{ height: 56, width: 56, objectFit: 'contain', margin: '0 auto 14px', borderRadius: 12, display: 'block' }} />
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Admin</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Vendor or super admin — passwords are stored in the database</p>
+            <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Sign in with the email and password for your account</p>
           </div>
           <form onSubmit={handleLogin}>
-            <div className="fg" style={{ marginBottom: 14 }}>
-              <span className="fl">Sign in as</span>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-                <button
-                  type="button"
-                  className={`admin-nav-btn ${adminLoginMode === 'vendor' ? 'active' : ''}`}
-                  style={{ flex: '1 1 120px' }}
-                  onClick={() => setAdminLoginMode('vendor')}
-                >
-                  Vendor
-                </button>
-                <button
-                  type="button"
-                  className={`admin-nav-btn ${adminLoginMode === 'super_admin' ? 'active' : ''}`}
-                  style={{ flex: '1 1 120px' }}
-                  onClick={() => setAdminLoginMode('super_admin')}
-                >
-                  Super admin
-                </button>
-              </div>
-            </div>
-            {adminLoginMode === 'vendor' && (
-              <div className="fg">
-                <label className="fl">Vendor</label>
-                <select
-                  className="fi fs"
-                  value={loginVendorSlug}
-                  onChange={(e) => setLoginVendorSlug(e.target.value)}
-                >
-                  {loginVendors.length === 0 ? (
-                    <option value="">Loading vendors…</option>
-                  ) : (
-                    loginVendors.map((v) => (
-                      <option key={v.slug} value={v.slug}>
-                        {v.name}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-            )}
             <div className="fg">
               <label className="fl">Email</label>
               <input className="fi" type="email" placeholder="admin@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -1367,7 +1344,7 @@ export default function AdminPage() {
               <h2 className="gatepass-subject">Permission Letter for Campus Entry</h2>
               <div className="gatepass-body">
                 <p>To whom it may concern,</p>
-                <p>This is to certify that <strong>{VENDOR.name}</strong> are official partners of <strong>LaundroSwipe</strong> (LaundroSwipe.com).</p>
+                <p>This is to certify that <strong>{gatePassVendorLabel}</strong> are official partners of <strong>LaundroSwipe</strong> (LaundroSwipe.com).</p>
                 <p>They have received <strong>{vitChennaiOrderCount} pickup order{vitChennaiOrderCount !== 1 ? 's' : ''}</strong> from students and are here to drop off the clothes. We request you to please allow these vendors to pass through the gate so they can complete the deliveries and carry out their work properly.</p>
                 <p>Kindly extend your cooperation.</p>
               </div>
@@ -1379,7 +1356,7 @@ export default function AdminPage() {
               </div>
             </div>
             <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => printGatePassLetter(VENDOR.name, vitChennaiOrderCount)} className="btn bp">
+              <button type="button" onClick={() => printGatePassLetter(gatePassVendorLabel, vitChennaiOrderCount)} className="btn bp">
                 🖨️ Print / Save as PDF
               </button>
             </div>
@@ -1391,26 +1368,20 @@ export default function AdminPage() {
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Vendor and app configuration</p>
             <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 600 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-                <img src="/profab-logo.png" alt="" style={{ width: 56, height: 56, objectFit: 'contain', borderRadius: 10 }} />
-                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0 }}>Vendor Details</h3>
+                <img src="/icon-192.png" alt="" style={{ width: 56, height: 56, objectFit: 'contain', borderRadius: 10 }} />
+                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0 }}>Vendor summary</h3>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Vendor Name</label>
-                <input readOnly value={VENDOR.name} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Vendor</label>
+                <input readOnly value={settingsVendorLabel} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Available Days</label>
-                <input readOnly value={VENDOR.days.join(', ')} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
-              </div>
-              <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Pickup Location</label>
-                <input readOnly value={VENDOR.location} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
-              </div>
-              <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Convenience Fee</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Convenience fee</label>
                 <input readOnly value={`₹${CONVENIENCE_FEE} per order`} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
               </div>
-              <div style={{ padding: '12px 16px', background: 'rgba(249,115,22,.08)', borderRadius: 8, fontSize: 13, color: 'var(--o)' }}>To change settings, update the code (e.g. lib/constants.ts) or the admin database.</div>
+              <div style={{ padding: '12px 16px', background: 'rgba(249,115,22,.08)', borderRadius: 8, fontSize: 13, color: 'var(--o)' }}>
+                Edit vendor card copy and pricing text on the Vendor tab. Add new laundry partners under Vendor Directory below.
+              </div>
             </div>
 
             {isSuperAdmin && (
@@ -1533,11 +1504,18 @@ export default function AdminPage() {
                   <select
                     className="fi fs"
                     value={registerVendorSlug}
-                    onChange={(e) => setRegisterVendorSlug(e.target.value as VendorId)}
+                    onChange={(e) => setRegisterVendorSlug(e.target.value)}
                     style={{ width: '100%' }}
                   >
-                    <option value="profab">Pro Fab</option>
-                    <option value="starwash">Star Wash</option>
+                    {vendorsList.length === 0 ? (
+                      <option value="">Add vendors in Vendor Directory first</option>
+                    ) : (
+                      vendorsList.map((v) => (
+                        <option key={v.slug} value={v.slug}>
+                          {v.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
@@ -1578,7 +1556,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   className="btn bp bbl"
-                  disabled={registerVendorSaving}
+                  disabled={registerVendorSaving || !registerVendorSlug.trim()}
                   style={{ width: '100%' }}
                   onClick={async () => {
                     setRegisterVendorSaving(true);

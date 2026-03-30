@@ -6,18 +6,15 @@ import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-pr
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import type { VendorBillRow } from '@/lib/api';
 import { CONVENIENCE_FEE } from '@/lib/constants';
-const VENDOR_NAMES: Record<string, string> = {
-  profab: 'Pro Fab Power Laundry Services',
-  starwash: 'Star Wash Power Launderers',
-};
 
 function billToHtml(b: VendorBillRow) {
+  const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const rows = Array.isArray(b.line_items) && b.line_items.length
     ? b.line_items.map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')
     : '<tr><td colspan="2">No items</td></tr>';
   return `
     <h2>LaundroSwipe</h2>
-    <p class="meta">Vendor name: Pro Fab Power Laundry</p>
+    <p class="meta">Vendor name: ${esc(b.vendor_name ?? 'Vendor')}</p>
     <p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p>
     <p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p>
     <p><strong>Phone:</strong> ${b.customer_phone ?? '—'}</p>
@@ -39,7 +36,7 @@ function billToPlainText(b: VendorBillRow): string {
     : [];
   return [
     'LaundroSwipe',
-    'Vendor: Pro Fab Power Laundry',
+    `Vendor: ${b.vendor_name ?? 'Vendor'}`,
     `Token: #${b.order_token}  Order: ${b.order_number ?? '—'}`,
     `Customer: ${b.customer_name ?? '—'}`,
     `Phone: ${b.customer_phone ?? '—'}`,
@@ -66,7 +63,11 @@ export default function BillsPage() {
     const role = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
     const vendorId = typeof window !== 'undefined' ? localStorage.getItem('admin_vendor_id') : null;
     setIsSuperAdmin(role === 'super_admin');
-    setVendorName(role === 'vendor' && vendorId ? (VENDOR_NAMES[vendorId] ?? null) : null);
+    setVendorName(
+      role === 'vendor' && vendorId
+        ? localStorage.getItem('admin_vendor_name') || vendorId
+        : null,
+    );
 
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
     const headers = token

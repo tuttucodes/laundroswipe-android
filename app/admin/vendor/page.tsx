@@ -6,18 +6,11 @@ import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-pr
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { VENDOR_BILL_ITEMS, CONVENIENCE_FEE } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
-import { VIT_VENDOR_BLOCK_ACCESS } from '@/lib/constants';
-import { VENDORS } from '@/lib/constants';
-
 type LineItem = { id: string; label: string; price: number; qty: number };
-const VENDOR_NAMES: Record<string, string> = {
-  profab: 'Pro Fab Power Laundry Services',
-  starwash: 'Star Wash Power Launderers',
-};
 
 export default function VendorPage() {
   const [vendorName, setVendorName] = useState('Vendor');
-  const [vendorId, setVendorId] = useState<'profab' | 'starwash' | null>(null);
+  const [vendorId, setVendorId] = useState<string | null>(null);
   const [token, setToken] = useState('');
   const [lookupErr, setLookupErr] = useState('');
   const [order, setOrder] = useState<OrderRow | null>(null);
@@ -42,12 +35,11 @@ export default function VendorPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const role = localStorage.getItem('admin_role');
-    const v = localStorage.getItem('admin_vendor_id');
-    if (role !== 'vendor') return;
-    if ((v === 'profab' || v === 'starwash') && VENDOR_NAMES[v]) {
-      setVendorId(v);
-      setVendorName(VENDOR_NAMES[v]);
-    }
+    const slug = localStorage.getItem('admin_vendor_id');
+    const displayName = localStorage.getItem('admin_vendor_name');
+    if (role !== 'vendor' || !slug) return;
+    setVendorId(slug);
+    setVendorName(displayName?.trim() || slug);
   }, []);
 
   const handleLookup = async (e: React.FormEvent) => {

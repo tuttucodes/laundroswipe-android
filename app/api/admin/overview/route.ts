@@ -8,10 +8,16 @@ type OrderWithVendorSlug = {
   [key: string]: unknown;
 };
 
-function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
-  const v = (vendorName ?? '').toLowerCase();
-  if (!v) return null;
-  const match = VENDORS.find((x) => v.includes(x.name.toLowerCase()) || v === x.name.toLowerCase());
+type DbVendor = { id: string; slug: string; name: string };
+
+function resolveVendorSlugFromName(vendorName: string | null | undefined, dbVendors: DbVendor[]): string | null {
+  const n = (vendorName ?? '').toLowerCase().trim();
+  if (!n) return null;
+  for (const v of dbVendors) {
+    const vn = v.name.toLowerCase();
+    if (n.includes(vn) || vn.includes(n)) return v.slug;
+  }
+  const match = VENDORS.find((x) => n.includes(x.name.toLowerCase()) || x.name.toLowerCase().includes(n));
   return match?.id ?? null;
 }
 
@@ -23,7 +29,7 @@ export async function GET(request: Request) {
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
 
   const [vendorsRes, ordersRes, usersRes, billsRes] = await Promise.all([
-    supabase.from('vendors').select('id, slug').order('slug', { ascending: true }),
+    supabase.from('vendors').select('id, slug, name, active').order('name', { ascending: true }),
     supabase
       .from('orders')
       .select(
@@ -37,7 +43,7 @@ export async function GET(request: Request) {
     supabase
       .from('vendor_bills')
       .select('id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at')
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false }),
   ]);
 
   if (vendorsRes.error) return NextResponse.json({ error: vendorsRes.error.message }, { status: 500 });
@@ -45,9 +51,8 @@ export async function GET(request: Request) {
   if (usersRes.error) return NextResponse.json({ error: usersRes.error.message }, { status: 500 });
   if (billsRes.error) return NextResponse.json({ error: billsRes.error.message }, { status: 500 });
 
-  const vendorsById = new Map<string, string>(
-    (vendorsRes.data ?? []).map((v: { id: string; slug: string }) => [v.id, v.slug])
-  );
+  const dbVendors = (vendorsRes.data ?? []) as DbVendor[];
+  const vendorsById = new Map<string, string>(dbVendors.map((v) => [v.id, v.slug]));
 
   const vendorSlug =
     session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? null : null;
@@ -55,7 +60,7 @@ export async function GET(request: Request) {
   const orders = (ordersRes.data ?? [])
     .map((o: any) => {
       const byId = o.vendor_id ? vendorsById.get(String(o.vendor_id)) : null;
-      const byName = resolveVendorSlugFromName(o.vendor_name);
+      const byName = resolveVendorSlugFromName(o.vendor_name, dbVendors);
       return { ...o, vendor_slug: (byId ?? byName ?? null) as string | null } as OrderWithVendorSlug;
     })
     .filter((o: OrderWithVendorSlug) => {
@@ -68,7 +73,7 @@ export async function GET(request: Request) {
   const bills = (billsRes.data ?? []).filter((b: any) => {
     if (!vendorSlug) return true;
     const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
-    const byVendorName = resolveVendorSlugFromName(b.vendor_name);
+    const byVendorName = resolveVendorSlugFromName(b.vendor_name, dbVendors);
     const billVendorSlug = (byVendorId ?? byVendorName ?? null) as string | null;
     return (
       String(billVendorSlug ?? '').toLowerCase() === vendorSlug &&
@@ -78,15 +83,22 @@ export async function GET(request: Request) {
 
   const billsWithVendorSlug = bills.map((b: any) => {
     const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
-    const byVendorName = resolveVendorSlugFromName(b.vendor_name);
+    const byVendorName = resolveVendorSlugFromName(b.vendor_name, dbVendors);
     return { ...b, vendor_slug: (byVendorId ?? byVendorName ?? null) as string | null };
   });
+
+  const vendorsPayload =
+    session.role === 'super_admin'
+      ? dbVendors
+      : vendorSlug
+        ? dbVendors.filter((v) => v.slug === vendorSlug)
+        : [];
 
   return NextResponse.json({
     ok: true,
     orders,
     users: usersRes.data ?? [],
     vendor_bills: billsWithVendorSlug,
+    vendors: vendorsPayload,
   });
 }
-
