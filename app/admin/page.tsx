@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
-import { COLLEGES, VENDOR, CONVENIENCE_FEE, VIT_VENDOR_BLOCK_ACCESS } from '@/lib/constants';
+import { COLLEGES, VENDOR, CONVENIENCE_FEE } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
 
 const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered'];
@@ -127,7 +127,7 @@ function printGatePassLetter(vendorName: string, orderCount: number) {
 type OrderWithUser = OrderRow & { user?: string };
 type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'vendor' | 'gatepass' | 'settings';
 type AdminRole = 'super_admin' | 'vendor';
-type VendorId = keyof typeof VIT_VENDOR_BLOCK_ACCESS;
+type VendorId = string;
 
 type ScheduleSlot = { id: string; label: string; time_from: string; time_to: string; sort_order: number; active: boolean };
 type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
@@ -161,6 +161,7 @@ export default function AdminPage() {
   }>({ count: 0, totalRevenue: 0, subtotalExcludingFees: 0, totalConvenienceFee: 0 });
   const [tab, setTab] = useState<Tab>('orders');
   const [filter, setFilter] = useState('all');
+  const [orderAreaFilter, setOrderAreaFilter] = useState('all');
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
@@ -177,6 +178,7 @@ export default function AdminPage() {
   const [vendorName, setVendorName] = useState('');
   const [vendorBrief, setVendorBrief] = useState('');
   const [vendorPricing, setVendorPricing] = useState('');
+  const [vendorProfileSlug, setVendorProfileSlug] = useState<VendorId>('profab');
   const [vendorProfileLoading, setVendorProfileLoading] = useState(false);
   const [vendorProfileSaving, setVendorProfileSaving] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -200,7 +202,7 @@ export default function AdminPage() {
     const savedRole = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
     const savedVendorId = typeof window !== 'undefined' ? localStorage.getItem('admin_vendor_id') : null;
     if (savedRole === 'super_admin' || savedRole === 'vendor') setRole(savedRole);
-    if (savedVendorId === 'profab' || savedVendorId === 'starwash') setVendorId(savedVendorId);
+    if (savedVendorId) setVendorId(savedVendorId);
     if (saved === 'true') setLoggedIn(true);
   }, []);
 
@@ -218,17 +220,15 @@ export default function AdminPage() {
         }));
         const vendorScopedOrders = !isSuperAdmin && vendorId
           ? withUser.filter((o) => {
-              const u = userMap.get(o.user_id ?? '');
-              if (!u) return false;
-              if (u.college_id !== 'vit-chn') return false;
-              const block = String(u.hostel_block ?? '').trim().toUpperCase();
-              const allowed = VIT_VENDOR_BLOCK_ACCESS[vendorId];
-              return allowed.some((b) => block.startsWith(b));
+              const ov = String((o as { vendor_id?: string | null; vendor_name?: string | null }).vendor_id ?? (o as { vendor_name?: string | null }).vendor_name ?? '').toLowerCase();
+              return ov === vendorId;
             })
           : withUser;
         setOrders(vendorScopedOrders);
         const orderIds = new Set(vendorScopedOrders.map((o) => o.id));
-        const bl = !isSuperAdmin ? (billList ?? []).filter((b) => (b.order_id ? orderIds.has(b.order_id) : false)) : (billList ?? []);
+        const bl = !isSuperAdmin
+          ? (billList ?? []).filter((b) => (b.order_id ? orderIds.has(b.order_id) : String((b as { vendor_name?: string | null }).vendor_name ?? '').toLowerCase().includes(vendorId ?? '')))
+          : (billList ?? []);
         const vendorTotals = new Map<string, number>();
         bl.forEach((b) => {
           const key = String((b as { vendor_name?: string | null }).vendor_name ?? 'Unassigned');
@@ -293,7 +293,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (!loggedIn || tab !== 'vendor') return;
     setVendorProfileLoading(true);
-    fetch('/api/admin/vendor-profile', { credentials: 'include', headers: adminAuthHeaders() })
+    const profileUrl = isSuperAdmin
+      ? `/api/admin/vendor-profile?slug=${encodeURIComponent(vendorProfileSlug)}`
+      : '/api/admin/vendor-profile';
+    fetch(profileUrl, { credentials: 'include', headers: adminAuthHeaders() })
       .then((r) => {
         if (r.status === 401) {
           sessionStorage.removeItem('admin_token');
@@ -312,10 +315,15 @@ export default function AdminPage() {
       })
       .catch(() => {})
       .finally(() => setVendorProfileLoading(false));
-  }, [loggedIn, tab]);
+  }, [loggedIn, tab, isSuperAdmin, vendorProfileSlug]);
 
   useEffect(() => {
-    if (!loggedIn || !isSuperAdmin || tab !== 'settings') return;
+    if (role === 'vendor' && vendorId) setVendorProfileSlug(vendorId);
+    if (role === 'vendor') setOrderAreaFilter('vit-chn');
+  }, [role, vendorId]);
+
+  useEffect(() => {
+    if (!loggedIn || !isSuperAdmin || !['settings', 'vendor'].includes(tab)) return;
     Promise.all([
       fetch('/api/admin/vendors', { credentials: 'include', headers: adminAuthHeaders() }).then((r) => r.json().catch(() => ({}))),
       fetch('/api/admin/service-areas', { credentials: 'include', headers: adminAuthHeaders() }).then((r) => r.json().catch(() => ({}))),
@@ -350,7 +358,7 @@ export default function AdminPage() {
           if (data.token) sessionStorage.setItem('admin_token', data.token);
         }
         setRole(data.role === 'super_admin' ? 'super_admin' : 'vendor');
-        setVendorId(data.vendorId === 'profab' || data.vendorId === 'starwash' ? data.vendorId : null);
+        setVendorId(typeof data.vendorId === 'string' ? data.vendorId : null);
         setLoggedIn(true);
       } else {
         setErr(data?.error || 'Invalid email or password');
@@ -425,7 +433,10 @@ export default function AdminPage() {
     showToast('Users exported', 'ok');
   };
 
-  const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
+  const areaScopedOrders = orderAreaFilter === 'all'
+    ? orders
+    : orders.filter((o) => users.find((u) => u.id === o.user_id)?.college_id === orderAreaFilter);
+  const filtered = filter === 'all' ? areaScopedOrders : areaScopedOrders.filter((o) => o.status === filter);
   const filteredUsers = (users ?? []).filter((u) => {
     const q = userSearch.trim().toLowerCase();
     if (!q) return true;
@@ -573,6 +584,17 @@ export default function AdminPage() {
             )}
             {!loading && (
               <div className="admin-filter-row">
+                <select
+                  className="admin-filter-btn"
+                  value={orderAreaFilter}
+                  onChange={(e) => setOrderAreaFilter(e.target.value)}
+                  style={{ minWidth: 170 }}
+                >
+                  <option value="all">All locations</option>
+                  {COLLEGES.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
                 {['all', 'scheduled', 'processing', 'delivered'].map((f) => (
                   <button
                     key={f}
@@ -954,11 +976,24 @@ export default function AdminPage() {
         {tab === 'vendor' && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Vendor</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Edit the vendor card shown on the user homepage (brief and pricing).</p>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>
+              Edit vendor card details. {isSuperAdmin ? 'Choose vendor to edit each profile independently.' : 'You can edit only your vendor profile.'}
+            </p>
             {vendorProfileLoading ? (
               <p style={{ color: 'var(--ts)' }}>Loading…</p>
             ) : (
               <div className="vendor-card" style={{ maxWidth: 520 }}>
+                {isSuperAdmin && (
+                  <div className="fg" style={{ marginBottom: 12 }}>
+                    <label className="fl">Vendor Profile</label>
+                    <select className="fi fs" value={vendorProfileSlug} onChange={(e) => setVendorProfileSlug(e.target.value)}>
+                      {vendorsList.map((v) => (
+                        <option key={v.slug} value={v.slug}>{v.name} ({v.slug})</option>
+                      ))}
+                      {vendorsList.length === 0 && <option value={vendorProfileSlug}>{vendorProfileSlug}</option>}
+                    </select>
+                  </div>
+                )}
                 <div className="fg" style={{ marginBottom: 12 }}>
                   <label className="fl">Display name</label>
                   <input className="fi" value={vendorName} onChange={(e) => setVendorName(e.target.value)} placeholder="e.g. Pro Fab Power Launders" />
@@ -982,7 +1017,12 @@ export default function AdminPage() {
                         method: 'POST',
                         credentials: 'include',
                         headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
-                        body: JSON.stringify({ name: vendorName.trim(), brief: vendorBrief.trim(), pricing_details: vendorPricing.trim() }),
+                        body: JSON.stringify({
+                          slug: isSuperAdmin ? vendorProfileSlug : undefined,
+                          name: vendorName.trim(),
+                          brief: vendorBrief.trim(),
+                          pricing_details: vendorPricing.trim(),
+                        }),
                       });
                       const data = await res.json().catch(() => ({}));
                       if (res.ok) {

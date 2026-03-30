@@ -892,6 +892,7 @@ export default function LaundroApp() {
       return;
     }
     const svc = SERVICES.find((x) => x.id === sd.svc);
+    const selectedVendor = VENDORS.find((v) => v.id === sd.vendorId);
     const payload = {
       on: genOid(),
       tk: genTk(),
@@ -901,6 +902,7 @@ export default function LaundroApp() {
       ts: sd.ts,
       status: 'scheduled',
       ins: sd.ins ?? undefined,
+      vendorName: selectedVendor?.id ?? 'profab',
     };
     setOrderSubmitting(true);
     try {

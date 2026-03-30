@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { isAdminRequest } from '@/lib/admin-session';
+import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
 
 function getServiceSupabase() {
@@ -10,37 +10,47 @@ function getServiceSupabase() {
   return createClient(url, key);
 }
 
-const SLUG = 'profab';
+function resolveSlug(request: Request, bodySlug?: string): string | null {
+  const s = getAdminSessionFromRequest(request);
+  if (!s) return null;
+  if (s.role === 'vendor') return s.vendorId ?? null;
+  const q = new URL(request.url).searchParams.get('slug')?.trim();
+  return (bodySlug?.trim() || q || 'profab') || 'profab';
+}
 
 export async function GET(request: Request) {
-  if (!isAdminRequest(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const slug = resolveSlug(request);
+  if (!slug) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const supabase = getServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
-  const { data, error } = await supabase.from('vendor_profiles').select('*').eq('slug', SLUG).maybeSingle();
+  const { data, error } = await supabase.from('vendor_profiles').select('*').eq('slug', slug).maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
 
 export async function POST(request: Request) {
-  if (!isAdminRequest(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const session = getAdminSessionFromRequest(request);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const rate = checkAdminRateLimit(request);
   if (!rate.ok) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   if (!checkBodySize(request)) return NextResponse.json({ error: 'Request too large' }, { status: 413 });
   const supabase = getServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
-  let body: { name?: string; brief?: string; pricing_details?: string };
+  let body: { name?: string; brief?: string; pricing_details?: string; slug?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }
+  const slug = resolveSlug(request, body.slug);
+  if (!slug) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const name = body.name != null ? String(body.name).trim().slice(0, 200) : undefined;
   const brief = body.brief != null ? String(body.brief).trim().slice(0, 2000) : undefined;
   const pricing_details = body.pricing_details != null ? String(body.pricing_details).trim().slice(0, 5000) : undefined;
   const now = new Date().toISOString();
-  const { data: existing } = await supabase.from('vendor_profiles').select('name, brief, pricing_details').eq('slug', SLUG).maybeSingle();
+  const { data: existing } = await supabase.from('vendor_profiles').select('name, brief, pricing_details').eq('slug', slug).maybeSingle();
   const row = {
-    slug: SLUG,
+    slug,
     name: name !== undefined ? name : (existing?.name ?? 'Vendor'),
     brief: brief !== undefined ? brief : (existing?.brief ?? null),
     pricing_details: pricing_details !== undefined ? pricing_details : (existing?.pricing_details ?? null),

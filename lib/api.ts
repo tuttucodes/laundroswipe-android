@@ -25,6 +25,8 @@ export type OrderRow = {
   status: string;
   instructions: string | null;
   user_id: string | null;
+  vendor_name?: string | null;
+  vendor_id?: string | null;
   created_at: string;
   delivery_confirmed_at?: string | null;
   delivery_comments?: string | null;
@@ -135,6 +137,7 @@ export const LSApi = {
       ts: string;
       status: string;
       ins?: string;
+      vendorName?: string;
     },
     userId: string
   ): Promise<OrderRow | null> {
@@ -152,6 +155,7 @@ export const LSApi = {
           status: order.status,
           instructions: order.ins ?? null,
           user_id: userId,
+          vendor_name: order.vendorName ?? null,
         })
         .select()
         .single();
