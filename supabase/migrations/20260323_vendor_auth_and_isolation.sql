@@ -100,7 +100,7 @@ language sql
 security definer
 set search_path = public
 as $$
-  select crypt(p_password, gen_salt('bf', 10));
+  select extensions.crypt(p_password, extensions.gen_salt('bf', 10));
 $$;
 
 create or replace function public.admin_password_matches(p_password text, p_hash text)
@@ -110,7 +110,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select crypt(p_password, p_hash) = p_hash;
+  select extensions.crypt(p_password, p_hash) = p_hash;
 $$;
 
 -- 8) Login RPC used by /api/admin/login
@@ -186,7 +186,7 @@ begin
     return;
   end if;
 
-  if crypt(p_join_code, code_row.code_hash) <> code_row.code_hash then
+  if extensions.crypt(p_join_code, code_row.code_hash) <> code_row.code_hash then
     return query select false, 'Invalid join code';
     return;
   end if;

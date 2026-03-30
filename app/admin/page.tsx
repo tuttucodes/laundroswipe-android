@@ -132,6 +132,8 @@ type VendorId = keyof typeof VIT_VENDOR_BLOCK_ACCESS;
 type ScheduleSlot = { id: string; label: string; time_from: string; time_to: string; sort_order: number; active: boolean };
 type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
 type AdminNotification = { id: string; title: string; body: string | null; sent_at: string | null; scheduled_at: string | null; created_at: string };
+type VendorSummary = { id: string; slug: string; name: string; active: boolean };
+type ServiceArea = { id: string; name: string; short_code: string; city: string | null; state: string | null; is_active: boolean };
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -147,6 +149,7 @@ export default function AdminPage() {
   const [err, setErr] = useState('');
   const [orders, setOrders] = useState<OrderWithUser[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [userSearch, setUserSearch] = useState('');
   const [bills, setBills] = useState<{
     count: number;
     /** Sum of each bill’s final total (what customers paid). */
@@ -178,6 +181,17 @@ export default function AdminPage() {
   const [vendorProfileSaving, setVendorProfileSaving] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const isSuperAdmin = role === 'super_admin';
+  const [vendorsList, setVendorsList] = useState<VendorSummary[]>([]);
+  const [areasList, setAreasList] = useState<ServiceArea[]>([]);
+  const [vendorStats, setVendorStats] = useState<Array<{ vendorName: string; total: number }>>([]);
+  const [newVendorSlug, setNewVendorSlug] = useState('');
+  const [newVendorName, setNewVendorName] = useState('');
+  const [newVendorSaving, setNewVendorSaving] = useState(false);
+  const [newAreaName, setNewAreaName] = useState('');
+  const [newAreaCode, setNewAreaCode] = useState('');
+  const [newAreaCity, setNewAreaCity] = useState('');
+  const [newAreaState, setNewAreaState] = useState('');
+  const [newAreaSaving, setNewAreaSaving] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -215,6 +229,12 @@ export default function AdminPage() {
         setOrders(vendorScopedOrders);
         const orderIds = new Set(vendorScopedOrders.map((o) => o.id));
         const bl = !isSuperAdmin ? (billList ?? []).filter((b) => (b.order_id ? orderIds.has(b.order_id) : false)) : (billList ?? []);
+        const vendorTotals = new Map<string, number>();
+        bl.forEach((b) => {
+          const key = String((b as { vendor_name?: string | null }).vendor_name ?? 'Unassigned');
+          vendorTotals.set(key, (vendorTotals.get(key) ?? 0) + (Number(b.total) || 0));
+        });
+        setVendorStats(Array.from(vendorTotals.entries()).map(([vendorName, total]) => ({ vendorName, total })).sort((a, b) => b.total - a.total));
         const agg = bl.reduce(
           (acc, b) => {
             const sub = Number(b.subtotal) || 0;
@@ -293,6 +313,17 @@ export default function AdminPage() {
       .catch(() => {})
       .finally(() => setVendorProfileLoading(false));
   }, [loggedIn, tab]);
+
+  useEffect(() => {
+    if (!loggedIn || !isSuperAdmin || tab !== 'settings') return;
+    Promise.all([
+      fetch('/api/admin/vendors', { credentials: 'include', headers: adminAuthHeaders() }).then((r) => r.json().catch(() => ({}))),
+      fetch('/api/admin/service-areas', { credentials: 'include', headers: adminAuthHeaders() }).then((r) => r.json().catch(() => ({}))),
+    ]).then(([v, a]) => {
+      if (Array.isArray(v?.vendors)) setVendorsList(v.vendors);
+      if (Array.isArray(a?.areas)) setAreasList(a.areas);
+    }).catch(() => {});
+  }, [loggedIn, isSuperAdmin, tab]);
 
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
@@ -395,6 +426,12 @@ export default function AdminPage() {
   };
 
   const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
+  const filteredUsers = (users ?? []).filter((u) => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return true;
+    return [u.display_id, u.full_name, u.email, u.phone, u.college_id, u.reg_no, u.hostel_block]
+      .some((v) => String(v ?? '').toLowerCase().includes(q));
+  });
   const totalOrders = orders.length;
   const active = orders.filter((o) => o.status !== 'delivered').length;
   const delivered = orders.filter((o) => o.status === 'delivered').length;
@@ -408,7 +445,7 @@ export default function AdminPage() {
       <div className="login-wrap">
         <div className="login-card">
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <img src="/profab-logo.png" alt="ProFab" style={{ height: 56, objectFit: 'contain', marginBottom: 14 }} />
+            <img src="/icon-192.png" alt="LaundroSwipe" style={{ height: 56, width: 56, objectFit: 'contain', marginBottom: 14, borderRadius: 12 }} />
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Vendor Login</h1>
             <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Vendor portal + super admin access</p>
           </div>
@@ -520,6 +557,18 @@ export default function AdminPage() {
                   <div className="admin-stat-value" style={{ color: 'var(--ok)' }}>{delivered}</div>
                   <div className="admin-stat-label">Delivered</div>
                 </div>
+                {isSuperAdmin && (
+                  <div className="admin-stat-card">
+                    <div className="admin-stat-value" style={{ color: 'var(--b)' }}>{users.length}</div>
+                    <div className="admin-stat-label">Total users</div>
+                  </div>
+                )}
+                {isSuperAdmin && vendorStats.slice(0, 3).map((vs) => (
+                  <div className="admin-stat-card" key={vs.vendorName}>
+                    <div className="admin-stat-value" style={{ color: 'var(--t)' }}>₹{vs.total.toFixed(0)}</div>
+                    <div className="admin-stat-label">{vs.vendorName} sales</div>
+                  </div>
+                ))}
               </div>
             )}
             {!loading && (
@@ -612,6 +661,14 @@ export default function AdminPage() {
                 <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Users</h1>
                 <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>Registered app users</p>
               </div>
+              <input
+                type="text"
+                className="fi"
+                placeholder="Search by name, email, phone, ID, college..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                style={{ minWidth: 260, flex: '1 1 280px', maxWidth: 420 }}
+              />
               <button type="button" onClick={exportUsersToCsv} disabled={loading || !users?.length} className="admin-nav-btn" style={{ marginLeft: 'auto' }}>
                 📥 Export to Excel
               </button>
@@ -640,7 +697,7 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(users ?? []).map((u) => {
+                      {filteredUsers.map((u) => {
                         const ini = (u.full_name ?? '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
                         const collegeName = u.college_id ? (COLLEGES.find((c) => c.id === u.college_id)?.name ?? u.college_id) : '—';
                         const displayId = u.display_id ?? '—';
@@ -663,13 +720,13 @@ export default function AdminPage() {
                       })}
                     </tbody>
                   </table>
-                  {(!users || users.length === 0) && <p style={{ textAlign: 'center', padding: 48, color: 'var(--ts)' }}>No users yet. Users appear when they register.</p>}
+                  {filteredUsers.length === 0 && <p style={{ textAlign: 'center', padding: 48, color: 'var(--ts)' }}>No users found for this search.</p>}
                 </div>
                 <div className="admin-user-cards">
-                  {(!users || users.length === 0) ? (
-                    <p style={{ textAlign: 'center', padding: 24, color: 'var(--ts)', fontSize: 14 }}>No users yet. Users appear when they register.</p>
+                  {(filteredUsers.length === 0) ? (
+                    <p style={{ textAlign: 'center', padding: 24, color: 'var(--ts)', fontSize: 14 }}>No users found for this search.</p>
                   ) : (
-                    (users ?? []).map((u) => {
+                    filteredUsers.map((u) => {
                       const collegeName = u.college_id ? (COLLEGES.find((c) => c.id === u.college_id)?.name ?? u.college_id) : '—';
                       return (
                         <div key={u.id} className="admin-user-card">
@@ -1011,6 +1068,114 @@ export default function AdminPage() {
               </div>
               <div style={{ padding: '12px 16px', background: 'rgba(249,115,22,.08)', borderRadius: 8, fontSize: 13, color: 'var(--o)' }}>To change settings, update the code (e.g. lib/constants.ts) or the admin database.</div>
             </div>
+
+            {isSuperAdmin && (
+              <div style={{ marginTop: 20, background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 600 }}>
+                <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, marginBottom: 6 }}>Vendor Directory</h2>
+                <p style={{ color: 'var(--ts)', fontSize: 13, marginBottom: 12 }}>Add a vendor to enable platform-level reporting and account assignment.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                  <input className="fi" placeholder="Vendor name" value={newVendorName} onChange={(e) => setNewVendorName(e.target.value)} />
+                  <input className="fi" placeholder="slug (e.g. starwash)" value={newVendorSlug} onChange={(e) => setNewVendorSlug(e.target.value)} />
+                </div>
+                <button
+                  type="button"
+                  className="btn bp bbl"
+                  disabled={newVendorSaving}
+                  onClick={async () => {
+                    setNewVendorSaving(true);
+                    try {
+                      const res = await fetch('/api/admin/vendors', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+                        body: JSON.stringify({ name: newVendorName.trim(), slug: newVendorSlug.trim(), active: true }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (res.ok) {
+                        showToast('Vendor saved', 'ok');
+                        setNewVendorName('');
+                        setNewVendorSlug('');
+                        setVendorsList((prev) => {
+                          const row = data.vendor as VendorSummary;
+                          const rest = prev.filter((v) => v.slug !== row.slug);
+                          return [row, ...rest];
+                        });
+                      } else showToast(data?.error || 'Vendor save failed', 'er');
+                    } catch {
+                      showToast('Vendor save failed', 'er');
+                    } finally {
+                      setNewVendorSaving(false);
+                    }
+                  }}
+                >
+                  {newVendorSaving ? 'Saving…' : 'Add / Update vendor'}
+                </button>
+                <div style={{ marginTop: 12, fontSize: 13, color: 'var(--ts)' }}>
+                  {vendorsList.length > 0
+                    ? vendorsList.map((v) => `${v.name} (${v.slug})`).join(' · ')
+                    : 'No vendors loaded yet.'}
+                </div>
+              </div>
+            )}
+
+            {isSuperAdmin && (
+              <div style={{ marginTop: 20, background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 600 }}>
+                <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, marginBottom: 6 }}>Locality / Service Area</h2>
+                <p style={{ color: 'var(--ts)', fontSize: 13, marginBottom: 12 }}>Add service areas for rollout (uses the colleges table).</p>
+                <input className="fi" placeholder="Area name (e.g. SRM KTR)" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} style={{ marginBottom: 8 }} />
+                <input className="fi" placeholder="Code (e.g. SRM_KTR)" value={newAreaCode} onChange={(e) => setNewAreaCode(e.target.value)} style={{ marginBottom: 8 }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                  <input className="fi" placeholder="City" value={newAreaCity} onChange={(e) => setNewAreaCity(e.target.value)} />
+                  <input className="fi" placeholder="State" value={newAreaState} onChange={(e) => setNewAreaState(e.target.value)} />
+                </div>
+                <button
+                  type="button"
+                  className="btn bp bbl"
+                  disabled={newAreaSaving}
+                  onClick={async () => {
+                    setNewAreaSaving(true);
+                    try {
+                      const res = await fetch('/api/admin/service-areas', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+                        body: JSON.stringify({
+                          name: newAreaName.trim(),
+                          short_code: newAreaCode.trim(),
+                          city: newAreaCity.trim(),
+                          state: newAreaState.trim(),
+                          is_active: false,
+                        }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (res.ok) {
+                        showToast('Service area saved', 'ok');
+                        setNewAreaName('');
+                        setNewAreaCode('');
+                        setNewAreaCity('');
+                        setNewAreaState('');
+                        setAreasList((prev) => {
+                          const row = data.area as ServiceArea;
+                          const rest = prev.filter((a) => a.short_code !== row.short_code);
+                          return [row, ...rest];
+                        });
+                      } else showToast(data?.error || 'Service area save failed', 'er');
+                    } catch {
+                      showToast('Service area save failed', 'er');
+                    } finally {
+                      setNewAreaSaving(false);
+                    }
+                  }}
+                >
+                  {newAreaSaving ? 'Saving…' : 'Add / Update service area'}
+                </button>
+                <div style={{ marginTop: 12, fontSize: 13, color: 'var(--ts)' }}>
+                  {areasList.length > 0
+                    ? areasList.slice(0, 8).map((a) => `${a.name} (${a.short_code})`).join(' · ')
+                    : 'No areas loaded yet.'}
+                </div>
+              </div>
+            )}
 
             {isSuperAdmin && (
               <div style={{ marginTop: 20, background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 600 }}>
