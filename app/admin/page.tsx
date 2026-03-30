@@ -152,6 +152,30 @@ type LocationRequestRow = {
   source: string | null;
 };
 
+/** Default labels/times when adding a slot from order-history suggestions. */
+const SLOT_SUGGEST_PRESETS: Record<string, { label: string; time_from: string; time_to: string }> = {
+  afternoon: { label: 'Afternoon (12–4 PM)', time_from: '12:00', time_to: '16:00' },
+  evening: { label: 'Evening (4–8 PM)', time_from: '16:00', time_to: '20:00' },
+  morning: { label: 'Morning (8 AM–12 PM)', time_from: '08:00', time_to: '12:00' },
+};
+
+function sanitizeSuggestedSlotId(raw: string): string {
+  const s = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 64);
+  return s || 'custom_slot';
+}
+
+function presetForSuggestedSlot(id: string): { label: string; time_from: string; time_to: string } {
+  if (SLOT_SUGGEST_PRESETS[id]) return SLOT_SUGGEST_PRESETS[id];
+  const label = id
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return { label, time_from: '10:00', time_to: '14:00' };
+}
+
 const TAB_FROM_QUERY: Tab[] = [
   'orders',
   'users',
@@ -200,6 +224,10 @@ export default function AdminPage() {
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [scheduleSuggestions, setScheduleSuggestions] = useState<{
+    slot_counts: { time_slot: string; count: number }[];
+    dow_counts: { dow: number; label: string; count: number }[];
+  } | null>(null);
   const [notifyTitle, setNotifyTitle] = useState('');
   const [notifyBody, setNotifyBody] = useState('');
   const [notifyScheduledAt, setNotifyScheduledAt] = useState('');
@@ -260,14 +288,13 @@ export default function AdminPage() {
         /* vendors cannot open Users tab from URL */
       } else if (
         (t === 'colleges' ||
-          t === 'schedule' ||
           t === 'notifications' ||
           t === 'gatepass' ||
           t === 'settings' ||
           t === 'area_requests') &&
         savedRole !== 'super_admin'
       ) {
-        /* vendor-only tabs stay on allowed surface */
+        /* vendors: schedule allowed; other super-only tabs blocked */
       } else {
         setTab(t);
       }
@@ -409,19 +436,34 @@ export default function AdminPage() {
   useEffect(() => {
     if (!loggedIn || tab !== 'schedule') return;
     setScheduleLoading(true);
-    fetch('/api/admin/schedule', { credentials: 'include', headers: adminAuthHeaders() })
-      .then(async (r) => {
-        const data = await r.json().catch(() => ({}));
-        if (r.status === 401) {
+    setScheduleSuggestions(null);
+    const headers = adminAuthHeaders();
+    Promise.all([
+      fetch('/api/admin/schedule', { credentials: 'include', headers }),
+      fetch('/api/admin/schedule/suggestions', { credentials: 'include', headers }),
+    ])
+      .then(async ([schedRes, sugRes]) => {
+        const schedData = await schedRes.json().catch(() => ({}));
+        const sugData = await sugRes.json().catch(() => ({}));
+        if (schedRes.status === 401) {
           sessionStorage.removeItem('admin_token');
           localStorage.removeItem('admin_logged');
           setLoggedIn(false);
           return;
         }
-        if (data.slots) setScheduleSlots(data.slots);
-        if (data.dates) setScheduleDates(data.dates);
+        if (schedData.slots) setScheduleSlots(schedData.slots);
+        if (schedData.dates) setScheduleDates(schedData.dates);
+        if (sugRes.ok && sugData?.slot_counts && sugData?.dow_counts) {
+          setScheduleSuggestions({
+            slot_counts: sugData.slot_counts,
+            dow_counts: sugData.dow_counts,
+          });
+        }
       })
-      .catch(() => setScheduleSlots([]))
+      .catch(() => {
+        setScheduleSlots([]);
+        setScheduleSuggestions(null);
+      })
       .finally(() => setScheduleLoading(false));
   }, [loggedIn, tab]);
 
@@ -563,6 +605,39 @@ export default function AdminPage() {
   const adminAuthHeaders = (): Record<string, string> => {
     const t = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
     return t ? { Authorization: `Bearer ${t}` } : {};
+  };
+
+  const applySuggestedSlot = (timeSlotRaw: string) => {
+    const id = sanitizeSuggestedSlotId(timeSlotRaw);
+    const preset = presetForSuggestedSlot(id);
+    setScheduleSlots((prev) => {
+      const idx = prev.findIndex((s) => s.id === id);
+      const maxOrd = prev.reduce((m, s) => Math.max(m, s.sort_order ?? 0), -1);
+      if (idx < 0) {
+        return [
+          ...prev,
+          {
+            id,
+            label: preset.label,
+            time_from: `${preset.time_from}:00`,
+            time_to: `${preset.time_to}:00`,
+            sort_order: maxOrd + 1,
+            active: true,
+          },
+        ];
+      }
+      return prev.map((s, i) =>
+        i === idx ? { ...s, active: true, label: s.label?.trim() ? s.label : preset.label } : s,
+      );
+    });
+    setScheduleDates((prev) =>
+      prev.map((d) => {
+        if (!d.enabled) return d;
+        if (d.slot_ids.includes(id)) return d;
+        return { ...d, slot_ids: [...d.slot_ids, id] };
+      }),
+    );
+    showToast(`“${preset.label}” added — click Save schedule to publish.`, 'ok');
   };
 
   const advanceStatus = async (orderId: string) => {
@@ -737,6 +812,11 @@ export default function AdminPage() {
             <Link href="/admin/pickup" className="admin-nav-link" onClick={closeMenu}>📦 Pickup / Delivery</Link>
             <Link href="/admin/bills" className="admin-nav-link" onClick={closeMenu}>📋 Saved bills</Link>
             <Link href="/admin/printers" className="admin-nav-link" onClick={closeMenu}>🖨️ Printers</Link>
+            {!isSuperAdmin && (
+              <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>
+                📅 Schedule &amp; time slots
+              </button>
+            )}
             <button type="button" onClick={() => { setTab('vendor'); closeMenu(); }} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
           </div>
           {isSuperAdmin && (
@@ -1116,6 +1196,68 @@ export default function AdminPage() {
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Schedule</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enable/disable dates and slots. Users only see enabled dates and the slots you allow per date.</p>
+            {!scheduleLoading && scheduleSuggestions && (
+              <div
+                style={{
+                  marginBottom: 24,
+                  padding: 16,
+                  borderRadius: 14,
+                  background: '#F0F9FF',
+                  border: '1px solid rgba(14, 165, 233, 0.35)',
+                }}
+              >
+                <h2 style={{ fontFamily: 'var(--fd)', fontSize: 17, marginBottom: 8, color: 'var(--b)' }}>Suggestions from bookings</h2>
+                <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 12, lineHeight: 1.5 }}>
+                  {isSuperAdmin
+                    ? 'Popular time slots and weekdays across all orders. One tap adds or activates the slot and attaches it to every enabled date (you can still tweak below).'
+                    : 'Popular time slots and weekdays from your orders. One tap adds or activates the slot and attaches it to every enabled date.'}{' '}
+                  <strong>Save schedule</strong> when you are done.
+                </p>
+                {scheduleSuggestions.dow_counts.length > 0 && (
+                  <p style={{ fontSize: 13, color: 'var(--b)', marginBottom: 14, fontWeight: 600 }}>
+                    Busiest pickup days:{' '}
+                    {scheduleSuggestions.dow_counts
+                      .slice(0, 4)
+                      .map((d) => `${d.label} (${d.count})`)
+                      .join(' · ')}
+                  </p>
+                )}
+                {scheduleSuggestions.slot_counts.length === 0 ? (
+                  <p style={{ fontSize: 13, color: 'var(--ts)', margin: 0 }}>No order history yet — add slots manually below.</p>
+                ) : (
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {scheduleSuggestions.slot_counts.map((s) => {
+                      const sid = sanitizeSuggestedSlotId(s.time_slot);
+                      const exists = scheduleSlots.some((x) => x.id === sid);
+                      return (
+                        <li
+                          key={s.time_slot}
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            gap: 10,
+                            justifyContent: 'space-between',
+                            padding: '10px 12px',
+                            background: '#fff',
+                            borderRadius: 10,
+                            border: '1px solid var(--bd)',
+                          }}
+                        >
+                          <span style={{ fontSize: 14 }}>
+                            <strong style={{ color: 'var(--b)' }}>{s.time_slot}</strong>
+                            <span style={{ color: 'var(--ts)', marginLeft: 8 }}>{s.count} orders</span>
+                          </span>
+                          <button type="button" className="admin-nav-btn" onClick={() => applySuggestedSlot(s.time_slot)}>
+                            {exists ? 'Add to enabled dates' : 'Add slot (1-click)'}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
             {scheduleLoading ? (
               <p style={{ color: 'var(--ts)' }}>Loading…</p>
             ) : (

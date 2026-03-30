@@ -15,9 +15,8 @@ export async function GET(request: Request) {
   if (!isAdminRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  // Schedule config is super-admin only.
   const session = getAdminSessionFromRequest(request);
-  if (!session || session.role !== 'super_admin') {
+  if (!session || (session.role !== 'super_admin' && session.role !== 'vendor')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   const supabase = getServiceSupabase();
@@ -64,7 +63,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const session = getAdminSessionFromRequest(request);
-  if (!session || session.role !== 'super_admin') {
+  if (!session || (session.role !== 'super_admin' && session.role !== 'vendor')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   const rate = checkAdminRateLimit(request);
