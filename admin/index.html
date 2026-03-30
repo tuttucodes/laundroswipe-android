@@ -222,12 +222,12 @@ const AD={
   },
 
   rUsers(){
-    return`<div style="animation:fadeIn .4s"><div class="page-title">Users</div><div class="page-sub">Registered app users</div><div class="table-wrap"><div class="table-head"><h3>All Users</h3></div>${!this.users.length?'<div class="empty"><div class="em">👥</div>No users yet. Users will appear here when they register.</div>':`<table><thead><tr><th>User</th><th>Email</th><th>Phone</th><th>Type</th><th>College</th><th>Reg No</th></tr></thead><tbody>${this.users.map(u=>{const ini=(u.fn||u.fullName||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);const name=u.fn||u.fullName||'—';const email=u.em||u.email||'—';const phone=u.ph||u.phone||'—';const type=u.ut||u.userType||'general';const college=u.cid?'Chennai Institution':'—';const reg=u.rn||u.regNumber||'—';return`<tr><td style="display:flex;align-items:center;gap:10px"><div class="user-avatar">${ini}</div><span style="font-weight:600">${name}</span></td><td>${email}</td><td>${phone}</td><td>${type==='student'?'<span class="badge b-student">🎓 Student</span>':'<span class="badge b-pro">General</span>'}</td><td>${college}</td><td>${reg}</td></tr>`}).join('')}</tbody></table>`}</div></div>`;
+    return`<div style="animation:fadeIn .4s"><div class="page-title">Users</div><div class="page-sub">Registered app users</div><div class="table-wrap"><div class="table-head"><h3>All Users</h3></div>${!this.users.length?'<div class="empty"><div class="em">👥</div>No users yet. Users will appear here when they register.</div>':`<table><thead><tr><th>User</th><th>Email</th><th>Phone</th><th>Type</th><th>College</th><th>Reg No</th></tr></thead><tbody>${this.users.map(u=>{const ini=(u.fn||u.fullName||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);const name=u.fn||u.fullName||'—';const email=u.em||u.email||'—';const phone=u.ph||u.phone||'—';const type=u.ut||u.userType||'general';const college=u.cid?'VIT Chennai':'—';const reg=u.rn||u.regNumber||'—';return`<tr><td style="display:flex;align-items:center;gap:10px"><div class="user-avatar">${ini}</div><span style="font-weight:600">${name}</span></td><td>${email}</td><td>${phone}</td><td>${type==='student'?'<span class="badge b-student">🎓 Student</span>':'<span class="badge b-pro">General</span>'}</td><td>${college}</td><td>${reg}</td></tr>`}).join('')}</tbody></table>`}</div></div>`;
   },
 
   rColleges(){
     const colleges=[
-      {name:'Chennai Institution',code:'VIT_CHN',city:'Chennai',active:true},
+      {name:'VIT Chennai',code:'VIT_CHN',city:'Chennai',active:true},
       {name:'VIT Vellore',code:'VIT_VLR',city:'Vellore',active:false},
       {name:'VIT AP',code:'VIT_AP',city:'Amaravati',active:false},
       {name:'VIT Bhopal',code:'VIT_BPL',city:'Bhopal',active:false},

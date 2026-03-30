@@ -1,5 +1,5 @@
 export const COLLEGES = [
-  { id: 'vit-chn', name: 'Chennai Institution', code: 'VIT_CHN', active: true },
+  { id: 'vit-chn', name: 'VIT Chennai', code: 'VIT_CHN', active: true },
   { id: 'vit-vlr', name: 'VIT Vellore', code: 'VIT_VLR', active: false },
   { id: 'vit-ap', name: 'VIT AP', code: 'VIT_AP', active: false },
   { id: 'vit-bpl', name: 'VIT Bhopal', code: 'VIT_BPL', active: false },
