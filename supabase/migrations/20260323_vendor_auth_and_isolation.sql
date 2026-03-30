@@ -238,27 +238,7 @@ drop policy if exists vendor_join_codes_service_all on public.vendor_join_codes;
 create policy vendor_join_codes_service_all on public.vendor_join_codes
 for all to service_role using (true) with check (true);
 
--- 12) One-time bootstrap examples
--- Replace with your actual values before running.
-
--- Super admin account:
-insert into public.admin_accounts (email, password_hash, role, active)
-values (
-  'founder@laundroswipe.com',
-  public.admin_hash_password('Beena@123'),
-  'super_admin',
-  true
-)
-on conflict (email) do nothing;
-
--- Set current vendor join codes:
-insert into public.vendor_join_codes (vendor_id, code_hash, active)
-select v.id, public.admin_hash_password('KRISHNAA'), true
-from public.vendors v
-where v.slug in ('profab', 'starwash')
-on conflict do nothing;
-
--- Direct vendor admin creation examples:
-select * from public.register_vendor_admin('profab@laundroswipe.com','Abdul@123','profab','KRISHNAA');
-select * from public.register_vendor_admin('starwash@laundroswipe.com','Raaj@123','starwash','KRISHNAA');
+-- 12) Bootstrap (no secrets in migrations)
+-- Create super admin, join codes, and vendor accounts in Supabase SQL Editor using
+-- supabase/scripts/bootstrap_admin.example.sql (copy and replace placeholders).
 

@@ -163,10 +163,13 @@ export default function AdminPage() {
   const [registerVendorEmail, setRegisterVendorEmail] = useState('');
   const [registerVendorPassword, setRegisterVendorPassword] = useState('');
   const [registerVendorSlug, setRegisterVendorSlug] = useState<VendorId>('profab');
-  const [registerJoinCode, setRegisterJoinCode] = useState('KRISHNAA');
+  const [registerJoinCode, setRegisterJoinCode] = useState('');
   const [registerVendorSaving, setRegisterVendorSaving] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [adminLoginMode, setAdminLoginMode] = useState<'vendor' | 'super_admin'>('vendor');
+  const [loginVendors, setLoginVendors] = useState<{ slug: string; name: string }[]>([]);
+  const [loginVendorSlug, setLoginVendorSlug] = useState('');
   const [err, setErr] = useState('');
   const [orders, setOrders] = useState<OrderWithUser[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -224,6 +227,18 @@ export default function AdminPage() {
     : `${VENDOR_TITLES[vendorId ?? ''] ?? 'Vendor'} Dashboard`;
 
   const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (loggedIn) return;
+    fetch('/api/vendors/active')
+      .then((r) => r.json())
+      .then((d: { vendors?: { slug: string; name: string }[] }) => {
+        const list = d?.vendors ?? [];
+        setLoginVendors(list);
+        setLoginVendorSlug((prev) => (prev ? prev : list[0]?.slug ?? ''));
+      })
+      .catch(() => setLoginVendors([]));
+  }, [loggedIn]);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('admin_logged') : null;
@@ -457,12 +472,20 @@ export default function AdminPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr('');
+    if (adminLoginMode === 'vendor' && !loginVendorSlug.trim()) {
+      setErr('Choose a vendor');
+      return;
+    }
     setAuthLoading(true);
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          vendorSlug: adminLoginMode === 'vendor' ? loginVendorSlug.trim().toLowerCase() : null,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
@@ -604,10 +627,51 @@ export default function AdminPage() {
         <div className="login-card">
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <img src="/icon-192.png" alt="LaundroSwipe" style={{ height: 56, width: 56, objectFit: 'contain', margin: '0 auto 14px', borderRadius: 12, display: 'block' }} />
-            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Vendor Login</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Vendor portal + super admin access</p>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Admin</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Vendor or super admin — passwords are stored in the database</p>
           </div>
           <form onSubmit={handleLogin}>
+            <div className="fg" style={{ marginBottom: 14 }}>
+              <span className="fl">Sign in as</span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                <button
+                  type="button"
+                  className={`admin-nav-btn ${adminLoginMode === 'vendor' ? 'active' : ''}`}
+                  style={{ flex: '1 1 120px' }}
+                  onClick={() => setAdminLoginMode('vendor')}
+                >
+                  Vendor
+                </button>
+                <button
+                  type="button"
+                  className={`admin-nav-btn ${adminLoginMode === 'super_admin' ? 'active' : ''}`}
+                  style={{ flex: '1 1 120px' }}
+                  onClick={() => setAdminLoginMode('super_admin')}
+                >
+                  Super admin
+                </button>
+              </div>
+            </div>
+            {adminLoginMode === 'vendor' && (
+              <div className="fg">
+                <label className="fl">Vendor</label>
+                <select
+                  className="fi fs"
+                  value={loginVendorSlug}
+                  onChange={(e) => setLoginVendorSlug(e.target.value)}
+                >
+                  {loginVendors.length === 0 ? (
+                    <option value="">Loading vendors…</option>
+                  ) : (
+                    loginVendors.map((v) => (
+                      <option key={v.slug} value={v.slug}>
+                        {v.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            )}
             <div className="fg">
               <label className="fl">Email</label>
               <input className="fi" type="email" placeholder="admin@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
