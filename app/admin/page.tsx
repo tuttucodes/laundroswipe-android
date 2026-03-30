@@ -134,6 +134,10 @@ type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
 type AdminNotification = { id: string; title: string; body: string | null; sent_at: string | null; scheduled_at: string | null; created_at: string };
 type VendorSummary = { id: string; slug: string; name: string; active: boolean };
 type ServiceArea = { id: string; name: string; short_code: string; city: string | null; state: string | null; is_active: boolean };
+const VENDOR_TITLES: Record<string, string> = {
+  profab: 'Pro Fab',
+  starwash: 'Star Wash',
+};
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -194,6 +198,9 @@ export default function AdminPage() {
   const [newAreaCity, setNewAreaCity] = useState('');
   const [newAreaState, setNewAreaState] = useState('');
   const [newAreaSaving, setNewAreaSaving] = useState(false);
+  const dashboardTitle = isSuperAdmin
+    ? 'LaundroSwipe Super Admin'
+    : `${VENDOR_TITLES[vendorId ?? ''] ?? 'Vendor'} Dashboard`;
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -486,14 +493,14 @@ export default function AdminPage() {
           <span className="admin-hamburger-bar" />
           <span className="admin-hamburger-bar" />
         </button>
-        <h2 className="admin-header-title">{isSuperAdmin ? 'LaundroSwipe Super Admin' : 'LaundroSwipe Vendor Portal'}</h2>
+        <h2 className="admin-header-title">{dashboardTitle}</h2>
       </header>
 
       {menuOpen && <div className="admin-drawer-overlay" onClick={closeMenu} aria-hidden />}
 
       <aside className={`admin-drawer ${menuOpen ? 'admin-drawer-open' : ''}`}>
         <div className="admin-drawer-head">
-          <span className="admin-drawer-title">{isSuperAdmin ? 'LaundroSwipe Super Admin' : 'LaundroSwipe Vendor Portal'}</span>
+          <span className="admin-drawer-title">{dashboardTitle}</span>
           <button type="button" className="admin-drawer-close" onClick={closeMenu} aria-label="Close menu">×</button>
         </div>
         <nav className="admin-drawer-nav">
