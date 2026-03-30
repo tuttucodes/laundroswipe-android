@@ -579,6 +579,7 @@ export const LSApi = {
     subtotal: number;
     convenience_fee: number;
     total: number;
+    vendor_name?: string | null;
   }): Promise<{ id: string } | null> {
     if (!supabase) return null;
     try {
@@ -595,6 +596,7 @@ export const LSApi = {
           subtotal: bill.subtotal,
           convenience_fee: bill.convenience_fee,
           total: bill.total,
+          vendor_name: bill.vendor_name ?? null,
         })
         .select('id')
         .single();
@@ -609,13 +611,15 @@ export const LSApi = {
     }
   },
 
-  async fetchVendorBills(): Promise<VendorBillRow[] | null> {
+  async fetchVendorBills(vendorName?: string): Promise<VendorBillRow[] | null> {
     if (!supabase) return null;
     try {
-      const { data, error } = await supabase
+      let q = supabase
         .from('vendor_bills')
         .select('*')
         .order('created_at', { ascending: false });
+      if (vendorName) q = q.eq('vendor_name', vendorName);
+      const { data, error } = await q;
       if (error) {
         console.error('Supabase fetchVendorBills error', error);
         return null;
@@ -774,6 +778,7 @@ export type VendorBillRow = {
   subtotal: number;
   convenience_fee: number;
   total: number;
+  vendor_name?: string | null;
   created_at: string;
 };
 

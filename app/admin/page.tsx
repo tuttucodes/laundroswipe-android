@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
-import { COLLEGES, VENDOR, CONVENIENCE_FEE } from '@/lib/constants';
+import { COLLEGES, VENDOR, CONVENIENCE_FEE, VIT_VENDOR_BLOCK_ACCESS } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
 
 const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered'];
@@ -126,6 +126,8 @@ function printGatePassLetter(vendorName: string, orderCount: number) {
 
 type OrderWithUser = OrderRow & { user?: string };
 type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'vendor' | 'gatepass' | 'settings';
+type AdminRole = 'super_admin' | 'vendor';
+type VendorId = keyof typeof VIT_VENDOR_BLOCK_ACCESS;
 
 type ScheduleSlot = { id: string; label: string; time_from: string; time_to: string; sort_order: number; active: boolean };
 type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
@@ -133,6 +135,13 @@ type AdminNotification = { id: string; title: string; body: string | null; sent_
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [role, setRole] = useState<AdminRole>('vendor');
+  const [vendorId, setVendorId] = useState<VendorId | null>(null);
+  const [registerVendorEmail, setRegisterVendorEmail] = useState('');
+  const [registerVendorPassword, setRegisterVendorPassword] = useState('');
+  const [registerVendorSlug, setRegisterVendorSlug] = useState<VendorId>('profab');
+  const [registerJoinCode, setRegisterJoinCode] = useState('KRISHNAA');
+  const [registerVendorSaving, setRegisterVendorSaving] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
@@ -168,11 +177,16 @@ export default function AdminPage() {
   const [vendorProfileLoading, setVendorProfileLoading] = useState(false);
   const [vendorProfileSaving, setVendorProfileSaving] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const isSuperAdmin = role === 'super_admin';
 
   const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('admin_logged') : null;
+    const savedRole = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
+    const savedVendorId = typeof window !== 'undefined' ? localStorage.getItem('admin_vendor_id') : null;
+    if (savedRole === 'super_admin' || savedRole === 'vendor') setRole(savedRole);
+    if (savedVendorId === 'profab' || savedVendorId === 'starwash') setVendorId(savedVendorId);
     if (saved === 'true') setLoggedIn(true);
   }, []);
 
@@ -188,8 +202,19 @@ export default function AdminPage() {
           ...o,
           user: userMap.get(o.user_id ?? '')?.full_name ?? userMap.get(o.user_id ?? '')?.email ?? '—',
         }));
-        setOrders(withUser);
-        const bl = billList ?? [];
+        const vendorScopedOrders = !isSuperAdmin && vendorId
+          ? withUser.filter((o) => {
+              const u = userMap.get(o.user_id ?? '');
+              if (!u) return false;
+              if (u.college_id !== 'vit-chn') return false;
+              const block = String(u.hostel_block ?? '').trim().toUpperCase();
+              const allowed = VIT_VENDOR_BLOCK_ACCESS[vendorId];
+              return allowed.some((b) => block.startsWith(b));
+            })
+          : withUser;
+        setOrders(vendorScopedOrders);
+        const orderIds = new Set(vendorScopedOrders.map((o) => o.id));
+        const bl = !isSuperAdmin ? (billList ?? []).filter((b) => (b.order_id ? orderIds.has(b.order_id) : false)) : (billList ?? []);
         const agg = bl.reduce(
           (acc, b) => {
             const sub = Number(b.subtotal) || 0;
@@ -206,7 +231,7 @@ export default function AdminPage() {
         setBills({ count: bl.length, ...agg });
       })
       .finally(() => setLoading(false));
-  }, [loggedIn]);
+  }, [loggedIn, isSuperAdmin, vendorId]);
 
   useEffect(() => {
     if (!loggedIn || tab !== 'schedule') return;
@@ -288,8 +313,13 @@ export default function AdminPage() {
       if (res.ok && data.ok) {
         if (typeof window !== 'undefined') {
           localStorage.setItem('admin_logged', 'true');
+          localStorage.setItem('admin_role', data.role === 'super_admin' ? 'super_admin' : 'vendor');
+          if (data.vendorId) localStorage.setItem('admin_vendor_id', data.vendorId);
+          else localStorage.removeItem('admin_vendor_id');
           if (data.token) sessionStorage.setItem('admin_token', data.token);
         }
+        setRole(data.role === 'super_admin' ? 'super_admin' : 'vendor');
+        setVendorId(data.vendorId === 'profab' || data.vendorId === 'starwash' ? data.vendorId : null);
         setLoggedIn(true);
       } else {
         setErr(data?.error || 'Invalid email or password');
@@ -303,6 +333,8 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('admin_logged');
+    localStorage.removeItem('admin_role');
+    localStorage.removeItem('admin_vendor_id');
     sessionStorage.removeItem('admin_token');
     setLoggedIn(false);
   };
@@ -377,8 +409,8 @@ export default function AdminPage() {
         <div className="login-card">
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <img src="/profab-logo.png" alt="ProFab" style={{ height: 56, objectFit: 'contain', marginBottom: 14 }} />
-            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Admin</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Pro Fab Power Laundry</p>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Vendor Login</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Vendor portal + super admin access</p>
           </div>
           <form onSubmit={handleLogin}>
             <div className="fg">
@@ -406,21 +438,23 @@ export default function AdminPage() {
           <span className="admin-hamburger-bar" />
           <span className="admin-hamburger-bar" />
         </button>
-        <h2 className="admin-header-title">LaundroSwipe Admin</h2>
+        <h2 className="admin-header-title">{isSuperAdmin ? 'LaundroSwipe Super Admin' : 'LaundroSwipe Vendor Portal'}</h2>
       </header>
 
       {menuOpen && <div className="admin-drawer-overlay" onClick={closeMenu} aria-hidden />}
 
       <aside className={`admin-drawer ${menuOpen ? 'admin-drawer-open' : ''}`}>
         <div className="admin-drawer-head">
-          <span className="admin-drawer-title">LaundroSwipe Admin</span>
+          <span className="admin-drawer-title">{isSuperAdmin ? 'LaundroSwipe Super Admin' : 'LaundroSwipe Vendor Portal'}</span>
           <button type="button" className="admin-drawer-close" onClick={closeMenu} aria-label="Close menu">×</button>
         </div>
         <nav className="admin-drawer-nav">
           <div className="admin-drawer-section">
             <span className="admin-drawer-section-label">Overview</span>
             <button type="button" onClick={() => { setTab('orders'); closeMenu(); }} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
-            <button type="button" onClick={() => { setTab('users'); closeMenu(); }} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
+            {isSuperAdmin && (
+              <button type="button" onClick={() => { setTab('users'); closeMenu(); }} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
+            )}
           </div>
           <div className="admin-drawer-section">
             <span className="admin-drawer-section-label">Vendor & Bills</span>
@@ -430,17 +464,21 @@ export default function AdminPage() {
             <Link href="/admin/printers" className="admin-nav-link" onClick={closeMenu}>🖨️ Printers</Link>
             <button type="button" onClick={() => { setTab('vendor'); closeMenu(); }} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
           </div>
-          <div className="admin-drawer-section">
-            <span className="admin-drawer-section-label">Campus</span>
-            <button type="button" onClick={() => { setTab('colleges'); closeMenu(); }} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
-            <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
-            <button type="button" onClick={() => { setTab('notifications'); closeMenu(); }} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
-            <button type="button" onClick={() => { setTab('gatepass'); closeMenu(); }} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>🏫 Gate pass</button>
-          </div>
-          <div className="admin-drawer-section">
-            <span className="admin-drawer-section-label">System</span>
-            <button type="button" onClick={() => { setTab('settings'); closeMenu(); }} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
-          </div>
+          {isSuperAdmin && (
+            <>
+              <div className="admin-drawer-section">
+                <span className="admin-drawer-section-label">Campus</span>
+                <button type="button" onClick={() => { setTab('colleges'); closeMenu(); }} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
+                <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
+                <button type="button" onClick={() => { setTab('notifications'); closeMenu(); }} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
+                <button type="button" onClick={() => { setTab('gatepass'); closeMenu(); }} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>🏫 Gate pass</button>
+              </div>
+              <div className="admin-drawer-section">
+                <span className="admin-drawer-section-label">System</span>
+                <button type="button" onClick={() => { setTab('settings'); closeMenu(); }} className={`admin-nav-btn ${tab === 'settings' ? 'active' : ''}`}>⚙️ Settings</button>
+              </div>
+            </>
+          )}
         </nav>
         <div className="admin-drawer-foot">
           <button type="button" className="btn bout admin-drawer-logout" onClick={handleLogout}>Log out</button>
@@ -567,7 +605,7 @@ export default function AdminPage() {
             )}
           </>
         )}
-        {tab === 'users' && (
+        {isSuperAdmin && tab === 'users' && (
           <>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 24 }}>
               <div>
@@ -973,6 +1011,102 @@ export default function AdminPage() {
               </div>
               <div style={{ padding: '12px 16px', background: 'rgba(249,115,22,.08)', borderRadius: 8, fontSize: 13, color: 'var(--o)' }}>To change settings, update the code (e.g. lib/constants.ts) or the admin database.</div>
             </div>
+
+            {isSuperAdmin && (
+              <div style={{ marginTop: 20, background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 600 }}>
+                <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, marginBottom: 6 }}>Create Vendor Login</h2>
+                <p style={{ color: 'var(--ts)', fontSize: 13, marginBottom: 18 }}>
+                  Vendor accounts are created using the mandatory join code. If the code is wrong, the account will not be created.
+                </p>
+
+                <div className="fg" style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Vendor</label>
+                  <select
+                    className="fi fs"
+                    value={registerVendorSlug}
+                    onChange={(e) => setRegisterVendorSlug(e.target.value as VendorId)}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="profab">Pro Fab</option>
+                    <option value="starwash">Star Wash</option>
+                  </select>
+                </div>
+
+                <div className="fg" style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Vendor login email</label>
+                  <input
+                    className="fi"
+                    value={registerVendorEmail}
+                    onChange={(e) => setRegisterVendorEmail(e.target.value)}
+                    placeholder="e.g. starwash-admin@laundroswipe.com"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div className="fg" style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Initial password</label>
+                  <input
+                    className="fi"
+                    value={registerVendorPassword}
+                    onChange={(e) => setRegisterVendorPassword(e.target.value)}
+                    type="password"
+                    placeholder="Min 8 characters"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div className="fg" style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Join code</label>
+                  <input
+                    className="fi"
+                    value={registerJoinCode}
+                    onChange={(e) => setRegisterJoinCode(e.target.value)}
+                    placeholder="e.g. KRISHNAA"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="btn bp bbl"
+                  disabled={registerVendorSaving}
+                  style={{ width: '100%' }}
+                  onClick={async () => {
+                    setRegisterVendorSaving(true);
+                    try {
+                      const res = await fetch('/api/admin/register-vendor', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          ...adminAuthHeaders(),
+                        },
+                        body: JSON.stringify({
+                          email: registerVendorEmail.trim(),
+                          password: registerVendorPassword,
+                          vendor_slug: registerVendorSlug,
+                          join_code: registerJoinCode.trim(),
+                        }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (res.ok) {
+                        showToast(data?.message ?? 'Vendor account created', 'ok');
+                        setRegisterVendorEmail('');
+                        setRegisterVendorPassword('');
+                      } else {
+                        showToast(data?.error ?? 'Vendor account creation failed', 'er');
+                      }
+                    } catch {
+                      showToast('Vendor account creation failed', 'er');
+                    } finally {
+                      setRegisterVendorSaving(false);
+                    }
+                  }}
+                >
+                  {registerVendorSaving ? 'Creating…' : 'Create vendor account'}
+                </button>
+              </div>
+            )}
           </>
         )}
       </main>

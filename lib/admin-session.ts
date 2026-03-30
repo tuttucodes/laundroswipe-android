@@ -2,9 +2,11 @@ import { createHmac, timingSafeEqual } from 'crypto';
 
 const COOKIE_NAME = 'admin_session';
 const MAX_AGE_SEC = 24 * 60 * 60; // 24h
+export type AdminRole = 'super_admin' | 'vendor';
+export type AdminSessionData = { email: string; exp: number; role: AdminRole; vendorId?: string | null };
 
 function getSecret(): string {
-  return process.env.ADMIN_PASSWORD ?? '';
+  return process.env.ADMIN_SESSION_SECRET ?? process.env.ADMIN_PASSWORD ?? '';
 }
 
 /** Encode payload to base64url (no padding). */
@@ -20,11 +22,11 @@ function b64urlDecode(s: string): string {
 /**
  * Create a signed token for admin session. Use as cookie value.
  */
-export function createAdminToken(email: string): string {
+export function createAdminToken(email: string, role: AdminRole = 'super_admin', vendorId?: string | null): string {
   const secret = getSecret();
   if (!secret) return '';
   const exp = Math.floor(Date.now() / 1000) + MAX_AGE_SEC;
-  const payload = b64urlEncode(JSON.stringify({ email: email.trim().toLowerCase(), exp }));
+  const payload = b64urlEncode(JSON.stringify({ email: email.trim().toLowerCase(), exp, role, vendorId: vendorId ?? null }));
   const sig = createHmac('sha256', secret).update(payload).digest('base64url');
   return `${payload}.${sig}`;
 }
@@ -33,6 +35,11 @@ export function createAdminToken(email: string): string {
  * Verify cookie value and return email if valid.
  */
 export function verifyAdminToken(cookieValue: string | null | undefined): string | null {
+  const s = verifyAdminSession(cookieValue);
+  return s?.email ?? null;
+}
+
+export function verifyAdminSession(cookieValue: string | null | undefined): AdminSessionData | null {
   if (!cookieValue?.includes('.')) return null;
   const secret = getSecret();
   if (!secret) return null;
@@ -40,14 +47,16 @@ export function verifyAdminToken(cookieValue: string | null | undefined): string
   if (!payload || !sig) return null;
   const expectedSig = createHmac('sha256', secret).update(payload).digest('base64url');
   if (sig.length !== expectedSig.length || !timingSafeEqual(Buffer.from(sig, 'utf8'), Buffer.from(expectedSig, 'utf8'))) return null;
-  let data: { email?: string; exp?: number };
+  let data: { email?: string; exp?: number; role?: AdminRole; vendorId?: string | null };
   try {
     data = JSON.parse(b64urlDecode(payload));
   } catch {
     return null;
   }
   if (!data.exp || data.exp < Math.floor(Date.now() / 1000)) return null;
-  return data.email ?? null;
+  if (!data.email) return null;
+  const role: AdminRole = data.role === 'vendor' ? 'vendor' : 'super_admin';
+  return { email: data.email, exp: data.exp, role, vendorId: data.vendorId ?? null };
 }
 
 export function getAdminSessionCookie(request: Request): string | null {
@@ -71,6 +80,11 @@ export function getAdminTokenFromRequest(request: Request): string | null {
 export function isAdminRequest(request: Request): boolean {
   const token = getAdminTokenFromRequest(request);
   return verifyAdminToken(token) !== null;
+}
+
+export function getAdminSessionFromRequest(request: Request): AdminSessionData | null {
+  const token = getAdminTokenFromRequest(request);
+  return verifyAdminSession(token);
 }
 
 export function adminSessionCookieHeader(token: string): string {

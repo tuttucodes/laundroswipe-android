@@ -9,6 +9,7 @@ import {
   SERVICES,
   VENDORS,
   VENDOR,
+  VIT_VENDOR_BLOCK_ACCESS,
   statusLabel,
   statusClass,
   getScheduleDates,
@@ -222,6 +223,8 @@ export default function LaundroApp() {
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
   const [ordersListLoading, setOrdersListLoading] = useState(false);
   const [geo, setGeo] = useState<{ status: 'idle' | 'loading' | 'ok' | 'denied' | 'error'; coords?: LatLng }>({ status: 'idle' });
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [otherAreaRequest, setOtherAreaRequest] = useState('');
 
   useEffect(() => {
     if (user?.sid && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.sid) === '1') {
@@ -283,6 +286,20 @@ export default function LaundroApp() {
     return { ok: true, reason: '' };
   }, [geo.coords, haversineKm]);
 
+  const vendorBlockReason = useCallback((vendorId: string) => {
+    if (pickupLocation !== 'vit-chn') return '';
+    const block = String(user?.hos ?? '').trim().toUpperCase();
+    if (!block) return 'Add your hostel block in profile to continue';
+    const allowed =
+      vendorId === 'profab'
+        ? VIT_VENDOR_BLOCK_ACCESS.profab
+        : vendorId === 'starwash'
+          ? VIT_VENDOR_BLOCK_ACCESS.starwash
+          : [];
+    if (!allowed.length) return '';
+    return allowed.some((b) => block.startsWith(b)) ? '' : `Only ${allowed.join(', ')} block students`;
+  }, [pickupLocation, user?.hos]);
+
   useEffect(() => {
     // Only ask for location when user is in the booking flow surfaces.
     if (!user) return;
@@ -307,6 +324,15 @@ export default function LaundroApp() {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 }
     );
   }, [geo.status, screen, user]);
+
+  useEffect(() => {
+    if (pickupLocation) return;
+    if (geo.status !== 'ok' || !geo.coords) return;
+    // Chennai area auto-suggestion.
+    if (geo.coords.lat > 12.7 && geo.coords.lat < 13.3 && geo.coords.lng > 79.9 && geo.coords.lng < 80.4) {
+      setPickupLocation('vit-chn');
+    }
+  }, [geo, pickupLocation]);
 
   const saveUser = useCallback((u: User | null) => {
     if (u) localStorage.setItem('ls_u', JSON.stringify(u));
@@ -1616,7 +1642,42 @@ export default function LaundroApp() {
                 {sd.step === 0 && (
                   <>
                     <p className="st">Select vendor</p>
-                    <p className="vd" style={{ marginBottom: 16 }}>Choose your laundry partner for pickup & delivery.</p>
+                    <p className="vd" style={{ marginBottom: 12 }}>Choose your location and laundry partner for pickup & delivery.</p>
+                    <div className="fg" style={{ marginBottom: 10 }}>
+                      <label className="fl">Choose location</label>
+                      <select className="fi fs" value={pickupLocation} onChange={(e) => setPickupLocation(e.target.value)}>
+                        <option value="">Select location</option>
+                        <option value="vit-chn">VIT Chennai</option>
+                        <option value="srm-ktr">SRM KTR</option>
+                        <option value="srm-rmp">SRM Ramapuram</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    {pickupLocation === 'other' && (
+                      <div className="vendor-card" style={{ marginBottom: 12 }}>
+                        <p className="vd" style={{ marginBottom: 8 }}>Currently not in your area. Request activation below.</p>
+                        <textarea
+                          className="fi"
+                          rows={3}
+                          placeholder="Your college / area / hostel and contact"
+                          value={otherAreaRequest}
+                          onChange={(e) => setOtherAreaRequest(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          className="btn bp bbl"
+                          style={{ marginTop: 10 }}
+                          onClick={() => showToast(otherAreaRequest.trim() ? 'Thanks! Area request received.' : 'Enter your area details', otherAreaRequest.trim() ? 'ok' : 'er')}
+                        >
+                          Request activation
+                        </button>
+                      </div>
+                    )}
+                    {pickupLocation === 'vit-chn' && (
+                      <p className="vd" style={{ marginBottom: 12 }}>
+                        VIT Chennai split: Pro Fab for A, D1, D2 blocks · Star Wash for B, C, E blocks.
+                      </p>
+                    )}
                     {(geo.status === 'loading' || geo.status === 'denied' || geo.status === 'error') && (
                       <div className="warn" style={{ marginBottom: 14 }}>
                         {geo.status === 'loading'
@@ -1627,13 +1688,18 @@ export default function LaundroApp() {
                       </div>
                     )}
                     {VENDORS.map((v) => (
+                      (() => {
+                        const blockReason = vendorBlockReason(v.id);
+                        const isLocationAllowed = pickupLocation && pickupLocation !== 'other' && (pickupLocation === 'vit-chn' ? ['profab', 'starwash'].includes(v.id) : false);
+                        const canPick = isVendorAvailable(v).ok && !!isLocationAllowed && !blockReason;
+                        return (
                       <div
                         key={v.id}
-                        className={`ssc vendor-card ${isVendorAvailable(v).ok ? '' : 'coming-soon'}`}
-                        onClick={() => isVendorAvailable(v).ok && handleSelectVendor(v.id)}
-                        onKeyDown={(e) => e.key === 'Enter' && isVendorAvailable(v).ok && handleSelectVendor(v.id)}
+                        className={`ssc vendor-card ${canPick ? '' : 'coming-soon'}`}
+                        onClick={() => canPick && handleSelectVendor(v.id)}
+                        onKeyDown={(e) => e.key === 'Enter' && canPick && handleSelectVendor(v.id)}
                         role="button"
-                        tabIndex={isVendorAvailable(v).ok ? 0 : -1}
+                        tabIndex={canPick ? 0 : -1}
                       >
                         {v.id === 'profab' ? (
                           <img src="/profab-logo.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
@@ -1643,16 +1709,18 @@ export default function LaundroApp() {
                         <div className="inf">
                           <div className="sn">
                             {v.name}{' '}
-                            {!isVendorAvailable(v).ok && (
+                            {!canPick && (
                               <span style={{ fontWeight: 700, color: 'var(--tm)' }}>
-                                ({isVendorAvailable(v).reason})
+                                ({blockReason || (!pickupLocation ? 'Select location first' : pickupLocation === 'other' ? 'Not available in selected area' : isVendorAvailable(v).reason || 'Not available')})
                               </span>
                             )}
                           </div>
                           <div className="sd">{v.location}</div>
                         </div>
-                        <span className="aw" style={{ fontSize: 20, opacity: isVendorAvailable(v).ok ? 1 : 0.35 }}>→</span>
+                        <span className="aw" style={{ fontSize: 20, opacity: canPick ? 1 : 0.35 }}>→</span>
                       </div>
+                        );
+                      })()
                     ))}
                     <button type="button" className="btn bout bbl" style={{ marginTop: 16 }} onClick={() => go('home')}>
                       Back

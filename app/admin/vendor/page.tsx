@@ -1,16 +1,23 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { LSApi } from '@/lib/api';
 import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { VENDOR_BILL_ITEMS, CONVENIENCE_FEE } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
+import { VIT_VENDOR_BLOCK_ACCESS } from '@/lib/constants';
 
 type LineItem = { id: string; label: string; price: number; qty: number };
+const VENDOR_NAMES: Record<string, string> = {
+  profab: 'Pro Fab Power Laundry Services',
+  starwash: 'Star Wash Power Launderers',
+};
 
 export default function VendorPage() {
+  const [vendorName, setVendorName] = useState('Vendor');
+  const [vendorId, setVendorId] = useState<'profab' | 'starwash' | null>(null);
   const [token, setToken] = useState('');
   const [lookupErr, setLookupErr] = useState('');
   const [order, setOrder] = useState<OrderRow | null>(null);
@@ -26,6 +33,17 @@ export default function VendorPage() {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const role = localStorage.getItem('admin_role');
+    const v = localStorage.getItem('admin_vendor_id');
+    if (role !== 'vendor') return;
+    if ((v === 'profab' || v === 'starwash') && VENDOR_NAMES[v]) {
+      setVendorId(v);
+      setVendorName(VENDOR_NAMES[v]);
+    }
+  }, []);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +61,16 @@ export default function VendorPage() {
     }
     const result = await LSApi.fetchOrderByToken(t);
     if (result) {
+      if (vendorId) {
+        const collegeId = result.user?.college_id ?? '';
+        const block = String(result.user?.hostel_block ?? '').trim().toUpperCase();
+        const allowed = VIT_VENDOR_BLOCK_ACCESS[vendorId];
+        const authorized = collegeId === 'vit-chn' && allowed.some((b) => block.startsWith(b));
+        if (!authorized) {
+          setLookupErr(`This token is not assigned to ${vendorName}.`);
+          return;
+        }
+      }
       setOrder(result.order);
       setUser(result.user ?? null);
       const existingCount = await LSApi.countBillsForOrderToken(t);
@@ -103,7 +131,7 @@ export default function VendorPage() {
     const dateStr = new Date().toLocaleString();
     return `
 <h2>LaundroSwipe</h2>
-<p class="meta">Vendor name: Pro Fab Power Laundry</p>
+<p class="meta">Vendor name: ${vendorName}</p>
 <p><strong>Token:</strong> #${o?.token ?? ''} <strong>Order:</strong> ${o?.order_number ?? ''}</p>
 <p><strong>Customer:</strong> ${(u.full_name ?? u.email ?? '—').toString().slice(0, 20)}</p>
 <p><strong>Phone:</strong> ${(u.phone ?? '—').toString().slice(0, 14)}</p>
@@ -124,7 +152,7 @@ export default function VendorPage() {
     const u = (user ?? {}) as Partial<UserRow>;
     const lines = [
       'LaundroSwipe',
-      'Vendor: Pro Fab Power Laundry',
+      `Vendor: ${vendorName}`,
       `Token: #${o?.token ?? ''}  Order: ${o?.order_number ?? ''}`,
       `Customer: ${(u.full_name ?? u.email ?? '—').toString().slice(0, 24)}`,
       `Phone: ${(u.phone ?? '—').toString().slice(0, 14)}`,
@@ -170,6 +198,7 @@ export default function VendorPage() {
       subtotal,
       convenience_fee: CONVENIENCE_FEE,
       total,
+      vendor_name: vendorName,
     });
     setSaving(false);
     if (result) {
@@ -217,6 +246,7 @@ export default function VendorPage() {
       subtotal,
       convenience_fee: CONVENIENCE_FEE,
       total,
+      vendor_name: vendorName,
     });
     if (result) lastSavedBillFingerprintRef.current = fingerprint;
     showToast(result ? 'Bill saved. Printing…' : 'Printing…', result ? 'ok' : 'er');
@@ -239,7 +269,7 @@ export default function VendorPage() {
       <p style={{ marginBottom: 16, fontSize: 14 }}>
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Back to Dashboard</Link>
       </p>
-      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>Vendor Bill</h1>
+      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>{vendorName} · Vendor Bill</h1>
       <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enter token to load order, add line items, then print bill.</p>
 
       <div className="vendor-card">

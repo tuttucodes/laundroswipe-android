@@ -27,6 +27,13 @@ export const VENDORS = [
     emoji: '🧺',
     availability: { type: 'nearby', lat: 12.8406, lng: 80.1533, radiusKm: 18 },
   },
+  {
+    id: 'starwash',
+    name: 'Star Wash Power Launderers',
+    location: 'VIT Chennai',
+    emoji: '🧼',
+    availability: { type: 'nearby', lat: 12.8406, lng: 80.1533, radiusKm: 18 },
+  },
   { id: 'jos-brothers', name: 'Jos Brothers', location: 'Kochi', emoji: '🧼', comingSoon: true },
   { id: 'tumbledry', name: 'TumbleDry', location: 'Bangalore · Chennai', emoji: '🌀', comingSoon: true },
 ] as const;
@@ -35,6 +42,11 @@ export const VENDOR = {
   name: 'Pro Fab Power Laundry Services',
   days: ['Tuesday', 'Saturday', 'Sunday'],
   location: 'On-campus pickup point',
+} as const;
+
+export const VIT_VENDOR_BLOCK_ACCESS = {
+  profab: ['A', 'D1', 'D2'],
+  starwash: ['B', 'C', 'E'],
 } as const;
 
 export const CONVENIENCE_FEE = 20;

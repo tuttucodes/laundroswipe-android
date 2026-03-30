@@ -7,6 +7,10 @@ import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-pr
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import type { VendorBillRow } from '@/lib/api';
 import { CONVENIENCE_FEE } from '@/lib/constants';
+const VENDOR_NAMES: Record<string, string> = {
+  profab: 'Pro Fab Power Laundry Services',
+  starwash: 'Star Wash Power Launderers',
+};
 
 function billToHtml(b: VendorBillRow) {
   const rows = Array.isArray(b.line_items) && b.line_items.length
@@ -56,9 +60,16 @@ export default function BillsPage() {
   const [loading, setLoading] = useState(true);
   const [viewingBill, setViewingBill] = useState<VendorBillRow | null>(null);
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [vendorName, setVendorName] = useState<string | null>(null);
 
   useEffect(() => {
-    LSApi.fetchVendorBills().then((data) => {
+    const role = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
+    const vendorId = typeof window !== 'undefined' ? localStorage.getItem('admin_vendor_id') : null;
+    const vendorFilter = role === 'vendor' && vendorId ? (VENDOR_NAMES[vendorId] ?? null) : null;
+    setIsSuperAdmin(role === 'super_admin');
+    setVendorName(vendorFilter);
+    LSApi.fetchVendorBills(vendorFilter ?? undefined).then((data) => {
       setBills(data ?? []);
       setLoading(false);
     });
@@ -129,7 +140,9 @@ export default function BillsPage() {
       </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>Saved bills</h1>
+          <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>
+            {isSuperAdmin ? 'All vendor bills' : `${vendorName ?? 'Vendor'} bills`}
+          </h1>
           <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>View and re-print past bills.</p>
         </div>
         <button type="button" onClick={exportBillsToCsv} disabled={loading || bills.length === 0} className="vendor-btn-secondary" style={{ marginLeft: 'auto' }}>
