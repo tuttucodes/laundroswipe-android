@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   if (!checkBodySize(request)) return NextResponse.json({ error: 'Request too large' }, { status: 413 });
   const supabase = getServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
-  let body: { name?: string; brief?: string; pricing_details?: string; slug?: string };
+  let body: { name?: string; brief?: string; pricing_details?: string; logo_url?: string; slug?: string };
   try {
     body = await request.json();
   } catch {
@@ -47,13 +47,15 @@ export async function POST(request: Request) {
   const name = body.name != null ? String(body.name).trim().slice(0, 200) : undefined;
   const brief = body.brief != null ? String(body.brief).trim().slice(0, 2000) : undefined;
   const pricing_details = body.pricing_details != null ? String(body.pricing_details).trim().slice(0, 5000) : undefined;
+  const logo_url = body.logo_url != null ? String(body.logo_url).trim().slice(0, 300000) : undefined;
   const now = new Date().toISOString();
-  const { data: existing } = await supabase.from('vendor_profiles').select('name, brief, pricing_details').eq('slug', slug).maybeSingle();
+  const { data: existing } = await supabase.from('vendor_profiles').select('name, brief, pricing_details, logo_url').eq('slug', slug).maybeSingle();
   const row = {
     slug,
     name: name !== undefined ? name : (existing?.name ?? 'Vendor'),
     brief: brief !== undefined ? brief : (existing?.brief ?? null),
     pricing_details: pricing_details !== undefined ? pricing_details : (existing?.pricing_details ?? null),
+    logo_url: logo_url !== undefined ? logo_url : (existing?.logo_url ?? null),
     updated_at: now,
   };
   const { data, error } = await supabase

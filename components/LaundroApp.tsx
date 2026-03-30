@@ -102,6 +102,7 @@ const DEFAULT_VENDOR_PROFILE: VendorProfileRow = {
   name: 'Pro Fab Power Launders',
   brief: 'Pro Fab Power Launders is our campus laundry partner. We pick up from your hostel, wash & iron, and deliver back on the same cycle. Service days: Tuesday, Saturday, Sunday.',
   pricing_details: 'Shirt / T-shirt: ₹19 | White shirt / White T-shirt: ₹25 | Pant / Jean: ₹22 | White pants / White jean: ₹25 | Dry clean (shirt/T-shirt): ₹50 | Dry clean (white/formal): ₹60. Convenience fee: ₹20 per order.',
+  logo_url: '/profab-logo.png',
   updated_at: '',
 };
 
@@ -1635,7 +1636,7 @@ export default function LaundroApp() {
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingVendor(vendorProfile ?? DEFAULT_VENDOR_PROFILE); } }}
                 >
-                  <img src="/profab-logo.png" alt="" className="oc-logo" />
+                  <img src={(vendorProfile?.logo_url || DEFAULT_VENDOR_PROFILE.logo_url || '/profab-logo.png')} alt="" className="oc-logo" />
                   <span className="nm oc-vendor-name">{vendorProfile?.name ?? DEFAULT_VENDOR_PROFILE.name}</span>
                 </div>
                 <div className="hiw">
@@ -1755,7 +1756,7 @@ export default function LaundroApp() {
                         tabIndex={canPick ? 0 : -1}
                       >
                         {v.id === 'profab' ? (
-                          <img src="/profab-logo.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
+                          <img src={(vendorProfile?.logo_url || DEFAULT_VENDOR_PROFILE.logo_url || '/profab-logo.png')} alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
                         ) : (
                           <span className="em">{v.emoji}</span>
                         )}
@@ -2116,7 +2117,7 @@ export default function LaundroApp() {
             <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <img src="/profab-logo.png" alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 10 }} />
+                  <img src={(viewingVendor.logo_url || DEFAULT_VENDOR_PROFILE.logo_url || '/profab-logo.png')} alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 10 }} />
                   <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>{viewingVendor.name}</h3>
                 </div>
                 <button type="button" className="btn bout bsm" onClick={() => setViewingVendor(null)} aria-label="Close">Close</button>

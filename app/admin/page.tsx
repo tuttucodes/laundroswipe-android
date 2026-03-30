@@ -237,6 +237,7 @@ export default function AdminPage() {
   const [vendorName, setVendorName] = useState('');
   const [vendorBrief, setVendorBrief] = useState('');
   const [vendorPricing, setVendorPricing] = useState('');
+  const [vendorLogoUrl, setVendorLogoUrl] = useState('');
   const [vendorProfileSlug, setVendorProfileSlug] = useState('');
   const [vendorProfileLoading, setVendorProfileLoading] = useState(false);
   const [vendorProfileSaving, setVendorProfileSaving] = useState(false);
@@ -506,6 +507,7 @@ export default function AdminPage() {
           setVendorName(data.name ?? '');
           setVendorBrief(data.brief ?? '');
           setVendorPricing(data.pricing_details ?? '');
+          setVendorLogoUrl(data.logo_url ?? '');
         }
       })
       .catch(() => {})
@@ -1468,6 +1470,48 @@ export default function AdminPage() {
                   <label className="fl">Pricing details</label>
                   <textarea className="fi fta" value={vendorPricing} onChange={(e) => setVendorPricing(e.target.value)} rows={6} placeholder="e.g. Shirt: ₹19 | Pant: ₹22 | Convenience fee: ₹20" />
                 </div>
+                <div className="fg" style={{ marginBottom: 12 }}>
+                  <label className="fl">Logo</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                    <img
+                      src={vendorLogoUrl || '/profab-logo.png'}
+                      alt=""
+                      style={{ width: 56, height: 56, objectFit: 'contain', borderRadius: 10, border: '1px solid var(--bd)', background: '#fff' }}
+                    />
+                    <span style={{ fontSize: 12, color: 'var(--ts)' }}>
+                      Upload an image or paste image URL
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 1024 * 1024) {
+                        showToast('Logo is too large. Keep it under 1MB.', 'er');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const result = typeof reader.result === 'string' ? reader.result : '';
+                        if (!result.startsWith('data:image/')) {
+                          showToast('Invalid image file', 'er');
+                          return;
+                        }
+                        setVendorLogoUrl(result);
+                      };
+                      reader.onerror = () => showToast('Logo upload failed', 'er');
+                      reader.readAsDataURL(file);
+                    }}
+                    style={{ marginBottom: 8 }}
+                  />
+                  <input
+                    className="fi"
+                    value={vendorLogoUrl}
+                    onChange={(e) => setVendorLogoUrl(e.target.value)}
+                    placeholder="https://... (or data:image/...)" />
+                </div>
                 <button
                   type="button"
                   className="btn bp bbl"
@@ -1484,6 +1528,7 @@ export default function AdminPage() {
                           name: vendorName.trim(),
                           brief: vendorBrief.trim(),
                           pricing_details: vendorPricing.trim(),
+                          logo_url: vendorLogoUrl.trim(),
                         }),
                       });
                       const data = await res.json().catch(() => ({}));

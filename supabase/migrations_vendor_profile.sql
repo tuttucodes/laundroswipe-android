@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS vendor_profiles (
   name TEXT NOT NULL,
   brief TEXT,
   pricing_details TEXT,
+  logo_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -22,6 +23,9 @@ ON CONFLICT (slug) DO UPDATE SET
   brief = EXCLUDED.brief,
   pricing_details = EXCLUDED.pricing_details,
   updated_at = now();
+
+ALTER TABLE public.vendor_profiles
+ADD COLUMN IF NOT EXISTS logo_url TEXT;
 
 ALTER TABLE vendor_profiles ENABLE ROW LEVEL SECURITY;
 

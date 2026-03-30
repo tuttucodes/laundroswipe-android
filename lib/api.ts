@@ -759,7 +759,7 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('vendor_profiles')
-        .select('id, slug, name, brief, pricing_details, updated_at')
+        .select('id, slug, name, brief, pricing_details, logo_url, updated_at')
         .eq('slug', slug)
         .maybeSingle();
       if (error) return null;
@@ -796,5 +796,6 @@ export type VendorProfileRow = {
   name: string;
   brief: string | null;
   pricing_details: string | null;
+  logo_url?: string | null;
   updated_at?: string;
 };
