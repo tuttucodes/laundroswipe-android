@@ -106,6 +106,19 @@ const DEFAULT_VENDOR_PROFILE: VendorProfileRow = {
   updated_at: '',
 };
 
+function defaultVendorProfileFor(vendor: (typeof VENDORS)[number]): VendorProfileRow {
+  if (vendor.id === 'profab') return DEFAULT_VENDOR_PROFILE;
+  return {
+    id: '',
+    slug: vendor.id,
+    name: vendor.name,
+    brief: null,
+    pricing_details: null,
+    logo_url: null,
+    updated_at: '',
+  };
+}
+
 function rowToUser(r: UserRow): User {
   return {
     fn: r.full_name ?? '',
@@ -221,7 +234,7 @@ export default function LaundroApp() {
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
   const [scheduleConfigLoaded, setScheduleConfigLoaded] = useState(false);
   const [passwordAlreadySet, setPasswordAlreadySet] = useState(false);
-  const [vendorProfile, setVendorProfile] = useState<VendorProfileRow | null>(null);
+  const [vendorProfilesBySlug, setVendorProfilesBySlug] = useState<Record<string, VendorProfileRow>>({});
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
   const [ordersListLoading, setOrdersListLoading] = useState(false);
   const [geo, setGeo] = useState<{ status: 'idle' | 'loading' | 'ok' | 'denied' | 'error'; coords?: LatLng }>({ status: 'idle' });
@@ -566,11 +579,24 @@ export default function LaundroApp() {
     });
   }, [screen, scheduleConfigLoaded]);
 
-  // Load vendor profile when user is on home (refetch when entering home so admin updates show)
+  const profileForVendor = useCallback((vendor: (typeof VENDORS)[number]): VendorProfileRow => {
+    return vendorProfilesBySlug[vendor.id] ?? defaultVendorProfileFor(vendor);
+  }, [vendorProfilesBySlug]);
+
+  // Load vendor profiles when user is on home (refetch when entering home so admin updates show)
   useEffect(() => {
     if (screen !== 'home' || !LSApi.hasSupabase) return;
-    LSApi.fetchVendorProfile().then((p) => {
-      if (p) setVendorProfile(p);
+    Promise.all(
+      VENDORS.map(async (v) => {
+        const p = await LSApi.fetchVendorProfile(v.id);
+        return { slug: v.id, profile: p };
+      }),
+    ).then((rows) => {
+      const next: Record<string, VendorProfileRow> = {};
+      rows.forEach(({ slug, profile }) => {
+        if (profile) next[slug] = profile;
+      });
+      setVendorProfilesBySlug(next);
     });
   }, [screen]);
 
@@ -1604,18 +1630,28 @@ export default function LaundroApp() {
                 </p>
                 <div className="dss" aria-label="Laundry partners" role="list">
                   {VENDORS.map((v) => (
+                    (() => {
+                      const vp = profileForVendor(v);
+                      const available = isVendorAvailable(v);
+                      return (
                     <button
                       key={v.id}
                       type="button"
-                      className={`ds ${isVendorAvailable(v).ok ? '' : 'dis'}`}
-                      onClick={() => isVendorAvailable(v).ok && goToScheduleWithVendor(v.id)}
-                      aria-label={`Schedule with ${v.name}`}
-                      disabled={!isVendorAvailable(v).ok}
+                      className={`ds ${available.ok ? '' : 'dis'}`}
+                      onClick={() => available.ok && goToScheduleWithVendor(v.id)}
+                      aria-label={`Schedule with ${vp.name || v.name}`}
+                      disabled={!available.ok}
                     >
-                      <span style={{ fontSize: 18, lineHeight: 1 }}>{v.emoji}</span>
-                      <span className="dy" style={{ marginTop: 2 }}>{v.name}</span>
-                      <span className="mo">{isVendorAvailable(v).ok ? v.location : isVendorAvailable(v).reason}</span>
+                      {vp.logo_url ? (
+                        <img src={vp.logo_url} alt="" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: 6 }} />
+                      ) : (
+                        <span style={{ fontSize: 18, lineHeight: 1 }}>{v.emoji}</span>
+                      )}
+                      <span className="dy" style={{ marginTop: 2 }}>{vp.name || v.name}</span>
+                      <span className="mo">{available.ok ? v.location : available.reason}</span>
                     </button>
+                      );
+                    })()
                   ))}
                 </div>
 
@@ -1639,18 +1675,28 @@ export default function LaundroApp() {
                   })}
                 </div>
                 <p className="fn">LaundroSwipe — schedule pickup from your favorite laundry company in one swipe.</p>
-                <p className="st">Vendor</p>
-                <div
-                  className="oc oc-row"
-                  style={{ marginBottom: 16 }}
-                  onClick={() => setViewingVendor(vendorProfile ?? DEFAULT_VENDOR_PROFILE)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingVendor(vendorProfile ?? DEFAULT_VENDOR_PROFILE); } }}
-                >
-                  <img src={(vendorProfile?.logo_url || DEFAULT_VENDOR_PROFILE.logo_url || '/profab-logo.png')} alt="" className="oc-logo" />
-                  <span className="nm oc-vendor-name">{vendorProfile?.name ?? DEFAULT_VENDOR_PROFILE.name}</span>
-                </div>
+                <p className="st">Vendors</p>
+                {VENDORS.map((v) => {
+                  const vp = profileForVendor(v);
+                  return (
+                    <div
+                      key={v.id}
+                      className="oc oc-row"
+                      style={{ marginBottom: 10 }}
+                      onClick={() => setViewingVendor(vp)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingVendor(vp); } }}
+                    >
+                      {vp.logo_url ? (
+                        <img src={vp.logo_url} alt="" className="oc-logo" />
+                      ) : (
+                        <span className="em" style={{ width: 40, textAlign: 'center' }}>{v.emoji}</span>
+                      )}
+                      <span className="nm oc-vendor-name">{vp.name || v.name}</span>
+                    </div>
+                  );
+                })}
                 <div className="hiw">
                   <div className="hiws">
                     <div className="hiwn">1</div>
@@ -1755,13 +1801,12 @@ export default function LaundroApp() {
                     )}
                     {VENDORS.map((v) => (
                       (() => {
+                        const vp = profileForVendor(v);
                         const blockReason = vendorBlockReason(v.id);
                         const isLocationAllowed = pickupLocation && pickupLocation !== 'other' && (pickupLocation === 'vit-chn' ? ['profab', 'starwash'].includes(v.id) : false);
                         const scheduleReason = hasAnyBookableSlots ? '' : 'No slots available right now';
                         const canPick = isVendorAvailable(v).ok && !!isLocationAllowed && !blockReason && !scheduleReason;
-                        const vendorTitle = v.id === 'profab'
-                          ? 'Pro Fab Power Laundry Services'
-                          : v.name;
+                        const vendorTitle = vp.name || v.name;
                         return (
                       <div
                         key={v.id}
@@ -1771,8 +1816,8 @@ export default function LaundroApp() {
                         role="button"
                         tabIndex={canPick ? 0 : -1}
                       >
-                        {v.id === 'profab' ? (
-                          <img src={(vendorProfile?.logo_url || DEFAULT_VENDOR_PROFILE.logo_url || '/profab-logo.png')} alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
+                        {vp.logo_url ? (
+                          <img src={vp.logo_url} alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
                         ) : (
                           <span className="em">{v.emoji}</span>
                         )}
