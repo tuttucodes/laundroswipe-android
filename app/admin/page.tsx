@@ -463,7 +463,7 @@ export default function AdminPage() {
       <div className="login-wrap">
         <div className="login-card">
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <img src="/icon-192.png" alt="LaundroSwipe" style={{ height: 56, width: 56, objectFit: 'contain', marginBottom: 14, borderRadius: 12 }} />
+            <img src="/icon-192.png" alt="LaundroSwipe" style={{ height: 56, width: 56, objectFit: 'contain', margin: '0 auto 14px', borderRadius: 12, display: 'block' }} />
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, color: 'var(--b)' }}>LaundroSwipe Vendor Login</h1>
             <p style={{ color: 'var(--ts)', fontSize: 13, marginTop: 6 }}>Vendor portal + super admin access</p>
           </div>
