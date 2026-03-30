@@ -151,6 +151,19 @@ type LocationRequestRow = {
   contact_email: string | null;
   source: string | null;
 };
+
+const TAB_FROM_QUERY: Tab[] = [
+  'orders',
+  'users',
+  'colleges',
+  'schedule',
+  'notifications',
+  'vendor',
+  'gatepass',
+  'settings',
+  'area_requests',
+];
+
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [role, setRole] = useState<AdminRole>('vendor');
@@ -235,6 +248,32 @@ export default function AdminPage() {
     if (savedVendorId) setVendorId(savedVendorId);
     if (saved === 'true') setLoggedIn(true);
   }, []);
+
+  useEffect(() => {
+    if (!loggedIn || typeof window === 'undefined') return;
+    const savedRole = localStorage.getItem('admin_role');
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('tab') as Tab | null;
+    const qs = params.get('userSearch');
+    if (t && TAB_FROM_QUERY.includes(t)) {
+      if (t === 'users' && savedRole !== 'super_admin') {
+        /* vendors cannot open Users tab from URL */
+      } else if (
+        (t === 'colleges' ||
+          t === 'schedule' ||
+          t === 'notifications' ||
+          t === 'gatepass' ||
+          t === 'settings' ||
+          t === 'area_requests') &&
+        savedRole !== 'super_admin'
+      ) {
+        /* vendor-only tabs stay on allowed surface */
+      } else {
+        setTab(t);
+      }
+    }
+    if (qs != null && qs !== '') setUserSearch(qs);
+  }, [loggedIn]);
 
   useEffect(() => {
     if (!loggedIn || !isSuperAdmin || tab !== 'area_requests') return;
@@ -614,7 +653,7 @@ export default function AdminPage() {
     if (isSuperAdmin && superVendorFilter !== 'all' && !usersByVisibleOrders.has(u.id)) return false;
     const q = userSearch.trim().toLowerCase();
     if (!q) return true;
-    return [u.display_id, u.full_name, u.email, u.phone, u.college_id, u.reg_no, u.hostel_block]
+    return [u.id, u.display_id, u.full_name, u.email, u.phone, u.college_id, u.reg_no, u.hostel_block]
       .some((v) => String(v ?? '').toLowerCase().includes(q));
   });
   const totalOrders = vendorScopedForSuperAdmin.length;

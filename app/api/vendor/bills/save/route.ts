@@ -81,9 +81,20 @@ export async function POST(request: Request) {
   // Best-effort vendor_id assignment (use order.vendor_id if present).
   const vendor_id = order.vendor_id ?? null;
 
-  const customer_name = null;
-  const customer_phone = null;
   const user_id = order.user_id ?? null;
+  let customer_name: string | null = null;
+  let customer_phone: string | null = null;
+  if (user_id) {
+    const { data: urow } = await supabase
+      .from('users')
+      .select('full_name, email, phone')
+      .eq('id', user_id)
+      .maybeSingle();
+    if (urow) {
+      customer_name = (urow.full_name as string | null) ?? (urow.email as string | null) ?? null;
+      customer_phone = (urow.phone as string | null) ?? null;
+    }
+  }
 
   const { data, error } = await supabase
     .from('vendor_bills')

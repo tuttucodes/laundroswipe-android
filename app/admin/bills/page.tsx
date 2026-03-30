@@ -5,19 +5,28 @@ import Link from 'next/link';
 import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import type { VendorBillRow } from '@/lib/api';
-import { CONVENIENCE_FEE } from '@/lib/constants';
 
 function billToHtml(b: VendorBillRow) {
   const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const rows = Array.isArray(b.line_items) && b.line_items.length
     ? b.line_items.map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')
     : '<tr><td colspan="2">No items</td></tr>';
+  const emailLine =
+    b.user_email != null && String(b.user_email).trim() !== ''
+      ? `<p><strong>Email:</strong> ${esc(String(b.user_email))}</p>`
+      : '';
+  const idLine =
+    b.user_display_id != null && String(b.user_display_id).trim() !== ''
+      ? `<p><strong>User ID:</strong> ${esc(String(b.user_display_id))}</p>`
+      : '';
   return `
     <h2>LaundroSwipe</h2>
     <p class="meta">Vendor name: ${esc(b.vendor_name ?? 'Vendor')}</p>
     <p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p>
-    <p><strong>Customer:</strong> ${b.customer_name ?? '—'}</p>
-    <p><strong>Phone:</strong> ${b.customer_phone ?? '—'}</p>
+    <p><strong>Customer:</strong> ${esc(b.customer_name ?? '—')}</p>
+    <p><strong>Phone:</strong> ${esc(b.customer_phone ?? '—')}</p>
+    ${emailLine}
+    ${idLine}
     <p><strong>Date:</strong> ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p>
     <table>
       <thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
@@ -34,12 +43,16 @@ function billToPlainText(b: VendorBillRow): string {
   const items = Array.isArray(b.line_items) && b.line_items.length
     ? b.line_items.map((l: { label: string; qty: number; price: number }) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`)
     : [];
+  const extra: string[] = [];
+  if (b.user_email != null && String(b.user_email).trim() !== '') extra.push(`Email: ${b.user_email}`);
+  if (b.user_display_id != null && String(b.user_display_id).trim() !== '') extra.push(`User ID: ${b.user_display_id}`);
   return [
     'LaundroSwipe',
     `Vendor: ${b.vendor_name ?? 'Vendor'}`,
     `Token: #${b.order_token}  Order: ${b.order_number ?? '—'}`,
     `Customer: ${b.customer_name ?? '—'}`,
     `Phone: ${b.customer_phone ?? '—'}`,
+    ...extra,
     `Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}`,
     '---',
     ...items,
@@ -207,6 +220,16 @@ export default function BillsPage() {
             </div>
             <style>{`.bill-view-content table{width:100%;border-collapse:collapse}.bill-view-content .right{text-align:right}.bill-view-content .total{font-weight:700;border-top:2px solid #000;padding-top:4px;margin-top:4px}.bill-view-content .conv{color:#666}.bill-view-content h2{text-align:center;margin:0 0 8px}.bill-view-content p{margin:4px 0}`}</style>
             <div className="bill-view-content" style={{ fontFamily: 'system-ui', fontSize: 13, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: billToHtml(viewingBill) }} />
+            {isSuperAdmin && viewingBill.user_id && (
+              <p style={{ marginTop: 14, fontSize: 13 }}>
+                <Link
+                  href={`/admin?tab=users&userSearch=${encodeURIComponent(viewingBill.user_id)}`}
+                  style={{ color: 'var(--b)', fontWeight: 600 }}
+                >
+                  Open this user in Users
+                </Link>
+              </p>
+            )}
             {copyMsg && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--ok)' }}>{copyMsg}</p>}
             <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
               <button type="button" onClick={() => printBill(viewingBill)} className="vendor-btn-primary" style={{ flex: 1 }}>Print</button>

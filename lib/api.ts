@@ -778,11 +778,15 @@ export type VendorBillRow = {
   customer_name: string | null;
   customer_phone: string | null;
   user_id: string | null;
+  /** Present when API joins users (admin bills list). */
+  user_email?: string | null;
+  user_display_id?: string | null;
   line_items: { id: string; label: string; price: number; qty: number }[];
   subtotal: number;
   convenience_fee: number;
   total: number;
   vendor_name?: string | null;
+  vendor_id?: string | null;
   created_at: string;
 };
 
