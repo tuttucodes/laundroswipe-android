@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Bell, Shirt, Sparkles, Flame, Zap, Footprints, type LucideIcon } from 'lucide-react';
 import { SwipeToConfirm } from '@/components/SwipeToConfirm';
@@ -339,6 +339,18 @@ export default function LaundroApp() {
     if (!allowed.length) return '';
     return allowed.some((b) => block.startsWith(b)) ? '' : `Only ${allowed.join(', ')} block students`;
   }, [pickupLocation, user?.hos]);
+
+  const hasAnyBookableSlots = useMemo(() => {
+    if (scheduleDates.length === 0) return false;
+    const activeSlotIds = new Set(scheduleSlots.filter((s) => s.active).map((s) => s.id));
+    return scheduleDates.some((d) => {
+      if (!d.enabled) return false;
+      const ids = Array.isArray(d.slot_ids) ? d.slot_ids : [];
+      if (ids.length === 0) return false;
+      if (activeSlotIds.size === 0) return true;
+      return ids.some((id) => activeSlotIds.has(id));
+    });
+  }, [scheduleDates, scheduleSlots]);
 
   useEffect(() => {
     // Only ask for location when user is in the booking flow surfaces.
@@ -1745,7 +1757,11 @@ export default function LaundroApp() {
                       (() => {
                         const blockReason = vendorBlockReason(v.id);
                         const isLocationAllowed = pickupLocation && pickupLocation !== 'other' && (pickupLocation === 'vit-chn' ? ['profab', 'starwash'].includes(v.id) : false);
-                        const canPick = isVendorAvailable(v).ok && !!isLocationAllowed && !blockReason;
+                        const scheduleReason = hasAnyBookableSlots ? '' : 'No slots available right now';
+                        const canPick = isVendorAvailable(v).ok && !!isLocationAllowed && !blockReason && !scheduleReason;
+                        const vendorTitle = v.id === 'profab'
+                          ? 'Pro Fab Power Laundry Services'
+                          : v.name;
                         return (
                       <div
                         key={v.id}
@@ -1762,10 +1778,15 @@ export default function LaundroApp() {
                         )}
                         <div className="inf">
                           <div className="sn">
-                            {v.name}{' '}
+                            {vendorTitle}{' '}
+                            {v.id === 'profab' && (
+                              <span style={{ display: 'inline-block', fontWeight: 700, color: 'var(--tm)' }}>
+                                (ONLY A, D1 & D2 Students)
+                              </span>
+                            )}
                             {!canPick && (
                               <span style={{ fontWeight: 700, color: 'var(--tm)' }}>
-                                ({blockReason || (!pickupLocation ? 'Select location first' : pickupLocation === 'other' ? 'Not available in selected area' : isVendorAvailable(v).reason || 'Not available')})
+                                ({blockReason || scheduleReason || (!pickupLocation ? 'Select location first' : pickupLocation === 'other' ? 'Not available in selected area' : isVendorAvailable(v).reason || 'Not available')})
                               </span>
                             )}
                           </div>
