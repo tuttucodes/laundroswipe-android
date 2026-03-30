@@ -34,10 +34,18 @@ export async function POST(request: Request) {
         const role = row.role === 'super_admin' ? 'super_admin' : 'vendor';
         const vendorId = typeof row.vendor_slug === 'string' ? row.vendor_slug : null;
         const token = createAdminToken(email, role, vendorId);
-        const res = NextResponse.json({ ok: true, role, vendorId, token: token || undefined });
-        if (token) {
-          res.headers.set('Set-Cookie', adminSessionCookieHeader(token));
+        if (!token) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error:
+                'Server misconfiguration: set ADMIN_SESSION_SECRET (or ADMIN_PASSWORD / SUPER_ADMIN_PASSWORD) so sessions can be signed.',
+            },
+            { status: 503 }
+          );
         }
+        const res = NextResponse.json({ ok: true, role, vendorId, token });
+        res.headers.set('Set-Cookie', adminSessionCookieHeader(token));
         return res;
       }
     }
@@ -46,8 +54,18 @@ export async function POST(request: Request) {
   // Optional emergency fallback via env (checked only if DB auth is not successful).
   if (SUPER_ADMIN_EMAIL && SUPER_ADMIN_PASSWORD && email === SUPER_ADMIN_EMAIL.toLowerCase() && password === SUPER_ADMIN_PASSWORD) {
     const fallback = createAdminToken(email, 'super_admin');
-    const fallbackRes = NextResponse.json({ ok: true, role: 'super_admin', token: fallback || undefined });
-    if (fallback) fallbackRes.headers.set('Set-Cookie', adminSessionCookieHeader(fallback));
+    if (!fallback) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            'Server misconfiguration: set ADMIN_SESSION_SECRET (or ADMIN_PASSWORD / SUPER_ADMIN_PASSWORD) so sessions can be signed.',
+        },
+        { status: 503 }
+      );
+    }
+    const fallbackRes = NextResponse.json({ ok: true, role: 'super_admin', token: fallback });
+    fallbackRes.headers.set('Set-Cookie', adminSessionCookieHeader(fallback));
     return fallbackRes;
   }
 

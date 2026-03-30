@@ -5,8 +5,18 @@ const MAX_AGE_SEC = 24 * 60 * 60; // 24h
 export type AdminRole = 'super_admin' | 'vendor';
 export type AdminSessionData = { email: string; exp: number; role: AdminRole; vendorId?: string | null };
 
+/**
+ * Used to HMAC-sign admin session tokens. Must be stable across deploys.
+ * Prefer ADMIN_SESSION_SECRET; falls back to legacy ADMIN_PASSWORD or SUPER_ADMIN_PASSWORD
+ * so env-only super-admin login still gets a valid session.
+ */
 function getSecret(): string {
-  return process.env.ADMIN_SESSION_SECRET ?? process.env.ADMIN_PASSWORD ?? '';
+  return (
+    process.env.ADMIN_SESSION_SECRET ??
+    process.env.ADMIN_PASSWORD ??
+    process.env.SUPER_ADMIN_PASSWORD ??
+    ''
+  );
 }
 
 /** Encode payload to base64url (no padding). */
