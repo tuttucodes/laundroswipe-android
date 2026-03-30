@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { isAdminRequest } from '@/lib/admin-session';
+import { getAdminSessionFromRequest, isAdminRequest } from '@/lib/admin-session';
 import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
 import type { ScheduleSlotRow, ScheduleDateRow } from '@/lib/api';
 
@@ -11,7 +11,15 @@ function getServiceSupabase() {
   return createClient(url, key);
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isAdminRequest(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // Schedule config is super-admin only.
+  const session = getAdminSessionFromRequest(request);
+  if (!session || session.role !== 'super_admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
   const supabase = getServiceSupabase();
   if (!supabase) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
@@ -54,6 +62,10 @@ type SchedulePayload = {
 export async function POST(request: Request) {
   if (!isAdminRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const session = getAdminSessionFromRequest(request);
+  if (!session || session.role !== 'super_admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   const rate = checkAdminRateLimit(request);
   if (!rate.ok) {

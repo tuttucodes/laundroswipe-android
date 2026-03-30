@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkBodySize } from '@/lib/rate-limit';
+import { checkPublicRateLimit } from '@/lib/public-rate-limit';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -15,12 +17,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Request too large' }, { status: 413 });
   }
 
+  const rate = checkPublicRateLimit({
+    request,
+    keyPrefix: 'public:waitlist',
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: 20,
+  });
+  if (!rate.ok) {
+    return NextResponse.json(
+      { ok: false, error: 'Too many requests. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } },
+    );
+  }
+
   const supabase = getServiceSupabase();
   if (!supabase) {
     return NextResponse.json({ ok: false, error: 'Database not configured' }, { status: 503 });
   }
 
-  let body: { name?: string; email?: string; city?: string };
+  let body: { name?: string; email?: string; city?: string; captchaToken?: string };
   try {
     body = await request.json();
   } catch {
@@ -36,6 +51,13 @@ export async function POST(request: Request) {
       { ok: false, error: 'Email and city are required' },
       { status: 400 },
     );
+  }
+
+  const captcha = await verifyTurnstileToken({
+    token: typeof body.captchaToken === 'string' ? body.captchaToken : null,
+  });
+  if (!captcha.ok) {
+    return NextResponse.json({ ok: false, error: captcha.error }, { status: 400 });
   }
 
   try {

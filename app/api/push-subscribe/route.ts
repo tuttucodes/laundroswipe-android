@@ -3,6 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { checkPublicRateLimit } from '@/lib/public-rate-limit';
 
 const MAX_BODY = 2 * 1024; // 2KB
 
@@ -17,6 +18,19 @@ export async function POST(request: Request) {
 
   const contentLength = request.headers.get('content-length');
   if (contentLength && parseInt(contentLength, 10) > MAX_BODY) return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+
+  const rate = checkPublicRateLimit({
+    request,
+    keyPrefix: 'public:push-subscribe',
+    windowMs: 60 * 60 * 1000,
+    maxRequests: 60,
+  });
+  if (!rate.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } },
+    );
+  }
 
   let body: { expo_push_token?: string };
   try {

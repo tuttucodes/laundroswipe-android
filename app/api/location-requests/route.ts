@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkBodySize } from '@/lib/rate-limit';
+import { checkPublicRateLimit } from '@/lib/public-rate-limit';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -14,11 +16,27 @@ type Payload = {
   lat?: number | null;
   lng?: number | null;
   contactEmail?: string | null;
+  captchaToken?: string;
+  /** e.g. app_schedule_other, web_homepage */
+  source?: string;
 };
 
 export async function POST(request: Request) {
   if (!checkBodySize(request)) {
     return NextResponse.json({ ok: false, error: 'Request too large' }, { status: 413 });
+  }
+
+  const rate = checkPublicRateLimit({
+    request,
+    keyPrefix: 'public:location-requests',
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: 20,
+  });
+  if (!rate.ok) {
+    return NextResponse.json(
+      { ok: false, error: 'Too many requests. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } },
+    );
   }
 
   const supabase = getServiceSupabase();
@@ -38,6 +56,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Location is required' }, { status: 400 });
   }
 
+  const captcha = await verifyTurnstileToken({
+    token: typeof body.captchaToken === 'string' ? body.captchaToken : null,
+  });
+  if (!captcha.ok) {
+    return NextResponse.json({ ok: false, error: captcha.error }, { status: 400 });
+  }
+
   const lat = typeof body.lat === 'number' && Number.isFinite(body.lat) ? body.lat : null;
   const lng = typeof body.lng === 'number' && Number.isFinite(body.lng) ? body.lng : null;
   let contactEmail: string | null = null;
@@ -46,13 +71,16 @@ export async function POST(request: Request) {
     contactEmail = em || null;
   }
 
+  const sourceRaw = typeof body.source === 'string' ? body.source.trim().slice(0, 64) : '';
+  const source = sourceRaw || 'web_homepage';
+
   try {
     const { error } = await supabase.from('location_requests').insert({
       location_text: locationText,
       lat,
       lng,
       contact_email: contactEmail,
-      source: 'web_homepage',
+      source,
     });
     if (error) {
       console.error('location-requests insert error', error);

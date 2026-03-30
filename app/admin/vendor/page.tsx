@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { LSApi } from '@/lib/api';
 import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { VENDOR_BILL_ITEMS, CONVENIENCE_FEE } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
 import { VIT_VENDOR_BLOCK_ACCESS } from '@/lib/constants';
+import { VENDORS } from '@/lib/constants';
 
 type LineItem = { id: string; label: string; price: number; qty: number };
 const VENDOR_NAMES: Record<string, string> = {
@@ -28,6 +28,11 @@ export default function VendorPage() {
   const [billAlreadyGenerated, setBillAlreadyGenerated] = useState(false);
   const [showAnyway, setShowAnyway] = useState(false);
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
+
+  const adminAuthHeaders = (): Record<string, string> => {
+    const t = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  };
 
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
@@ -59,25 +64,29 @@ export default function VendorPage() {
       setLookupErr('Enter a token number');
       return;
     }
-    const result = await LSApi.fetchOrderByToken(t);
-    if (result) {
-      if (vendorId) {
-        const collegeId = result.user?.college_id ?? '';
-        const block = String(result.user?.hostel_block ?? '').trim().toUpperCase();
-        const allowed = VIT_VENDOR_BLOCK_ACCESS[vendorId];
-        const authorized = collegeId === 'vit-chn' && allowed.some((b) => block.startsWith(b));
-        if (!authorized) {
-          setLookupErr(`This token is not assigned to ${vendorName}.`);
-          return;
-        }
+
+    try {
+      const res = await fetch('/api/vendor/orders/lookup', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({ token: t }),
+      });
+      if (res.status === 401) {
+        setLookupErr('Session expired. Log in again.');
+        return;
       }
-      setOrder(result.order);
-      setUser(result.user ?? null);
-      const existingCount = await LSApi.countBillsForOrderToken(t);
-      setBillAlreadyGenerated(existingCount > 0);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        setLookupErr(data?.error || 'Order not found for this token');
+        return;
+      }
+      setOrder(data.order as OrderRow);
+      setUser((data.user ?? null) as UserRow | null);
+      setBillAlreadyGenerated(Number(data.existing_bills_count ?? 0) > 0);
       showToast('Order loaded', 'ok');
-    } else {
-      setLookupErr('Order not found for this token');
+    } catch {
+      setLookupErr('Order lookup failed');
     }
   };
 
@@ -185,27 +194,34 @@ export default function VendorPage() {
       showToast('Add at least one item', 'er');
       return;
     }
-    const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
+    if (!order?.token) {
+      showToast('Load an order first', 'er');
+      return;
+    }
+    const orderToken = order.token;
     setSaving(true);
-    const result = await LSApi.saveVendorBill({
-      order_id: order?.id ?? null,
-      order_token: orderToken,
-      order_number: order?.order_number ?? null,
-      customer_name: user?.full_name ?? null,
-      customer_phone: user?.phone ?? null,
-      user_id: order?.user_id ?? user?.id ?? null,
-      line_items: lineItems,
-      subtotal,
-      convenience_fee: CONVENIENCE_FEE,
-      total,
-      vendor_name: vendorName,
-    });
-    setSaving(false);
-    if (result) {
+    try {
+      const res = await fetch('/api/vendor/bills/save', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({
+          token: orderToken,
+          order_number: order.order_number ?? null,
+          line_items: lineItems.map((l) => ({ id: l.id, qty: l.qty })),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        showToast(data?.error || 'Save failed', 'er');
+        return;
+      }
       setBillAlreadyGenerated(true);
       showToast('Bill saved', 'ok');
-    } else {
-      showToast('Save failed. Run supabase/vendor_bills.sql if needed.', 'er');
+    } catch {
+      showToast('Save failed', 'er');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -227,6 +243,10 @@ export default function VendorPage() {
       showToast('Add at least one item', 'er');
       return;
     }
+    if (!order?.token) {
+      showToast('Load an order first', 'er');
+      return;
+    }
     const fingerprint = billFingerprint();
     if (lastSavedBillFingerprintRef.current === fingerprint) {
       showToast('Printing…', 'ok');
@@ -234,22 +254,28 @@ export default function VendorPage() {
       return;
     }
     showToast('Saving & printing…', 'ok');
-    const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
-    const result = await LSApi.saveVendorBill({
-      order_id: order?.id ?? null,
-      order_token: orderToken,
-      order_number: order?.order_number ?? null,
-      customer_name: user?.full_name ?? null,
-      customer_phone: user?.phone ?? null,
-      user_id: order?.user_id ?? user?.id ?? null,
-      line_items: lineItems,
-      subtotal,
-      convenience_fee: CONVENIENCE_FEE,
-      total,
-      vendor_name: vendorName,
-    });
-    if (result) lastSavedBillFingerprintRef.current = fingerprint;
-    showToast(result ? 'Bill saved. Printing…' : 'Printing…', result ? 'ok' : 'er');
+    const orderToken = order.token;
+    try {
+      const res = await fetch('/api/vendor/bills/save', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({
+          token: orderToken,
+          order_number: order.order_number ?? null,
+          line_items: lineItems.map((l) => ({ id: l.id, qty: l.qty })),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.ok) {
+        lastSavedBillFingerprintRef.current = fingerprint;
+        showToast('Bill saved. Printing…', 'ok');
+      } else {
+        showToast('Printing…', 'er');
+      }
+    } catch {
+      showToast('Printing…', 'er');
+    }
     await doPrint();
   };
 

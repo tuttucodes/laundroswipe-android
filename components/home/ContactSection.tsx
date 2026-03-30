@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
 
 export function ContactSection() {
   const [userRole, setUserRole] = useState('Student');
@@ -8,6 +9,7 @@ export function ContactSection() {
   const [email, setEmail] = useState('');
   const [institution, setInstitution] = useState('');
   const [message, setMessage] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: 'ok' | 'error'; message: string } | null>(null);
 
@@ -22,6 +24,7 @@ export function ContactSection() {
       institution: institution.trim(),
       message: message.trim(),
       subject: `Homepage inquiry (${userRole})`,
+      captchaToken,
     };
 
     if (!payload.name || !payload.email || !payload.message) {
@@ -158,6 +161,10 @@ export function ContactSection() {
                   onChange={(e) => setMessage(e.target.value)}
                   className="w-full bg-transparent border-b border-white/10 pb-4 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8523F] transition-colors text-sm font-bold tracking-widest uppercase resize-none mt-2"
                 />
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <TurnstileWidget onToken={setCaptchaToken} />
               </div>
 
               {status && (

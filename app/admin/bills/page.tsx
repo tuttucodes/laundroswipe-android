@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { LSApi } from '@/lib/api';
 import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import type { VendorBillRow } from '@/lib/api';
@@ -66,13 +65,31 @@ export default function BillsPage() {
   useEffect(() => {
     const role = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
     const vendorId = typeof window !== 'undefined' ? localStorage.getItem('admin_vendor_id') : null;
-    const vendorFilter = role === 'vendor' && vendorId ? (VENDOR_NAMES[vendorId] ?? null) : null;
     setIsSuperAdmin(role === 'super_admin');
-    setVendorName(vendorFilter);
-    LSApi.fetchVendorBills(vendorFilter ?? undefined).then((data) => {
-      setBills(data ?? []);
-      setLoading(false);
-    });
+    setVendorName(role === 'vendor' && vendorId ? (VENDOR_NAMES[vendorId] ?? null) : null);
+
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers = token
+      ? ({ Authorization: `Bearer ${token}` } as Record<string, string>)
+      : ({} as Record<string, string>);
+
+    fetch('/api/vendor/bills', { credentials: 'include', headers })
+      .then(async (r) => {
+        if (r.status === 401) {
+          sessionStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_logged');
+          setLoading(false);
+          return null;
+        }
+        const data = await r.json().catch(() => ({}));
+        return data?.bills ?? [];
+      })
+      .then((rows) => {
+        if (!rows) return;
+        setBills(rows as VendorBillRow[]);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const escapeCsv = (v: string | number | null | undefined): string => {

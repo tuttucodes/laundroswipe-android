@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { LSApi } from '@/lib/api';
 import { COLLEGES, VENDOR, CONVENIENCE_FEE } from '@/lib/constants';
 import type { OrderRow, UserRow } from '@/lib/api';
 
@@ -125,7 +124,16 @@ function printGatePassLetter(vendorName: string, orderCount: number) {
 }
 
 type OrderWithUser = OrderRow & { user?: string };
-type Tab = 'orders' | 'users' | 'colleges' | 'schedule' | 'notifications' | 'vendor' | 'gatepass' | 'settings';
+type Tab =
+  | 'orders'
+  | 'users'
+  | 'colleges'
+  | 'schedule'
+  | 'notifications'
+  | 'vendor'
+  | 'gatepass'
+  | 'settings'
+  | 'area_requests';
 type AdminRole = 'super_admin' | 'vendor';
 type VendorId = string;
 
@@ -134,6 +142,15 @@ type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
 type AdminNotification = { id: string; title: string; body: string | null; sent_at: string | null; scheduled_at: string | null; created_at: string };
 type VendorSummary = { id: string; slug: string; name: string; active: boolean };
 type ServiceArea = { id: string; name: string; short_code: string; city: string | null; state: string | null; is_active: boolean };
+type LocationRequestRow = {
+  id: string;
+  created_at: string;
+  location_text: string;
+  lat: number | null;
+  lng: number | null;
+  contact_email: string | null;
+  source: string | null;
+};
 const VENDOR_TITLES: Record<string, string> = {
   profab: 'Pro Fab',
   starwash: 'Star Wash',
@@ -165,6 +182,7 @@ export default function AdminPage() {
   }>({ count: 0, totalRevenue: 0, subtotalExcludingFees: 0, totalConvenienceFee: 0 });
   const [tab, setTab] = useState<Tab>('orders');
   const [filter, setFilter] = useState('all');
+  const [superVendorFilter, setSuperVendorFilter] = useState('all');
   const [orderAreaFilter, setOrderAreaFilter] = useState('all');
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -198,6 +216,9 @@ export default function AdminPage() {
   const [newAreaCity, setNewAreaCity] = useState('');
   const [newAreaState, setNewAreaState] = useState('');
   const [newAreaSaving, setNewAreaSaving] = useState(false);
+  const [areaRequests, setAreaRequests] = useState<LocationRequestRow[]>([]);
+  const [areaRequestsLoading, setAreaRequestsLoading] = useState(false);
+  const [areaRequestsError, setAreaRequestsError] = useState<string | null>(null);
   const dashboardTitle = isSuperAdmin
     ? 'LaundroSwipe Super Admin'
     : `${VENDOR_TITLES[vendorId ?? ''] ?? 'Vendor'} Dashboard`;
@@ -214,36 +235,113 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (!loggedIn || !LSApi.hasSupabase) return;
+    if (!loggedIn || !isSuperAdmin || tab !== 'area_requests') return;
+
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers = token ? ({ Authorization: `Bearer ${token}` } as Record<string, string>) : {};
+
+    setAreaRequestsLoading(true);
+    setAreaRequestsError(null);
+    fetch('/api/admin/location-requests', { credentials: 'include', headers })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (r.status === 401) return { unauthorized: true as const };
+        if (!r.ok) return { error: (data as { error?: string })?.error ?? 'Failed to load' };
+        return { requests: (data as { requests?: LocationRequestRow[] }).requests ?? [] };
+      })
+      .then((result) => {
+        if (result && 'unauthorized' in result) return;
+        if (result && 'error' in result) {
+          setAreaRequestsError(result.error ?? 'Failed to load');
+          setAreaRequests([]);
+          return;
+        }
+        if (result && 'requests' in result) setAreaRequests(result.requests);
+      })
+      .catch(() => {
+        setAreaRequestsError('Failed to load');
+        setAreaRequests([]);
+      })
+      .finally(() => setAreaRequestsLoading(false));
+  }, [loggedIn, isSuperAdmin, tab]);
+
+  useEffect(() => {
+    if (!loggedIn) return;
     setLoading(true);
-    Promise.all([LSApi.fetchOrders(), LSApi.fetchUsers(), LSApi.fetchVendorBills()])
-      .then(([ords, us, billList]) => {
+
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers = token ? ({ Authorization: `Bearer ${token}` } as Record<string, string>) : {};
+
+    fetch('/api/admin/overview', { credentials: 'include', headers })
+      .then(async (r) => {
+        if (r.status === 401) {
+          sessionStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_logged');
+          setLoggedIn(false);
+          return null;
+        }
+        const data = await r.json().catch(() => ({}));
+        if (!data?.orders || !data?.users) return null;
+        return data as { orders: OrderRow[] & { vendor_slug?: string | null }[]; users: UserRow[]; vendor_bills: any[] };
+      })
+      .then((data) => {
+        if (!data) return;
+        const { orders: ords, users: us, vendor_bills: billList } = data;
+
         const userMap = new Map<string, UserRow>();
         (us ?? []).forEach((u) => userMap.set(u.id, u));
         setUsers(us ?? []);
-        const withUser = (ords ?? []).map((o) => ({
+
+        const withUser = (ords ?? []).map((o: any) => ({
           ...o,
           user: userMap.get(o.user_id ?? '')?.full_name ?? userMap.get(o.user_id ?? '')?.email ?? '—',
         }));
+
         const vendorScopedOrders = !isSuperAdmin && vendorId
-          ? withUser.filter((o) => {
-              const ov = String((o as { vendor_id?: string | null; vendor_name?: string | null }).vendor_id ?? (o as { vendor_name?: string | null }).vendor_name ?? '').toLowerCase();
-              return ov === vendorId;
-            })
+          ? withUser.filter((o: any) => String(o.vendor_slug ?? '').toLowerCase() === String(vendorId).toLowerCase())
           : withUser;
-        setOrders(vendorScopedOrders);
-        const orderIds = new Set(vendorScopedOrders.map((o) => o.id));
-        const bl = !isSuperAdmin
-          ? (billList ?? []).filter((b) => (b.order_id ? orderIds.has(b.order_id) : String((b as { vendor_name?: string | null }).vendor_name ?? '').toLowerCase().includes(vendorId ?? '')))
+
+        setOrders(vendorScopedOrders as any);
+        const orderIds = new Set(vendorScopedOrders.map((o: any) => o.id));
+
+        let bl = !isSuperAdmin
+          ? (billList ?? []).filter((b: any) => {
+              if (b.order_id) return orderIds.has(b.order_id);
+              return String(b.vendor_slug ?? '').toLowerCase() === String(vendorId ?? '').toLowerCase();
+            })
           : (billList ?? []);
+
+        if (isSuperAdmin && superVendorFilter !== 'all') {
+          const sv = superVendorFilter.toLowerCase();
+          const scopedOrderIds = new Set(
+            vendorScopedOrders
+              .filter((o: any) => {
+                const ov = String(o.vendor_slug ?? '').toLowerCase();
+                return ov === sv || ov.includes(sv);
+              })
+              .map((o: any) => o.id),
+          );
+
+          bl = bl.filter((b: any) => {
+            const bv = String(b.vendor_slug ?? '').toLowerCase();
+            return (b.order_id ? scopedOrderIds.has(b.order_id) : false) || bv === sv || bv.includes(sv);
+          });
+        }
+
         const vendorTotals = new Map<string, number>();
-        bl.forEach((b) => {
-          const key = String((b as { vendor_name?: string | null }).vendor_name ?? 'Unassigned');
+        bl.forEach((b: any) => {
+          const key = String(b.vendor_name ?? 'Unassigned');
           vendorTotals.set(key, (vendorTotals.get(key) ?? 0) + (Number(b.total) || 0));
         });
-        setVendorStats(Array.from(vendorTotals.entries()).map(([vendorName, total]) => ({ vendorName, total })).sort((a, b) => b.total - a.total));
+
+        setVendorStats(
+          Array.from(vendorTotals.entries())
+            .map(([vendorName, total]) => ({ vendorName, total }))
+            .sort((a, b) => b.total - a.total),
+        );
+
         const agg = bl.reduce(
-          (acc, b) => {
+          (acc: any, b: any) => {
             const sub = Number(b.subtotal) || 0;
             const conv = Number(b.convenience_fee) || 0;
             const tot = Number(b.total) || 0;
@@ -255,10 +353,11 @@ export default function AdminPage() {
           },
           { subtotalExcludingFees: 0, totalConvenienceFee: 0, totalRevenue: 0 },
         );
+
         setBills({ count: bl.length, ...agg });
       })
       .finally(() => setLoading(false));
-  }, [loggedIn, isSuperAdmin, vendorId]);
+  }, [loggedIn, isSuperAdmin, vendorId, superVendorFilter]);
 
   useEffect(() => {
     if (!loggedIn || tab !== 'schedule') return;
@@ -340,6 +439,16 @@ export default function AdminPage() {
     }).catch(() => {});
   }, [loggedIn, isSuperAdmin, tab]);
 
+  useEffect(() => {
+    if (!loggedIn || !isSuperAdmin) return;
+    fetch('/api/admin/vendors', { credentials: 'include', headers: adminAuthHeaders() })
+      .then((r) => r.json().catch(() => ({})))
+      .then((v) => {
+        if (Array.isArray(v?.vendors)) setVendorsList(v.vendors);
+      })
+      .catch(() => {});
+  }, [loggedIn, isSuperAdmin]);
+
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -391,11 +500,33 @@ export default function AdminPage() {
   };
 
   const advanceStatus = async (orderId: string) => {
-    const updated = await LSApi.advanceOrderStatus(orderId);
-    if (updated) {
-      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: updated.status } : o)));
-      showToast('Status updated', 'ok');
-    } else {
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers = token
+      ? ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } as Record<string, string>)
+      : { 'Content-Type': 'application/json' };
+
+    try {
+      const res = await fetch('/api/admin/orders/advance', {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        sessionStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_logged');
+        setLoggedIn(false);
+        showToast('Session expired. Log in again.', 'er');
+        return;
+      }
+      if (res.ok && data?.order?.status) {
+        setOrders((prev) => prev.map((o: any) => (o.id === orderId ? { ...o, status: data.order.status } : o)));
+        showToast('Status updated', 'ok');
+      } else {
+        showToast(data?.error || 'Update failed', 'er');
+      }
+    } catch {
       showToast('Update failed', 'er');
     }
   };
@@ -443,20 +574,29 @@ export default function AdminPage() {
   const areaScopedOrders = orderAreaFilter === 'all'
     ? orders
     : orders.filter((o) => users.find((u) => u.id === o.user_id)?.college_id === orderAreaFilter);
-  const filtered = filter === 'all' ? areaScopedOrders : areaScopedOrders.filter((o) => o.status === filter);
+  const vendorScopedForSuperAdmin = isSuperAdmin && superVendorFilter !== 'all'
+    ? areaScopedOrders.filter((o) => {
+        const ov = String((o as { vendor_id?: string | null; vendor_name?: string | null }).vendor_id ?? (o as { vendor_name?: string | null }).vendor_name ?? '').toLowerCase();
+        const sv = superVendorFilter.toLowerCase();
+        return ov === sv || ov.includes(sv);
+      })
+    : areaScopedOrders;
+  const filtered = filter === 'all' ? vendorScopedForSuperAdmin : vendorScopedForSuperAdmin.filter((o) => o.status === filter);
+  const usersByVisibleOrders = new Set(vendorScopedForSuperAdmin.map((o) => o.user_id).filter(Boolean));
   const filteredUsers = (users ?? []).filter((u) => {
+    if (isSuperAdmin && superVendorFilter !== 'all' && !usersByVisibleOrders.has(u.id)) return false;
     const q = userSearch.trim().toLowerCase();
     if (!q) return true;
     return [u.display_id, u.full_name, u.email, u.phone, u.college_id, u.reg_no, u.hostel_block]
       .some((v) => String(v ?? '').toLowerCase().includes(q));
   });
-  const totalOrders = orders.length;
-  const active = orders.filter((o) => o.status !== 'delivered').length;
-  const delivered = orders.filter((o) => o.status === 'delivered').length;
+  const totalOrders = vendorScopedForSuperAdmin.length;
+  const active = vendorScopedForSuperAdmin.filter((o) => o.status !== 'delivered').length;
+  const delivered = vendorScopedForSuperAdmin.filter((o) => o.status === 'delivered').length;
   const billsGenerated = bills.count;
   const tokensGenerated = totalOrders;
   const { totalRevenue, subtotalExcludingFees, totalConvenienceFee } = bills;
-  const vitChennaiOrderCount = orders.filter((o) => users.find((u) => u.id === o.user_id)?.college_id === 'vit-chn').length;
+  const vitChennaiOrderCount = vendorScopedForSuperAdmin.filter((o) => users.find((u) => u.id === o.user_id)?.college_id === 'vit-chn').length;
 
   if (!loggedIn) {
     return (
@@ -526,6 +666,7 @@ export default function AdminPage() {
                 <button type="button" onClick={() => { setTab('colleges'); closeMenu(); }} className={`admin-nav-btn ${tab === 'colleges' ? 'active' : ''}`}>🎓 Colleges</button>
                 <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>📅 Schedule</button>
                 <button type="button" onClick={() => { setTab('notifications'); closeMenu(); }} className={`admin-nav-btn ${tab === 'notifications' ? 'active' : ''}`}>🔔 Notifications</button>
+                <button type="button" onClick={() => { setTab('area_requests'); closeMenu(); }} className={`admin-nav-btn ${tab === 'area_requests' ? 'active' : ''}`}>📍 Area requests</button>
                 <button type="button" onClick={() => { setTab('gatepass'); closeMenu(); }} className={`admin-nav-btn ${tab === 'gatepass' ? 'active' : ''}`}>🏫 Gate pass</button>
               </div>
               <div className="admin-drawer-section">
@@ -591,6 +732,19 @@ export default function AdminPage() {
             )}
             {!loading && (
               <div className="admin-filter-row">
+                {isSuperAdmin && (
+                  <select
+                    className="admin-filter-btn"
+                    value={superVendorFilter}
+                    onChange={(e) => setSuperVendorFilter(e.target.value)}
+                    style={{ minWidth: 170 }}
+                  >
+                    <option value="all">All vendors</option>
+                    {vendorsList.map((v) => (
+                      <option key={v.slug} value={v.slug}>{v.name}</option>
+                    ))}
+                  </select>
+                )}
                 <select
                   className="admin-filter-btn"
                   value={orderAreaFilter}
@@ -768,6 +922,85 @@ export default function AdminPage() {
                   )}
                 </div>
               </>
+            )}
+          </>
+        )}
+        {isSuperAdmin && tab === 'area_requests' && (
+          <>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Area activation requests</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>
+              Submissions when users choose Other in schedule and request a new area. Stored in <code style={{ fontSize: 13 }}>location_requests</code>.
+            </p>
+            {areaRequestsLoading ? (
+              <p style={{ color: 'var(--ts)' }}>Loading…</p>
+            ) : areaRequestsError ? (
+              <div
+                style={{
+                  padding: 16,
+                  borderRadius: 12,
+                  background: '#FEF3C7',
+                  color: '#92400E',
+                  fontSize: 14,
+                  marginBottom: 16,
+                }}
+              >
+                {areaRequestsError}. If the table is missing, run the migration{' '}
+                <code style={{ fontSize: 12 }}>supabase/migrations/20260317_create_location_requests.sql</code> in Supabase.
+              </div>
+            ) : areaRequests.length === 0 ? (
+              <p style={{ textAlign: 'center', padding: 48, color: 'var(--ts)' }}>No requests yet.</p>
+            ) : (
+              <div className="admin-table-wrap">
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>
+                        When
+                      </th>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>
+                        Request
+                      </th>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>
+                        Email
+                      </th>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>
+                        Source
+                      </th>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>
+                        Map
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {areaRequests.map((row) => {
+                      const when = row.created_at ? new Date(row.created_at).toLocaleString() : '—';
+                      const mapHref =
+                        row.lat != null && row.lng != null
+                          ? `https://www.google.com/maps?q=${row.lat},${row.lng}`
+                          : null;
+                      return (
+                        <tr key={row.id} style={{ borderBottom: '1px solid var(--bd)' }}>
+                          <td style={{ padding: '14px 16px', color: 'var(--ts)', fontSize: 13, whiteSpace: 'nowrap' }}>{when}</td>
+                          <td style={{ padding: '14px 16px', maxWidth: 360, fontSize: 14 }}>{row.location_text}</td>
+                          <td style={{ padding: '14px 16px', fontSize: 13 }}>{row.contact_email ?? '—'}</td>
+                          <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12, color: 'var(--ts)' }}>
+                            {row.source ?? '—'}
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            {mapHref ? (
+                              <a href={mapHref} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--b)' }}>
+                                Open
+                              </a>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </>
         )}

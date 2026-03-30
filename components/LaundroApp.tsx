@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Bell, Shirt, Sparkles, Flame, Zap, Footprints, type LucideIcon } from 'lucide-react';
 import { SwipeToConfirm } from '@/components/SwipeToConfirm';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
 import {
   COLLEGES,
   SERVICES,
@@ -225,6 +226,8 @@ export default function LaundroApp() {
   const [geo, setGeo] = useState<{ status: 'idle' | 'loading' | 'ok' | 'denied' | 'error'; coords?: LatLng }>({ status: 'idle' });
   const [pickupLocation, setPickupLocation] = useState('');
   const [otherAreaRequest, setOtherAreaRequest] = useState('');
+  const [areaRequestSaving, setAreaRequestSaving] = useState(false);
+  const [areaRequestCaptchaToken, setAreaRequestCaptchaToken] = useState('');
 
   useEffect(() => {
     if (user?.sid && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.sid) === '1') {
@@ -261,6 +264,42 @@ export default function LaundroApp() {
     setSd({ step: 1, vendorId });
     go('schedule');
   }, [user, go, showToast]);
+
+  const handleOtherAreaRequest = useCallback(async () => {
+    const text = otherAreaRequest.trim();
+    if (!text) {
+      showToast('Enter your area details', 'er');
+      return;
+    }
+    if (areaRequestSaving) return;
+
+    setAreaRequestSaving(true);
+    try {
+      const res = await fetch('/api/location-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          locationText: text,
+          lat: geo.coords?.lat ?? null,
+          lng: geo.coords?.lng ?? null,
+          contactEmail: user?.em ?? null,
+          source: 'app_schedule_other',
+          captchaToken: areaRequestCaptchaToken || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) {
+        showToast(data?.error || 'Request failed', 'er');
+        return;
+      }
+      setOtherAreaRequest('');
+      showToast('Thanks! Area request received.', 'ok');
+    } catch {
+      showToast('Request failed', 'er');
+    } finally {
+      setAreaRequestSaving(false);
+    }
+  }, [otherAreaRequest, areaRequestSaving, geo.coords, user?.em, areaRequestCaptchaToken, showToast]);
 
   const haversineKm = useCallback((a: LatLng, b: LatLng) => {
     const R = 6371;
@@ -344,18 +383,17 @@ export default function LaundroApp() {
   }, []);
 
   const genTk = useCallback(() => {
-    const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-    const digits = String(Math.floor(100 + Math.random() * 900)); // 100–999
-    return letter + digits; // e.g. A704
+    const uuid =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    const short = String(uuid).replace(/-/g, '').slice(0, 8).toUpperCase();
+    return `LS-${short}`;
   }, []);
 
   const genOid = useCallback(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const n = String(Math.floor(1 + Math.random() * 999)).padStart(3, '0');
-    return `LS-${y}${m}${d}-${n}`;
+    const uuid =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    const short = String(uuid).replace(/-/g, '').slice(0, 10).toUpperCase();
+    return `ON-${short}`;
   }, []);
 
   useEffect(() => {
@@ -893,20 +931,28 @@ export default function LaundroApp() {
     }
     const svc = SERVICES.find((x) => x.id === sd.svc);
     const selectedVendor = VENDORS.find((v) => v.id === sd.vendorId);
-    const payload = {
-      on: genOid(),
-      tk: genTk(),
-      svc: sd.svc,
-      sl: svc?.name ?? sd.svc,
-      pd: sd.date,
-      ts: sd.ts,
-      status: 'scheduled',
-      ins: sd.ins ?? undefined,
-      vendorName: selectedVendor?.id ?? 'profab',
-    };
     setOrderSubmitting(true);
     try {
-      const row = await LSApi.createOrder(payload, user.sid);
+      const vendorName = selectedVendor?.name ?? 'Pro Fab Power Laundry Services';
+      let row: any = null;
+
+      // Retry if the DB rejects due to rare unique-token collisions.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const payload = {
+          on: genOid(),
+          tk: genTk(),
+          svc: sd.svc,
+          sl: svc?.name ?? sd.svc,
+          pd: sd.date,
+          ts: sd.ts,
+          status: 'scheduled',
+          ins: sd.ins ?? undefined,
+          vendorName,
+        };
+        row = await LSApi.createOrder(payload, user.sid);
+        if (row) break;
+      }
+
       if (row) {
         const newOrder = rowToOrder(row);
         setOrders((prev) => [newOrder, ...prev]);
@@ -1669,10 +1715,15 @@ export default function LaundroApp() {
                           type="button"
                           className="btn bp bbl"
                           style={{ marginTop: 10 }}
-                          onClick={() => showToast(otherAreaRequest.trim() ? 'Thanks! Area request received.' : 'Enter your area details', otherAreaRequest.trim() ? 'ok' : 'er')}
+                          disabled={areaRequestSaving}
+                          onClick={handleOtherAreaRequest}
                         >
-                          Request activation
+                          {areaRequestSaving ? 'Requesting…' : 'Request activation'}
                         </button>
+
+                        <div style={{ marginTop: 14 }}>
+                          <TurnstileWidget onToken={setAreaRequestCaptchaToken} />
+                        </div>
                       </div>
                     )}
                     {pickupLocation === 'vit-chn' && (

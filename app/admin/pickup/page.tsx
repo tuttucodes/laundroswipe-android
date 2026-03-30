@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { LSApi } from '@/lib/api';
 import type { OrderRow, UserRow } from '@/lib/api';
 
 export default function AdminPickupPage() {
@@ -12,6 +11,11 @@ export default function AdminPickupPage() {
   const [user, setUser] = useState<UserRow | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
+
+  const adminAuthHeaders = (): Record<string, string> => {
+    const t = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  };
 
   const showToast = (msg: string, type: string) => {
     setToast({ msg, type });
@@ -28,26 +32,51 @@ export default function AdminPickupPage() {
       setLookupErr('Enter a token number');
       return;
     }
-    const result = await LSApi.fetchOrderByToken(t);
-    if (result) {
-      setOrder(result.order);
-      setUser(result.user ?? null);
+    try {
+      const res = await fetch('/api/vendor/orders/lookup', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({ token: t }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        setLookupErr('Session expired. Log in again.');
+        return;
+      }
+      if (!res.ok || !data?.ok) {
+        setLookupErr(data?.error || 'Order not found for this token');
+        return;
+      }
+      setOrder(data.order as OrderRow);
+      setUser((data.user ?? null) as UserRow | null);
       showToast('Order loaded', 'ok');
-    } else {
-      setLookupErr('Order not found for this token');
+    } catch {
+      setLookupErr('Order lookup failed');
     }
   };
 
   const handleConfirmDelivery = async () => {
     if (!order) return;
     setConfirming(true);
-    const updated = await LSApi.confirmDeliveryByToken(order.token);
-    setConfirming(false);
-    if (updated) {
-      setOrder({ ...order, status: 'delivered' });
+    try {
+      const res = await fetch('/api/vendor/orders/confirm-delivery', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({ token: order.token }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        showToast(data?.error || 'Failed to confirm', 'er');
+        return;
+      }
+      setOrder({ ...order, status: 'delivered', delivery_confirmed_at: new Date().toISOString() } as any);
       showToast('Delivery confirmed', 'ok');
-    } else {
+    } catch {
       showToast('Failed to confirm', 'er');
+    } finally {
+      setConfirming(false);
     }
   };
 
