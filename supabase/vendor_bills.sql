@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS vendor_bills (
   customer_phone TEXT,
   line_items JSONB NOT NULL DEFAULT '[]',
   subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
-  convenience_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
+  convenience_fee DECIMAL(12,2) NOT NULL DEFAULT 20,
   total DECIMAL(12,2) NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );

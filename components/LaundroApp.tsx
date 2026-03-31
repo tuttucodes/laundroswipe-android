@@ -367,20 +367,6 @@ export default function LaundroApp() {
     return { ok: true, reason: '' };
   }, [geo.coords, haversineKm]);
 
-  const vendorBlockReason = useCallback((vendorId: string) => {
-    if (pickupLocation !== 'vit-chn') return '';
-    const block = String(user?.hos ?? '').trim().toUpperCase();
-    if (!block) return 'Add your hostel block in profile to continue';
-    const allowed =
-      vendorId === 'profab'
-        ? VIT_VENDOR_BLOCK_ACCESS.profab
-        : vendorId === 'starwash'
-          ? VIT_VENDOR_BLOCK_ACCESS.starwash
-          : [];
-    if (!allowed.length) return '';
-    return allowed.some((b) => block.startsWith(b)) ? '' : `Only ${allowed.join(', ')} block students`;
-  }, [pickupLocation, user?.hos]);
-
   const hasAnyBookableSlots = useMemo(() => {
     if (scheduleDates.length === 0) return false;
     const activeSlotIds = new Set(scheduleSlots.filter((s) => s.active).map((s) => s.id));
@@ -1880,10 +1866,9 @@ export default function LaundroApp() {
                     {HOME_VENDORS.map((v) => (
                       (() => {
                         const vp = profileForVendor(v);
-                        const blockReason = vendorBlockReason(v.id);
                         const isLocationAllowed = pickupLocation && pickupLocation !== 'other' && (pickupLocation === 'vit-chn' ? ['profab', 'starwash'].includes(v.id) : false);
                         const scheduleReason = hasAnyBookableSlots ? '' : 'No slots available right now';
-                        const canPick = isVendorAvailable(v).ok && !!isLocationAllowed && !blockReason && !scheduleReason;
+                        const canPick = isVendorAvailable(v).ok && !!isLocationAllowed && !scheduleReason;
                         const vendorTitle = vp.name || v.name;
                         return (
                       <div
@@ -1904,7 +1889,7 @@ export default function LaundroApp() {
                             {vendorTitle}{' '}
                             {!canPick && (
                               <span style={{ fontWeight: 700, color: 'var(--tm)' }}>
-                                ({blockReason || scheduleReason || (!pickupLocation ? 'Select location first' : pickupLocation === 'other' ? 'Not available in selected area' : isVendorAvailable(v).reason || 'Not available')})
+                                ({scheduleReason || (!pickupLocation ? 'Select location first' : pickupLocation === 'other' ? 'Not available in selected area' : isVendorAvailable(v).reason || 'Not available')})
                               </span>
                             )}
                           </div>
