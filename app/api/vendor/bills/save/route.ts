@@ -4,6 +4,16 @@ import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS, VENDOR_BILL_ITEMS } from '@/lib/constants';
 import { calculateServiceFee } from '@/lib/fees';
 
+function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
+  const normalized = String(vendorName ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+  const match = VENDORS.find((vendor) => {
+    const candidate = vendor.name.toLowerCase();
+    return normalized === candidate || normalized.includes(candidate) || candidate.includes(normalized);
+  });
+  return match?.id ?? null;
+}
+
 function normalizeToken(token: string): string {
   return String(token).replace(/^#/, '').trim();
 }
@@ -50,7 +60,7 @@ export async function POST(request: Request) {
 
   if (session.role === 'vendor') {
     const vendorSlug = session.vendorId?.toLowerCase().trim() ?? '';
-    const orderVendorSlug = VENDORS.find((v) => v.name.toLowerCase() === String(order.vendor_name ?? '').toLowerCase())?.id ?? null;
+    const orderVendorSlug = resolveVendorSlugFromName(order.vendor_name);
     if (orderVendorSlug && orderVendorSlug !== vendorSlug) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

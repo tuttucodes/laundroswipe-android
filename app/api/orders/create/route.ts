@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUserContext } from '@/lib/authenticated-user';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
+import { VENDORS } from '@/lib/constants';
 
 type CreateOrderBody = {
   on?: string;
@@ -13,6 +14,16 @@ type CreateOrderBody = {
   ins?: string;
   vendorName?: string;
 };
+
+function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
+  const normalized = String(vendorName ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+  const match = VENDORS.find((vendor) => {
+    const candidate = vendor.name.toLowerCase();
+    return normalized === candidate || normalized.includes(candidate) || candidate.includes(normalized);
+  });
+  return match?.id ?? null;
+}
 
 export async function POST(request: Request) {
   const context = await getAuthenticatedUserContext(request);
@@ -62,6 +73,17 @@ export async function POST(request: Request) {
     );
   }
 
+  let vendorId: string | null = null;
+  const vendorSlug = resolveVendorSlugFromName(vendorName);
+  if (vendorSlug) {
+    const { data: vendorRow } = await supabase
+      .from('vendors')
+      .select('id')
+      .eq('slug', vendorSlug)
+      .maybeSingle();
+    vendorId = vendorRow?.id ?? null;
+  }
+
   const { data, error } = await supabase
     .from('orders')
     .insert({
@@ -75,6 +97,7 @@ export async function POST(request: Request) {
       instructions,
       user_id: userRow.id,
       vendor_name: vendorName,
+      vendor_id: vendorId,
     })
     .select('*')
     .single();
