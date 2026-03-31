@@ -412,8 +412,8 @@ export default function LaundroApp() {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
     const alphaNum = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const rand = (pool: string) => pool[Math.floor(Math.random() * pool.length)];
-    const rawLen = Number(process.env.NEXT_PUBLIC_ORDER_TOKEN_LENGTH ?? 5);
-    const len = Number.isFinite(rawLen) ? Math.max(4, Math.min(8, Math.floor(rawLen))) : 5;
+    const rawLen = Number(process.env.NEXT_PUBLIC_ORDER_TOKEN_LENGTH ?? 4);
+    const len = Number.isFinite(rawLen) ? Math.max(4, Math.min(8, Math.floor(rawLen))) : 4;
     // First char is always a letter to avoid confusing tokens like "0O..".
     let token = rand(letters);
     for (let i = 1; i < len; i += 1) token += rand(alphaNum);
