@@ -25,6 +25,7 @@ export const VENDORS = [
     name: 'Pro Fab Power Laundry Services',
     location: 'On-campus pickup point',
     emoji: '🧺',
+    audienceLabel: 'For A, D1 & D2 Students Only',
     availability: { type: 'nearby', lat: 12.8406, lng: 80.1533, radiusKm: 18 },
   },
   {
@@ -32,10 +33,9 @@ export const VENDORS = [
     name: 'Star Wash Power Launderers',
     location: 'VIT Chennai',
     emoji: '🧼',
+    audienceLabel: 'For B, C & E Block Students Only',
     availability: { type: 'nearby', lat: 12.8406, lng: 80.1533, radiusKm: 18 },
   },
-  { id: 'jos-brothers', name: 'Jos Brothers', location: 'Kochi', emoji: '🧼', comingSoon: true },
-  { id: 'tumbledry', name: 'TumbleDry', location: 'Bangalore · Chennai', emoji: '🌀', comingSoon: true },
 ] as const;
 
 export const VENDOR = {

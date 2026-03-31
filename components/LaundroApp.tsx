@@ -9,7 +9,6 @@ import {
   COLLEGES,
   SERVICES,
   VENDORS,
-  VENDOR,
   VIT_VENDOR_BLOCK_ACCESS,
   statusLabel,
   statusClass,
@@ -20,7 +19,7 @@ import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
-import { SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { SERVICE_FEE_SHORT_EXPLANATION, SERVICE_FEE_TERMS_EXPLANATION, formatServiceFeeTiers } from '@/lib/fees';
 
 const SERVICE_ICONS: Record<string, LucideIcon> = {
   wash_fold: Shirt,
@@ -30,6 +29,8 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   express: Zap,
   shoe_clean: Footprints,
 };
+
+const HOME_VENDORS = VENDORS.filter((vendor) => ['profab', 'starwash'].includes(vendor.id));
 
 type Screen =
   | 'splash'
@@ -110,17 +111,19 @@ const DEFAULT_VENDOR_PROFILE: VendorProfileRow = {
   updated_at: '',
 };
 
+const STAR_WASH_VENDOR_PROFILE: VendorProfileRow = {
+  id: '',
+  slug: 'starwash',
+  name: 'Star Wash Power Launderers',
+  brief: 'Star Wash serves VIT Chennai students in B, C, and E blocks with scheduled campus pickup and return.',
+  pricing_details: 'Pricing is shared by the vendor at billing time. Service fee is added separately based on the final bill subtotal.',
+  logo_url: null,
+  updated_at: '',
+};
+
 function defaultVendorProfileFor(vendor: (typeof VENDORS)[number]): VendorProfileRow {
   if (vendor.id === 'profab') return DEFAULT_VENDOR_PROFILE;
-  return {
-    id: '',
-    slug: vendor.id,
-    name: vendor.name,
-    brief: null,
-    pricing_details: null,
-    logo_url: null,
-    updated_at: '',
-  };
+  return STAR_WASH_VENDOR_PROFILE;
 }
 
 function rowToUser(r: UserRow): User {
@@ -281,6 +284,16 @@ export default function LaundroApp() {
       return;
     }
     setSd({ step: 0 });
+    go('schedule');
+  }, [user, go, showToast]);
+
+  const goToScheduleWithService = useCallback((serviceId: string) => {
+    if (user && !user.ph?.trim()) {
+      go('complete-profile');
+      showToast('Add your phone number to place orders', 'er');
+      return;
+    }
+    setSd({ step: 0, svc: serviceId });
     go('schedule');
   }, [user, go, showToast]);
 
@@ -450,11 +463,8 @@ export default function LaundroApp() {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
     const alphaNum = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const rand = (pool: string) => pool[Math.floor(Math.random() * pool.length)];
-    const rawLen = Number(process.env.NEXT_PUBLIC_ORDER_TOKEN_LENGTH ?? 4);
-    const len = Number.isFinite(rawLen) ? Math.max(4, Math.min(8, Math.floor(rawLen))) : 4;
-    // First char is always a letter to avoid confusing tokens like "0O..".
     let token = rand(letters);
-    for (let i = 1; i < len; i += 1) token += rand(alphaNum);
+    for (let i = 1; i < 4; i += 1) token += rand(alphaNum);
     return token;
   }, []);
 
@@ -985,7 +995,7 @@ export default function LaundroApp() {
   };
 
   const handleSelectVendor = (vendorId: string) => {
-    setSd((s) => ({ ...s, step: 1, vendorId }));
+    setSd((s) => ({ ...s, step: s.svc ? 2 : 1, vendorId }));
   };
 
   const handleScheduleService = (svcId: string) => {
@@ -1128,6 +1138,8 @@ export default function LaundroApp() {
     .map((d) => formatScheduleDay(d.date));
   const days = daysFromApi.length > 0 ? daysFromApi : getScheduleDates();
   const selectedSvc = SERVICES.find((s) => s.id === sd.svc);
+  const selectedVendor = VENDORS.find((vendor) => vendor.id === sd.vendorId);
+  const selectedVendorProfile = selectedVendor ? profileForVendor(selectedVendor) : null;
   const timeSlotsForStep2 =
     scheduleSlots.length > 0 && scheduleDates.length > 0 && sd.date
       ? scheduleSlots.filter(
@@ -1676,19 +1688,20 @@ export default function LaundroApp() {
               <>
                 <div className="hh">
                   <p>Hi, {user.fn || 'User'} 👋</p>
-                  <p className="hh-sub">Schedule pickup from your favorite laundry company at ease.</p>
+                  <p className="hh-sub">Schedule pickup with the right laundry partner for your hostel, with cleaner booking steps and clearer pricing info.</p>
                   <button type="button" className="scta" onClick={goToSchedule}>
                     Schedule pickup
                     <span className="aw">→</span>
                   </button>
                 </div>
 
-                <p className="st">Pick a partner</p>
-                <p className="vd" style={{ marginBottom: 12 }}>
-                  Choose a laundry partner to schedule your pickup.
-                </p>
-                <div className="dss" aria-label="Laundry partners" role="list">
-                  {VENDORS.map((v) => (
+                <div className="oc" style={{ marginBottom: 16, padding: 16, borderRadius: 20, background: 'linear-gradient(180deg, rgba(23,70,162,0.06), rgba(23,70,162,0.01))' }}>
+                  <p className="st" style={{ marginBottom: 6 }}>Pick a partner</p>
+                  <p className="vd" style={{ marginBottom: 12 }}>
+                    Choose a laundry partner based on your hostel block.
+                  </p>
+                  <div className="dss" aria-label="Laundry partners" role="list">
+                    {HOME_VENDORS.map((v) => (
                     (() => {
                       const vp = profileForVendor(v);
                       const available = isVendorAvailable(v);
@@ -1704,18 +1717,20 @@ export default function LaundroApp() {
                       {vp.logo_url ? (
                         <img src={vp.logo_url} alt="" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: 6 }} />
                       ) : (
-                        <span style={{ fontSize: 18, lineHeight: 1 }}>{v.emoji}</span>
+                        <span aria-hidden style={{ width: 22, height: 22, display: 'inline-block' }} />
                       )}
                       <span className="dy" style={{ marginTop: 2 }}>{vp.name || v.name}</span>
-                      <span className="mo">{available.ok ? v.location : available.reason}</span>
+                      <span className="mo">{available.ok ? (v as { audienceLabel?: string }).audienceLabel || v.location : available.reason}</span>
                     </button>
                       );
                     })()
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
+                <div className="oc" style={{ marginBottom: 16, padding: 16, borderRadius: 20 }}>
                 <p className="st">Services</p>
-                <div className="sg">
+                <div className="sg" style={{ marginTop: 12 }}>
                   {SERVICES.filter((s) => !s.comingSoon).map((s) => {
                     const Icon = SERVICE_ICONS[s.id] ?? Shirt;
                     return (
@@ -1723,7 +1738,7 @@ export default function LaundroApp() {
                         type="button"
                         key={s.id}
                         className="sc"
-                        onClick={goToSchedule}
+                        onClick={() => goToScheduleWithService(s.id)}
                       >
                         <span className="ic sc-icon">
                           <Icon size={28} strokeWidth={1.8} />
@@ -1733,9 +1748,10 @@ export default function LaundroApp() {
                     );
                   })}
                 </div>
-                <p className="fn">LaundroSwipe — schedule pickup from your favorite laundry company in one swipe.</p>
-                <p className="st">Vendors</p>
-                {VENDORS.map((v) => {
+                </div>
+                <p className="fn">LaundroSwipe makes pickup selection clearer for your hostel and location.</p>
+                <p className="st">Vendors available in your location</p>
+                {HOME_VENDORS.map((v) => {
                   const vp = profileForVendor(v);
                   return (
                     <div
@@ -1750,9 +1766,12 @@ export default function LaundroApp() {
                       {vp.logo_url ? (
                         <img src={vp.logo_url} alt="" className="oc-logo" />
                       ) : (
-                        <span className="em" style={{ width: 40, textAlign: 'center' }}>{v.emoji}</span>
+                        <span aria-hidden style={{ width: 40, height: 40, display: 'inline-block', flexShrink: 0 }} />
                       )}
-                      <span className="nm oc-vendor-name">{vp.name || v.name}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span className="nm oc-vendor-name">{vp.name || v.name}</span>
+                        <span className="vd" style={{ fontSize: 12 }}>{(v as { audienceLabel?: string }).audienceLabel || v.location}</span>
+                      </div>
                     </div>
                   );
                 })}
@@ -1858,7 +1877,7 @@ export default function LaundroApp() {
                             : 'Unable to access location. Vendor availability may be limited.'}
                       </div>
                     )}
-                    {VENDORS.map((v) => (
+                    {HOME_VENDORS.map((v) => (
                       (() => {
                         const vp = profileForVendor(v);
                         const blockReason = vendorBlockReason(v.id);
@@ -1878,23 +1897,18 @@ export default function LaundroApp() {
                         {vp.logo_url ? (
                           <img src={vp.logo_url} alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
                         ) : (
-                          <span className="em">{v.emoji}</span>
+                          <span aria-hidden style={{ width: 44, height: 44, display: 'inline-block', flexShrink: 0 }} />
                         )}
                         <div className="inf">
                           <div className="sn">
                             {vendorTitle}{' '}
-                            {v.id === 'profab' && (
-                              <span style={{ display: 'inline-block', fontWeight: 700, color: 'var(--tm)' }}>
-                                (ONLY A, D1 & D2 Students)
-                              </span>
-                            )}
                             {!canPick && (
                               <span style={{ fontWeight: 700, color: 'var(--tm)' }}>
                                 ({blockReason || scheduleReason || (!pickupLocation ? 'Select location first' : pickupLocation === 'other' ? 'Not available in selected area' : isVendorAvailable(v).reason || 'Not available')})
                               </span>
                             )}
                           </div>
-                          <div className="sd">{v.location}</div>
+                          <div className="sd">{(v as { audienceLabel?: string }).audienceLabel || v.location}</div>
                         </div>
                         <span className="aw" style={{ fontSize: 20, opacity: canPick ? 1 : 0.35 }}>→</span>
                       </div>
@@ -2005,36 +2019,19 @@ export default function LaundroApp() {
                 {sd.step === 3 && (
                   <>
                     <p className="st">Confirm</p>
-                    <div className="vc">
+                    <div className="vc" style={{ borderRadius: 22, padding: 18 }}>
                       <div className="vn">{selectedSvc?.name} {selectedSvc?.emoji}</div>
-                      <div className="vd">{sd.date} · {selectedTs?.label}</div>
+                      <div className="vd">{selectedTs?.label} · {sd.date}</div>
+                      {selectedVendorProfile && <div className="vd" style={{ marginTop: 4 }}>Partner: {selectedVendorProfile.name}</div>}
                       {sd.ins && <div className="vd">Instructions: {sd.ins}</div>}
                     </div>
-                    <div className="oc" style={{ marginTop: 12 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                        <div>
-                          <p className="st" style={{ marginBottom: 4 }}>Service fee</p>
-                          <p className="vd" style={{ fontSize: 13 }}>Added later based on the final bill subtotal.</p>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn bout bsm"
-                          onClick={() => setShowServiceFeeInfo(true)}
-                          aria-label="What is the service fee?"
-                        >
-                          <CircleHelp size={16} />
-                        </button>
+                    <div className="oc" style={{ marginTop: 12, padding: 16, borderRadius: 20, background: 'rgba(23,70,162,0.03)' }}>
+                      <div className="vd" style={{ fontSize: 14, color: 'var(--tx)', lineHeight: 1.6 }}>
+                        By confirming the booking, you accept the <Link href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--b)', fontWeight: 700 }}>Terms &amp; Conditions</Link> and the applicable service charges.
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowServiceFeeInfo(true)}
-                        style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, color: 'var(--b)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer' }}
-                      >
-                        Why am I charged this?
-                      </button>
                     </div>
                     <div className="warn">
-                      Pickup at {VENDOR.location} on {sd.date}. Keep your token ready.
+                      Pickup at {selectedVendor?.location || 'your selected pickup point'} on {sd.date}. Keep your token ready.
                     </div>
                     <p className="vd" style={{ marginTop: 8, fontSize: 12 }}>Timings may vary.</p>
                     <p className="vd" style={{ marginBottom: 12, fontWeight: 600 }}>Swipe to confirm order</p>
@@ -2231,7 +2228,7 @@ export default function LaundroApp() {
         </nav>
         {viewingBill && (
           <div className="bill-popup-overlay" onClick={() => setViewingBill(null)} role="dialog" aria-modal="true" aria-label="View bill">
-            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
+            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ borderRadius: 24, padding: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>Bill #{viewingBill.order_token}</h3>
                 <button type="button" className="btn bout bsm" onClick={() => setViewingBill(null)} aria-label="Close">Close</button>
@@ -2268,21 +2265,32 @@ export default function LaundroApp() {
         )}
         {viewingVendor && (
           <div className="bill-popup-overlay" onClick={() => setViewingVendor(null)} role="dialog" aria-modal="true" aria-label="Vendor info">
-            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
+            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ borderRadius: 24, padding: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <img src={(viewingVendor.logo_url || DEFAULT_VENDOR_PROFILE.logo_url || '/profab-logo.png')} alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 10 }} />
-                  <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>{viewingVendor.name}</h3>
+                  {viewingVendor.logo_url ? (
+                    <img src={viewingVendor.logo_url} alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 10 }} />
+                  ) : (
+                    <span aria-hidden style={{ width: 48, height: 48, display: 'inline-block', borderRadius: 10, background: 'rgba(23,70,162,0.06)' }} />
+                  )}
+                  <div>
+                    <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>{viewingVendor.name}</h3>
+                    <p style={{ fontSize: 12, color: 'var(--ts)', marginTop: 4 }}>Vendor profile</p>
+                  </div>
                 </div>
                 <button type="button" className="btn bout bsm" onClick={() => setViewingVendor(null)} aria-label="Close">Close</button>
               </div>
               {viewingVendor.brief && (
-                <p style={{ fontSize: 14, color: 'var(--tx)', marginBottom: 16, lineHeight: 1.5 }}>{viewingVendor.brief}</p>
+                <div style={{ padding: 14, borderRadius: 16, background: 'rgba(23,70,162,0.05)', marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, color: 'var(--tx)', margin: 0, lineHeight: 1.6 }}>{viewingVendor.brief}</p>
+                </div>
               )}
               {viewingVendor.pricing_details && (
                 <>
                   <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--b)', marginBottom: 8 }}>Pricing</p>
-                  <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{viewingVendor.pricing_details}</p>
+                  <div style={{ padding: 14, borderRadius: 16, border: '1px solid rgba(148,163,184,.28)', background: '#fff' }}>
+                    <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: 0 }}>{viewingVendor.pricing_details}</p>
+                  </div>
                 </>
               )}
             </div>
@@ -2290,18 +2298,24 @@ export default function LaundroApp() {
         )}
         {showServiceFeeInfo && (
           <div className="bill-popup-overlay" onClick={() => setShowServiceFeeInfo(false)} role="dialog" aria-modal="true" aria-label="Service fee details">
-            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
+            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ borderRadius: 24, padding: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>Service fee</h3>
                 <button type="button" className="btn bout bsm" onClick={() => setShowServiceFeeInfo(false)}>Close</button>
               </div>
-              <p style={{ fontSize: 14, color: 'var(--tx)', lineHeight: 1.6, marginBottom: 12 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
-              <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, marginBottom: 12 }}>
-                LaundroSwipe is not the laundry vendor. Vendor laundry charges are billed separately, while LaundroSwipe charges the Service fee for pickup coordination, tracking, notifications, billing history, and support.
-              </p>
-              <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, marginBottom: 0 }}>
-                Current fee slabs: ₹0–₹49 = ₹0, ₹50–₹99 = ₹5, ₹100–₹199 = ₹10, ₹200+ = ₹20.
-              </p>
+              <div style={{ padding: 16, borderRadius: 18, background: 'linear-gradient(180deg, rgba(23,70,162,0.08), rgba(23,70,162,0.02))', marginBottom: 14 }}>
+                <p style={{ fontSize: 14, color: 'var(--tx)', lineHeight: 1.6, margin: 0 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
+              </div>
+              <div style={{ display: 'grid', gap: 12 }}>
+                <div style={{ padding: 14, borderRadius: 16, border: '1px solid rgba(148,163,184,.28)' }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--b)', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '.04em' }}>Why it is charged</p>
+                  <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, margin: 0 }}>{SERVICE_FEE_TERMS_EXPLANATION}</p>
+                </div>
+                <div style={{ padding: 14, borderRadius: 16, border: '1px solid rgba(148,163,184,.28)' }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--b)', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '.04em' }}>Current fee slabs</p>
+                  <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, margin: 0 }}>{formatServiceFeeTiers()}</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
