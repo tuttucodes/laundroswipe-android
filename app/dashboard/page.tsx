@@ -1,3 +1,5 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
 import PwaRegister from '@/components/PwaRegister';
