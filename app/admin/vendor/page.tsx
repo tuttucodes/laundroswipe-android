@@ -134,6 +134,7 @@ export default function VendorPage() {
 <h2>LaundroSwipe</h2>
 <p class="meta">Vendor name: ${vendorName}</p>
 <p><strong>Token:</strong> #${o?.token ?? ''} <strong>Order:</strong> ${o?.order_number ?? ''}</p>
+<p><strong>Customer ID:</strong> ${(u.display_id ?? '—').toString().slice(0, 24)}</p>
 <p><strong>Customer:</strong> ${(u.full_name ?? u.email ?? '—').toString().slice(0, 20)}</p>
 <p><strong>Phone:</strong> ${(u.phone ?? '—').toString().slice(0, 14)}</p>
 <p><strong>Date:</strong> ${dateStr}</p>
@@ -155,6 +156,7 @@ export default function VendorPage() {
       'LaundroSwipe',
       `Vendor: ${vendorName}`,
       `Token: #${o?.token ?? ''}  Order: ${o?.order_number ?? ''}`,
+      `Customer ID: ${(u.display_id ?? '—').toString().slice(0, 24)}`,
       `Customer: ${(u.full_name ?? u.email ?? '—').toString().slice(0, 24)}`,
       `Phone: ${(u.phone ?? '—').toString().slice(0, 14)}`,
       '---',
@@ -297,7 +299,7 @@ export default function VendorPage() {
             <input
               type="text"
               className="vendor-input"
-              placeholder="e.g. A704"
+              placeholder="e.g. A7K4"
               value={token}
               onChange={(e) => setToken(e.target.value.toUpperCase())}
               autoCapitalize="characters"
@@ -329,6 +331,7 @@ export default function VendorPage() {
           )}
           <div style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ts)', marginBottom: 20 }}>
             <p><strong style={{ color: 'var(--tx)' }}>Order:</strong> {order.order_number} &nbsp;|&nbsp; <strong>Token:</strong> #{order.token}</p>
+            <p><strong style={{ color: 'var(--tx)' }}>Customer ID:</strong> {user?.display_id ?? '—'}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Customer ID:</strong> {(user as UserRow & { display_id?: string | null })?.display_id ?? '—'} &nbsp;|&nbsp; <strong>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Phone:</strong> {user?.phone ?? '—'} &nbsp;|&nbsp; <strong>Email:</strong> {user?.email ?? '—'}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Service:</strong> {order.service_name} &nbsp;|&nbsp; <strong>Date:</strong> {order.pickup_date}</p>

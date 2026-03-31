@@ -409,10 +409,11 @@ export default function LaundroApp() {
   }, []);
 
   const genTk = useCallback(() => {
-    const uuid =
-      typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-    const short = String(uuid).replace(/-/g, '').slice(0, 8).toUpperCase();
-    return `LS-${short}`;
+    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const alphaNum = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const rand = (pool: string) => pool[Math.floor(Math.random() * pool.length)];
+    // Short human-friendly per-order token. Uniqueness is enforced by DB + retry loop below.
+    return `${rand(letters)}${rand(alphaNum)}${rand(alphaNum)}${rand(alphaNum)}${rand(alphaNum)}`;
   }, []);
 
   const genOid = useCallback(() => {
@@ -975,8 +976,8 @@ export default function LaundroApp() {
       const vendorName = selectedVendor?.name ?? 'Pro Fab Power Laundry Services';
       let row: any = null;
 
-      // Retry if the DB rejects due to rare unique-token collisions.
-      for (let attempt = 0; attempt < 3; attempt++) {
+      // Short tokens can collide; retry several times if DB unique constraint rejects.
+      for (let attempt = 0; attempt < 8; attempt++) {
         const payload = {
           on: genOid(),
           tk: genTk(),

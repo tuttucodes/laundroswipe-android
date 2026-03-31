@@ -17,7 +17,7 @@ function billToHtml(b: VendorBillRow) {
       : '';
   const idLine =
     b.user_display_id != null && String(b.user_display_id).trim() !== ''
-      ? `<p><strong>User ID:</strong> ${esc(String(b.user_display_id))}</p>`
+      ? `<p><strong>Customer ID:</strong> ${esc(String(b.user_display_id))}</p>`
       : '';
   return `
     <h2>LaundroSwipe</h2>
@@ -45,7 +45,7 @@ function billToPlainText(b: VendorBillRow): string {
     : [];
   const extra: string[] = [];
   if (b.user_email != null && String(b.user_email).trim() !== '') extra.push(`Email: ${b.user_email}`);
-  if (b.user_display_id != null && String(b.user_display_id).trim() !== '') extra.push(`User ID: ${b.user_display_id}`);
+  if (b.user_display_id != null && String(b.user_display_id).trim() !== '') extra.push(`Customer ID: ${b.user_display_id}`);
   return [
     'LaundroSwipe',
     `Vendor: ${b.vendor_name ?? 'Vendor'}`,
