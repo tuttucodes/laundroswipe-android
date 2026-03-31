@@ -33,7 +33,7 @@ function billToHtml(b: VendorBillRow) {
       <tbody>${rows}</tbody>
     </table>
     <p class="right receipt-summary">Subtotal: ₹${b.subtotal}</p>
-    <p class="right conv">Convenience fee: ₹${b.convenience_fee}</p>
+    <p class="right conv">Service fee: ₹${b.convenience_fee}</p>
     <p class="total right">Total: ₹${b.total}</p>
     <p class="foot">Thank you!</p>
   `;
@@ -58,7 +58,7 @@ function billToPlainText(b: VendorBillRow): string {
     ...items,
     '---',
     `Subtotal: ₹${b.subtotal}`,
-    `Conv fee: ₹${b.convenience_fee}`,
+    `Service fee: ₹${b.convenience_fee}`,
     `TOTAL: ₹${b.total}`,
     'Thank you!',
   ].join('\n');
@@ -113,7 +113,7 @@ export default function BillsPage() {
   };
 
   const exportBillsToCsv = () => {
-    const cols = ['Token', 'Order', 'Customer', 'Phone', 'Date', 'Subtotal', 'Convenience fee', 'Total', 'Line items'];
+    const cols = ['Token', 'Order', 'Customer', 'Phone', 'Date', 'Subtotal', 'Service fee', 'Total', 'Line items'];
     const rows = bills.map((b) => {
       const items = Array.isArray(b.line_items) && b.line_items.length
         ? b.line_items.map((l: { label: string; qty: number; price: number }) => `${l.label} x${l.qty} ₹${l.price * l.qty}`).join('; ')

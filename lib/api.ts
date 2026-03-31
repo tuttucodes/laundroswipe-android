@@ -12,6 +12,8 @@ export type UserRow = {
   hostel_block: string | null;
   year: number | null;
   display_id?: string | null;
+  terms_accepted_at?: string | null;
+  terms_version?: string | null;
 };
 
 export type OrderRow = {
@@ -140,33 +142,35 @@ export const LSApi = {
       vendorName?: string;
     },
     userId: string
-  ): Promise<OrderRow | null> {
-    if (!supabase) return null;
+  ): Promise<{ order: OrderRow | null; error?: string; code?: string }> {
+    if (!supabase) return { order: null, error: 'Not connected' };
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .insert({
-          order_number: order.on,
-          token: order.tk,
-          service_id: order.svc,
-          service_name: order.sl,
-          pickup_date: order.pd,
-          time_slot: order.ts,
-          status: order.status,
-          instructions: order.ins ?? null,
-          user_id: userId,
-          vendor_name: order.vendorName ?? null,
-        })
-        .select()
-        .single();
-      if (error) {
-        console.error('Supabase createOrder error', error);
-        return null;
+      const session = await this.getAuthSession();
+      const accessToken = (session as { access_token?: string } | null)?.access_token;
+      if (!accessToken) return { order: null, error: 'Sign in required' };
+      const response = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          ...order,
+          userId,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.ok) {
+        return {
+          order: null,
+          error: data?.error || 'Order failed',
+          code: data?.code,
+        };
       }
-      return data as OrderRow;
+      return { order: data.order as OrderRow };
     } catch (e) {
-      console.error('Supabase createOrder exception', e);
-      return null;
+      console.error('createOrder exception', e);
+      return { order: null, error: (e as Error)?.message || 'Order failed' };
     }
   },
 
@@ -414,6 +418,19 @@ export const LSApi = {
     }
   },
 
+  async getAccessToken(): Promise<string | null> {
+    if (!supabase) return null;
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      return session?.access_token ?? null;
+    } catch (e) {
+      console.error('getAccessToken exception', e);
+      return null;
+    }
+  },
+
   async signOutAuth(): Promise<void> {
     if (!supabase) return;
     try {
@@ -513,6 +530,28 @@ export const LSApi = {
     } catch (e) {
       console.error('upsertUserFromAuth exception', e);
       return null;
+    }
+  },
+
+  async acceptLatestTerms(): Promise<{ user: UserRow | null; error?: string }> {
+    const accessToken = await this.getAccessToken();
+    if (!accessToken) return { user: null, error: 'Sign in required' };
+    try {
+      const response = await fetch('/api/terms/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.ok) {
+        return { user: null, error: data?.error || 'Could not save terms acceptance' };
+      }
+      return { user: data.user as UserRow };
+    } catch (e) {
+      console.error('acceptLatestTerms exception', e);
+      return { user: null, error: (e as Error)?.message || 'Could not save terms acceptance' };
     }
   },
 

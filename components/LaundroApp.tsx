@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Bell, Shirt, Sparkles, Flame, Zap, Footprints, type LucideIcon } from 'lucide-react';
+import { Bell, CircleHelp, FileText, Shirt, Sparkles, Flame, Zap, Footprints, type LucideIcon } from 'lucide-react';
 import { SwipeToConfirm } from '@/components/SwipeToConfirm';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import {
@@ -19,6 +19,8 @@ import {
 import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
+import { CURRENT_TERMS_VERSION } from '@/lib/terms';
+import { SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 
 const SERVICE_ICONS: Record<string, LucideIcon> = {
   wash_fold: Shirt,
@@ -61,6 +63,8 @@ type User = {
   yr?: number;
   sid: string;
   displayId?: string;
+  termsAcceptedAt?: string | null;
+  termsVersion?: string | null;
 };
 
 type Order = {
@@ -101,7 +105,7 @@ const DEFAULT_VENDOR_PROFILE: VendorProfileRow = {
   slug: 'profab',
   name: 'Pro Fab Power Launders',
   brief: 'Pro Fab Power Launders is our campus laundry partner. We pick up from your hostel, wash & iron, and deliver back on the same cycle. Service days: Tuesday, Saturday, Sunday.',
-  pricing_details: 'Shirt / T-shirt: ₹19 | White shirt / White T-shirt: ₹25 | Pant / Jean: ₹22 | White pants / White jean: ₹25 | Dry clean (shirt/T-shirt): ₹50 | Dry clean (white/formal): ₹60. Convenience fee: ₹20 per order.',
+  pricing_details: 'Shirt / T-shirt: ₹19 | White shirt / White T-shirt: ₹25 | Pant / Jean: ₹22 | White pants / White jean: ₹25 | Dry clean (shirt/T-shirt): ₹50 | Dry clean (white/formal): ₹60. Service fee is added separately based on the bill subtotal.',
   logo_url: '/profab-logo.png',
   updated_at: '',
 };
@@ -132,6 +136,8 @@ function rowToUser(r: UserRow): User {
     yr: r.year ?? undefined,
     sid: r.id,
     displayId: r.display_id ?? undefined,
+    termsAcceptedAt: r.terms_accepted_at ?? null,
+    termsVersion: r.terms_version ?? null,
   };
 }
 
@@ -242,6 +248,10 @@ export default function LaundroApp() {
   const [otherAreaRequest, setOtherAreaRequest] = useState('');
   const [areaRequestSaving, setAreaRequestSaving] = useState(false);
   const [areaRequestCaptchaToken, setAreaRequestCaptchaToken] = useState('');
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsChecked, setTermsChecked] = useState(false);
+  const [termsSaving, setTermsSaving] = useState(false);
+  const [showServiceFeeInfo, setShowServiceFeeInfo] = useState(false);
 
   useEffect(() => {
     if (user?.sid && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.sid) === '1') {
@@ -258,6 +268,11 @@ export default function LaundroApp() {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
+
+  const hasAcceptedLatestTerms = useMemo(
+    () => !!user?.termsAcceptedAt && user?.termsVersion === CURRENT_TERMS_VERSION,
+    [user]
+  );
 
   const goToSchedule = useCallback(() => {
     if (user && !user.ph?.trim()) {
@@ -403,6 +418,29 @@ export default function LaundroApp() {
     if (u) localStorage.setItem('ls_u', JSON.stringify(u));
     else localStorage.removeItem('ls_u');
   }, []);
+
+  const handleAcceptLatestTerms = useCallback(async () => {
+    if (!termsChecked) {
+      showToast('Please agree to the Terms & Conditions', 'er');
+      return;
+    }
+    setTermsSaving(true);
+    try {
+      const { user: updatedUser, error } = await LSApi.acceptLatestTerms();
+      if (!updatedUser) {
+        showToast(error ?? 'Could not save terms acceptance', 'er');
+        return;
+      }
+      const mappedUser = rowToUser(updatedUser);
+      setUser(mappedUser);
+      saveUser(mappedUser);
+      setShowTermsModal(false);
+      setTermsChecked(false);
+      showToast('Terms accepted. You can place your order now.', 'ok');
+    } finally {
+      setTermsSaving(false);
+    }
+  }, [termsChecked, saveUser, showToast]);
 
   const saveO = useCallback((o: Order[]) => {
     localStorage.setItem('ls_o', JSON.stringify(o));
@@ -973,12 +1011,18 @@ export default function LaundroApp() {
       showToast(`You already have a ${svcName} order for this date. Complete it first.`, 'er');
       return;
     }
+    if (!hasAcceptedLatestTerms) {
+      setTermsChecked(false);
+      setShowTermsModal(true);
+      return;
+    }
     const svc = SERVICES.find((x) => x.id === sd.svc);
     const selectedVendor = VENDORS.find((v) => v.id === sd.vendorId);
     setOrderSubmitting(true);
     try {
       const vendorName = selectedVendor?.name ?? 'Pro Fab Power Laundry Services';
       let row: any = null;
+      let lastError = 'Order failed';
 
       // Short tokens can collide; retry several times if DB unique constraint rejects.
       for (let attempt = 0; attempt < 8; attempt++) {
@@ -993,8 +1037,18 @@ export default function LaundroApp() {
           ins: sd.ins ?? undefined,
           vendorName,
         };
-        row = await LSApi.createOrder(payload, user.sid);
-        if (row) break;
+        const result = await LSApi.createOrder(payload, user.sid);
+        if (result.order) {
+          row = result.order;
+          break;
+        }
+        if (result.error) lastError = result.error;
+        if (result.code === 'TERMS_NOT_ACCEPTED') {
+          setTermsChecked(false);
+          setShowTermsModal(true);
+          setOrderSubmitting(false);
+          return;
+        }
       }
 
       if (row) {
@@ -1004,7 +1058,7 @@ export default function LaundroApp() {
         setSd({ step: 0 });
         go('token-success', { oid: row.id });
       } else {
-        showToast('Order failed', 'er');
+        showToast(lastError, 'er');
       }
     } catch (_) {
       showToast('Order failed', 'er');
@@ -1956,6 +2010,29 @@ export default function LaundroApp() {
                       <div className="vd">{sd.date} · {selectedTs?.label}</div>
                       {sd.ins && <div className="vd">Instructions: {sd.ins}</div>}
                     </div>
+                    <div className="oc" style={{ marginTop: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                        <div>
+                          <p className="st" style={{ marginBottom: 4 }}>Service fee</p>
+                          <p className="vd" style={{ fontSize: 13 }}>Added later based on the final bill subtotal.</p>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn bout bsm"
+                          onClick={() => setShowServiceFeeInfo(true)}
+                          aria-label="What is the service fee?"
+                        >
+                          <CircleHelp size={16} />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowServiceFeeInfo(true)}
+                        style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, color: 'var(--b)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer' }}
+                      >
+                        Why am I charged this?
+                      </button>
+                    </div>
                     <div className="warn">
                       Pickup at {VENDOR.location} on {sd.date}. Keep your token ready.
                     </div>
@@ -2178,7 +2255,13 @@ export default function LaundroApp() {
                 </tbody>
               </table>
               <p style={{ textAlign: 'right', fontSize: 13, marginBottom: 2 }}>Subtotal: ₹{viewingBill.subtotal}</p>
-              <p style={{ textAlign: 'right', fontSize: 13, marginBottom: 2 }}>Convenience fee: ₹{viewingBill.convenience_fee}</p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                <p style={{ textAlign: 'right', fontSize: 13, margin: 0 }}>Service fee: ₹{viewingBill.convenience_fee}</p>
+                <button type="button" className="btn bout bsm" onClick={() => setShowServiceFeeInfo(true)} aria-label="Service fee details">
+                  <CircleHelp size={14} />
+                </button>
+              </div>
+              <p style={{ textAlign: 'right', fontSize: 12, color: 'var(--ts)', marginBottom: 2 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
               <p style={{ textAlign: 'right', fontWeight: 700, fontSize: 15, marginTop: 8, paddingTop: 8, borderTop: '2px solid var(--b)' }}>Total: ₹{viewingBill.total}</p>
             </div>
           </div>
@@ -2202,6 +2285,66 @@ export default function LaundroApp() {
                   <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{viewingVendor.pricing_details}</p>
                 </>
               )}
+            </div>
+          </div>
+        )}
+        {showServiceFeeInfo && (
+          <div className="bill-popup-overlay" onClick={() => setShowServiceFeeInfo(false)} role="dialog" aria-modal="true" aria-label="Service fee details">
+            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>Service fee</h3>
+                <button type="button" className="btn bout bsm" onClick={() => setShowServiceFeeInfo(false)}>Close</button>
+              </div>
+              <p style={{ fontSize: 14, color: 'var(--tx)', lineHeight: 1.6, marginBottom: 12 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
+              <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, marginBottom: 12 }}>
+                LaundroSwipe is not the laundry vendor. Vendor laundry charges are billed separately, while LaundroSwipe charges the Service fee for pickup coordination, tracking, notifications, billing history, and support.
+              </p>
+              <p style={{ fontSize: 13, color: 'var(--ts)', lineHeight: 1.6, marginBottom: 0 }}>
+                Current fee slabs: ₹0–₹49 = ₹0, ₹50–₹99 = ₹5, ₹100–₹199 = ₹10, ₹200+ = ₹20.
+              </p>
+            </div>
+          </div>
+        )}
+        {showTermsModal && (
+          <div className="bill-popup-overlay" onClick={() => !termsSaving && setShowTermsModal(false)} role="dialog" aria-modal="true" aria-label="Accept Terms & Conditions">
+            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+                <div className="pmic bl2" style={{ flexShrink: 0 }}>
+                  <FileText size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>Accept the latest Terms &amp; Conditions</h3>
+                  <p style={{ fontSize: 13, color: 'var(--ts)', marginTop: 6, lineHeight: 1.6 }}>
+                    Before placing an order, please accept the latest Terms &amp; Conditions. They explain the Service fee and how vendor laundry charges are billed separately.
+                  </p>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 12 }}>
+                Current version: <strong>{CURRENT_TERMS_VERSION}</strong>
+              </p>
+              <p style={{ marginBottom: 16 }}>
+                <Link href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--b)', fontWeight: 600 }}>
+                  Read Terms &amp; Conditions
+                </Link>
+              </p>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: 'var(--tx)', lineHeight: 1.5, marginBottom: 18 }}>
+                <input
+                  type="checkbox"
+                  checked={termsChecked}
+                  onChange={(e) => setTermsChecked(e.target.checked)}
+                  disabled={termsSaving}
+                  style={{ marginTop: 3 }}
+                />
+                <span>I agree to the Terms &amp; Conditions.</span>
+              </label>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button type="button" className="btn bp bbl" disabled={termsSaving || !termsChecked} onClick={handleAcceptLatestTerms} style={{ flex: 1 }}>
+                  {termsSaving ? 'Saving…' : 'Accept'}
+                </button>
+                <button type="button" className="btn bout bbl" disabled={termsSaving} onClick={() => setShowTermsModal(false)} style={{ flex: 1 }}>
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}

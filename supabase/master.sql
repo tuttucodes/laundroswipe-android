@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS orders (
   status TEXT NOT NULL DEFAULT 'scheduled',
   instructions TEXT,
   vendor_name TEXT DEFAULT 'Pro Fab Power Laundry Services',
-  convenience_fee DECIMAL(10,2) DEFAULT 20.00,
+  convenience_fee DECIMAL(10,2) DEFAULT 0.00,
   payment_status TEXT DEFAULT 'pending',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()

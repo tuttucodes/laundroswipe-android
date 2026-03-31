@@ -16,7 +16,7 @@ VALUES (
   'profab',
   'Pro Fab Power Launders',
   'Pro Fab Power Launders is our campus laundry partner. We pick up from your hostel, wash & iron, and deliver back on the same cycle. Service days: Tuesday, Saturday, Sunday.',
-  E'Shirt ₹19\nT shirt ₹19\nWhite shirt ₹25\nWhite t shirt ₹25\nShirt dc ₹50\nT-shirts dc ₹50\nWhite shirt dc ₹60\nWhite t shirt dc ₹60\nWhite pants ₹25\nWhite pants dc ₹60\nWhite jean ₹25\nWhite jean dc ₹60\nPant ₹22\nPant dc ₹50\nJean ₹22\nJeans dc ₹50\nBedsheet ₹30\nBedsheet dc ₹60\nPillow cover ₹15\nPillow cover dc ₹30\nHoodie ₹50\nHoodie dc ₹80\nJacket ₹50\nJacket dc ₹80\nShorts ₹18\nShorts dc ₹40\nShoe wash ₹150\nBlanket big dc ₹110\nBlanket small dc ₹90\nQuilt dc ₹130\nTrack pant ₹19\nTrack pant dc ₹50\nWhite track pant ₹25\nWhite track pant dc ₹60\nTowel ₹20\nTowel dc ₹40\nTurkish towel ₹25\nTurkish towel dc ₹40\nHand towel ₹12\nHand towel dc ₹22\nDhoti ₹50\nDhoti dc ₹80\nKurtha ₹50\nKurtha dc ₹80\nOnly ironing ₹10\nLadies top ₹25\nLadies top dc ₹60\nLeggings ₹20\nLeggings dc ₹50\nBedsheet heavy ₹40\nWhite bedsheet ₹40\nDupatta ₹22\nDupatta dc ₹40\nCap ₹25\nCap dc ₹40\nBag wash ₹150\nJeans ₹22\n\nConvenience fee: ₹20 per order.'
+  E'Shirt ₹19\nT shirt ₹19\nWhite shirt ₹25\nWhite t shirt ₹25\nPant ₹22\nJean ₹22\nDry clean (shirt/T-shirt) ₹50\nDry clean (white/formal) ₹60\n\nService fee is added separately based on the final bill subtotal.\nService fee helps cover LaundroSwipe''s order support, pickup coordination, tracking, notifications, and billing management. Laundry charges are set separately by the vendor.'
 )
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,

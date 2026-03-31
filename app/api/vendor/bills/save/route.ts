@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS, VENDOR_BILL_ITEMS } from '@/lib/constants';
+import { calculateServiceFee } from '@/lib/fees';
 
 function normalizeToken(token: string): string {
   return String(token).replace(/^#/, '').trim();
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
   }
 
   const subtotal = safeLineItems.reduce((s, l) => s + l.price * l.qty, 0);
-  const convenience_fee = 20;
+  const convenience_fee = calculateServiceFee(subtotal);
   const total = subtotal + convenience_fee;
 
   const vendorName =

@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
-import { VENDOR_BILL_ITEMS, CONVENIENCE_FEE } from '@/lib/constants';
+import { VENDOR_BILL_ITEMS } from '@/lib/constants';
+import { calculateServiceFee, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number };
 
@@ -112,7 +113,8 @@ export default function VendorPage() {
   };
 
   const subtotal = lineItems.reduce((s, l) => s + l.price * l.qty, 0);
-  const total = subtotal + CONVENIENCE_FEE;
+  const serviceFee = calculateServiceFee(subtotal);
+  const total = subtotal + serviceFee;
 
   const billFingerprint = (): string => {
     const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
@@ -143,7 +145,7 @@ export default function VendorPage() {
 <tbody>${rows}</tbody>
 </table>
 <p class="right receipt-summary">Subtotal: ₹${subtotal}</p>
-<p class="right conv">Convenience fee: ₹${CONVENIENCE_FEE}</p>
+<p class="right conv">Service fee: ₹${serviceFee}</p>
 <p class="total right">Total: ₹${total}</p>
 <p class="foot">Thank you!</p>
 `;
@@ -163,7 +165,7 @@ export default function VendorPage() {
       ...lineItems.map((l) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`),
       '---',
       `Subtotal: ₹${subtotal}`,
-      `Conv fee: ₹${CONVENIENCE_FEE}`,
+      `Service fee: ₹${serviceFee}`,
       `TOTAL: ₹${total}`,
       'Thank you!',
     ];
@@ -381,7 +383,8 @@ export default function VendorPage() {
 
             <p style={{ fontSize: 13, color: 'var(--ts)' }}>Total items: {lineItems.reduce((s, l) => s + l.qty, 0)}</p>
             <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{subtotal}</p>
-            <p style={{ fontWeight: 600, fontSize: 14 }}>Convenience fee: ₹{CONVENIENCE_FEE}</p>
+            <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{serviceFee}</p>
+            <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
 
             <div className="vendor-action-row" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>

@@ -49,8 +49,6 @@ export const VIT_VENDOR_BLOCK_ACCESS = {
   starwash: ['B', 'C', 'E'],
 } as const;
 
-export const CONVENIENCE_FEE = 20;
-
 export const VENDOR_BILL_ITEMS = [
   { id: 'shirt', label: 'Shirt', price: 19 },
   { id: 'tshirt', label: 'T shirt', price: 19 },

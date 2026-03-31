@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { COLLEGES, CONVENIENCE_FEE } from '@/lib/constants';
+import { COLLEGES } from '@/lib/constants';
+import { formatServiceFeeTiers } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
 
 const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered'];
@@ -208,7 +209,7 @@ export default function AdminPage() {
     count: number;
     /** Sum of each bill’s final total (what customers paid). */
     totalRevenue: number;
-    /** Sum of line-item amounts only (excludes convenience fee). */
+    /** Sum of line-item amounts only (excludes service fee). */
     subtotalExcludingFees: number;
     /** Sum of convenience_fee across saved bills. */
     totalConvenienceFee: number;
@@ -864,11 +865,11 @@ export default function AdminPage() {
                 </div>
                 <div className="admin-stat-card">
                   <div className="admin-stat-value" style={{ color: 'var(--b)' }}>₹{subtotalExcludingFees.toFixed(0)}</div>
-                  <div className="admin-stat-label">After convenience fee (laundry subtotal)</div>
+                  <div className="admin-stat-label">Laundry subtotal before service fee</div>
                 </div>
                 <div className="admin-stat-card">
                   <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{totalConvenienceFee.toFixed(0)}</div>
-                  <div className="admin-stat-label">Total convenience fee (on saved bills)</div>
+                  <div className="admin-stat-label">Total service fee (on saved bills)</div>
                 </div>
                 <div className="admin-stat-card">
                   <div className="admin-stat-value" style={{ color: 'var(--o)' }}>{active}</div>
@@ -1468,7 +1469,7 @@ export default function AdminPage() {
                 </div>
                 <div className="fg" style={{ marginBottom: 12 }}>
                   <label className="fl">Pricing details</label>
-                  <textarea className="fi fta" value={vendorPricing} onChange={(e) => setVendorPricing(e.target.value)} rows={6} placeholder="e.g. Shirt: ₹19 | Pant: ₹22 | Convenience fee: ₹20" />
+                  <textarea className="fi fta" value={vendorPricing} onChange={(e) => setVendorPricing(e.target.value)} rows={6} placeholder="e.g. Shirt: ₹19 | Pant: ₹22 | Service fee: based on subtotal" />
                 </div>
                 <div className="fg" style={{ marginBottom: 12 }}>
                   <label className="fl">Logo</label>
@@ -1602,8 +1603,8 @@ export default function AdminPage() {
                 <input readOnly value={settingsVendorLabel} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
               </div>
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Convenience fee</label>
-                <input readOnly value={`₹${CONVENIENCE_FEE} per order`} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Service fee</label>
+                <input readOnly value={formatServiceFeeTiers()} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid var(--bd)', background: '#F8FAFC', fontSize: 14 }} />
               </div>
               <div style={{ padding: '12px 16px', background: 'rgba(249,115,22,.08)', borderRadius: 8, fontSize: 13, color: 'var(--o)' }}>
                 Edit vendor card copy and pricing text on the Vendor tab. Add new laundry partners under Vendor Directory below.
