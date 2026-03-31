@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
-import { VIT_VENDOR_BLOCK_ACCESS, VENDORS } from '@/lib/constants';
+import { VENDORS } from '@/lib/constants';
 
 type LookupResponse = {
   ok: true;
@@ -17,18 +17,6 @@ function normalizeToken(token: string): string {
 function resolveVendorSlugFromSession(session: ReturnType<typeof getAdminSessionFromRequest>): string | null {
   if (!session || session.role !== 'vendor') return null;
   return session.vendorId ? session.vendorId.toLowerCase().trim() : null;
-}
-
-function isUserAuthorizedForVendor(vendorSlug: string, user: any | null): boolean {
-  if (!user) return false;
-  const collegeId = String(user.college_id ?? '').toLowerCase();
-  if (collegeId !== 'vit-chn') return false;
-
-  const allowedBlocks = (VIT_VENDOR_BLOCK_ACCESS as any)[vendorSlug] as string[] | undefined;
-  if (!allowedBlocks?.length) return false;
-
-  const block = String(user.hostel_block ?? '').trim().toUpperCase();
-  return allowedBlocks.some((b) => block.startsWith(b));
 }
 
 function resolveVendorSlugFromOrderVendorName(orderVendorName: string | null | undefined): string | null {
@@ -74,13 +62,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const vendorSlug = resolveVendorSlugFromSession(session);
   if (vendorSlug) {
-    // Enforce that the order is assigned to this vendor and the user is authorized.
+    // Enforce only that the order is assigned to this vendor.
     const orderVendorSlug = resolveVendorSlugFromOrderVendorName(order.vendor_name);
     if (orderVendorSlug && orderVendorSlug !== vendorSlug) {
       return NextResponse.json({ ok: false, error: 'Forbidden for this vendor' }, { status: 403 });
-    }
-    if (!isUserAuthorizedForVendor(vendorSlug, userRow)) {
-      return NextResponse.json({ ok: false, error: `This token is not assigned to ${vendorSlug}` }, { status: 403 });
     }
   }
 
