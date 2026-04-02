@@ -40,6 +40,9 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const requestedVendor = url.searchParams.get('vendor')?.toLowerCase().trim() ?? null;
+  if (session.role === 'super_admin' && !requestedVendor) {
+    return NextResponse.json({ error: 'vendor query parameter is required for super admin' }, { status: 400 });
+  }
   const vendorSlugFilter = session.role === 'vendor'
     ? session.vendorId?.toLowerCase().trim() ?? null
     : (requestedVendor || null);

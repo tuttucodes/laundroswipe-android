@@ -438,6 +438,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!loggedIn || tab !== 'schedule') return;
+    if (isSuperAdmin && !scheduleVendorSlug) {
+      setScheduleSlots([]);
+      setScheduleDates([]);
+      setScheduleSuggestions(null);
+      setScheduleLoading(false);
+      return;
+    }
     setScheduleLoading(true);
     setScheduleSuggestions(null);
     const headers = adminAuthHeaders();
@@ -1350,7 +1357,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </section>
-                <button type="button" className="btn bp bbl" disabled={scheduleSaving} onClick={async () => {
+                <button type="button" className="btn bp bbl" disabled={scheduleSaving || (isSuperAdmin && !scheduleVendorSlug)} onClick={async () => {
                   setScheduleSaving(true);
                   try {
                     const scheduleQuery = isSuperAdmin && scheduleVendorSlug

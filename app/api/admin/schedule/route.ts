@@ -98,6 +98,9 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const requestedVendor = url.searchParams.get('vendor')?.toLowerCase().trim() ?? null;
+    if (session.role === 'super_admin' && !requestedVendor) {
+      return NextResponse.json({ error: 'vendor query parameter is required for super admin' }, { status: 400 });
+    }
     const vendorSlug = session.role === 'vendor'
       ? session.vendorId?.toLowerCase().trim() ?? null
       : (requestedVendor || null);
@@ -179,6 +182,9 @@ export async function POST(request: Request) {
   try {
     const url = new URL(request.url);
     const requestedVendor = url.searchParams.get('vendor')?.toLowerCase().trim() ?? null;
+    if (session.role === 'super_admin' && !requestedVendor) {
+      return NextResponse.json({ error: 'vendor query parameter is required for super admin' }, { status: 400 });
+    }
     const vendorSlug = session.role === 'vendor'
       ? session.vendorId?.toLowerCase().trim() ?? null
       : (requestedVendor || null);
