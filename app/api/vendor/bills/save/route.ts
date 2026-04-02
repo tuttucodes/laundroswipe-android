@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS, getVendorBillItems } from '@/lib/constants';
-import { calculateServiceFee } from '@/lib/fees';
+import { applyServiceFeeDiscount } from '@/lib/fees';
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
   const normalized = String(vendorName ?? '').trim().toLowerCase();
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
   }
 
   const subtotal = safeLineItems.reduce((s, l) => s + l.price * l.qty, 0);
-  const convenience_fee = calculateServiceFee(subtotal);
+  const convenience_fee = applyServiceFeeDiscount(subtotal).finalFee;
   const total = subtotal + convenience_fee;
 
   const vendorName =

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import type { VendorBillRow } from '@/lib/api';
+import { calculateServiceFee } from '@/lib/fees';
 
 function billToHtml(b: VendorBillRow) {
   const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -19,6 +20,10 @@ function billToHtml(b: VendorBillRow) {
     b.user_display_id != null && String(b.user_display_id).trim() !== ''
       ? `<p><strong>Customer ID:</strong> ${esc(String(b.user_display_id))}</p>`
       : '';
+  const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
+  const discountedFeeHtml = Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
+    ? `Service fee: <s>₹${originalFee}</s> ₹0 <span style="font-size:11px">(discount)</span>`
+    : `Service fee: ₹${b.convenience_fee}`;
   return `
     <h2>LaundroSwipe</h2>
     <p class="meta">Vendor name: ${esc(b.vendor_name ?? 'Vendor')}</p>
@@ -33,7 +38,7 @@ function billToHtml(b: VendorBillRow) {
       <tbody>${rows}</tbody>
     </table>
     <p class="right receipt-summary">Subtotal: ₹${b.subtotal}</p>
-    <p class="right conv">Service fee: ₹${b.convenience_fee}</p>
+    <p class="right conv">${discountedFeeHtml}</p>
     <p class="total right">Total: ₹${b.total}</p>
     <p class="foot">Thank you!</p>
   `;
@@ -46,6 +51,7 @@ function billToPlainText(b: VendorBillRow): string {
   const extra: string[] = [];
   if (b.user_email != null && String(b.user_email).trim() !== '') extra.push(`Email: ${b.user_email}`);
   if (b.user_display_id != null && String(b.user_display_id).trim() !== '') extra.push(`Customer ID: ${b.user_display_id}`);
+  const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
   return [
     'LaundroSwipe',
     `Vendor: ${b.vendor_name ?? 'Vendor'}`,
@@ -58,7 +64,9 @@ function billToPlainText(b: VendorBillRow): string {
     ...items,
     '---',
     `Subtotal: ₹${b.subtotal}`,
-    `Service fee: ₹${b.convenience_fee}`,
+    Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
+      ? `Service fee: ₹0 (discounted from ₹${originalFee})`
+      : `Service fee: ₹${b.convenience_fee}`,
     `TOTAL: ₹${b.total}`,
     'Thank you!',
   ].join('\n');

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
-import { calculateServiceFee, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number };
 
@@ -21,6 +21,9 @@ export default function VendorPage() {
   const [saving, setSaving] = useState(false);
   const [billAlreadyGenerated, setBillAlreadyGenerated] = useState(false);
   const [showAnyway, setShowAnyway] = useState(false);
+  const [sampleMode, setSampleMode] = useState(false);
+  const [sampleCustomerName, setSampleCustomerName] = useState('');
+  const [sampleCustomerPhone, setSampleCustomerPhone] = useState('');
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
   const vendorBillItems = getVendorBillItems(vendorId);
 
@@ -52,6 +55,7 @@ export default function VendorPage() {
     setLineItems([]);
     setBillAlreadyGenerated(false);
     setShowAnyway(false);
+    setSampleMode(false);
     lastSavedBillFingerprintRef.current = null;
     const t = token.replace(/^#/, '').trim();
     if (!t) {
@@ -114,11 +118,12 @@ export default function VendorPage() {
   };
 
   const subtotal = lineItems.reduce((s, l) => s + l.price * l.qty, 0);
-  const serviceFee = calculateServiceFee(subtotal);
+  const feeBreakdown = applyServiceFeeDiscount(subtotal);
+  const serviceFee = feeBreakdown.finalFee;
   const total = subtotal + serviceFee;
 
   const billFingerprint = (): string => {
-    const orderToken = (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
+    const orderToken = sampleMode ? 'sample' : (order?.token ?? token.replace(/^#/, '').trim()) || 'draft';
     const itemsKey = [...lineItems]
       .sort((a, b) => a.id.localeCompare(b.id) || a.qty - b.qty)
       .map((l) => `${l.id}:${l.qty}:${l.price}`)
@@ -132,21 +137,28 @@ export default function VendorPage() {
       : '<tr><td colspan="2">No items</td></tr>';
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
+    const tokenLabel = sampleMode ? 'SAMPLE' : o?.token ?? '';
+    const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
+    const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 20);
+    const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
     const dateStr = new Date().toLocaleString();
+    const serviceFeeHtml = feeBreakdown.active && feeBreakdown.originalFee > 0
+      ? `Service fee: <s>₹${feeBreakdown.originalFee}</s> ₹0 <span style="font-size:11px">(5-day discount)</span>`
+      : `Service fee: ₹${serviceFee}`;
     return `
 <h2>LaundroSwipe</h2>
 <p class="meta">Vendor name: ${vendorName}</p>
-<p><strong>Token:</strong> #${o?.token ?? ''} <strong>Order:</strong> ${o?.order_number ?? ''}</p>
-<p><strong>Customer ID:</strong> ${(u.display_id ?? '—').toString().slice(0, 24)}</p>
-<p><strong>Customer:</strong> ${(u.full_name ?? u.email ?? '—').toString().slice(0, 20)}</p>
-<p><strong>Phone:</strong> ${(u.phone ?? '—').toString().slice(0, 14)}</p>
+<p><strong>Token:</strong> #${tokenLabel} <strong>Order:</strong> ${orderLabel}</p>
+<p><strong>Customer ID:</strong> ${sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24)}</p>
+<p><strong>Customer:</strong> ${customerLabel}</p>
+<p><strong>Phone:</strong> ${phoneLabel}</p>
 <p><strong>Date:</strong> ${dateStr}</p>
 <table>
 <thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>
 <p class="right receipt-summary">Subtotal: ₹${subtotal}</p>
-<p class="right conv">Service fee: ₹${serviceFee}</p>
+<p class="right conv">${serviceFeeHtml}</p>
 <p class="total right">Total: ₹${total}</p>
 <p class="foot">Thank you!</p>
 `;
@@ -155,18 +167,24 @@ export default function VendorPage() {
   const buildReceiptPlainText = () => {
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow>;
+    const tokenLabel = sampleMode ? 'SAMPLE' : o?.token ?? '';
+    const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
+    const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
+    const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
     const lines = [
       'LaundroSwipe',
       `Vendor: ${vendorName}`,
-      `Token: #${o?.token ?? ''}  Order: ${o?.order_number ?? ''}`,
-      `Customer ID: ${(u.display_id ?? '—').toString().slice(0, 24)}`,
-      `Customer: ${(u.full_name ?? u.email ?? '—').toString().slice(0, 24)}`,
-      `Phone: ${(u.phone ?? '—').toString().slice(0, 14)}`,
+      `Token: #${tokenLabel}  Order: ${orderLabel}`,
+      `Customer ID: ${sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24)}`,
+      `Customer: ${customerLabel}`,
+      `Phone: ${phoneLabel}`,
       '---',
       ...lineItems.map((l) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`),
       '---',
       `Subtotal: ₹${subtotal}`,
-      `Service fee: ₹${serviceFee}`,
+      feeBreakdown.active && feeBreakdown.originalFee > 0
+        ? `Service fee: ₹0 (discounted from ₹${feeBreakdown.originalFee} for 5 days)`
+        : `Service fee: ₹${serviceFee}`,
       `TOTAL: ₹${total}`,
       'Thank you!',
     ];
@@ -189,6 +207,10 @@ export default function VendorPage() {
   const handleSaveBill = async () => {
     if (lineItems.length === 0) {
       showToast('Add at least one item', 'er');
+      return;
+    }
+    if (sampleMode) {
+      showToast('Sample bills are print/copy only and are not saved.', 'er');
       return;
     }
     if (!order?.token) {
@@ -223,7 +245,7 @@ export default function VendorPage() {
   };
 
   const doPrint = async () => {
-    const title = `Bill #${order?.token ?? ''}`;
+    const title = sampleMode ? 'Sample Bill' : `Bill #${order?.token ?? ''}`;
     const config = getPrinterConfigForPrint();
     const result = await printThermalReceiptDirect(title, buildReceiptHtml(), buildReceiptPlainText(), { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true });
     if (result === 'blocked') {
@@ -240,8 +262,13 @@ export default function VendorPage() {
       showToast('Add at least one item', 'er');
       return;
     }
-    if (!order?.token) {
+    if (!sampleMode && !order?.token) {
       showToast('Load an order first', 'er');
+      return;
+    }
+    if (sampleMode) {
+      showToast('Printing sample bill…', 'ok');
+      await doPrint();
       return;
     }
     const fingerprint = billFingerprint();
@@ -284,6 +311,9 @@ export default function VendorPage() {
     setLineItems([]);
     setBillAlreadyGenerated(false);
     setShowAnyway(false);
+    setSampleMode(false);
+    setSampleCustomerName('');
+    setSampleCustomerPhone('');
     lastSavedBillFingerprintRef.current = null;
   };
 
@@ -293,7 +323,7 @@ export default function VendorPage() {
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Back to Dashboard</Link>
       </p>
       <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>{vendorName} · Vendor Bill</h1>
-      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enter token to load order, add line items, then print bill.</p>
+      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enter token to load order, or create a sample bill for walk-ins/emergency print.</p>
 
       <div className="vendor-card">
         <form onSubmit={handleLookup}>
@@ -313,6 +343,26 @@ export default function VendorPage() {
           <button type="submit" className="vendor-btn-primary" style={{ width: '100%', minHeight: 52 }}>Lookup order</button>
           {lookupErr && <p style={{ color: 'var(--er)', fontSize: 13, marginTop: 8 }}>{lookupErr}</p>}
         </form>
+        <div style={{ marginTop: 12 }}>
+          <button
+            type="button"
+            className="vendor-btn-secondary"
+            style={{ width: '100%' }}
+            onClick={() => {
+              setOrder(null);
+              setUser(null);
+              setToken('');
+              setLookupErr('');
+              setLineItems([]);
+              setBillAlreadyGenerated(false);
+              setShowAnyway(false);
+              setSampleMode(true);
+              showToast('Sample bill mode enabled', 'ok');
+            }}
+          >
+            Create sample bill (no token)
+          </button>
+        </div>
       </div>
 
       {order && billAlreadyGenerated && !showAnyway && (
@@ -324,20 +374,31 @@ export default function VendorPage() {
         </div>
       )}
 
-      {order && (showAnyway || !billAlreadyGenerated) && (
+      {(sampleMode || (order && (showAnyway || !billAlreadyGenerated))) && (
         <div className="vendor-card">
-          {billAlreadyGenerated && showAnyway && (
+          {billAlreadyGenerated && showAnyway && !sampleMode && (
             <div style={{ padding: '12px 16px', background: '#FEF3C7', borderRadius: 8, marginBottom: 16, fontSize: 13, color: '#92400E' }}>
               Adding another bill for same token (e.g. missed items).
               <button type="button" onClick={() => setShowAnyway(false)} style={{ display: 'block', marginTop: 8, color: 'var(--b)', fontWeight: 600 }}>← Back</button>
             </div>
           )}
           <div style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ts)', marginBottom: 20 }}>
-            <p><strong style={{ color: 'var(--tx)' }}>Order:</strong> {order.order_number} &nbsp;|&nbsp; <strong>Token:</strong> #{order.token}</p>
-            <p><strong style={{ color: 'var(--tx)' }}>Customer ID:</strong> {user?.display_id ?? '—'}</p>
-            <p><strong style={{ color: 'var(--tx)' }}>Customer ID:</strong> {(user as UserRow & { display_id?: string | null })?.display_id ?? '—'} &nbsp;|&nbsp; <strong>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>
-            <p><strong style={{ color: 'var(--tx)' }}>Phone:</strong> {user?.phone ?? '—'} &nbsp;|&nbsp; <strong>Email:</strong> {user?.email ?? '—'}</p>
-            <p><strong style={{ color: 'var(--tx)' }}>Service:</strong> {order.service_name} &nbsp;|&nbsp; <strong>Date:</strong> {order.pickup_date}</p>
+            {sampleMode ? (
+              <>
+                <p><strong style={{ color: 'var(--tx)' }}>Order:</strong> Sample Bill &nbsp;|&nbsp; <strong>Token:</strong> #SAMPLE</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(140px, 1fr))', gap: 10 }}>
+                  <input className="vendor-input" placeholder="Customer name (optional)" value={sampleCustomerName} onChange={(e) => setSampleCustomerName(e.target.value)} />
+                  <input className="vendor-input" placeholder="Phone (optional)" value={sampleCustomerPhone} onChange={(e) => setSampleCustomerPhone(e.target.value)} />
+                </div>
+              </>
+            ) : (
+              <>
+                <p><strong style={{ color: 'var(--tx)' }}>Order:</strong> {order?.order_number} &nbsp;|&nbsp; <strong>Token:</strong> #{order?.token}</p>
+                <p><strong style={{ color: 'var(--tx)' }}>Customer ID:</strong> {(user as UserRow & { display_id?: string | null })?.display_id ?? '—'} &nbsp;|&nbsp; <strong>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>
+                <p><strong style={{ color: 'var(--tx)' }}>Phone:</strong> {user?.phone ?? '—'} &nbsp;|&nbsp; <strong>Email:</strong> {user?.email ?? '—'}</p>
+                <p><strong style={{ color: 'var(--tx)' }}>Service:</strong> {order?.service_name} &nbsp;|&nbsp; <strong>Date:</strong> {order?.pickup_date}</p>
+              </>
+            )}
           </div>
 
           <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16, marginTop: 16 }}>
@@ -384,7 +445,14 @@ export default function VendorPage() {
 
             <p style={{ fontSize: 13, color: 'var(--ts)' }}>Total items: {lineItems.reduce((s, l) => s + l.qty, 0)}</p>
             <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{subtotal}</p>
-            <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{serviceFee}</p>
+            {feeBreakdown.active && feeBreakdown.originalFee > 0 ? (
+              <p style={{ fontWeight: 600, fontSize: 14 }}>
+                Service fee: <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee}</span> ₹0
+                <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--ok)' }}>(5-day discount)</span>
+              </p>
+            ) : (
+              <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{serviceFee}</p>
+            )}
             <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
 
@@ -394,11 +462,11 @@ export default function VendorPage() {
               <button
                 type="button"
                 onClick={handleSaveBill}
-                disabled={saving || lineItems.length === 0}
+                disabled={sampleMode || saving || lineItems.length === 0}
                 className="vendor-btn-secondary"
                 style={{ flex: '1 1 200px' }}
               >
-                {saving ? 'Saving…' : 'Save bill'}
+                {sampleMode ? 'Save disabled in sample mode' : saving ? 'Saving…' : 'Save bill'}
               </button>
               <button type="button" onClick={handleNewBill} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>New bill</button>
               <Link href="/admin/bills" className="vendor-btn-secondary" style={{ flex: '1 1 200px', textDecoration: 'none' }}>View saved bills</Link>

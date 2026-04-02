@@ -22,3 +22,24 @@ export function calculateServiceFee(subtotal: number): number {
 export function formatServiceFeeTiers(): string {
   return '₹0–₹49: ₹0 · ₹50–₹99: ₹5 · ₹100–₹199: ₹10 · ₹200+: ₹20';
 }
+
+// Temporary vendor billing offer window.
+const SERVICE_FEE_DISCOUNT_START = '2026-04-02';
+const SERVICE_FEE_DISCOUNT_DAYS = 5;
+
+export type ServiceFeeDiscount = {
+  originalFee: number;
+  finalFee: number;
+  discount: number;
+  active: boolean;
+};
+
+export function applyServiceFeeDiscount(subtotal: number, at: Date = new Date()): ServiceFeeDiscount {
+  const originalFee = calculateServiceFee(subtotal);
+  const startsAt = new Date(`${SERVICE_FEE_DISCOUNT_START}T00:00:00`);
+  const endsAt = new Date(startsAt);
+  endsAt.setDate(endsAt.getDate() + SERVICE_FEE_DISCOUNT_DAYS);
+  const active = at >= startsAt && at < endsAt;
+  if (!active || originalFee <= 0) return { originalFee, finalFee: originalFee, discount: 0, active: false };
+  return { originalFee, finalFee: 0, discount: originalFee, active: true };
+}
