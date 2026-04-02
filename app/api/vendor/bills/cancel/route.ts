@@ -34,21 +34,12 @@ export async function POST(request: Request) {
 
   const { data: bill, error: fetchErr } = await supabase
     .from('vendor_bills')
-    .select('id, vendor_id, vendor_name, created_at, cancelled_at')
+    .select('id, vendor_id, vendor_name, created_at')
     .eq('id', billId)
     .maybeSingle();
 
-  if (fetchErr) {
-    if ((fetchErr as { code?: string }).code === '42703') {
-      return NextResponse.json(
-        { error: 'Bill cancel is unavailable until DB migration is applied (missing cancelled_at column)' },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
-  }
+  if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
   if (!bill) return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
-  if (bill.cancelled_at) return NextResponse.json({ error: 'Bill already cancelled' }, { status: 400 });
 
   if (session.role === 'vendor') {
     const { data: dbVendors } = await supabase.from('vendors').select('id, slug, name');
@@ -67,24 +58,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Cancellation window expired (1 hour)' }, { status: 400 });
   }
 
-  const { error: updateErr } = await supabase
+  // Cancel now means delete the bill so token can be billed again.
+  const { error: deleteErr } = await supabase
     .from('vendor_bills')
-    .update({
-      cancelled_at: new Date().toISOString(),
-      cancelled_by_role: session.role,
-    })
-    .eq('id', billId)
-    .is('cancelled_at', null);
-
-  if (updateErr) {
-    if ((updateErr as { code?: string }).code === '42703') {
-      return NextResponse.json(
-        { error: 'Bill cancel is unavailable until DB migration is applied (missing cancelled_at column)' },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
-  }
+    .delete()
+    .eq('id', billId);
+  if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
 

@@ -172,7 +172,6 @@ export default function BillsPage() {
   };
 
   const canCancelBill = (b: VendorBillRow): boolean => {
-    if (b.cancelled_at) return false;
     const created = new Date(b.created_at).getTime();
     if (!Number.isFinite(created)) return false;
     return Date.now() - created <= 60 * 60 * 1000;
@@ -199,12 +198,9 @@ export default function BillsPage() {
         setTimeout(() => setCopyMsg(null), 3000);
         return;
       }
-      setBills((prev) =>
-        prev.map((b) =>
-          b.id === billId ? { ...b, cancelled_at: new Date().toISOString(), cancelled_by_role: 'vendor' } : b
-        )
-      );
-      setCopyMsg('Bill cancelled');
+      setBills((prev) => prev.filter((b) => b.id !== billId));
+      if (viewingBill?.id === billId) setViewingBill(null);
+      setCopyMsg('Bill deleted');
       setTimeout(() => setCopyMsg(null), 2500);
     } catch {
       setCopyMsg('Cancel failed');
@@ -261,11 +257,6 @@ export default function BillsPage() {
                 <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--b)' }}>#{b.order_token} · {b.order_number ?? '—'}</div>
                 <div style={{ fontSize: 13, color: 'var(--ts)', marginTop: 4 }}>{b.customer_name ?? '—'} · {b.customer_phone ?? '—'}</div>
                 <div style={{ fontSize: 12, color: 'var(--tm)', marginTop: 2 }}>{b.created_at ? new Date(b.created_at).toLocaleString() : ''}</div>
-                {b.cancelled_at && (
-                  <div style={{ fontSize: 12, color: 'var(--er)', marginTop: 4, fontWeight: 600 }}>
-                    Cancelled at {new Date(b.cancelled_at).toLocaleString()}
-                  </div>
-                )}
                 <div style={{ fontSize: 14, marginTop: 6, fontWeight: 600 }}>₹{b.total}</div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -282,7 +273,7 @@ export default function BillsPage() {
                   className="vendor-btn-secondary"
                   title={canCancelBill(b) ? 'Cancel this bill' : 'Can only cancel within 1 hour'}
                 >
-                  {b.cancelled_at ? 'Cancelled' : cancellingId === b.id ? 'Cancelling…' : 'Cancel bill'}
+                  {cancellingId === b.id ? 'Deleting…' : 'Cancel bill'}
                 </button>
               </div>
             </div>

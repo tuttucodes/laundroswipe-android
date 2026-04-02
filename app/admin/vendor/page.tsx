@@ -8,7 +8,7 @@ import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number };
-type LatestBill = { id: string; created_at: string; cancelled_at: string | null; can_cancel: boolean };
+type LatestBill = { id: string; created_at: string; can_cancel: boolean };
 
 export default function VendorPage() {
   const [vendorName, setVendorName] = useState('Vendor');
@@ -286,7 +286,7 @@ export default function VendorPage() {
         showToast(data?.error || 'Cancel failed', 'er');
         return;
       }
-      setLatestBill((prev) => (prev ? { ...prev, cancelled_at: new Date().toISOString(), can_cancel: false } : prev));
+      setLatestBill(null);
       setBillAlreadyGenerated(false);
       showToast('Latest bill cancelled', 'ok');
     } catch {

@@ -11,7 +11,6 @@ type LookupResponse = {
   latest_bill: {
     id: string;
     created_at: string;
-    cancelled_at: string | null;
     can_cancel: boolean;
   } | null;
 } | { ok: false; error: string };
@@ -82,33 +81,17 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (countErr) return NextResponse.json({ error: countErr.message }, { status: 500 });
 
-  let latestBill: { id: string; created_at: string; cancelled_at?: string | null } | null = null;
-  let latestBillErr: { message: string; code?: string } | null = null;
-  const withCancelCols = await supabase
+  const { data: latestBill, error: latestBillErr } = await supabase
     .from('vendor_bills')
-    .select('id, created_at, cancelled_at')
+    .select('id, created_at')
     .eq('order_token', token)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  latestBill = (withCancelCols.data as { id: string; created_at: string; cancelled_at?: string | null } | null) ?? null;
-  latestBillErr = withCancelCols.error as { message: string; code?: string } | null;
-  if (latestBillErr?.code === '42703') {
-    const fallback = await supabase
-      .from('vendor_bills')
-      .select('id, created_at')
-      .eq('order_token', token)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    latestBill = (fallback.data as { id: string; created_at: string } | null) ?? null;
-    latestBillErr = fallback.error as { message: string; code?: string } | null;
-  }
   if (latestBillErr) return NextResponse.json({ error: latestBillErr.message }, { status: 500 });
   const latestBillCreatedAtMs = latestBill?.created_at ? new Date(String(latestBill.created_at)).getTime() : NaN;
   const latestBillCanCancel =
     !!latestBill &&
-    !latestBill.cancelled_at &&
     Number.isFinite(latestBillCreatedAtMs) &&
     Date.now() - latestBillCreatedAtMs <= 60 * 60 * 1000;
 
@@ -121,7 +104,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       ? {
           id: String(latestBill.id),
           created_at: String(latestBill.created_at),
-          cancelled_at: latestBill.cancelled_at ? String(latestBill.cancelled_at) : null,
           can_cancel: latestBillCanCancel,
         }
       : null,
