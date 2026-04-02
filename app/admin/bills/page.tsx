@@ -8,6 +8,9 @@ import type { VendorBillRow } from '@/lib/api';
 import { calculateServiceFee } from '@/lib/fees';
 
 function billToHtml(b: VendorBillRow) {
+  const totalItems = Array.isArray(b.line_items)
+    ? b.line_items.reduce((sum, l: { qty: number }) => sum + Number(l.qty || 0), 0)
+    : 0;
   const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const rows = Array.isArray(b.line_items) && b.line_items.length
     ? b.line_items.map((l: { label: string; qty: number; price: number }) => `<tr><td class="qty-col">${l.qty}</td><td class="desc-col">${esc(l.label)}<br/><span class="meta">@₹${Number(l.price).toFixed(2)}</span></td><td class="amt-col">₹${(Number(l.price) * Number(l.qty)).toFixed(2)}</td></tr>`).join('')
@@ -41,6 +44,7 @@ function billToHtml(b: VendorBillRow) {
     </table>
     <div class="row-divider"></div>
     <div class="totals">
+      <p><span>Total items</span><span>${totalItems}</span></p>
       <p><span>Subtotal</span><span>₹${Number(b.subtotal ?? 0).toFixed(2)}</span></p>
       <p class="conv">${discountedFeeHtml}</p>
       <p class="total"><span>Total</span><span>₹${Number(b.total ?? 0).toFixed(2)}</span></p>
@@ -53,6 +57,9 @@ function billToPlainText(b: VendorBillRow): string {
   const items = Array.isArray(b.line_items) && b.line_items.length
     ? b.line_items.map((l: { label: string; qty: number; price: number }) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`)
     : [];
+  const totalItems = Array.isArray(b.line_items)
+    ? b.line_items.reduce((sum, l: { qty: number }) => sum + Number(l.qty || 0), 0)
+    : 0;
   const extra: string[] = [];
   if (b.user_email != null && String(b.user_email).trim() !== '') extra.push(`Email: ${b.user_email}`);
   if (b.user_display_id != null && String(b.user_display_id).trim() !== '') extra.push(`Customer ID: ${b.user_display_id}`);
@@ -68,6 +75,7 @@ function billToPlainText(b: VendorBillRow): string {
     '---',
     ...items,
     '---',
+    `Total items: ${totalItems}`,
     `Subtotal: ₹${b.subtotal}`,
     Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
       ? `Service fee: ₹0 (discounted from ₹${originalFee} for 7 days)`

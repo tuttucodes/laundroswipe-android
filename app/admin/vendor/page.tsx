@@ -132,6 +132,7 @@ export default function VendorPage() {
   };
 
   const buildReceiptHtml = () => {
+    const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
     const rows = lineItems.length
       ? lineItems.map((l) => `<tr><td class="qty-col">${l.qty}</td><td class="desc-col">${l.label}<br/><span class="meta">@₹${l.price.toFixed(2)}</span></td><td class="amt-col">₹${(l.price * l.qty).toFixed(2)}</td></tr>`).join('')
       : '<tr><td class="qty-col">0</td><td class="desc-col">No items</td><td class="amt-col">₹0.00</td></tr>';
@@ -160,6 +161,7 @@ export default function VendorPage() {
 </table>
 <div class="row-divider"></div>
 <div class="totals">
+  <p><span>Total items</span><span>${totalItems}</span></p>
   <p><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></p>
   <p class="conv">${serviceFeeHtml}</p>
   <p class="total"><span>Total</span><span>₹${total.toFixed(2)}</span></p>
@@ -175,6 +177,7 @@ export default function VendorPage() {
     const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
     const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
     const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
+    const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
     const lines = [
       'LaundroSwipe',
       `Vendor: ${vendorName}`,
@@ -185,6 +188,7 @@ export default function VendorPage() {
       '---',
       ...lineItems.map((l) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`),
       '---',
+      `Total items: ${totalItems}`,
       `Subtotal: ₹${subtotal}`,
       feeBreakdown.active && feeBreakdown.originalFee > 0
         ? `Service fee: ₹0 (discounted from ₹${feeBreakdown.originalFee} for 7 days)`
