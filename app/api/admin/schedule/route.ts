@@ -70,7 +70,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
   }
   try {
-    const vendorSlug = session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? null : null;
+    const url = new URL(request.url);
+    const requestedVendor = url.searchParams.get('vendor')?.toLowerCase().trim() ?? null;
+    const vendorSlug = session.role === 'vendor'
+      ? session.vendorId?.toLowerCase().trim() ?? null
+      : (requestedVendor || null);
     const [slotsRes, datesRes] = await Promise.all([
       supabase.from('schedule_slots').select('*').order('sort_order', { ascending: true }),
       supabase.from('schedule_dates').select('*').order('date', { ascending: true }),
@@ -144,7 +148,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const vendorSlug = session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? null : null;
+    const url = new URL(request.url);
+    const requestedVendor = url.searchParams.get('vendor')?.toLowerCase().trim() ?? null;
+    const vendorSlug = session.role === 'vendor'
+      ? session.vendorId?.toLowerCase().trim() ?? null
+      : (requestedVendor || null);
     if (body.slots != null && Array.isArray(body.slots)) {
       for (const row of body.slots) {
         const clientId = String(row?.id ?? '').trim();

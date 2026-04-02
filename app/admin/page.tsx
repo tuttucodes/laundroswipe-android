@@ -225,6 +225,7 @@ export default function AdminPage() {
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [scheduleVendorSlug, setScheduleVendorSlug] = useState('');
   const [scheduleSuggestions, setScheduleSuggestions] = useState<{
     slot_counts: { time_slot: string; count: number }[];
     dow_counts: { dow: number; label: string; count: number }[];
@@ -440,9 +441,12 @@ export default function AdminPage() {
     setScheduleLoading(true);
     setScheduleSuggestions(null);
     const headers = adminAuthHeaders();
+    const scheduleQuery = isSuperAdmin && scheduleVendorSlug
+      ? `?vendor=${encodeURIComponent(scheduleVendorSlug)}`
+      : '';
     Promise.all([
-      fetch('/api/admin/schedule', { credentials: 'include', headers }),
-      fetch('/api/admin/schedule/suggestions', { credentials: 'include', headers }),
+      fetch(`/api/admin/schedule${scheduleQuery}`, { credentials: 'include', headers }),
+      fetch(`/api/admin/schedule/suggestions${scheduleQuery}`, { credentials: 'include', headers }),
     ])
       .then(async ([schedRes, sugRes]) => {
         const schedData = await schedRes.json().catch(() => ({}));
@@ -467,7 +471,7 @@ export default function AdminPage() {
         setScheduleSuggestions(null);
       })
       .finally(() => setScheduleLoading(false));
-  }, [loggedIn, tab]);
+  }, [loggedIn, tab, isSuperAdmin, scheduleVendorSlug]);
 
   useEffect(() => {
     if (!loggedIn || tab !== 'notifications') return;
@@ -549,6 +553,11 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isSuperAdmin || vendorsList.length === 0) return;
     setVendorProfileSlug((prev) => (prev && vendorsList.some((v) => v.slug === prev) ? prev : vendorsList[0].slug));
+  }, [isSuperAdmin, vendorsList]);
+
+  useEffect(() => {
+    if (!isSuperAdmin || vendorsList.length === 0) return;
+    setScheduleVendorSlug((prev) => (prev && vendorsList.some((v) => v.slug === prev) ? prev : vendorsList[0].slug));
   }, [isSuperAdmin, vendorsList]);
 
   const showToast = (msg: string, type: string) => {
@@ -1199,6 +1208,21 @@ export default function AdminPage() {
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Schedule</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enable/disable dates and slots. Users only see enabled dates and the slots you allow per date.</p>
+            {isSuperAdmin && (
+              <div style={{ marginBottom: 16, maxWidth: 320 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Vendor schedule</label>
+                <select
+                  className="fi fs"
+                  value={scheduleVendorSlug}
+                  onChange={(e) => setScheduleVendorSlug(e.target.value)}
+                >
+                  {vendorsList.map((v) => (
+                    <option key={v.slug} value={v.slug}>{v.name}</option>
+                  ))}
+                  {vendorsList.length === 0 && <option value="">No vendors</option>}
+                </select>
+              </div>
+            )}
             {!scheduleLoading && scheduleSuggestions && (
               <div
                 style={{
@@ -1329,7 +1353,10 @@ export default function AdminPage() {
                 <button type="button" className="btn bp bbl" disabled={scheduleSaving} onClick={async () => {
                   setScheduleSaving(true);
                   try {
-                    const res = await fetch('/api/admin/schedule', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() }, body: JSON.stringify({ slots: scheduleSlots.filter((s) => s.id.trim()), dates: scheduleDates }) });
+                    const scheduleQuery = isSuperAdmin && scheduleVendorSlug
+                      ? `?vendor=${encodeURIComponent(scheduleVendorSlug)}`
+                      : '';
+                    const res = await fetch(`/api/admin/schedule${scheduleQuery}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() }, body: JSON.stringify({ slots: scheduleSlots.filter((s) => s.id.trim()), dates: scheduleDates }) });
                     const data = await res.json().catch(() => ({}));
                     if (res.ok && data.ok) { showToast('Schedule saved. Users will see updated dates and slots.', 'ok'); } else {
                     if (res.status === 401) {

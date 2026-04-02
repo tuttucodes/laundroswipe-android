@@ -38,7 +38,11 @@ export async function GET(request: Request) {
     .select('pickup_date, time_slot, vendor_id, vendor_name');
   if (oErr) return NextResponse.json({ error: oErr.message }, { status: 500 });
 
-  const vendorSlugFilter = session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? null : null;
+  const url = new URL(request.url);
+  const requestedVendor = url.searchParams.get('vendor')?.toLowerCase().trim() ?? null;
+  const vendorSlugFilter = session.role === 'vendor'
+    ? session.vendorId?.toLowerCase().trim() ?? null
+    : (requestedVendor || null);
 
   const rows = (ordersData ?? []).filter((o: { vendor_id?: string | null; vendor_name?: string | null }) => {
     if (!vendorSlugFilter) return true;
