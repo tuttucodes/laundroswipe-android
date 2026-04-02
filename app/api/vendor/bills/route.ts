@@ -29,10 +29,26 @@ export async function GET(request: Request) {
   const dbVendors = (vendorsData ?? []) as DbVendor[];
   const vendorsById = new Map<string, string>(dbVendors.map((v) => [String(v.id), v.slug]));
 
-  const { data, error } = await supabase
+  let data: any[] | null = null;
+  let error: { message: string; code?: string } | null = null;
+  const withCancelCols = await supabase
     .from('vendor_bills')
     .select('id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at, cancelled_by_role')
     .order('created_at', { ascending: false });
+  data = withCancelCols.data as any[] | null;
+  error = withCancelCols.error as { message: string; code?: string } | null;
+  if (error?.code === '42703') {
+    const fallback = await supabase
+      .from('vendor_bills')
+      .select('id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at')
+      .order('created_at', { ascending: false });
+    data = ((fallback.data as any[] | null) ?? []).map((row) => ({
+      ...row,
+      cancelled_at: null,
+      cancelled_by_role: null,
+    }));
+    error = fallback.error as { message: string; code?: string } | null;
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

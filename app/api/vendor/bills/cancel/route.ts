@@ -38,7 +38,15 @@ export async function POST(request: Request) {
     .eq('id', billId)
     .maybeSingle();
 
-  if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+  if (fetchErr) {
+    if ((fetchErr as { code?: string }).code === '42703') {
+      return NextResponse.json(
+        { error: 'Bill cancel is unavailable until DB migration is applied (missing cancelled_at column)' },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+  }
   if (!bill) return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
   if (bill.cancelled_at) return NextResponse.json({ error: 'Bill already cancelled' }, { status: 400 });
 
@@ -68,7 +76,15 @@ export async function POST(request: Request) {
     .eq('id', billId)
     .is('cancelled_at', null);
 
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  if (updateErr) {
+    if ((updateErr as { code?: string }).code === '42703') {
+      return NextResponse.json(
+        { error: 'Bill cancel is unavailable until DB migration is applied (missing cancelled_at column)' },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }
 
