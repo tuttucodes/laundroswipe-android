@@ -34,6 +34,7 @@ export const VENDORS = [
     location: 'VIT Chennai',
     emoji: '🧼',
     audienceLabel: 'For B, C & E Block Students Only',
+    comingSoon: true,
     availability: { type: 'nearby', lat: 12.8406, lng: 80.1533, radiusKm: 18 },
   },
 ] as const;
