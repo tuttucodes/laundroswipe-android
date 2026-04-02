@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
-import { VENDORS, VENDOR_BILL_ITEMS } from '@/lib/constants';
+import { VENDORS, getVendorBillItems } from '@/lib/constants';
 import { calculateServiceFee } from '@/lib/fees';
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
@@ -18,8 +18,8 @@ function normalizeToken(token: string): string {
   return String(token).replace(/^#/, '').trim();
 }
 
-function priceForItemId(itemId: string): number | null {
-  const item = (VENDOR_BILL_ITEMS as any).find((i: any) => i.id === itemId);
+function priceForItemId(itemId: string, vendorSlug: string | null): number | null {
+  const item = getVendorBillItems(vendorSlug).find((i) => i.id === itemId);
   return item ? Number(item.price) : null;
 }
 
@@ -66,15 +66,19 @@ export async function POST(request: Request) {
     }
   }
 
+  const effectiveVendorSlug =
+    (session.role === 'vendor' ? session.vendorId : resolveVendorSlugFromName(order.vendor_name))?.toLowerCase().trim() || null;
+  const vendorBillItems = getVendorBillItems(effectiveVendorSlug);
+
   const safeLineItems: Array<{ id: string; label: string; qty: number; price: number }> = [];
   for (const li of lineItems) {
     const id = String(li?.id ?? '').trim();
     const qty = Number(li?.qty ?? 0);
     if (!id) continue;
     if (!Number.isFinite(qty) || qty <= 0) continue;
-    const price = priceForItemId(id);
+    const price = priceForItemId(id, effectiveVendorSlug);
     if (price == null) continue;
-    const label = (VENDOR_BILL_ITEMS as any).find((x: any) => x.id === id)?.label ?? id;
+    const label = vendorBillItems.find((x) => x.id === id)?.label ?? id;
     safeLineItems.push({ id, label, qty: Math.floor(qty), price });
   }
 

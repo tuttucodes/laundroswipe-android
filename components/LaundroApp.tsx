@@ -106,7 +106,68 @@ const DEFAULT_VENDOR_PROFILE: VendorProfileRow = {
   slug: 'profab',
   name: 'Pro Fab Power Launders',
   brief: 'Pro Fab Power Launders is our campus laundry partner. We pick up from your hostel, wash & iron, and deliver back on the same cycle. Service days: Tuesday, Saturday, Sunday.',
-  pricing_details: 'Shirt / T-shirt: ₹19 | White shirt / White T-shirt: ₹25 | Pant / Jean: ₹22 | White pants / White jean: ₹25 | Dry clean (shirt/T-shirt): ₹50 | Dry clean (white/formal): ₹60. Service fee is added separately based on the bill subtotal.',
+  pricing_details: `Item-wise Price List
+
+Pant - ₹22
+Pant DC - ₹50
+Jeans - ₹22
+Jeans DC - ₹50
+White Pant - ₹25
+White Pant DC - ₹60
+White Jeans - ₹25
+White Jeans DC - ₹60
+Shirt - ₹22
+Shirt DC - ₹50
+T-Shirt - ₹22
+T-Shirt DC - ₹50
+White Shirt - ₹25
+White Shirt DC - ₹60
+White T-Shirt - ₹25
+White T-Shirt DC - ₹60
+Shorts - ₹16
+Shorts DC - ₹40
+Lungi - ₹20
+Lungi DC - ₹50
+Towel - ₹18
+Towel DC - ₹40
+Bed Sheet - ₹25
+Bed Sheet DC - ₹60
+Hand Towel - ₹8
+Hand Towel DC - ₹20
+Pillow Cover - ₹12
+Pillow Cover DC - ₹30
+Dhoti - ₹40
+Dhoti DC - ₹60
+Blanket (Small) - ₹90
+Blanket (Small) DC - ₹110
+Blanket (Big) - ₹100
+Blanket (Big) DC - ₹120
+Lab Coat - ₹25
+Lab Coat DC - ₹60
+Quilt - ₹120
+Quilt DC - ₹150
+Jacket - ₹50
+Jacket DC - ₹100
+Hoodie - ₹50
+Hoodie DC - ₹100
+Kurta - ₹50
+Kurta DC - ₹100
+Track Pant - ₹22
+Track Pant DC - ₹40
+Bag - ₹150
+Shoe - ₹70
+Shoe DC - ₹150
+Only Iron - ₹10
+Ladies Top - ₹25
+Ladies Top DC - ₹60
+Ladies Bottom - ₹22
+Ladies Bottom DC - ₹50
+Shawl - ₹18
+Shawl DC - ₹40
+Saree - ₹70
+Saree DC - ₹150
+Fancy Dress DC - ₹100
+Blazer DC - ₹150`,
   logo_url: '/profab-logo.png',
   updated_at: '',
 };

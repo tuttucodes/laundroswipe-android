@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
-import { VENDOR_BILL_ITEMS } from '@/lib/constants';
+import { getVendorBillItems } from '@/lib/constants';
 import { calculateServiceFee, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number };
@@ -22,6 +22,7 @@ export default function VendorPage() {
   const [billAlreadyGenerated, setBillAlreadyGenerated] = useState(false);
   const [showAnyway, setShowAnyway] = useState(false);
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
+  const vendorBillItems = getVendorBillItems(vendorId);
 
   const adminAuthHeaders = (): Record<string, string> => {
     const t = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
@@ -84,7 +85,7 @@ export default function VendorPage() {
   };
 
   const addItem = (itemId: string) => {
-    const item = VENDOR_BILL_ITEMS.find((i) => i.id === itemId);
+    const item = vendorBillItems.find((i) => i.id === itemId);
     if (!item) return;
     setLineItems((prev) => {
       const i = prev.findIndex((l) => l.id === itemId);
@@ -342,7 +343,7 @@ export default function VendorPage() {
           <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16, marginTop: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--tx)' }}>Tap an item to add one (tap again to add more)</p>
             <div className="vendor-item-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
-              {VENDOR_BILL_ITEMS.map((i) => {
+              {vendorBillItems.map((i) => {
                 const line = lineItems.find((l) => l.id === i.id);
                 const qty = line?.qty ?? 0;
                 return (
