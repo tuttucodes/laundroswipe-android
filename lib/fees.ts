@@ -25,7 +25,7 @@ export function formatServiceFeeTiers(): string {
 
 // Temporary vendor billing offer window.
 const SERVICE_FEE_DISCOUNT_START = '2026-04-02';
-const SERVICE_FEE_DISCOUNT_DAYS = 5;
+const SERVICE_FEE_DISCOUNT_DAYS = 7;
 
 export type ServiceFeeDiscount = {
   originalFee: number;

@@ -10,8 +10,8 @@ import { calculateServiceFee } from '@/lib/fees';
 function billToHtml(b: VendorBillRow) {
   const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const rows = Array.isArray(b.line_items) && b.line_items.length
-    ? b.line_items.map((l: { label: string; qty: number; price: number }) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')
-    : '<tr><td colspan="2">No items</td></tr>';
+    ? b.line_items.map((l: { label: string; qty: number; price: number }) => `<tr><td class="qty-col">${l.qty}</td><td class="desc-col">${esc(l.label)}<br/><span class="meta">@₹${Number(l.price).toFixed(2)}</span></td><td class="amt-col">₹${(Number(l.price) * Number(l.qty)).toFixed(2)}</td></tr>`).join('')
+    : '<tr><td class="qty-col">0</td><td class="desc-col">No items</td><td class="amt-col">₹0.00</td></tr>';
   const emailLine =
     b.user_email != null && String(b.user_email).trim() !== ''
       ? `<p><strong>Email:</strong> ${esc(String(b.user_email))}</p>`
@@ -22,24 +22,29 @@ function billToHtml(b: VendorBillRow) {
       : '';
   const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
   const discountedFeeHtml = Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
-    ? `Service fee: <s>₹${originalFee}</s> ₹0 <span style="font-size:11px">(discount)</span>`
-    : `Service fee: ₹${b.convenience_fee}`;
+    ? `<span>Service fee</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
+    : `<span>Service fee</span><span>₹${Number(b.convenience_fee ?? 0).toFixed(2)}</span>`;
   return `
     <h2>LaundroSwipe</h2>
-    <p class="meta">Vendor name: ${esc(b.vendor_name ?? 'Vendor')}</p>
-    <p><strong>Token:</strong> #${b.order_token} &nbsp; <strong>Order:</strong> ${b.order_number ?? '—'}</p>
-    <p><strong>Customer:</strong> ${esc(b.customer_name ?? '—')}</p>
-    <p><strong>Phone:</strong> ${esc(b.customer_phone ?? '—')}</p>
-    ${emailLine}
+    <p class="meta center">${esc(b.vendor_name ?? 'Vendor')}</p>
+    <p class="center">Token: #${b.order_token}</p>
+    <p class="center">Order: ${esc(String(b.order_number ?? '—'))}</p>
+    <p class="center">Customer: ${esc(b.customer_name ?? '—')}</p>
+    <p class="center">Phone: ${esc(b.customer_phone ?? '—')}</p>
     ${idLine}
-    <p><strong>Date:</strong> ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p>
+    ${emailLine}
+    <p class="center">Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p>
+    <div class="row-divider"></div>
     <table>
-      <thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
+      <thead><tr><th class="qty-col">Qty</th><th class="desc-col">Description</th><th class="amt-col">Amount</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <p class="right receipt-summary">Subtotal: ₹${b.subtotal}</p>
-    <p class="right conv">${discountedFeeHtml}</p>
-    <p class="total right">Total: ₹${b.total}</p>
+    <div class="row-divider"></div>
+    <div class="totals">
+      <p><span>Subtotal</span><span>₹${Number(b.subtotal ?? 0).toFixed(2)}</span></p>
+      <p class="conv">${discountedFeeHtml}</p>
+      <p class="total"><span>Total</span><span>₹${Number(b.total ?? 0).toFixed(2)}</span></p>
+    </div>
     <p class="foot">Thank you!</p>
   `;
 }

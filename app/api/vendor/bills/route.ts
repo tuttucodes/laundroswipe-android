@@ -3,9 +3,13 @@ import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
 
-function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
-  const v = (vendorName ?? '').toLowerCase();
+type DbVendor = { id: string; slug: string; name: string };
+
+function resolveVendorSlugFromName(vendorName: string | null | undefined, dbVendors: DbVendor[]): string | null {
+  const v = (vendorName ?? '').toLowerCase().trim();
   if (!v) return null;
+  const dbMatch = dbVendors.find((x) => v.includes(x.name.toLowerCase()) || x.name.toLowerCase().includes(v));
+  if (dbMatch) return dbMatch.slug;
   const match = VENDORS.find((x) => v.includes(x.name.toLowerCase()) || v === x.name.toLowerCase());
   return match?.id ?? null;
 }
@@ -18,6 +22,12 @@ export async function GET(request: Request) {
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
 
   const vendorSlug = session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? '' : '';
+  const { data: vendorsData, error: vendorsError } = await supabase
+    .from('vendors')
+    .select('id, slug, name');
+  if (vendorsError) return NextResponse.json({ error: vendorsError.message }, { status: 500 });
+  const dbVendors = (vendorsData ?? []) as DbVendor[];
+  const vendorsById = new Map<string, string>(dbVendors.map((v) => [String(v.id), v.slug]));
 
   const { data, error } = await supabase
     .from('vendor_bills')
@@ -28,8 +38,10 @@ export async function GET(request: Request) {
 
   const raw = (data ?? []).filter((b: any) => {
     if (!vendorSlug) return true;
-    const bySlug = resolveVendorSlugFromName(b.vendor_name);
-    return String(bySlug ?? '').toLowerCase() === vendorSlug;
+    const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
+    const byVendorName = resolveVendorSlugFromName(b.vendor_name, dbVendors);
+    const billVendorSlug = (byVendorId ?? byVendorName ?? null) as string | null;
+    return String(billVendorSlug ?? '').toLowerCase() === vendorSlug;
   });
 
   const userIds = Array.from(new Set(raw.map((b: any) => b.user_id).filter(Boolean))) as string[];

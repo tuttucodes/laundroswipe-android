@@ -133,8 +133,8 @@ export default function VendorPage() {
 
   const buildReceiptHtml = () => {
     const rows = lineItems.length
-      ? lineItems.map((l) => `<tr><td>${l.label} x${l.qty}</td><td class="right">₹${l.price * l.qty}</td></tr>`).join('')
-      : '<tr><td colspan="2">No items</td></tr>';
+      ? lineItems.map((l) => `<tr><td class="qty-col">${l.qty}</td><td class="desc-col">${l.label}<br/><span class="meta">@₹${l.price.toFixed(2)}</span></td><td class="amt-col">₹${(l.price * l.qty).toFixed(2)}</td></tr>`).join('')
+      : '<tr><td class="qty-col">0</td><td class="desc-col">No items</td><td class="amt-col">₹0.00</td></tr>';
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
     const tokenLabel = sampleMode ? 'SAMPLE' : o?.token ?? '';
@@ -143,23 +143,27 @@ export default function VendorPage() {
     const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
     const dateStr = new Date().toLocaleString();
     const serviceFeeHtml = feeBreakdown.active && feeBreakdown.originalFee > 0
-      ? `Service fee: <s>₹${feeBreakdown.originalFee}</s> ₹0 <span style="font-size:11px">(5-day discount)</span>`
-      : `Service fee: ₹${serviceFee}`;
+      ? `<span>Service fee</span><span><s>₹${feeBreakdown.originalFee.toFixed(2)}</s> ₹0.00</span>`
+      : `<span>Service fee</span><span>₹${serviceFee.toFixed(2)}</span>`;
     return `
 <h2>LaundroSwipe</h2>
-<p class="meta">Vendor name: ${vendorName}</p>
-<p><strong>Token:</strong> #${tokenLabel} <strong>Order:</strong> ${orderLabel}</p>
-<p><strong>Customer ID:</strong> ${sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24)}</p>
-<p><strong>Customer:</strong> ${customerLabel}</p>
-<p><strong>Phone:</strong> ${phoneLabel}</p>
-<p><strong>Date:</strong> ${dateStr}</p>
+<p class="meta center">${vendorName}</p>
+<p class="center">Token: #${tokenLabel}</p>
+<p class="center">Order: ${orderLabel}</p>
+<p class="center">Customer: ${customerLabel}</p>
+<p class="center">Phone: ${phoneLabel}</p>
+<p class="center">Date: ${dateStr}</p>
+<div class="row-divider"></div>
 <table>
-<thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
+<thead><tr><th class="qty-col">Qty</th><th class="desc-col">Description</th><th class="amt-col">Amount</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>
-<p class="right receipt-summary">Subtotal: ₹${subtotal}</p>
-<p class="right conv">${serviceFeeHtml}</p>
-<p class="total right">Total: ₹${total}</p>
+<div class="row-divider"></div>
+<div class="totals">
+  <p><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></p>
+  <p class="conv">${serviceFeeHtml}</p>
+  <p class="total"><span>Total</span><span>₹${total.toFixed(2)}</span></p>
+</div>
 <p class="foot">Thank you!</p>
 `;
   };
@@ -183,7 +187,7 @@ export default function VendorPage() {
       '---',
       `Subtotal: ₹${subtotal}`,
       feeBreakdown.active && feeBreakdown.originalFee > 0
-        ? `Service fee: ₹0 (discounted from ₹${feeBreakdown.originalFee} for 5 days)`
+        ? `Service fee: ₹0 (discounted from ₹${feeBreakdown.originalFee} for 7 days)`
         : `Service fee: ₹${serviceFee}`,
       `TOTAL: ₹${total}`,
       'Thank you!',
@@ -453,7 +457,7 @@ export default function VendorPage() {
             {feeBreakdown.active && feeBreakdown.originalFee > 0 ? (
               <p style={{ fontWeight: 600, fontSize: 14 }}>
                 Service fee: <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee}</span> ₹0
-                <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--ok)' }}>(5-day discount)</span>
+                <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--ok)' }}>(7-day discount)</span>
               </p>
             ) : (
               <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{serviceFee}</p>

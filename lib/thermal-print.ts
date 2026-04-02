@@ -18,32 +18,37 @@ const contentWidth = `${CONTENT_WIDTH_MM}mm`;
 
 function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
-  /* Wider, non-condensed font. */
-  const fontCss = `font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:18px;font-weight:700;letter-spacing:0.04em;line-height:1.5`;
+  const fontCss = `font-family:"Courier New","Liberation Mono","Nimbus Mono PS",monospace;font-size:13px;font-weight:700;line-height:1.35`;
   return `
 *{margin:0;padding:0}
-html,body{width:${w};max-width:${w};min-width:${w};${fontCss};padding:2mm;margin:0;background:#fff;color:#000;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
+html,body{width:${w};max-width:${w};min-width:${w};${fontCss};padding:1.2mm;margin:0;background:#fff;color:#000;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 body{overflow:visible}
-.receipt{width:${contentWidth};max-width:${contentWidth};margin:0 auto;text-align:center;padding:0}
-h2{text-align:center;font-size:22px;font-weight:700;letter-spacing:0.04em;margin:0 0 3mm}
-.meta{text-align:center;font-size:17px;font-weight:700;letter-spacing:0.03em;margin:0 0 3mm}
-p{margin:3mm 0;font-size:18px;font-weight:700;letter-spacing:0.04em;word-break:break-word;text-align:center}
-table{width:100%;border-collapse:collapse;font-size:18px;font-weight:700;letter-spacing:0.04em;margin:3mm 0}
-th,td{padding:2.5mm 2mm}
-th{font-weight:700;text-align:left}
-td{text-align:left}
+.receipt{width:${contentWidth};max-width:${contentWidth};margin:0 auto;padding:0}
+h2{text-align:center;font-size:18px;font-weight:700;margin:0 0 1.5mm}
+.meta{text-align:center;font-size:12px;margin:0 0 0.8mm}
+p{margin:0.6mm 0;font-size:12px;word-break:break-word}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:1.5mm 0}
+th,td{padding:0.8mm 0.6mm}
+th{font-weight:700;text-align:left;border-bottom:1px solid #000}
+td{text-align:left;vertical-align:top}
 .right{text-align:right}
-.receipt-summary{display:block;margin-top:4mm}
-.receipt-divider{border-top:2px solid #000;margin:4mm 0 2mm;padding-top:3mm}
-.total{font-weight:700;font-size:20px;letter-spacing:0.04em;padding-top:2mm;margin-top:0;text-align:right;border-top:2px solid #000}
-.conv{font-size:17px;font-weight:700;letter-spacing:0.03em;text-align:right}
-.foot{text-align:center;margin-top:5mm;font-size:18px;font-weight:700;letter-spacing:0.03em}
+.center{text-align:center}
+.qty-col{width:14%;text-align:left}
+.desc-col{width:56%}
+.amt-col{width:30%;text-align:right}
+.row-divider{border-top:1px solid #000;margin:1.5mm 0}
+.totals{margin-top:1mm}
+.totals p{display:flex;justify-content:space-between}
+.totals p span:first-child{padding-right:1mm}
+.total{font-weight:700;font-size:14px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
+.conv{font-size:11px}
+.foot{text-align:center;margin-top:2.5mm;font-size:13px}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
   .escpos-hint,.no-print{display:none!important}
-  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:2mm!important;margin:0!important;background:#fff!important}
+  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:1.2mm!important;margin:0!important;background:#fff!important}
   .receipt{width:${contentWidth}!important;max-width:${contentWidth}!important;margin:0 auto!important}
   @page{size:${paperWidthMm}mm auto;margin:0}
 }
