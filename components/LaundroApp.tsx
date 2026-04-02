@@ -308,7 +308,7 @@ export default function LaundroApp() {
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
   const [ordersListLoading, setOrdersListLoading] = useState(false);
   const [geo, setGeo] = useState<{ status: 'idle' | 'loading' | 'ok' | 'denied' | 'error'; coords?: LatLng }>({ status: 'idle' });
-  const [pickupLocation, setPickupLocation] = useState('');
+  const [pickupLocation, setPickupLocation] = useState('vit-chn');
   const [otherAreaRequest, setOtherAreaRequest] = useState('');
   const [areaRequestSaving, setAreaRequestSaving] = useState(false);
   const [areaRequestCaptchaToken, setAreaRequestCaptchaToken] = useState('');
@@ -421,12 +421,14 @@ export default function LaundroApp() {
     const availability = (vendor as { availability?: { type: string; lat: number; lng: number; radiusKm: number } }).availability;
     if (!availability) return { ok: true, reason: '' };
     if (availability.type === 'nearby') {
+      // VIT Chennai booking should not be blocked by location permission.
+      if (pickupLocation === 'vit-chn') return { ok: true, reason: '' };
       if (!geo.coords) return { ok: false, reason: 'Enable location to check availability' };
       const d = haversineKm(geo.coords, { lat: availability.lat, lng: availability.lng });
       return d <= availability.radiusKm ? { ok: true, reason: '' } : { ok: false, reason: 'Not available in your region' };
     }
     return { ok: true, reason: '' };
-  }, [geo.coords, haversineKm]);
+  }, [geo.coords, haversineKm, pickupLocation]);
 
   const hasAnyBookableSlots = useMemo(() => {
     if (scheduleDates.length === 0) return false;
@@ -1874,60 +1876,14 @@ export default function LaundroApp() {
                 {sd.step === 0 && (
                   <>
                     <p className="st">Select vendor</p>
-                    <p className="vd" style={{ marginBottom: 12 }}>Choose your location and laundry partner for pickup & delivery.</p>
-                    <div className="fg" style={{ marginBottom: 10 }}>
-                      <label className="fl">Choose location</label>
-                      <select className="fi fs" value={pickupLocation} onChange={(e) => setPickupLocation(e.target.value)}>
-                        <option value="">Select location</option>
-                        <option value="vit-chn">VIT Chennai</option>
-                        <option value="srm-ktr">SRM KTR</option>
-                        <option value="srm-rmp">SRM Ramapuram</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    {pickupLocation === 'other' && (
-                      <div className="vendor-card" style={{ marginBottom: 12 }}>
-                        <p className="vd" style={{ marginBottom: 8 }}>Currently not in your area. Request activation below.</p>
-                        <textarea
-                          className="fi"
-                          rows={3}
-                          placeholder="Your college / area / hostel and contact"
-                          value={otherAreaRequest}
-                          onChange={(e) => setOtherAreaRequest(e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          className="btn bp bbl"
-                          style={{ marginTop: 10 }}
-                          disabled={areaRequestSaving}
-                          onClick={handleOtherAreaRequest}
-                        >
-                          {areaRequestSaving ? 'Requesting…' : 'Request activation'}
-                        </button>
-
-                        <div style={{ marginTop: 14 }}>
-                          <TurnstileWidget onToken={setAreaRequestCaptchaToken} />
-                        </div>
-                      </div>
-                    )}
-                    {pickupLocation === 'vit-chn' && (
-                      <p className="vd" style={{ marginBottom: 12 }}>
-                        VIT Chennai split: Pro Fab for A, D1, D2 blocks · Star Wash for B, C, E blocks.
-                      </p>
-                    )}
-                    {(geo.status === 'loading' || geo.status === 'denied' || geo.status === 'error') && (
-                      <div className="warn" style={{ marginBottom: 14 }}>
-                        {geo.status === 'loading'
-                          ? 'Checking your location for vendor availability…'
-                          : geo.status === 'denied'
-                            ? 'Location permission denied. Enable location to see vendors available near you.'
-                            : 'Unable to access location. Vendor availability may be limited.'}
-                      </div>
-                    )}
+                    <p className="vd" style={{ marginBottom: 12 }}>VIT Chennai booking is open for everyone.</p>
+                    <p className="vd" style={{ marginBottom: 12 }}>
+                      VIT Chennai split: Pro Fab for A, D1, D2 blocks · Star Wash for B, C, E blocks.
+                    </p>
                     {HOME_VENDORS.map((v) => (
                       (() => {
                         const vp = profileForVendor(v);
-                        const isLocationAllowed = pickupLocation && pickupLocation !== 'other' && (pickupLocation === 'vit-chn' ? ['profab', 'starwash'].includes(v.id) : false);
+                        const isLocationAllowed = ['profab', 'starwash'].includes(v.id);
                         const scheduleReason = hasAnyBookableSlots ? '' : 'No slots available right now';
                         const canPick = isVendorAvailable(v).ok && !!isLocationAllowed && !scheduleReason;
                         const vendorTitle = vp.name || v.name;
@@ -1950,7 +1906,7 @@ export default function LaundroApp() {
                             {vendorTitle}{' '}
                             {!canPick && (
                               <span style={{ fontWeight: 700, color: 'var(--tm)' }}>
-                                ({scheduleReason || (!pickupLocation ? 'Select location first' : pickupLocation === 'other' ? 'Not available in selected area' : isVendorAvailable(v).reason || 'Not available')})
+                                ({scheduleReason || isVendorAvailable(v).reason || 'Not available'})
                               </span>
                             )}
                           </div>
