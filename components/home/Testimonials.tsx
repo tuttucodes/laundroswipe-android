@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export function Testimonials() {
   const testimonials = [
@@ -83,7 +84,14 @@ export function Testimonials() {
           {/* Right Quote Card (Image Background) */}
           <div className="md:col-span-8 bg-[#111111] rounded-[32px] relative overflow-hidden shadow-2xl group flex flex-col justify-between p-10 md:p-12 min-h-[400px]">
             {/* Image Overlay */}
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay transition-transform duration-[10s] group-hover:scale-105" alt="Students" />
+            <Image
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop"
+              className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay transition-transform duration-[10s] group-hover:scale-105"
+              alt="Students"
+              fill
+              sizes="(min-width: 768px) 66vw, 100vw"
+              priority={false}
+            />
             <div className="absolute inset-0 bg-gradient-to-tr from-black/90 via-black/40 to-transparent"></div>
 
             {/* Counter */}

@@ -258,17 +258,22 @@ export default function VendorPage() {
   };
 
   const handlePrint = async () => {
+    const currentOrder = order;
     if (lineItems.length === 0) {
       showToast('Add at least one item', 'er');
       return;
     }
-    if (!sampleMode && !order?.token) {
+    if (!sampleMode && !currentOrder?.token) {
       showToast('Load an order first', 'er');
       return;
     }
     if (sampleMode) {
       showToast('Printing sample bill…', 'ok');
       await doPrint();
+      return;
+    }
+    if (!currentOrder?.token) {
+      showToast('Load an order first', 'er');
       return;
     }
     const fingerprint = billFingerprint();
@@ -278,7 +283,7 @@ export default function VendorPage() {
       return;
     }
     showToast('Saving & printing…', 'ok');
-    const orderToken = order.token;
+    const orderToken = currentOrder.token;
     try {
       const res = await fetch('/api/vendor/bills/save', {
         method: 'POST',
@@ -286,7 +291,7 @@ export default function VendorPage() {
         headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
         body: JSON.stringify({
           token: orderToken,
-          order_number: order.order_number ?? null,
+          order_number: currentOrder.order_number ?? null,
           line_items: lineItems.map((l) => ({ id: l.id, qty: l.qty })),
         }),
       });
