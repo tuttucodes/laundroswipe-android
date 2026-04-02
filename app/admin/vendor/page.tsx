@@ -8,6 +8,7 @@ import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number };
+type LatestBill = { id: string; created_at: string; cancelled_at: string | null; can_cancel: boolean };
 
 export default function VendorPage() {
   const [vendorName, setVendorName] = useState('Vendor');
@@ -24,6 +25,8 @@ export default function VendorPage() {
   const [sampleMode, setSampleMode] = useState(false);
   const [sampleCustomerName, setSampleCustomerName] = useState('');
   const [sampleCustomerPhone, setSampleCustomerPhone] = useState('');
+  const [latestBill, setLatestBill] = useState<LatestBill | null>(null);
+  const [cancellingLatestBill, setCancellingLatestBill] = useState(false);
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
   const vendorBillItems = getVendorBillItems(vendorId);
 
@@ -56,6 +59,7 @@ export default function VendorPage() {
     setBillAlreadyGenerated(false);
     setShowAnyway(false);
     setSampleMode(false);
+    setLatestBill(null);
     lastSavedBillFingerprintRef.current = null;
     const t = token.replace(/^#/, '').trim();
     if (!t) {
@@ -82,6 +86,7 @@ export default function VendorPage() {
       setOrder(data.order as OrderRow);
       setUser((data.user ?? null) as UserRow | null);
       setBillAlreadyGenerated(Number(data.existing_bills_count ?? 0) > 0);
+      setLatestBill((data.latest_bill ?? null) as LatestBill | null);
       showToast('Order loaded', 'ok');
     } catch {
       setLookupErr('Order lookup failed');
@@ -244,6 +249,7 @@ export default function VendorPage() {
         return;
       }
       setBillAlreadyGenerated(true);
+      setLatestBill(null);
       showToast('Bill saved', 'ok');
     } catch {
       showToast('Save failed', 'er');
@@ -262,6 +268,31 @@ export default function VendorPage() {
       showToast('Select ESCPOS Bluetooth Print Service in the print dialog', 'ok');
     } else {
       showToast('Sent to printer', 'ok');
+    }
+  };
+
+  const handleCancelLatestBill = async () => {
+    if (!latestBill?.id || !latestBill.can_cancel) return;
+    setCancellingLatestBill(true);
+    try {
+      const res = await fetch('/api/vendor/bills/cancel', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({ bill_id: latestBill.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        showToast(data?.error || 'Cancel failed', 'er');
+        return;
+      }
+      setLatestBill((prev) => (prev ? { ...prev, cancelled_at: new Date().toISOString(), can_cancel: false } : prev));
+      setBillAlreadyGenerated(false);
+      showToast('Latest bill cancelled', 'ok');
+    } catch {
+      showToast('Cancel failed', 'er');
+    } finally {
+      setCancellingLatestBill(false);
     }
   };
 
@@ -327,6 +358,7 @@ export default function VendorPage() {
     setSampleMode(false);
     setSampleCustomerName('');
     setSampleCustomerPhone('');
+    setLatestBill(null);
     lastSavedBillFingerprintRef.current = null;
   };
 
@@ -383,6 +415,23 @@ export default function VendorPage() {
           <div style={{ padding: '12px 16px', background: '#FEF3C7', borderRadius: 8, marginBottom: 12, fontSize: 13, color: '#92400E' }}>
             <strong>A bill was already generated for this token.</strong> If you need to add more items (e.g. few missed), click Continue below.
           </div>
+          {latestBill && (
+            <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--ts)' }}>
+              Latest bill: {new Date(latestBill.created_at).toLocaleString()}
+              {latestBill.can_cancel ? ' (can cancel within 1 hour)' : ''}
+            </div>
+          )}
+          {latestBill?.can_cancel && (
+            <button
+              type="button"
+              onClick={handleCancelLatestBill}
+              className="vendor-btn-secondary"
+              style={{ width: '100%', marginBottom: 10 }}
+              disabled={cancellingLatestBill}
+            >
+              {cancellingLatestBill ? 'Cancelling latest bill…' : 'Cancel latest bill'}
+            </button>
+          )}
           <button type="button" onClick={() => setShowAnyway(true)} className="vendor-btn-primary" style={{ width: '100%' }}>Continue</button>
         </div>
       )}

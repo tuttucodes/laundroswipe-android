@@ -66,8 +66,23 @@ export async function POST(request: Request) {
     }
   }
 
-  const effectiveVendorSlug =
-    (session.role === 'vendor' ? session.vendorId : resolveVendorSlugFromName(order.vendor_name))?.toLowerCase().trim() || null;
+  const { data: dbVendors } = await supabase
+    .from('vendors')
+    .select('id, slug, name');
+  const vendorsBySlug = new Map<string, { id: string; slug: string; name: string }>();
+  const vendorsById = new Map<string, { id: string; slug: string; name: string }>();
+  for (const row of dbVendors ?? []) {
+    const v = row as { id: string; slug: string; name: string };
+    vendorsBySlug.set(String(v.slug).toLowerCase().trim(), v);
+    vendorsById.set(String(v.id), v);
+  }
+
+  const sessionVendorSlug =
+    session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? null : null;
+  const orderVendorSlug =
+    (order.vendor_id ? vendorsById.get(String(order.vendor_id))?.slug : null) ??
+    resolveVendorSlugFromName(order.vendor_name);
+  const effectiveVendorSlug = (sessionVendorSlug ?? orderVendorSlug ?? null)?.toLowerCase().trim() || null;
   const vendorBillItems = getVendorBillItems(effectiveVendorSlug);
 
   const safeLineItems: Array<{ id: string; label: string; qty: number; price: number }> = [];
@@ -90,11 +105,18 @@ export async function POST(request: Request) {
   const convenience_fee = applyServiceFeeDiscount(subtotal).finalFee;
   const total = subtotal + convenience_fee;
 
+  const vendorFromSlug = effectiveVendorSlug ? vendorsBySlug.get(effectiveVendorSlug) : null;
+  const vendorNameFromConstants = effectiveVendorSlug
+    ? VENDORS.find((v) => v.id === effectiveVendorSlug)?.name ?? null
+    : null;
   const vendorName =
-    session.role === 'vendor' ? VENDORS.find((v) => v.id === session.vendorId)?.name ?? null : String(order.vendor_name ?? null);
+    vendorFromSlug?.name ??
+    vendorNameFromConstants ??
+    (session.role === 'vendor' ? session.vendorId ?? null : null) ??
+    (order.vendor_name ? String(order.vendor_name) : null);
 
-  // Best-effort vendor_id assignment (use order.vendor_id if present).
-  const vendor_id = order.vendor_id ?? null;
+  // Best-effort vendor_id assignment.
+  const vendor_id = order.vendor_id ?? vendorFromSlug?.id ?? null;
 
   const user_id = order.user_id ?? null;
   let customer_name: string | null = null;

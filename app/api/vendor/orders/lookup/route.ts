@@ -8,6 +8,12 @@ type LookupResponse = {
   order: any;
   user: any | null;
   existing_bills_count: number;
+  latest_bill: {
+    id: string;
+    created_at: string;
+    cancelled_at: string | null;
+    can_cancel: boolean;
+  } | null;
 } | { ok: false; error: string };
 
 function normalizeToken(token: string): string {
@@ -76,11 +82,34 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (countErr) return NextResponse.json({ error: countErr.message }, { status: 500 });
 
+  const { data: latestBill, error: latestBillErr } = await supabase
+    .from('vendor_bills')
+    .select('id, created_at, cancelled_at')
+    .eq('order_token', token)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latestBillErr) return NextResponse.json({ error: latestBillErr.message }, { status: 500 });
+  const latestBillCreatedAtMs = latestBill?.created_at ? new Date(String(latestBill.created_at)).getTime() : NaN;
+  const latestBillCanCancel =
+    !!latestBill &&
+    !latestBill.cancelled_at &&
+    Number.isFinite(latestBillCreatedAtMs) &&
+    Date.now() - latestBillCreatedAtMs <= 60 * 60 * 1000;
+
   return NextResponse.json({
     ok: true,
     order,
     user: userRow ?? null,
     existing_bills_count: count ?? 0,
+    latest_bill: latestBill
+      ? {
+          id: String(latestBill.id),
+          created_at: String(latestBill.created_at),
+          cancelled_at: latestBill.cancelled_at ? String(latestBill.cancelled_at) : null,
+          can_cancel: latestBillCanCancel,
+        }
+      : null,
   } satisfies LookupResponse);
 }
 

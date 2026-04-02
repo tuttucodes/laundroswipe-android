@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
   const { data: bill, error: fetchErr } = await supabase
     .from('vendor_bills')
-    .select('id, vendor_name, created_at, cancelled_at')
+    .select('id, vendor_id, vendor_name, created_at, cancelled_at')
     .eq('id', billId)
     .maybeSingle();
 
@@ -43,7 +43,10 @@ export async function POST(request: Request) {
   if (bill.cancelled_at) return NextResponse.json({ error: 'Bill already cancelled' }, { status: 400 });
 
   if (session.role === 'vendor') {
-    const billVendorSlug = resolveVendorSlugFromName(bill.vendor_name);
+    const { data: dbVendors } = await supabase.from('vendors').select('id, slug, name');
+    const byVendorId = (dbVendors ?? []).find((v: any) => String(v.id) === String(bill.vendor_id ?? ''));
+    const byVendorName = resolveVendorSlugFromName(bill.vendor_name);
+    const billVendorSlug = (byVendorId?.slug ?? byVendorName ?? null) as string | null;
     const sessionVendorSlug = String(session.vendorId ?? '').toLowerCase().trim();
     if (!billVendorSlug || billVendorSlug !== sessionVendorSlug) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
