@@ -143,7 +143,7 @@ export default function VendorPage() {
     const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
     const dateStr = new Date().toLocaleString();
     const serviceFeeHtml = feeBreakdown.active && feeBreakdown.originalFee > 0
-      ? `<span>Service fee</span><span><s>₹${feeBreakdown.originalFee.toFixed(2)}</s> ₹0.00</span>`
+      ? `<span>Service fee (7-day discount)</span><span><s>₹${feeBreakdown.originalFee.toFixed(2)}</s> ₹0.00</span>`
       : `<span>Service fee</span><span>₹${serviceFee.toFixed(2)}</span>`;
     return `
 <h2>LaundroSwipe</h2>

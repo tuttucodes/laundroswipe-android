@@ -22,7 +22,7 @@ function billToHtml(b: VendorBillRow) {
       : '';
   const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
   const discountedFeeHtml = Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
-    ? `<span>Service fee</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
+    ? `<span>Service fee (7-day discount)</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
     : `<span>Service fee</span><span>₹${Number(b.convenience_fee ?? 0).toFixed(2)}</span>`;
   return `
     <h2>LaundroSwipe</h2>
@@ -70,7 +70,7 @@ function billToPlainText(b: VendorBillRow): string {
     '---',
     `Subtotal: ₹${b.subtotal}`,
     Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
-      ? `Service fee: ₹0 (discounted from ₹${originalFee})`
+      ? `Service fee: ₹0 (discounted from ₹${originalFee} for 7 days)`
       : `Service fee: ₹${b.convenience_fee}`,
     `TOTAL: ₹${b.total}`,
     'Thank you!',

@@ -18,17 +18,17 @@ const contentWidth = `${CONTENT_WIDTH_MM}mm`;
 
 function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
-  const fontCss = `font-family:"Courier New","Liberation Mono","Nimbus Mono PS",monospace;font-size:13px;font-weight:700;line-height:1.35`;
+  const fontCss = `font-family:"Courier New","Liberation Mono","Nimbus Mono PS",monospace;font-size:15px;font-weight:700;line-height:1.4`;
   return `
 *{margin:0;padding:0}
 html,body{width:${w};max-width:${w};min-width:${w};${fontCss};padding:1.2mm;margin:0;background:#fff;color:#000;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 body{overflow:visible}
 .receipt{width:${contentWidth};max-width:${contentWidth};margin:0 auto;padding:0}
-h2{text-align:center;font-size:18px;font-weight:700;margin:0 0 1.5mm}
-.meta{text-align:center;font-size:12px;margin:0 0 0.8mm}
-p{margin:0.6mm 0;font-size:12px;word-break:break-word}
-table{width:100%;border-collapse:collapse;font-size:12px;margin:1.5mm 0}
+h2{text-align:center;font-size:21px;font-weight:700;margin:0 0 1.5mm}
+.meta{text-align:center;font-size:14px;margin:0 0 0.8mm}
+p{margin:0.8mm 0;font-size:14px;word-break:break-word}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:1.7mm 0}
 th,td{padding:0.8mm 0.6mm}
 th{font-weight:700;text-align:left;border-bottom:1px solid #000}
 td{text-align:left;vertical-align:top}
@@ -41,9 +41,9 @@ td{text-align:left;vertical-align:top}
 .totals{margin-top:1mm}
 .totals p{display:flex;justify-content:space-between}
 .totals p span:first-child{padding-right:1mm}
-.total{font-weight:700;font-size:14px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
-.conv{font-size:11px}
-.foot{text-align:center;margin-top:2.5mm;font-size:13px}
+.total{font-weight:700;font-size:17px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
+.conv{font-size:13px}
+.foot{text-align:center;margin-top:2.5mm;font-size:15px}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
