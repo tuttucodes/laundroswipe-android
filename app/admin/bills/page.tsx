@@ -79,6 +79,7 @@ export default function BillsPage() {
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [vendorName, setVendorName] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     const role = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
@@ -157,6 +158,49 @@ export default function BillsPage() {
     );
   };
 
+  const canCancelBill = (b: VendorBillRow): boolean => {
+    if (b.cancelled_at) return false;
+    const created = new Date(b.created_at).getTime();
+    if (!Number.isFinite(created)) return false;
+    return Date.now() - created <= 60 * 60 * 1000;
+  };
+
+  const cancelBill = async (billId: string) => {
+    if (!billId) return;
+    setCancellingId(billId);
+    try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+      const res = await fetch('/api/vendor/bills/cancel', {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({ bill_id: billId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        setCopyMsg(data?.error || 'Cancel failed');
+        setTimeout(() => setCopyMsg(null), 3000);
+        return;
+      }
+      setBills((prev) =>
+        prev.map((b) =>
+          b.id === billId ? { ...b, cancelled_at: new Date().toISOString(), cancelled_by_role: 'vendor' } : b
+        )
+      );
+      setCopyMsg('Bill cancelled');
+      setTimeout(() => setCopyMsg(null), 2500);
+    } catch {
+      setCopyMsg('Cancel failed');
+      setTimeout(() => setCopyMsg(null), 3000);
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   const copyBill = async (b: VendorBillRow) => {
     try {
       await navigator.clipboard.writeText(billToPlainText(b));
@@ -204,6 +248,11 @@ export default function BillsPage() {
                 <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--b)' }}>#{b.order_token} · {b.order_number ?? '—'}</div>
                 <div style={{ fontSize: 13, color: 'var(--ts)', marginTop: 4 }}>{b.customer_name ?? '—'} · {b.customer_phone ?? '—'}</div>
                 <div style={{ fontSize: 12, color: 'var(--tm)', marginTop: 2 }}>{b.created_at ? new Date(b.created_at).toLocaleString() : ''}</div>
+                {b.cancelled_at && (
+                  <div style={{ fontSize: 12, color: 'var(--er)', marginTop: 4, fontWeight: 600 }}>
+                    Cancelled at {new Date(b.cancelled_at).toLocaleString()}
+                  </div>
+                )}
                 <div style={{ fontSize: 14, marginTop: 6, fontWeight: 600 }}>₹{b.total}</div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -212,6 +261,15 @@ export default function BillsPage() {
                 </button>
                 <button type="button" onClick={() => printBill(b)} className="vendor-btn-primary">
                   Print
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cancelBill(b.id)}
+                  disabled={!canCancelBill(b) || cancellingId === b.id}
+                  className="vendor-btn-secondary"
+                  title={canCancelBill(b) ? 'Cancel this bill' : 'Can only cancel within 1 hour'}
+                >
+                  {b.cancelled_at ? 'Cancelled' : cancellingId === b.id ? 'Cancelling…' : 'Cancel bill'}
                 </button>
               </div>
             </div>

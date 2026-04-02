@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from('vendor_bills')
-    .select('id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at')
+    .select('id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at, cancelled_by_role')
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

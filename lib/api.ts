@@ -826,6 +826,8 @@ export type VendorBillRow = {
   total: number;
   vendor_name?: string | null;
   vendor_id?: string | null;
+  cancelled_at?: string | null;
+  cancelled_by_role?: string | null;
   created_at: string;
 };
 
