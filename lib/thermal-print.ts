@@ -29,7 +29,7 @@ h2{text-align:center;font-size:21px;font-weight:700;margin:0 0 1.5mm}
 .meta{text-align:center;font-size:14px;margin:0 0 0.8mm}
 p{margin:0.8mm 0;font-size:14px;word-break:break-word}
 table{width:100%;border-collapse:collapse;font-size:14px;margin:1.7mm 0}
-th,td{padding:0.8mm 0.6mm}
+th,td{padding:0.8mm 0.6mm;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif}
 th{font-weight:700;text-align:left;border-bottom:1px solid #000}
 td{text-align:left;vertical-align:top}
 .right{text-align:right}
