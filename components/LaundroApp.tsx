@@ -685,6 +685,27 @@ export default function LaundroApp() {
     return vendorProfilesBySlug[vendor.id] ?? defaultVendorProfileFor(vendor);
   }, [vendorProfilesBySlug]);
 
+  const normalizeScheduleIdForVendor = useCallback((id: string, vendorId?: string) => {
+    const raw = String(id ?? '').trim();
+    if (!raw) return null;
+    const marker = raw.indexOf('__');
+    if (marker < 0) return raw; // legacy/global slot id
+    const scopedVendor = raw.slice(0, marker);
+    const localId = raw.slice(marker + 2);
+    if (!scopedVendor || !localId) return null;
+    if (!vendorId) return null;
+    return scopedVendor === vendorId ? localId : null;
+  }, []);
+
+  const slotIdsForDateByVendor = useCallback((date: string, vendorId?: string) => {
+    const row = scheduleDates.find((d) => d.date === date);
+    if (!row) return [] as string[];
+    const normalized = (Array.isArray(row.slot_ids) ? row.slot_ids : [])
+      .map((id) => normalizeScheduleIdForVendor(id, vendorId))
+      .filter((id): id is string => !!id);
+    return Array.from(new Set(normalized));
+  }, [normalizeScheduleIdForVendor, scheduleDates]);
+
   // Load vendor profiles when user is on home (refetch when entering home so admin updates show)
   useEffect(() => {
     if (screen !== 'home' || !LSApi.hasSupabase) return;
@@ -1189,13 +1210,21 @@ export default function LaundroApp() {
   const selectedSvc = SERVICES.find((s) => s.id === sd.svc);
   const selectedVendor = VENDORS.find((vendor) => vendor.id === sd.vendorId);
   const selectedVendorProfile = selectedVendor ? profileForVendor(selectedVendor) : null;
+  const selectedVendorSlotList = selectedVendor
+    ? scheduleSlots
+        .map((slot) => {
+          const normalizedId = normalizeScheduleIdForVendor(slot.id, selectedVendor.id);
+          return normalizedId ? { ...slot, id: normalizedId } : null;
+        })
+        .filter((slot): slot is ScheduleSlotRow => !!slot)
+    : scheduleSlots.filter((slot) => !String(slot.id).includes('__'));
   const timeSlotsForStep2 =
-    scheduleSlots.length > 0 && scheduleDates.length > 0 && sd.date
-      ? scheduleSlots.filter(
-          (s) => s.active && (scheduleDates.find((d) => d.date === sd.date)?.slot_ids ?? []).includes(s.id)
+    selectedVendorSlotList.length > 0 && scheduleDates.length > 0 && sd.date
+      ? selectedVendorSlotList.filter(
+          (s) => s.active && slotIdsForDateByVendor(sd.date!, selectedVendor?.id).includes(s.id)
         )
       : TIME_SLOTS;
-  const selectedTsFromApi = scheduleSlots.find((t) => t.id === sd.ts);
+  const selectedTsFromApi = selectedVendorSlotList.find((t) => t.id === sd.ts);
   const selectedTs = selectedTsFromApi
     ? { id: selectedTsFromApi.id, label: selectedTsFromApi.label, emoji: '🕐' }
     : TIME_SLOTS.find((t) => t.id === sd.ts);
@@ -1961,7 +1990,7 @@ export default function LaundroApp() {
                             onClick={() => {
                               const allowedIds =
                                 scheduleDates.length > 0
-                                  ? (scheduleDates.find((x) => x.date === d.full)?.slot_ids ?? [])
+                                  ? slotIdsForDateByVendor(d.full, selectedVendor?.id)
                                   : isEveningOnlyDate(d.full)
                                     ? ['evening']
                                     : ['afternoon', 'evening'];

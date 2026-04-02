@@ -753,7 +753,13 @@ export const LSApi = {
       const rows = (data ?? []) as (ScheduleDateRow & { slot_ids?: unknown })[];
       return rows.map((r) => ({
         ...r,
-        slot_ids: Array.isArray(r.slot_ids) ? r.slot_ids : [],
+        slot_ids: Array.isArray(r.slot_ids)
+          ? r.slot_ids.filter((s): s is string => typeof s === 'string')
+          : r.slot_ids && typeof r.slot_ids === 'object'
+            ? Object.values(r.slot_ids as Record<string, unknown>)
+                .flatMap((v) => (Array.isArray(v) ? v : []))
+                .filter((s): s is string => typeof s === 'string')
+            : [],
       }));
     } catch (e) {
       console.error('fetchScheduleDates exception', e);
