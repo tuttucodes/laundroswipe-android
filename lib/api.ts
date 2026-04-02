@@ -48,6 +48,7 @@ export type ScheduleDateRow = {
   date: string;
   enabled: boolean;
   slot_ids: string[];
+  enabled_by_vendor?: Record<string, boolean> | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -760,6 +761,10 @@ export const LSApi = {
                 .flatMap((v) => (Array.isArray(v) ? v : []))
                 .filter((s): s is string => typeof s === 'string')
             : [],
+        enabled_by_vendor:
+          r.enabled_by_vendor && typeof r.enabled_by_vendor === 'object'
+            ? (r.enabled_by_vendor as Record<string, boolean>)
+            : null,
       }));
     } catch (e) {
       console.error('fetchScheduleDates exception', e);

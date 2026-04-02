@@ -706,6 +706,17 @@ export default function LaundroApp() {
     return Array.from(new Set(normalized));
   }, [normalizeScheduleIdForVendor, scheduleDates]);
 
+  const isDateEnabledForVendor = useCallback((date: string, vendorId?: string) => {
+    const row = scheduleDates.find((d) => d.date === date);
+    if (!row) return false;
+    if (!vendorId) return Boolean(row.enabled);
+    const vendorEnabledMap = row.enabled_by_vendor;
+    if (vendorEnabledMap && typeof vendorEnabledMap === 'object' && typeof vendorEnabledMap[vendorId] === 'boolean') {
+      return Boolean(vendorEnabledMap[vendorId]);
+    }
+    return Boolean(row.enabled);
+  }, [scheduleDates]);
+
   // Load vendor profiles when user is on home (refetch when entering home so admin updates show)
   useEffect(() => {
     if (screen !== 'home' || !LSApi.hasSupabase) return;
@@ -1203,12 +1214,12 @@ export default function LaundroApp() {
   };
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const daysFromApi = scheduleDates
-    .filter((d) => d.enabled && d.date >= todayStr)
-    .map((d) => formatScheduleDay(d.date));
-  const days = daysFromApi.length > 0 ? daysFromApi : getScheduleDates();
   const selectedSvc = SERVICES.find((s) => s.id === sd.svc);
   const selectedVendor = VENDORS.find((vendor) => vendor.id === sd.vendorId);
+  const daysFromApi = scheduleDates
+    .filter((d) => d.date >= todayStr && isDateEnabledForVendor(d.date, selectedVendor?.id))
+    .map((d) => formatScheduleDay(d.date));
+  const days = daysFromApi.length > 0 ? daysFromApi : getScheduleDates();
   const selectedVendorProfile = selectedVendor ? profileForVendor(selectedVendor) : null;
   const selectedVendorSlotList = selectedVendor
     ? scheduleSlots

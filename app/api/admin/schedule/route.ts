@@ -57,6 +57,27 @@ function writeVendorSlotIds(raw: unknown, vendorSlug: string | null, slotIds: st
   return next;
 }
 
+function readVendorEnabled(raw: unknown, vendorSlug: string | null, fallbackEnabled: boolean): boolean {
+  if (!vendorSlug) return fallbackEnabled;
+  if (raw && typeof raw === 'object') {
+    const v = (raw as Record<string, unknown>)[vendorSlug];
+    if (typeof v === 'boolean') return v;
+  }
+  return fallbackEnabled;
+}
+
+function writeVendorEnabled(raw: unknown, vendorSlug: string | null, enabled: boolean): Record<string, boolean> | null {
+  if (!vendorSlug) return null;
+  const next: Record<string, boolean> = {};
+  if (raw && typeof raw === 'object') {
+    for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+      if (typeof v === 'boolean') next[k] = v;
+    }
+  }
+  next[vendorSlug] = enabled;
+  return next;
+}
+
 export async function GET(request: Request) {
   if (!isAdminRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -85,10 +106,13 @@ export async function GET(request: Request) {
     const slots = allSlots
       .filter((s) => (vendorSlug ? s.id.startsWith(vendorPrefix(vendorSlug)) : !s.id.includes('__')))
       .map((s) => ({ ...s, id: fromStoredSlotId(s.id, vendorSlug) }));
-    const dates = (datesRes.data ?? []).map((r: ScheduleDateRow & { slot_ids?: unknown }) => ({
-      ...r,
-      slot_ids: readVendorSlotIds(r.slot_ids, vendorSlug),
-    }));
+    const dates = (datesRes.data ?? []).map(
+      (r: ScheduleDateRow & { slot_ids?: unknown; enabled_by_vendor?: unknown }) => ({
+        ...r,
+        enabled: readVendorEnabled(r.enabled_by_vendor, vendorSlug, Boolean(r.enabled)),
+        slot_ids: readVendorSlotIds(r.slot_ids, vendorSlug),
+      })
+    );
     return NextResponse.json({ slots, dates });
   } catch (e) {
     console.error('GET /api/admin/schedule', e);
@@ -185,11 +209,12 @@ export async function POST(request: Request) {
         const storedSlotIds = slotIds.map((id) => toStoredSlotId(id, vendorSlug));
         const existing = await supabase
           .from('schedule_dates')
-          .select('slot_ids')
+          .select('slot_ids, enabled_by_vendor')
           .eq('date', dateStr)
           .maybeSingle();
         if (existing.error) return NextResponse.json({ error: existing.error.message }, { status: 400 });
         const mergedSlotIds = writeVendorSlotIds(existing.data?.slot_ids, vendorSlug, storedSlotIds);
+        const mergedVendorEnabled = writeVendorEnabled(existing.data?.enabled_by_vendor, vendorSlug, Boolean(row.enabled));
         const { error } = await supabase
           .from('schedule_dates')
           .upsert(
@@ -197,6 +222,7 @@ export async function POST(request: Request) {
               date: dateStr,
               enabled: Boolean(row.enabled),
               slot_ids: mergedSlotIds,
+              ...(mergedVendorEnabled ? { enabled_by_vendor: mergedVendorEnabled } : {}),
             },
             { onConflict: 'date' }
           );
