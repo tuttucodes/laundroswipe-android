@@ -717,8 +717,12 @@ export default function LaundroApp() {
     if (!row) return false;
     if (!vendorId) return Boolean(row.enabled);
     const vendorEnabledMap = row.enabled_by_vendor;
-    if (vendorEnabledMap && typeof vendorEnabledMap === 'object' && typeof vendorEnabledMap[vendorId] === 'boolean') {
-      return Boolean(vendorEnabledMap[vendorId]);
+    if (vendorEnabledMap && typeof vendorEnabledMap === 'object') {
+      if (typeof vendorEnabledMap[vendorId] === 'boolean') {
+        return Boolean(vendorEnabledMap[vendorId]);
+      }
+      // If vendor-scoped map exists and this vendor has no explicit entry, treat as disabled.
+      if (Object.keys(vendorEnabledMap).length > 0) return false;
     }
     return Boolean(row.enabled);
   }, [scheduleDates]);

@@ -31,8 +31,10 @@ function readVendorSlotIds(raw: unknown, vendorSlug: string | null): string[] {
     if (!vendorSlug) return ids;
     const p = vendorPrefix(vendorSlug);
     const vendorScoped = ids.filter((id) => id.startsWith(p)).map((id) => id.slice(p.length));
-    // Legacy fallback: old global schedule arrays before vendor scoping.
-    return vendorScoped.length > 0 ? vendorScoped : ids;
+    // Legacy fallback only when values are truly unscoped.
+    const hasAnyScopedIds = ids.some((id) => id.includes('__'));
+    if (vendorScoped.length > 0) return vendorScoped;
+    return hasAnyScopedIds ? [] : ids;
   }
   if (raw && typeof raw === 'object') {
     const map = raw as Record<string, unknown>;
@@ -60,8 +62,11 @@ function writeVendorSlotIds(raw: unknown, vendorSlug: string | null, slotIds: st
 function readVendorEnabled(raw: unknown, vendorSlug: string | null, fallbackEnabled: boolean): boolean {
   if (!vendorSlug) return fallbackEnabled;
   if (raw && typeof raw === 'object') {
-    const v = (raw as Record<string, unknown>)[vendorSlug];
+    const map = raw as Record<string, unknown>;
+    const v = map[vendorSlug];
     if (typeof v === 'boolean') return v;
+    // If vendor-scoped map exists but this vendor has no value, keep isolated by defaulting false.
+    if (Object.keys(map).length > 0) return false;
   }
   return fallbackEnabled;
 }
@@ -209,18 +214,19 @@ export async function POST(request: Request) {
         const storedSlotIds = slotIds.map((id) => toStoredSlotId(id, vendorSlug));
         const existing = await supabase
           .from('schedule_dates')
-          .select('slot_ids, enabled_by_vendor')
+          .select('enabled, slot_ids, enabled_by_vendor')
           .eq('date', dateStr)
           .maybeSingle();
         if (existing.error) return NextResponse.json({ error: existing.error.message }, { status: 400 });
         const mergedSlotIds = writeVendorSlotIds(existing.data?.slot_ids, vendorSlug, storedSlotIds);
         const mergedVendorEnabled = writeVendorEnabled(existing.data?.enabled_by_vendor, vendorSlug, Boolean(row.enabled));
+        const enabledToStore = vendorSlug ? Boolean(existing.data?.enabled ?? true) : Boolean(row.enabled);
         const { error } = await supabase
           .from('schedule_dates')
           .upsert(
             {
               date: dateStr,
-              enabled: Boolean(row.enabled),
+              enabled: enabledToStore,
               slot_ids: mergedSlotIds,
               ...(mergedVendorEnabled ? { enabled_by_vendor: mergedVendorEnabled } : {}),
             },
