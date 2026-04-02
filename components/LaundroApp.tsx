@@ -302,7 +302,6 @@ export default function LaundroApp() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlotRow[]>([]);
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
-  const [scheduleConfigLoaded, setScheduleConfigLoaded] = useState(false);
   const [passwordAlreadySet, setPasswordAlreadySet] = useState(false);
   const [vendorProfilesBySlug, setVendorProfilesBySlug] = useState<Record<string, VendorProfileRow>>({});
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
@@ -671,15 +670,22 @@ export default function LaundroApp() {
     }
   }, [screen, user?.sid, saveO]);
 
-  // Load schedule config (dates + slots) when user opens schedule flow
+  // Load schedule config every time schedule is opened (and on tab refocus while in schedule).
   useEffect(() => {
-    if (screen !== 'schedule' || !LSApi.hasSupabase || scheduleConfigLoaded) return;
-    Promise.all([LSApi.fetchScheduleSlots(), LSApi.fetchScheduleDates()]).then(([slots, dates]) => {
-      if (slots?.length) setScheduleSlots(slots);
-      if (dates?.length) setScheduleDates(dates);
-      setScheduleConfigLoaded(true);
-    });
-  }, [screen, scheduleConfigLoaded]);
+    if (screen !== 'schedule' || !LSApi.hasSupabase) return;
+    const refreshSchedule = () => {
+      Promise.all([LSApi.fetchScheduleSlots(), LSApi.fetchScheduleDates()]).then(([slots, dates]) => {
+        setScheduleSlots(slots ?? []);
+        setScheduleDates(dates ?? []);
+      });
+    };
+    refreshSchedule();
+    const onFocus = () => refreshSchedule();
+    if (typeof window !== 'undefined') window.addEventListener('focus', onFocus);
+    return () => {
+      if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus);
+    };
+  }, [screen]);
 
   const profileForVendor = useCallback((vendor: (typeof VENDORS)[number]): VendorProfileRow => {
     return vendorProfilesBySlug[vendor.id] ?? defaultVendorProfileFor(vendor);
