@@ -18,6 +18,7 @@ export type UserRow = {
   college_id: string | null;
   reg_no: string | null;
   hostel_block: string | null;
+  room_number: string | null;
   year: number | null;
   display_id?: string | null;
   terms_accepted_at?: string | null;
@@ -84,6 +85,7 @@ export const LSApi = {
     cid?: string | null;
     rn?: string | null;
     hos?: string | null;
+    rm?: string | null;
     yr?: number | null;
   }): Promise<{ user: UserRow | null; error?: string }> {
     if (!supabase) return { user: null, error: 'Not connected' };
@@ -99,6 +101,7 @@ export const LSApi = {
           college_id: user.cid ?? null,
           reg_no: user.rn ?? null,
           hostel_block: user.hos ?? null,
+          room_number: user.rm ?? null,
           year: user.yr ?? null,
         })
         .select()
@@ -117,7 +120,18 @@ export const LSApi = {
 
   async updateUser(
     userId: string,
-    updates: { full_name?: string; email?: string; phone?: string; whatsapp?: string; user_type?: string; college_id?: string | null; reg_no?: string | null; hostel_block?: string | null; year?: number | null }
+    updates: {
+      full_name?: string;
+      email?: string;
+      phone?: string;
+      whatsapp?: string;
+      user_type?: string;
+      college_id?: string | null;
+      reg_no?: string | null;
+      hostel_block?: string | null;
+      room_number?: string | null;
+      year?: number | null;
+    }
   ): Promise<{ user: UserRow | null; error?: string }> {
     if (!supabase) return { user: null, error: 'Not connected' };
     try {
@@ -325,6 +339,7 @@ export const LSApi = {
       college_id?: string | null;
       reg_no?: string | null;
       hostel_block?: string | null;
+      room_number?: string | null;
       year?: number | null;
     }
   ): Promise<{ user: UserRow | null; error?: string }> {
@@ -359,6 +374,7 @@ export const LSApi = {
         college_id: profile.college_id ?? null,
         reg_no: profile.reg_no ?? null,
         hostel_block: profile.hostel_block ?? null,
+        room_number: profile.room_number ?? null,
         year: profile.year ?? null,
       };
       const { data: inserted, error: insertErr } = await supabase
@@ -541,6 +557,7 @@ export const LSApi = {
         college_id: null,
         reg_no: null,
         hostel_block: null,
+        room_number: null,
         year: null,
       };
       const { data: inserted, error: insertErr } = await supabase
@@ -849,6 +866,9 @@ export type VendorBillRow = {
   order_number: string | null;
   customer_name: string | null;
   customer_phone: string | null;
+  customer_reg_no?: string | null;
+  customer_hostel_block?: string | null;
+  customer_room_number?: string | null;
   user_id: string | null;
   /** Present when API joins users (admin bills list). */
   user_email?: string | null;

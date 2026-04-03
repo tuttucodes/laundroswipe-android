@@ -38,7 +38,7 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false }),
     supabase
       .from('users')
-      .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, year, display_id')
+      .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id')
       .order('created_at', { ascending: false }),
     supabase
       .from('vendor_bills')

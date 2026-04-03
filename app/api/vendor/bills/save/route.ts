@@ -152,15 +152,21 @@ export async function POST(request: Request) {
   const user_id = order.user_id ?? null;
   let customer_name: string | null = null;
   let customer_phone: string | null = null;
+  let customer_reg_no: string | null = null;
+  let customer_hostel_block: string | null = null;
+  let customer_room_number: string | null = null;
   if (user_id) {
     const { data: urow } = await supabase
       .from('users')
-      .select('full_name, email, phone')
+      .select('full_name, email, phone, reg_no, hostel_block, room_number')
       .eq('id', user_id)
       .maybeSingle();
     if (urow) {
       customer_name = (urow.full_name as string | null) ?? (urow.email as string | null) ?? null;
       customer_phone = (urow.phone as string | null) ?? null;
+      customer_reg_no = urow.reg_no != null ? String(urow.reg_no).trim() || null : null;
+      customer_hostel_block = urow.hostel_block != null ? String(urow.hostel_block).trim() || null : null;
+      customer_room_number = urow.room_number != null ? String(urow.room_number).trim() || null : null;
     }
   }
 
@@ -172,6 +178,9 @@ export async function POST(request: Request) {
       order_number: body.order_number ?? order.order_number ?? null,
       customer_name,
       customer_phone,
+      customer_reg_no,
+      customer_hostel_block,
+      customer_room_number,
       user_id,
       line_items: safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty, image_url: l.image_url })),
       subtotal,

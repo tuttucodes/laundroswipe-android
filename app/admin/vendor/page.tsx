@@ -438,6 +438,9 @@ export default function VendorPage() {
     const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
     const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 20);
     const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
+    const regLabel = sampleMode ? '' : String(u.reg_no ?? '').trim();
+    const blockLabel = sampleMode ? '' : String(u.hostel_block ?? '').trim();
+    const roomLabel = sampleMode ? '' : String(u.room_number ?? '').trim();
     const dateStr = new Date().toLocaleString();
     const serviceFeeHtml = feeBreakdown.active && feeBreakdown.originalFee > 0
       ? `<span>Service fee (7-day discount)</span><span><s>₹${feeBreakdown.originalFee.toFixed(2)}</s> ₹0.00</span>`
@@ -449,6 +452,8 @@ export default function VendorPage() {
 <p class="center">Order: ${orderLabel}</p>
 <p class="center">Customer: ${customerLabel}</p>
 <p class="center">Phone: ${phoneLabel}</p>
+${regLabel ? `<p class="center">Reg no: ${regLabel}</p>` : ''}
+${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block ${blockLabel}`, roomLabel && `Room ${roomLabel}`].filter(Boolean).join(' · ')}</p>` : ''}
 <p class="center">Date: ${dateStr}</p>
 <div class="row-divider"></div>
 <table>
@@ -473,6 +478,9 @@ export default function VendorPage() {
     const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
     const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
     const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
+    const regPlain = sampleMode ? '' : String(u.reg_no ?? '').trim();
+    const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
+    const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
     const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
     const lines = [
       'LaundroSwipe',
@@ -481,6 +489,10 @@ export default function VendorPage() {
       `Customer ID: ${sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24)}`,
       `Customer: ${customerLabel}`,
       `Phone: ${phoneLabel}`,
+      ...(regPlain ? [`Reg no: ${regPlain}`] : []),
+      ...(blockPlain || roomPlain
+        ? [`Hostel: ${[blockPlain && `Block ${blockPlain}`, roomPlain && `Room ${roomPlain}`].filter(Boolean).join(' · ')}`]
+        : []),
       '---',
       ...lineItems.map((l) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`),
       '---',

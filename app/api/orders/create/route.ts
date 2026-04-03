@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   const { supabase, authUserId } = context;
   const { data: userRow, error: userError } = await supabase
     .from('users')
-    .select('id, phone, terms_version, college_id')
+    .select('id, phone, terms_version, college_id, user_type, reg_no, hostel_block, room_number')
     .eq('auth_id', authUserId)
     .maybeSingle();
 
@@ -66,6 +66,24 @@ export async function POST(request: Request) {
   if (!userRow?.id) return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
   if (!String(userRow.phone ?? '').trim()) {
     return NextResponse.json({ error: 'Add your phone number before placing an order' }, { status: 400 });
+  }
+
+  const ut = String((userRow as { user_type?: string | null }).user_type ?? '').toLowerCase();
+  const cidRaw = String((userRow as { college_id?: string | null }).college_id ?? '').trim().toLowerCase();
+  const isCampusStudent = ut === 'student' || (Boolean(cidRaw) && cidRaw !== 'general');
+  if (isCampusStudent) {
+    const reg = String((userRow as { reg_no?: string | null }).reg_no ?? '').trim();
+    const block = String((userRow as { hostel_block?: string | null }).hostel_block ?? '').trim();
+    const room = String((userRow as { room_number?: string | null }).room_number ?? '').trim();
+    if (!reg || !block || !room) {
+      return NextResponse.json(
+        {
+          error: 'Add your registration number, hostel block, and room number in your profile to book campus pickup.',
+          code: 'STUDENT_DETAILS_REQUIRED',
+        },
+        { status: 400 },
+      );
+    }
   }
   if (userRow.terms_version !== CURRENT_TERMS_VERSION) {
     return NextResponse.json(

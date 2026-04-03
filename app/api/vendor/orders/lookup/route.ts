@@ -68,7 +68,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!order) return NextResponse.json({ ok: false, error: 'Order not found' }, { status: 404 });
 
   const { data: userRow, error: userErr } = order.user_id
-    ? await supabase.from('users').select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, year, display_id').eq('id', order.user_id).maybeSingle()
+    ? await supabase.from('users').select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id').eq('id', order.user_id).maybeSingle()
     : { data: null, error: null };
 
   if (userErr) return NextResponse.json({ error: userErr.message }, { status: 500 });

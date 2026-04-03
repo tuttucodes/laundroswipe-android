@@ -72,6 +72,7 @@ type User = {
   rn?: string;
   cid?: string;
   hos?: string;
+  room?: string;
   yr?: number;
   sid: string;
   displayId?: string;
@@ -217,12 +218,37 @@ function rowToUser(r: UserRow): User {
     rn: r.reg_no ?? undefined,
     cid: r.college_id ?? undefined,
     hos: r.hostel_block ?? undefined,
+    room: r.room_number ?? undefined,
     yr: r.year ?? undefined,
     sid: r.id,
     displayId: r.display_id ?? undefined,
     termsAcceptedAt: r.terms_accepted_at ?? null,
     termsVersion: r.terms_version ?? null,
   };
+}
+
+/** Bookable campus user: explicit student or a non-general college on profile. */
+function isCampusCollegeStudent(u: Pick<User, 'ut' | 'cid'> | null): boolean {
+  if (!u) return false;
+  if ((u.ut ?? '').toLowerCase() === 'student') return true;
+  const cid = (u.cid ?? '').trim();
+  return Boolean(cid && cid !== 'general');
+}
+
+function needsStudentCollegeChoice(u: User | null): boolean {
+  if (!u) return false;
+  if ((u.ut ?? '').toLowerCase() !== 'student') return false;
+  const cid = (u.cid ?? '').trim();
+  return !cid || cid === 'general';
+}
+
+function needsStudentHostelDetails(u: User | null): boolean {
+  if (!u || !isCampusCollegeStudent(u)) return false;
+  if (needsStudentCollegeChoice(u)) return true;
+  if (!(u.rn ?? '').trim()) return true;
+  if (!(u.hos ?? '').trim()) return true;
+  if (!(u.room ?? '').trim()) return true;
+  return false;
 }
 
 function rowToOrder(r: OrderRow): Order {
@@ -290,6 +316,7 @@ export default function LaundroApp() {
   const [studentRn, setStudentRn] = useState('');
   const [studentCid, setStudentCid] = useState('');
   const [studentHos, setStudentHos] = useState('');
+  const [studentRm, setStudentRm] = useState('');
   const [studentYr, setStudentYr] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
@@ -313,6 +340,7 @@ export default function LaundroApp() {
   const [editCid, setEditCid] = useState('general');
   const [editRn, setEditRn] = useState('');
   const [editHos, setEditHos] = useState('');
+  const [editRm, setEditRm] = useState('');
   const [editYr, setEditYr] = useState('');
   const [editPhErr, setEditPhErr] = useState('');
   const [editWaErr, setEditWaErr] = useState('');
@@ -332,6 +360,13 @@ export default function LaundroApp() {
   const [otherAreaRequest, setOtherAreaRequest] = useState('');
   const [areaRequestSaving, setAreaRequestSaving] = useState(false);
   const [areaRequestCaptchaToken, setAreaRequestCaptchaToken] = useState('');
+  const [showStudentDetailsModal, setShowStudentDetailsModal] = useState(false);
+  const [studentModalSaving, setStudentModalSaving] = useState(false);
+  const [modalRn, setModalRn] = useState('');
+  const [modalBlk, setModalBlk] = useState('');
+  const [modalRm, setModalRm] = useState('');
+  const [modalCid, setModalCid] = useState('');
+  const profileSheetSyncedSidRef = useRef<string | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsChecked, setTermsChecked] = useState(false);
   const [termsSaving, setTermsSaving] = useState(false);
@@ -402,6 +437,11 @@ export default function LaundroApp() {
       showToast('Add your phone number to place orders', 'er');
       return;
     }
+    if (user && needsStudentHostelDetails(user)) {
+      setShowStudentDetailsModal(true);
+      showToast('Add your registration number, hostel block, and room number to continue', 'er');
+      return;
+    }
     setSd({ step: 0 });
     go('schedule');
   }, [user, go, showToast]);
@@ -412,6 +452,11 @@ export default function LaundroApp() {
       showToast('Add your phone number to place orders', 'er');
       return;
     }
+    if (user && needsStudentHostelDetails(user)) {
+      setShowStudentDetailsModal(true);
+      showToast('Add your registration number, hostel block, and room number to continue', 'er');
+      return;
+    }
     setSd({ step: 0, svc: serviceId });
     go('schedule');
   }, [user, go, showToast]);
@@ -420,6 +465,11 @@ export default function LaundroApp() {
     if (user && !user.ph?.trim()) {
       go('complete-profile');
       showToast('Add your phone number to place orders', 'er');
+      return;
+    }
+    if (user && needsStudentHostelDetails(user)) {
+      setShowStudentDetailsModal(true);
+      showToast('Add your registration number, hostel block, and room number to continue', 'er');
       return;
     }
     setSd({ step: 1, vendorId });
@@ -607,6 +657,7 @@ export default function LaundroApp() {
         setStudentCid(profile.college_id ?? 'general');
         setStudentRn(profile.reg_no ?? '');
         setStudentHos(profile.hostel_block ?? '');
+        setStudentRm(profile.room_number ?? '');
         setStudentYr(profile.year != null ? String(profile.year) : '');
         setScreen('complete-profile');
         showToast('Complete your profile', 'ok');
@@ -830,6 +881,7 @@ export default function LaundroApp() {
       setEditCid(user.cid ?? 'general');
       setEditRn(user.rn ?? '');
       setEditHos(user.hos ?? '');
+      setEditRm(user.room ?? '');
       setEditYr(user.yr != null ? String(user.yr) : '');
       setEditPhErr('');
       setEditWaErr('');
@@ -863,6 +915,36 @@ export default function LaundroApp() {
       })
       .catch(() => setUnreadNotificationCount(0));
   }, [user?.sid, screen]);
+
+  useEffect(() => {
+    if (!user?.sid) {
+      profileSheetSyncedSidRef.current = null;
+    }
+  }, [user?.sid]);
+
+  const MAIN_SHELL_SCREENS = ['home', 'schedule', 'orders', 'profile', 'order-detail', 'my-bills'] as const;
+  useEffect(() => {
+    const onMain = MAIN_SHELL_SCREENS.includes(screen as (typeof MAIN_SHELL_SCREENS)[number]);
+    if (!onMain || !user?.sid || !LSApi.hasSupabase) return;
+    if (profileSheetSyncedSidRef.current === user.sid) return;
+    profileSheetSyncedSidRef.current = user.sid;
+    LSApi.fetchUserById(user.sid).then((row) => {
+      if (!row) return;
+      const fresh = rowToUser(row);
+      setUser(fresh);
+      saveUser(fresh);
+      if (needsStudentHostelDetails(fresh)) setShowStudentDetailsModal(true);
+    });
+  }, [screen, user?.sid, saveUser]);
+
+  useEffect(() => {
+    if (!showStudentDetailsModal || !user) return;
+    setModalRn((user.rn ?? '').trim());
+    setModalBlk((user.hos ?? '').trim());
+    setModalRm((user.room ?? '').trim());
+    const cid = (user.cid ?? '').trim();
+    setModalCid(cid && cid !== 'general' ? cid : '');
+  }, [showStudentDetailsModal, user]);
 
   const handleObNext = () => {
     if (obSlide < 2) setObSlide((obSlide + 1) as 0 | 1 | 2);
@@ -985,6 +1067,7 @@ export default function LaundroApp() {
           setStudentCid(profile.college_id ?? 'general');
           setStudentRn(profile.reg_no ?? '');
           setStudentHos(profile.hostel_block ?? '');
+          setStudentRm(profile.room_number ?? '');
           setStudentYr(profile.year != null ? String(profile.year) : '');
           setScreen('complete-profile');
         } else {
@@ -996,6 +1079,53 @@ export default function LaundroApp() {
     } else {
       setScreen('login');
     }
+  };
+
+  const handleSaveStudentDetailsModal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.sid) return;
+    const effectiveCid =
+      modalCid.trim() && modalCid.trim() !== 'general'
+        ? modalCid.trim()
+        : (user.cid ?? '').trim() && (user.cid ?? '').trim() !== 'general'
+          ? (user.cid ?? '').trim()
+          : null;
+    if (needsStudentCollegeChoice(user)) {
+      if (!modalCid.trim() || modalCid.trim() === 'general') {
+        showToast('Select your college', 'er');
+        return;
+      }
+    }
+    if (!effectiveCid) {
+      showToast('Select your college', 'er');
+      return;
+    }
+    if (!modalRn.trim() || !modalBlk.trim() || !modalRm.trim()) {
+      showToast('Enter registration number, hostel block, and room number', 'er');
+      return;
+    }
+    setStudentModalSaving(true);
+    try {
+      const { user: updated, error } = await LSApi.updateUser(user.sid, {
+        user_type: 'student',
+        college_id: effectiveCid,
+        reg_no: modalRn.trim(),
+        hostel_block: modalBlk.trim(),
+        room_number: modalRm.trim(),
+      });
+      if (updated) {
+        const u = rowToUser(updated);
+        setUser(u);
+        saveUser(u);
+        setShowStudentDetailsModal(false);
+        showToast('Details saved', 'ok');
+      } else {
+        showToast(error || 'Update failed', 'er');
+      }
+    } catch {
+      showToast('Update failed', 'er');
+    }
+    setStudentModalSaving(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -1025,6 +1155,10 @@ export default function LaundroApp() {
       showToast('Registration number required for students', 'er');
       return;
     }
+    if (!isGeneral && (!studentHos.trim() || !studentRm.trim())) {
+      showToast('Hostel block and room number are required for students', 'er');
+      return;
+    }
     setAuthLoading(true);
     try {
       const { user: row, error } = await LSApi.signUpWithEmail(
@@ -1037,7 +1171,8 @@ export default function LaundroApp() {
           user_type: isGeneral ? 'general' : 'student',
           college_id: isGeneral ? null : studentCid,
           reg_no: isGeneral ? null : studentRn.trim() || null,
-          hostel_block: studentHos.trim() || null,
+          hostel_block: isGeneral ? null : studentHos.trim() || null,
+          room_number: isGeneral ? null : studentRm.trim() || null,
           year: studentYr?.trim() ? parseInt(studentYr, 10) || null : null,
         }
       );
@@ -1082,6 +1217,10 @@ export default function LaundroApp() {
       showToast('Registration number required for students', 'er');
       return;
     }
+    if (!isGeneral && (!studentHos.trim() || !studentRm.trim())) {
+      showToast('Hostel block and room number are required for students', 'er');
+      return;
+    }
     setAuthLoading(true);
     try {
       const yearNum = studentYr?.trim() ? parseInt(studentYr, 10) : null;
@@ -1091,7 +1230,8 @@ export default function LaundroApp() {
         user_type: isGeneral ? 'general' : 'student',
         college_id: isGeneral ? null : studentCid,
         reg_no: isGeneral ? null : studentRn.trim() || null,
-        hostel_block: studentHos.trim() || null,
+        hostel_block: isGeneral ? null : studentHos.trim() || null,
+        room_number: isGeneral ? null : studentRm.trim() || null,
         year: yearNum != null && !Number.isNaN(yearNum) ? yearNum : null,
       });
       if (updated) {
@@ -1129,6 +1269,10 @@ export default function LaundroApp() {
       showToast('Registration number required for students', 'er');
       return;
     }
+    if (!isGeneral && (!editHos.trim() || !editRm.trim())) {
+      showToast('Hostel block and room number are required for students', 'er');
+      return;
+    }
     setEditProfileSaving(true);
     try {
       const yearNum = editYr?.trim() ? parseInt(editYr, 10) : null;
@@ -1139,7 +1283,8 @@ export default function LaundroApp() {
         user_type: isGeneral ? 'general' : 'student',
         college_id: isGeneral ? null : editCid,
         reg_no: isGeneral ? null : editRn.trim() || null,
-        hostel_block: editHos.trim() || null,
+        hostel_block: isGeneral ? null : editHos.trim() || null,
+        room_number: isGeneral ? null : editRm.trim() || null,
         year: yearNum != null && !Number.isNaN(yearNum) ? yearNum : null,
       });
       if (updated) {
@@ -1174,6 +1319,11 @@ export default function LaundroApp() {
     if (!user.ph?.trim()) {
       go('complete-profile');
       showToast('Add your phone number to place orders', 'er');
+      return;
+    }
+    if (needsStudentHostelDetails(user)) {
+      setShowStudentDetailsModal(true);
+      showToast('Add your registration number, hostel block, and room number to place an order', 'er');
       return;
     }
     const existingSameDay = orders.some(
@@ -1221,6 +1371,12 @@ export default function LaundroApp() {
         if (result.code === 'TERMS_NOT_ACCEPTED') {
           setTermsChecked(false);
           setShowTermsModal(true);
+          setOrderSubmitting(false);
+          return;
+        }
+        if (result.code === 'STUDENT_DETAILS_REQUIRED') {
+          setShowStudentDetailsModal(true);
+          showToast(result.error || 'Add your student details to book', 'er');
           setOrderSubmitting(false);
           return;
         }
@@ -1584,8 +1740,12 @@ export default function LaundroApp() {
                 <input type="text" className="fi" placeholder="Reg no" value={studentRn} onChange={(e) => setStudentRn(e.target.value)} required />
               </div>
               <div className="fg">
-                <label className="fl">Hostel block (optional)</label>
-                <input type="text" className="fi" placeholder="Block / room" value={studentHos} onChange={(e) => setStudentHos(e.target.value)} />
+                <label className="fl">Hostel block</label>
+                <input type="text" className="fi" placeholder="e.g. D2, A" value={studentHos} onChange={(e) => setStudentHos(e.target.value)} required />
+              </div>
+              <div className="fg">
+                <label className="fl">Room number</label>
+                <input type="text" className="fi" placeholder="e.g. 405" value={studentRm} onChange={(e) => setStudentRm(e.target.value)} required />
               </div>
               <div className="fg">
                 <label className="fl">Year (optional)</label>
@@ -1651,8 +1811,12 @@ export default function LaundroApp() {
                 <input type="text" className="fi" placeholder="Reg no" value={studentRn} onChange={(e) => setStudentRn(e.target.value)} required />
               </div>
               <div className="fg">
-                <label className="fl">Hostel block (optional)</label>
-                <input type="text" className="fi" placeholder="Block / room" value={studentHos} onChange={(e) => setStudentHos(e.target.value)} />
+                <label className="fl">Hostel block</label>
+                <input type="text" className="fi" placeholder="e.g. D2, A" value={studentHos} onChange={(e) => setStudentHos(e.target.value)} required />
+              </div>
+              <div className="fg">
+                <label className="fl">Room number</label>
+                <input type="text" className="fi" placeholder="e.g. 405" value={studentRm} onChange={(e) => setStudentRm(e.target.value)} required />
               </div>
               <div className="fg">
                 <label className="fl">Year (optional)</label>
@@ -1750,8 +1914,12 @@ export default function LaundroApp() {
                 <input type="text" className="fi" placeholder="Reg no" value={editRn} onChange={(e) => setEditRn(e.target.value)} />
               </div>
               <div className="fg">
-                <label className="fl">Hostel block (optional)</label>
-                <input type="text" className="fi" placeholder="Block / room" value={editHos} onChange={(e) => setEditHos(e.target.value)} />
+                <label className="fl">Hostel block</label>
+                <input type="text" className="fi" placeholder="e.g. D2, A" value={editHos} onChange={(e) => setEditHos(e.target.value)} required />
+              </div>
+              <div className="fg">
+                <label className="fl">Room number</label>
+                <input type="text" className="fi" placeholder="e.g. 405" value={editRm} onChange={(e) => setEditRm(e.target.value)} required />
               </div>
               <div className="fg">
                 <label className="fl">Year (optional)</label>
@@ -2367,6 +2535,62 @@ export default function LaundroApp() {
             Profile
           </button>
         </nav>
+        {showStudentDetailsModal && user && (
+          <div
+            className="bill-popup-overlay"
+            onClick={() => !studentModalSaving && setShowStudentDetailsModal(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Student details required"
+          >
+            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ borderRadius: 24, padding: 24, maxWidth: 420 }}>
+              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: '0 0 8px', color: 'var(--b)' }}>Campus details required</h3>
+              <p style={{ fontSize: 14, color: 'var(--ts)', lineHeight: 1.6, marginBottom: 18 }}>
+                Add your registration number, hostel block, and room number for billing and pickup. You won&apos;t be asked again after you save.
+              </p>
+              <form onSubmit={handleSaveStudentDetailsModal}>
+                {needsStudentCollegeChoice(user) ? (
+                  <div className="fg">
+                    <label className="fl">College</label>
+                    <select className="fi fs" value={modalCid} onChange={(e) => setModalCid(e.target.value)} required>
+                      <option value="">Select college</option>
+                      {COLLEGES.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                          {!c.active ? ' (coming soon)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <p className="vd" style={{ marginBottom: 14 }}>
+                    <strong>College:</strong> {COLLEGES.find((c) => c.id === user.cid)?.name ?? user.cid ?? '—'}
+                  </p>
+                )}
+                <div className="fg">
+                  <label className="fl">Registration number</label>
+                  <input className="fi" value={modalRn} onChange={(e) => setModalRn(e.target.value)} placeholder="Reg no" required />
+                </div>
+                <div className="fg">
+                  <label className="fl">Hostel block</label>
+                  <input className="fi" value={modalBlk} onChange={(e) => setModalBlk(e.target.value)} placeholder="e.g. D2" required />
+                </div>
+                <div className="fg">
+                  <label className="fl">Room number</label>
+                  <input className="fi" value={modalRm} onChange={(e) => setModalRm(e.target.value)} placeholder="e.g. 405" required />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+                  <button type="submit" className="btn bp bbl" disabled={studentModalSaving}>
+                    {studentModalSaving ? 'Saving…' : 'Save and continue'}
+                  </button>
+                  <button type="button" className="btn bout bbl" disabled={studentModalSaving} onClick={() => setShowStudentDetailsModal(false)}>
+                    Later
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
         {viewingBill && (
           <div className="bill-popup-overlay" onClick={() => setViewingBill(null)} role="dialog" aria-modal="true" aria-label="View bill">
             <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ borderRadius: 24, padding: 24 }}>
@@ -2376,6 +2600,20 @@ export default function LaundroApp() {
               </div>
               <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Order:</strong> {viewingBill.order_number ?? '—'}</p>
               <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Date:</strong> {viewingBill.created_at ? new Date(viewingBill.created_at).toLocaleString() : '—'}</p>
+              {String(viewingBill.customer_reg_no ?? '').trim() ? (
+                <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Reg no:</strong> {viewingBill.customer_reg_no}</p>
+              ) : null}
+              {String(viewingBill.customer_hostel_block ?? '').trim() || String(viewingBill.customer_room_number ?? '').trim() ? (
+                <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}>
+                  <strong>Hostel:</strong>{' '}
+                  {[
+                    String(viewingBill.customer_hostel_block ?? '').trim() && `Block ${String(viewingBill.customer_hostel_block).trim()}`,
+                    String(viewingBill.customer_room_number ?? '').trim() && `Room ${String(viewingBill.customer_room_number).trim()}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              ) : null}
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 12, marginBottom: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--bd)' }}>

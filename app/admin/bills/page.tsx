@@ -40,6 +40,14 @@ function billToHtml(b: VendorBillRow) {
     b.user_display_id != null && String(b.user_display_id).trim() !== ''
       ? `<p><strong>Customer ID:</strong> ${esc(String(b.user_display_id))}</p>`
       : '';
+  const reg = String(b.customer_reg_no ?? '').trim();
+  const blk = String(b.customer_hostel_block ?? '').trim();
+  const rm = String(b.customer_room_number ?? '').trim();
+  const regLine = reg ? `<p class="center"><strong>Reg no:</strong> ${esc(reg)}</p>` : '';
+  const hostelLine =
+    blk || rm
+      ? `<p class="center"><strong>Hostel:</strong> ${esc([blk && `Block ${blk}`, rm && `Room ${rm}`].filter(Boolean).join(' · '))}</p>`
+      : '';
   const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
   const discountedFeeHtml = Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
     ? `<span>Service fee (7-day discount)</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
@@ -53,6 +61,8 @@ function billToHtml(b: VendorBillRow) {
     <p class="center">Phone: ${esc(b.customer_phone ?? '—')}</p>
     ${idLine}
     ${emailLine}
+    ${regLine}
+    ${hostelLine}
     <p class="center">Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p>
     <div class="row-divider"></div>
     <table>
@@ -80,6 +90,13 @@ function billToPlainText(b: VendorBillRow): string {
   const extra: string[] = [];
   if (b.user_email != null && String(b.user_email).trim() !== '') extra.push(`Email: ${b.user_email}`);
   if (b.user_display_id != null && String(b.user_display_id).trim() !== '') extra.push(`Customer ID: ${b.user_display_id}`);
+  const regP = String(b.customer_reg_no ?? '').trim();
+  const blkP = String(b.customer_hostel_block ?? '').trim();
+  const rmP = String(b.customer_room_number ?? '').trim();
+  if (regP) extra.push(`Reg no: ${regP}`);
+  if (blkP || rmP) {
+    extra.push(`Hostel: ${[blkP && `Block ${blkP}`, rmP && `Room ${rmP}`].filter(Boolean).join(' · ')}`);
+  }
   const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
   return [
     'LaundroSwipe',

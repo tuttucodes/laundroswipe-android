@@ -727,7 +727,7 @@ export default function AdminPage() {
   };
 
   const exportUsersToCsv = () => {
-    const cols = ['ID', 'Full name', 'Email', 'Phone', 'WhatsApp', 'Type', 'College', 'Reg No', 'Hostel', 'Year'];
+    const cols = ['ID', 'Full name', 'Email', 'Phone', 'WhatsApp', 'Type', 'College', 'Reg No', 'Hostel block', 'Room', 'Year'];
     const rows = (users ?? []).map((u) => [
       escapeCsv(u.display_id ?? u.id),
       escapeCsv(u.full_name),
@@ -738,6 +738,7 @@ export default function AdminPage() {
       escapeCsv(u.college_id ? (COLLEGES.find((c) => c.id === u.college_id)?.name ?? u.college_id) : ''),
       escapeCsv(u.reg_no),
       escapeCsv(u.hostel_block),
+      escapeCsv(u.room_number),
       escapeCsv(u.year),
     ]);
     const csv = [cols.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
@@ -766,7 +767,7 @@ export default function AdminPage() {
     if (isSuperAdmin && superVendorFilter !== 'all' && !usersByVisibleOrders.has(u.id)) return false;
     const q = userSearch.trim().toLowerCase();
     if (!q) return true;
-    return [u.id, u.display_id, u.full_name, u.email, u.phone, u.college_id, u.reg_no, u.hostel_block]
+    return [u.id, u.display_id, u.full_name, u.email, u.phone, u.college_id, u.reg_no, u.hostel_block, u.room_number]
       .some((v) => String(v ?? '').toLowerCase().includes(q));
   });
   const totalOrders = vendorScopedForSuperAdmin.length;
@@ -1080,6 +1081,8 @@ export default function AdminPage() {
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Type</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>College</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Reg No</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Block</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Room</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1101,6 +1104,8 @@ export default function AdminPage() {
                             </td>
                             <td style={{ padding: '14px 16px', fontSize: 14 }}>{collegeName}</td>
                             <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.reg_no ?? '—'}</td>
+                            <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.hostel_block ?? '—'}</td>
+                            <td style={{ padding: '14px 16px', fontSize: 14 }}>{u.room_number ?? '—'}</td>
                           </tr>
                         );
                       })}

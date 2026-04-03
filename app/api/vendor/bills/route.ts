@@ -33,7 +33,9 @@ export async function GET(request: Request) {
   let error: { message: string; code?: string } | null = null;
   const withCancelCols = await supabase
     .from('vendor_bills')
-    .select('id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at, cancelled_by_role')
+    .select(
+      'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at, cancelled_by_role',
+    )
     .order('created_at', { ascending: false });
   data = withCancelCols.data as any[] | null;
   error = withCancelCols.error as { message: string; code?: string } | null;
@@ -44,6 +46,9 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false });
     data = ((fallback.data as any[] | null) ?? []).map((row) => ({
       ...row,
+      customer_reg_no: null,
+      customer_hostel_block: null,
+      customer_room_number: null,
       cancelled_at: null,
       cancelled_by_role: null,
     }));
