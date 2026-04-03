@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
-import { VENDORS, getVendorBillItems } from '@/lib/constants';
+import { VENDORS } from '@/lib/constants';
 import { applyServiceFeeDiscount } from '@/lib/fees';
+import { mergeVendorBillItemsFromDbRow } from '@/lib/vendor-bill-catalog';
 
 type DbVendor = { id: string; slug: string; name: string };
 
@@ -23,11 +24,6 @@ function resolveBillVendorSlug(
   const byId = bill.vendor_id ? vendorsById.get(String(bill.vendor_id)) : null;
   const byName = resolveVendorSlugFromName(bill.vendor_name, dbVendors);
   return (byId ?? byName ?? null)?.toLowerCase().trim() || null;
-}
-
-function priceForItemId(itemId: string, vendorSlug: string | null): number | null {
-  const item = getVendorBillItems(vendorSlug).find((i) => i.id === itemId);
-  return item ? Number(item.price) : null;
 }
 
 export async function POST(request: Request) {
@@ -81,7 +77,16 @@ export async function POST(request: Request) {
     }
   }
 
-  const catalog = getVendorBillItems(billVendorSlug);
+  let billOverrides: unknown = {};
+  if (billVendorSlug) {
+    const { data: prof } = await supabase
+      .from('vendor_profiles')
+      .select('bill_item_overrides')
+      .eq('slug', billVendorSlug)
+      .maybeSingle();
+    billOverrides = prof?.bill_item_overrides ?? {};
+  }
+  const mergedCatalog = mergeVendorBillItemsFromDbRow(billVendorSlug, billOverrides);
   const existingRows = Array.isArray(bill.line_items)
     ? (bill.line_items as { id: string; label: string; price: number; qty: number; image_url?: string | null }[])
     : [];
@@ -100,8 +105,8 @@ export async function POST(request: Request) {
     if (!id) continue;
     if (!Number.isFinite(qty) || qty <= 0) continue;
 
-    const catRow = catalog.find((x) => x.id === id);
-    let price = priceForItemId(id, billVendorSlug);
+    const catRow = mergedCatalog.find((x) => x.id === id);
+    let price = catRow ? Number(catRow.price) : null;
     let label: string | undefined = catRow ? String(catRow.label) : undefined;
     const inputLabel = String((li as { label?: string | null }).label ?? '').trim();
     const inputPrice = Number((li as { price?: number | string | null }).price ?? NaN);
@@ -119,14 +124,16 @@ export async function POST(request: Request) {
     if (price == null || !label) continue;
     const prev = existingById.get(id) as unknown as { image_url?: string | null } | undefined;
     const rawInputImage = (li as { image_url?: string | null }).image_url;
+    const validImg = (s: string | null | undefined) => {
+      const t = String(s ?? '').trim();
+      if (!t) return null;
+      return t.startsWith('data:image/') || t.startsWith('http://') || t.startsWith('https://') ? t : null;
+    };
+    const catalogImg = catRow ? validImg(catRow.image_url) : null;
     const image_url =
       rawInputImage === undefined
-        ? prev?.image_url ?? null
-        : (() => {
-            const s = String(rawInputImage ?? '').trim();
-            if (!s) return null;
-            return s.startsWith('data:image/') || s.startsWith('http://') || s.startsWith('https://') ? s : null;
-          })();
+        ? validImg(prev?.image_url ?? null) ?? catalogImg
+        : validImg(String(rawInputImage ?? ''));
 
     safeLineItems.push({ id, label, qty: Math.floor(qty), price, image_url });
   }

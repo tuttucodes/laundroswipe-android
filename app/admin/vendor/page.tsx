@@ -44,12 +44,13 @@ export default function VendorPage() {
   const [editCustomImage, setEditCustomImage] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
+  const [catalogFromApi, setCatalogFromApi] = useState<QuickItem[] | null>(null);
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
   const vendorBillItems = getVendorBillItems(vendorId);
-  const billItemOptions: QuickItem[] = [
-    ...vendorBillItems.map((i) => ({ id: i.id, label: i.label, price: i.price, image_url: null })),
-    ...quickItems,
-  ];
+  const catalogBase: QuickItem[] =
+    catalogFromApi ??
+    vendorBillItems.map((i) => ({ id: i.id, label: i.label, price: i.price, image_url: null }));
+  const billItemOptions: QuickItem[] = [...catalogBase, ...quickItems];
 
   const adminAuthHeaders = (): Record<string, string> => {
     const t = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
@@ -100,6 +101,34 @@ export default function VendorPage() {
     if (typeof window === 'undefined' || !vendorId) return;
     localStorage.setItem(`vendor_quick_items_${vendorId}`, JSON.stringify(quickItems));
   }, [vendorId, quickItems]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !vendorId) return;
+    const t = sessionStorage.getItem('admin_token');
+    const headers: Record<string, string> = {};
+    if (t) headers.Authorization = `Bearer ${t}`;
+    fetch('/api/vendor/bill-catalog', { credentials: 'include', headers })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || !data?.ok || !Array.isArray(data.items)) return null;
+        return data.items as Array<{ id: string; label: string; price: number; image_url?: string | null }>;
+      })
+      .then((items) => {
+        if (!items) {
+          setCatalogFromApi(null);
+          return;
+        }
+        setCatalogFromApi(
+          items.map((i) => ({
+            id: i.id,
+            label: i.label,
+            price: Number(i.price),
+            image_url: i.image_url ?? null,
+          })),
+        );
+      })
+      .catch(() => setCatalogFromApi(null));
+  }, [vendorId]);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -654,6 +683,11 @@ export default function VendorPage() {
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Back to Dashboard</Link>
       </p>
       <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>{vendorName} · Vendor Bill</h1>
+      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 8 }}>
+        <Link href="/admin/vendor/items" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>
+          Items &amp; rates (photos for quick tap)
+        </Link>
+      </p>
       <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enter token to load order, or create a sample bill for walk-ins/emergency print.</p>
 
       <div className="vendor-card">
@@ -818,8 +852,11 @@ export default function VendorPage() {
                     <button
                       type="button"
                       onClick={() => addItem(i.id)}
-                      className={`vendor-item-btn ${qty > 0 ? 'has-qty' : ''}`}
+                      className={`vendor-item-btn ${i.image_url ? 'with-thumb' : ''} ${qty > 0 ? 'has-qty' : ''}`}
                     >
+                      {i.image_url ? (
+                        <img src={i.image_url} alt="" className="vendor-item-thumb" />
+                      ) : null}
                       {i.label}
                       {qty > 0 && <span style={{ display: 'block', fontSize: 12, marginTop: 2 }}>×{qty} ₹{i.price * qty}</span>}
                     </button>
@@ -940,7 +977,12 @@ export default function VendorPage() {
                   const qty = line?.qty ?? 0;
                   return (
                     <div key={i.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                      <button type="button" onClick={() => addEditItem(i.id)} className={`vendor-item-btn ${qty > 0 ? 'has-qty' : ''}`}>
+                      <button
+                        type="button"
+                        onClick={() => addEditItem(i.id)}
+                        className={`vendor-item-btn ${i.image_url ? 'with-thumb' : ''} ${qty > 0 ? 'has-qty' : ''}`}
+                      >
+                        {i.image_url ? <img src={i.image_url} alt="" className="vendor-item-thumb" /> : null}
                         {i.label}
                         {qty > 0 && <span style={{ display: 'block', fontSize: 12, marginTop: 2 }}>×{qty} ₹{i.price * qty}</span>}
                       </button>

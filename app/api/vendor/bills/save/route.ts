@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
-import { VENDORS, getVendorBillItems } from '@/lib/constants';
+import { VENDORS } from '@/lib/constants';
 import { applyServiceFeeDiscount } from '@/lib/fees';
+import { mergeVendorBillItemsFromDbRow } from '@/lib/vendor-bill-catalog';
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
   const normalized = String(vendorName ?? '').trim().toLowerCase();
@@ -16,11 +17,6 @@ function resolveVendorSlugFromName(vendorName: string | null | undefined): strin
 
 function normalizeToken(token: string): string {
   return String(token).replace(/^#/, '').trim();
-}
-
-function priceForItemId(itemId: string, vendorSlug: string | null): number | null {
-  const item = getVendorBillItems(vendorSlug).find((i) => i.id === itemId);
-  return item ? Number(item.price) : null;
 }
 
 export async function POST(request: Request) {
@@ -89,7 +85,17 @@ export async function POST(request: Request) {
     (order.vendor_id ? vendorsById.get(String(order.vendor_id))?.slug : null) ??
     resolveVendorSlugFromName(order.vendor_name);
   const effectiveVendorSlug = (sessionVendorSlug ?? orderVendorSlug ?? null)?.toLowerCase().trim() || null;
-  const vendorBillItems = getVendorBillItems(effectiveVendorSlug);
+
+  let billOverrides: unknown = {};
+  if (effectiveVendorSlug) {
+    const { data: prof } = await supabase
+      .from('vendor_profiles')
+      .select('bill_item_overrides')
+      .eq('slug', effectiveVendorSlug)
+      .maybeSingle();
+    billOverrides = prof?.bill_item_overrides ?? {};
+  }
+  const mergedCatalog = mergeVendorBillItemsFromDbRow(effectiveVendorSlug, billOverrides);
 
   const safeLineItems: Array<{ id: string; label: string; qty: number; price: number; image_url?: string | null }> = [];
   for (const li of lineItems) {
@@ -97,8 +103,9 @@ export async function POST(request: Request) {
     const qty = Number(li?.qty ?? 0);
     if (!id) continue;
     if (!Number.isFinite(qty) || qty <= 0) continue;
-    const catalogPrice = priceForItemId(id, effectiveVendorSlug);
-    const catalogLabel = vendorBillItems.find((x) => x.id === id)?.label ?? null;
+    const catRow = mergedCatalog.find((x) => x.id === id);
+    const catalogPrice = catRow ? Number(catRow.price) : null;
+    const catalogLabel = catRow?.label ?? null;
     const inputLabel = String((li as { label?: string | null }).label ?? '').trim();
     const inputPrice = Number((li as { price?: number | string | null }).price ?? NaN);
 
@@ -109,10 +116,14 @@ export async function POST(request: Request) {
     const rawImage = typeof (li as { image_url?: unknown }).image_url === 'string'
       ? String((li as { image_url?: string }).image_url).trim()
       : null;
-    const image_url =
-      rawImage && (rawImage.startsWith('data:image/') || rawImage.startsWith('http://') || rawImage.startsWith('https://'))
-        ? rawImage
-        : null;
+    const validImg = (s: string | null | undefined) => {
+      const t = String(s ?? '').trim();
+      if (!t) return null;
+      return t.startsWith('data:image/') || t.startsWith('http://') || t.startsWith('https://') ? t : null;
+    };
+    const fromClient = validImg(rawImage);
+    const fromCatalog = !isCustomItem ? validImg(catRow?.image_url ?? null) : null;
+    const image_url = fromClient ?? fromCatalog ?? null;
 
     safeLineItems.push({ id, label, qty: Math.floor(qty), price, image_url });
   }

@@ -849,6 +849,11 @@ export default function AdminPage() {
             <Link href="/admin/vendor" className="admin-nav-link" onClick={closeMenu}>🧾 Vendor / Bill</Link>
             <Link href="/admin/pickup" className="admin-nav-link" onClick={closeMenu}>📦 Pickup / Delivery</Link>
             <Link href="/admin/bills" className="admin-nav-link" onClick={closeMenu}>📋 Saved bills</Link>
+            {!isSuperAdmin && (
+              <Link href="/admin/vendor/items" className="admin-nav-link" onClick={closeMenu}>
+                📦 Items &amp; rates
+              </Link>
+            )}
             <Link href="/admin/printers" className="admin-nav-link" onClick={closeMenu}>🖨️ Printers</Link>
             {!isSuperAdmin && (
               <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
@@ -11,6 +11,7 @@ import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fe
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
+type CatalogRow = { id: string; label: string; price: number; image_url?: string | null };
 
 function billLineItemsToState(b: VendorBillRow): LineItem[] {
   if (!Array.isArray(b.line_items)) return [];
@@ -118,6 +119,7 @@ export default function BillsPage() {
   const [editCustomRate, setEditCustomRate] = useState('');
   const [editCustomQty, setEditCustomQty] = useState('1');
   const [editCustomImage, setEditCustomImage] = useState<string | null>(null);
+  const [editBillCatalog, setEditBillCatalog] = useState<CatalogRow[] | null>(null);
 
   useEffect(() => {
     const role = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
@@ -154,6 +156,31 @@ export default function BillsPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!editingBill) {
+      setEditBillCatalog(null);
+      return;
+    }
+    const slug = (editingBill.vendor_slug ?? sessionVendorSlug ?? '').toLowerCase().trim();
+    if (!slug) {
+      setEditBillCatalog(null);
+      return;
+    }
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers = token ? ({ Authorization: `Bearer ${token}` } as Record<string, string>) : {};
+    const qs = isSuperAdmin ? `?slug=${encodeURIComponent(slug)}` : '';
+    fetch(`/api/vendor/bill-catalog${qs}`, { credentials: 'include', headers })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || !data?.ok || !Array.isArray(data.items)) return null;
+        return data.items as CatalogRow[];
+      })
+      .then((items) => {
+        setEditBillCatalog(items && items.length > 0 ? items : null);
+      })
+      .catch(() => setEditBillCatalog(null));
+  }, [editingBill, sessionVendorSlug, isSuperAdmin]);
 
   const escapeCsv = (v: string | number | null | undefined): string => {
     const s = v == null ? '' : String(v);
@@ -201,7 +228,10 @@ export default function BillsPage() {
   const canDeleteBill = (b: VendorBillRow): boolean => isWithinVendorBillCancelEditWindow(b.created_at);
 
   const editCatalogSlug = editingBill?.vendor_slug ?? sessionVendorSlug;
-  const editBillItems = getVendorBillItems(editCatalogSlug);
+  const editBillItems = useMemo(() => {
+    if (editBillCatalog && editBillCatalog.length > 0) return editBillCatalog;
+    return getVendorBillItems(editCatalogSlug).map((i) => ({ ...i, image_url: null as string | null }));
+  }, [editBillCatalog, editCatalogSlug]);
 
   const addEditItem = (itemId: string) => {
     const item = editBillItems.find((i) => i.id === itemId);
@@ -213,7 +243,7 @@ export default function BillsPage() {
         next[i] = { ...next[i], qty: next[i].qty + 1 };
         return next;
       }
-      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: null }];
+      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: item.image_url ?? null }];
     });
   };
 
@@ -550,7 +580,12 @@ export default function BillsPage() {
                 const qty = line?.qty ?? 0;
                 return (
                   <div key={i.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <button type="button" onClick={() => addEditItem(i.id)} className={`vendor-item-btn ${qty > 0 ? 'has-qty' : ''}`}>
+                    <button
+                      type="button"
+                      onClick={() => addEditItem(i.id)}
+                      className={`vendor-item-btn ${i.image_url ? 'with-thumb' : ''} ${qty > 0 ? 'has-qty' : ''}`}
+                    >
+                      {i.image_url ? <img src={i.image_url} alt="" className="vendor-item-thumb" /> : null}
                       {i.label}
                       {qty > 0 && (
                         <span style={{ display: 'block', fontSize: 11, marginTop: 2 }}>
