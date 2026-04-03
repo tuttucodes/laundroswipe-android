@@ -409,11 +409,15 @@ export default function BillsPage() {
                 <button type="button" onClick={() => printBill(b)} className="vendor-btn-primary">
                   Print
                 </button>
-                {canModifyBill(b) && (
-                  <button type="button" onClick={() => openEditBill(b)} className="vendor-btn-secondary">
-                    Edit bill
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => openEditBill(b)}
+                  disabled={!canModifyBill(b)}
+                  className="vendor-btn-secondary"
+                  title={canModifyBill(b) ? 'Edit this bill' : 'Can only edit within 1 hour of bill creation'}
+                >
+                  Edit bill
+                </button>
                 <button
                   type="button"
                   onClick={() => cancelBill(b.id)}
@@ -450,18 +454,18 @@ export default function BillsPage() {
             )}
             {copyMsg && <p style={{ marginTop: 12, fontSize: 13, color: copyMsg.includes('failed') ? 'var(--er)' : 'var(--ok)' }}>{copyMsg}</p>}
             <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
-              {canModifyBill(viewingBill) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    openEditBill(viewingBill);
-                  }}
-                  className="vendor-btn-secondary"
-                  style={{ flex: '1 1 140px' }}
-                >
-                  Edit bill
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  openEditBill(viewingBill);
+                }}
+                disabled={!canModifyBill(viewingBill)}
+                className="vendor-btn-secondary"
+                style={{ flex: '1 1 140px' }}
+                title={canModifyBill(viewingBill) ? 'Edit this bill' : 'Can only edit within 1 hour of bill creation'}
+              >
+                Edit bill
+              </button>
               <button type="button" onClick={() => printBill(viewingBill)} className="vendor-btn-primary" style={{ flex: '1 1 140px' }}>Print</button>
               <button type="button" onClick={() => copyBill(viewingBill)} className="vendor-btn-secondary" style={{ flex: '1 1 140px' }}>Copy receipt</button>
               <button type="button" onClick={() => setViewingBill(null)} className="vendor-btn-secondary" style={{ flex: '1 1 140px' }}>Close</button>
