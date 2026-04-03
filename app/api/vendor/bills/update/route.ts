@@ -39,7 +39,13 @@ export async function POST(request: Request) {
 
   let body: {
     bill_id?: string;
-    line_items?: Array<{ id: string; qty: number; image_url?: string | null }>;
+    line_items?: Array<{
+      id: string;
+      qty: number;
+      label?: string | null;
+      price?: number | string | null;
+      image_url?: string | null;
+    }>;
   };
   try {
     body = await request.json();
@@ -94,14 +100,20 @@ export async function POST(request: Request) {
     if (!id) continue;
     if (!Number.isFinite(qty) || qty <= 0) continue;
 
-    let price = priceForItemId(id, billVendorSlug);
     const catRow = catalog.find((x) => x.id === id);
+    let price = priceForItemId(id, billVendorSlug);
     let label: string | undefined = catRow ? String(catRow.label) : undefined;
+    const inputLabel = String((li as { label?: string | null }).label ?? '').trim();
+    const inputPrice = Number((li as { price?: number | string | null }).price ?? NaN);
+
     if (price == null) {
       const prev = existingById.get(id);
       if (prev && typeof prev.price === 'number' && prev.label) {
         price = Number(prev.price);
         label = String(prev.label);
+      } else {
+        if (Number.isFinite(inputPrice) && inputPrice > 0) price = inputPrice;
+        if (inputLabel) label = inputLabel;
       }
     }
     if (price == null || !label) continue;

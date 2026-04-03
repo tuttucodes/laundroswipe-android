@@ -9,6 +9,7 @@ import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fe
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
 type LatestBill = { id: string; created_at: string; can_cancel: boolean; line_items: LineItem[] };
+type QuickItem = { id: string; label: string; price: number; image_url?: string | null };
 
 export default function VendorPage() {
   const [vendorName, setVendorName] = useState('Vendor');
@@ -18,6 +19,14 @@ export default function VendorPage() {
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [user, setUser] = useState<UserRow | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [quickItems, setQuickItems] = useState<QuickItem[]>([]);
+  const [quickItemDesc, setQuickItemDesc] = useState('');
+  const [quickItemRate, setQuickItemRate] = useState('');
+  const [quickItemImage, setQuickItemImage] = useState<string | null>(null);
+  const [customItemDesc, setCustomItemDesc] = useState('');
+  const [customItemRate, setCustomItemRate] = useState('');
+  const [customItemQty, setCustomItemQty] = useState('1');
+  const [customItemImage, setCustomItemImage] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [billAlreadyGenerated, setBillAlreadyGenerated] = useState(false);
@@ -29,10 +38,18 @@ export default function VendorPage() {
   const [cancellingLatestBill, setCancellingLatestBill] = useState(false);
   const [editingLatestBill, setEditingLatestBill] = useState(false);
   const [editLineItems, setEditLineItems] = useState<LineItem[]>([]);
+  const [editCustomDesc, setEditCustomDesc] = useState('');
+  const [editCustomRate, setEditCustomRate] = useState('');
+  const [editCustomQty, setEditCustomQty] = useState('1');
+  const [editCustomImage, setEditCustomImage] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
   const vendorBillItems = getVendorBillItems(vendorId);
+  const billItemOptions: QuickItem[] = [
+    ...vendorBillItems.map((i) => ({ id: i.id, label: i.label, price: i.price, image_url: null })),
+    ...quickItems,
+  ];
 
   const adminAuthHeaders = (): Record<string, string> => {
     const t = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
@@ -54,6 +71,36 @@ export default function VendorPage() {
     setVendorName(displayName?.trim() || slug);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !vendorId) return;
+    try {
+      const raw = localStorage.getItem(`vendor_quick_items_${vendorId}`);
+      if (!raw) {
+        setQuickItems([]);
+        return;
+      }
+      const parsed = JSON.parse(raw) as Array<{ id: string; label: string; price: number; image_url?: string | null }>;
+      const safe = Array.isArray(parsed)
+        ? parsed
+            .map((x) => ({
+              id: String(x.id ?? ''),
+              label: String(x.label ?? '').trim(),
+              price: Number(x.price ?? 0),
+              image_url: typeof x.image_url === 'string' ? x.image_url : null,
+            }))
+            .filter((x) => x.id && x.label && Number.isFinite(x.price) && x.price > 0)
+        : [];
+      setQuickItems(safe);
+    } catch {
+      setQuickItems([]);
+    }
+  }, [vendorId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !vendorId) return;
+    localStorage.setItem(`vendor_quick_items_${vendorId}`, JSON.stringify(quickItems));
+  }, [vendorId, quickItems]);
+
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLookupErr('');
@@ -68,6 +115,14 @@ export default function VendorPage() {
     setEditLineItems([]);
     setEditErr(null);
     setEditSaving(false);
+    setCustomItemDesc('');
+    setCustomItemRate('');
+    setCustomItemQty('1');
+    setCustomItemImage(null);
+    setEditCustomDesc('');
+    setEditCustomRate('');
+    setEditCustomQty('1');
+    setEditCustomImage(null);
     lastSavedBillFingerprintRef.current = null;
     const t = token.replace(/^#/, '').trim();
     if (!t) {
@@ -102,7 +157,7 @@ export default function VendorPage() {
   };
 
   const addItem = (itemId: string) => {
-    const item = vendorBillItems.find((i) => i.id === itemId);
+    const item = billItemOptions.find((i) => i.id === itemId);
     if (!item) return;
     setLineItems((prev) => {
       const i = prev.findIndex((l) => l.id === itemId);
@@ -111,7 +166,7 @@ export default function VendorPage() {
         next[i] = { ...next[i], qty: next[i].qty + 1 };
         return next;
       }
-      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: null }];
+      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: item.image_url ?? null }];
     });
   };
 
@@ -130,6 +185,71 @@ export default function VendorPage() {
     setLineItems((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const readImageAsDataUrl = (file: File, onOk: (dataUrl: string) => void, onErr: (msg: string) => void) => {
+    if (file.size > 1024 * 1024) {
+      onErr('Image is too large. Keep it under 1MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!result.startsWith('data:image/')) {
+        onErr('Invalid image file');
+        return;
+      }
+      onOk(result);
+    };
+    reader.onerror = () => onErr('Image upload failed');
+    reader.readAsDataURL(file);
+  };
+
+  const addCustomItemMain = () => {
+    const label = customItemDesc.trim();
+    const price = Number(customItemRate);
+    const qty = Math.floor(Number(customItemQty));
+    if (!label) {
+      showToast('Enter item description', 'er');
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      showToast('Enter a valid rate', 'er');
+      return;
+    }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      showToast('Enter a valid quantity', 'er');
+      return;
+    }
+    const id = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setLineItems((prev) => [...prev, { id, label, price, qty, image_url: customItemImage }]);
+    setCustomItemDesc('');
+    setCustomItemRate('');
+    setCustomItemQty('1');
+    setCustomItemImage(null);
+  };
+
+  const addQuickItemPreset = () => {
+    const label = quickItemDesc.trim();
+    const price = Number(quickItemRate);
+    if (!label) {
+      showToast('Enter item description', 'er');
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      showToast('Enter a valid rate', 'er');
+      return;
+    }
+    const id = `preset_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setQuickItems((prev) => [...prev, { id, label, price, image_url: quickItemImage }]);
+    setQuickItemDesc('');
+    setQuickItemRate('');
+    setQuickItemImage(null);
+    showToast('Quick item saved', 'ok');
+  };
+
+  const removeQuickItemPreset = (id: string) => {
+    setQuickItems((prev) => prev.filter((x) => x.id !== id));
+  };
+
   const startEditLatestBill = () => {
     if (!latestBill) return;
     setEditErr(null);
@@ -142,11 +262,15 @@ export default function VendorPage() {
         image_url: x.image_url ?? null,
       })),
     );
+    setEditCustomDesc('');
+    setEditCustomRate('');
+    setEditCustomQty('1');
+    setEditCustomImage(null);
     setEditingLatestBill(true);
   };
 
   const addEditItem = (itemId: string) => {
-    const item = vendorBillItems.find((i) => i.id === itemId);
+    const item = billItemOptions.find((i) => i.id === itemId);
     if (!item) return;
     setEditLineItems((prev) => {
       const i = prev.findIndex((l) => l.id === itemId);
@@ -155,8 +279,33 @@ export default function VendorPage() {
         next[i] = { ...next[i], qty: next[i].qty + 1 };
         return next;
       }
-      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: null }];
+      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: item.image_url ?? null }];
     });
+  };
+
+  const addCustomItemEdit = () => {
+    const label = editCustomDesc.trim();
+    const price = Number(editCustomRate);
+    const qty = Math.floor(Number(editCustomQty));
+    if (!label) {
+      setEditErr('Enter item description');
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      setEditErr('Enter a valid rate');
+      return;
+    }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      setEditErr('Enter a valid quantity');
+      return;
+    }
+    const id = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setEditLineItems((prev) => [...prev, { id, label, price, qty, image_url: editCustomImage }]);
+    setEditCustomDesc('');
+    setEditCustomRate('');
+    setEditCustomQty('1');
+    setEditCustomImage(null);
+    setEditErr(null);
   };
 
   const removeOneEdit = (itemId: string) => {
@@ -214,6 +363,8 @@ export default function VendorPage() {
           line_items: editLineItems.map((l) => ({
             id: l.id,
             qty: l.qty,
+            label: l.label,
+            price: l.price,
             image_url: l.image_url ?? null,
           })),
         }),
@@ -351,7 +502,13 @@ export default function VendorPage() {
         body: JSON.stringify({
           token: orderToken,
           order_number: order.order_number ?? null,
-          line_items: lineItems.map((l) => ({ id: l.id, qty: l.qty })),
+          line_items: lineItems.map((l) => ({
+            id: l.id,
+            qty: l.qty,
+            label: l.label,
+            price: l.price,
+            image_url: l.image_url ?? null,
+          })),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -442,7 +599,13 @@ export default function VendorPage() {
         body: JSON.stringify({
           token: orderToken,
           order_number: currentOrder.order_number ?? null,
-          line_items: lineItems.map((l) => ({ id: l.id, qty: l.qty })),
+          line_items: lineItems.map((l) => ({
+            id: l.id,
+            qty: l.qty,
+            label: l.label,
+            price: l.price,
+            image_url: l.image_url ?? null,
+          })),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -474,6 +637,14 @@ export default function VendorPage() {
     setEditLineItems([]);
     setEditErr(null);
     setEditSaving(false);
+    setCustomItemDesc('');
+    setCustomItemRate('');
+    setCustomItemQty('1');
+    setCustomItemImage(null);
+    setEditCustomDesc('');
+    setEditCustomRate('');
+    setEditCustomQty('1');
+    setEditCustomImage(null);
     lastSavedBillFingerprintRef.current = null;
   };
 
@@ -590,9 +761,56 @@ export default function VendorPage() {
           </div>
 
           <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16, marginTop: 16 }}>
+            <div style={{ border: '1px dashed var(--bd)', borderRadius: 10, padding: 12, marginBottom: 16 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--tx)' }}>
+                Manage item presets shown in this bill generator (desc, rate, image)
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr', gap: 8, marginBottom: 8 }}>
+                <input className="vendor-input" placeholder="Item description" value={quickItemDesc} onChange={(e) => setQuickItemDesc(e.target.value)} />
+                <input className="vendor-input" placeholder="Rate" value={quickItemRate} onChange={(e) => setQuickItemRate(e.target.value)} inputMode="decimal" />
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) {
+                      setQuickItemImage(null);
+                      return;
+                    }
+                    readImageAsDataUrl(file, setQuickItemImage, (m) => showToast(m, 'er'));
+                  }}
+                />
+                {quickItemImage && (
+                  <>
+                    <img src={quickItemImage} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--bd)' }} />
+                    <button type="button" className="vendor-item-btn-minus" style={{ minWidth: 44 }} onClick={() => setQuickItemImage(null)}>×</button>
+                  </>
+                )}
+                <button type="button" onClick={addQuickItemPreset} className="vendor-btn-secondary">Add to presets</button>
+              </div>
+              {quickItems.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {quickItems.map((q) => (
+                    <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, borderTop: '1px dashed var(--bd)', paddingTop: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {q.image_url ? (
+                          <img src={q.image_url} alt="" style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--bd)' }} />
+                        ) : (
+                          <span aria-hidden style={{ width: 34, height: 34, display: 'inline-block', borderRadius: 6, border: '1px dashed var(--bd)' }} />
+                        )}
+                        <span style={{ fontSize: 13 }}>{q.label} · ₹{q.price}</span>
+                      </div>
+                      <button type="button" className="vendor-item-btn-minus" style={{ minWidth: 44 }} onClick={() => removeQuickItemPreset(q.id)}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--tx)' }}>Tap an item to add one (tap again to add more)</p>
             <div className="vendor-item-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
-              {vendorBillItems.map((i) => {
+              {billItemOptions.map((i) => {
                 const line = lineItems.find((l) => l.id === i.id);
                 const qty = line?.qty ?? 0;
                 return (
@@ -613,6 +831,36 @@ export default function VendorPage() {
                   </div>
                 );
               })}
+            </div>
+
+            <div style={{ border: '1px dashed var(--bd)', borderRadius: 10, padding: 12, marginBottom: 16 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--tx)' }}>Add custom item (desc, rate, image)</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 0.6fr', gap: 8, marginBottom: 8 }}>
+                <input className="vendor-input" placeholder="Item description" value={customItemDesc} onChange={(e) => setCustomItemDesc(e.target.value)} />
+                <input className="vendor-input" placeholder="Rate" value={customItemRate} onChange={(e) => setCustomItemRate(e.target.value)} inputMode="decimal" />
+                <input className="vendor-input" placeholder="Qty" value={customItemQty} onChange={(e) => setCustomItemQty(e.target.value)} inputMode="numeric" />
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) {
+                      setCustomItemImage(null);
+                      return;
+                    }
+                    readImageAsDataUrl(file, setCustomItemImage, (m) => showToast(m, 'er'));
+                  }}
+                />
+                {customItemImage && (
+                  <>
+                    <img src={customItemImage} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--bd)' }} />
+                    <button type="button" className="vendor-item-btn-minus" style={{ minWidth: 44 }} onClick={() => setCustomItemImage(null)}>×</button>
+                  </>
+                )}
+                <button type="button" onClick={addCustomItemMain} className="vendor-btn-secondary">Add custom item</button>
+              </div>
             </div>
 
             <div style={{ marginBottom: 12, minHeight: 24 }}>
@@ -687,7 +935,7 @@ export default function VendorPage() {
             <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16 }}>
               <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--tx)' }}>Tap an item to add one</p>
               <div className="vendor-item-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
-                {vendorBillItems.map((i) => {
+                {billItemOptions.map((i) => {
                   const line = editLineItems.find((l) => l.id === i.id);
                   const qty = line?.qty ?? 0;
                   return (
@@ -704,6 +952,36 @@ export default function VendorPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              <div style={{ border: '1px dashed var(--bd)', borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--tx)' }}>Add custom item (desc, rate, image)</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 0.6fr', gap: 8, marginBottom: 8 }}>
+                  <input className="vendor-input" placeholder="Item description" value={editCustomDesc} onChange={(e) => setEditCustomDesc(e.target.value)} />
+                  <input className="vendor-input" placeholder="Rate" value={editCustomRate} onChange={(e) => setEditCustomRate(e.target.value)} inputMode="decimal" />
+                  <input className="vendor-input" placeholder="Qty" value={editCustomQty} onChange={(e) => setEditCustomQty(e.target.value)} inputMode="numeric" />
+                </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) {
+                        setEditCustomImage(null);
+                        return;
+                      }
+                      readImageAsDataUrl(file, setEditCustomImage, setEditErr);
+                    }}
+                  />
+                  {editCustomImage && (
+                    <>
+                      <img src={editCustomImage} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--bd)' }} />
+                      <button type="button" className="vendor-item-btn-minus" style={{ minWidth: 44 }} onClick={() => setEditCustomImage(null)}>×</button>
+                    </>
+                  )}
+                  <button type="button" onClick={addCustomItemEdit} className="vendor-btn-secondary">Add custom item</button>
+                </div>
               </div>
 
               <div style={{ marginBottom: 12 }}>

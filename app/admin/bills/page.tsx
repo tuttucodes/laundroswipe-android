@@ -114,6 +114,10 @@ export default function BillsPage() {
   const [editLineItems, setEditLineItems] = useState<LineItem[]>([]);
   const [editSaving, setEditSaving] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
+  const [editCustomDesc, setEditCustomDesc] = useState('');
+  const [editCustomRate, setEditCustomRate] = useState('');
+  const [editCustomQty, setEditCustomQty] = useState('1');
+  const [editCustomImage, setEditCustomImage] = useState<string | null>(null);
 
   useEffect(() => {
     const role = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
@@ -258,6 +262,53 @@ export default function BillsPage() {
     setEditErr(null);
     setEditingBill(b);
     setEditLineItems(billLineItemsToState(b));
+    setEditCustomDesc('');
+    setEditCustomRate('');
+    setEditCustomQty('1');
+    setEditCustomImage(null);
+  };
+
+  const readImageAsDataUrl = (file: File, onOk: (dataUrl: string) => void, onErr: (msg: string) => void) => {
+    if (file.size > 1024 * 1024) {
+      onErr('Image is too large. Keep it under 1MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!result.startsWith('data:image/')) {
+        onErr('Invalid image file');
+        return;
+      }
+      onOk(result);
+    };
+    reader.onerror = () => onErr('Image upload failed');
+    reader.readAsDataURL(file);
+  };
+
+  const addCustomItemEdit = () => {
+    const label = editCustomDesc.trim();
+    const price = Number(editCustomRate);
+    const qty = Math.floor(Number(editCustomQty));
+    if (!label) {
+      setEditErr('Enter item description');
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      setEditErr('Enter a valid rate');
+      return;
+    }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      setEditErr('Enter a valid quantity');
+      return;
+    }
+    const id = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setEditLineItems((prev) => [...prev, { id, label, price, qty, image_url: editCustomImage }]);
+    setEditCustomDesc('');
+    setEditCustomRate('');
+    setEditCustomQty('1');
+    setEditCustomImage(null);
+    setEditErr(null);
   };
 
   const saveEditedBill = async () => {
@@ -278,6 +329,8 @@ export default function BillsPage() {
           line_items: editLineItems.map((l) => ({
             id: l.id,
             qty: l.qty,
+            label: l.label,
+            price: l.price,
             image_url: l.image_url ?? null,
           })),
         }),
@@ -513,6 +566,35 @@ export default function BillsPage() {
                   </div>
                 );
               })}
+            </div>
+            <div style={{ border: '1px dashed var(--bd)', borderRadius: 10, padding: 12, marginBottom: 14 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--tx)' }}>Add custom item (desc, rate, image)</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 0.6fr', gap: 8, marginBottom: 8 }}>
+                <input className="vendor-input" placeholder="Item description" value={editCustomDesc} onChange={(e) => setEditCustomDesc(e.target.value)} />
+                <input className="vendor-input" placeholder="Rate" value={editCustomRate} onChange={(e) => setEditCustomRate(e.target.value)} inputMode="decimal" />
+                <input className="vendor-input" placeholder="Qty" value={editCustomQty} onChange={(e) => setEditCustomQty(e.target.value)} inputMode="numeric" />
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) {
+                      setEditCustomImage(null);
+                      return;
+                    }
+                    readImageAsDataUrl(file, setEditCustomImage, setEditErr);
+                  }}
+                />
+                {editCustomImage && (
+                  <>
+                    <img src={editCustomImage} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--bd)' }} />
+                    <button type="button" className="vendor-item-btn-minus" style={{ minWidth: 44 }} onClick={() => setEditCustomImage(null)}>×</button>
+                  </>
+                )}
+                <button type="button" onClick={addCustomItemEdit} className="vendor-btn-secondary">Add custom item</button>
+              </div>
             </div>
             <div style={{ marginBottom: 12 }}>
               {editLineItems.length === 0 ? (

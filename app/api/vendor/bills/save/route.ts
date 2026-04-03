@@ -32,7 +32,13 @@ export async function POST(request: Request) {
 
   let body: {
     token?: string;
-    line_items?: Array<{ id: string; qty: number; image_url?: string | null }>;
+    line_items?: Array<{
+      id: string;
+      qty: number;
+      label?: string | null;
+      price?: number | string | null;
+      image_url?: string | null;
+    }>;
     order_number?: string | null;
   };
 
@@ -91,9 +97,15 @@ export async function POST(request: Request) {
     const qty = Number(li?.qty ?? 0);
     if (!id) continue;
     if (!Number.isFinite(qty) || qty <= 0) continue;
-    const price = priceForItemId(id, effectiveVendorSlug);
-    if (price == null) continue;
-    const label = vendorBillItems.find((x) => x.id === id)?.label ?? id;
+    const catalogPrice = priceForItemId(id, effectiveVendorSlug);
+    const catalogLabel = vendorBillItems.find((x) => x.id === id)?.label ?? null;
+    const inputLabel = String((li as { label?: string | null }).label ?? '').trim();
+    const inputPrice = Number((li as { price?: number | string | null }).price ?? NaN);
+
+    const isCustomItem = catalogPrice == null;
+    const price = isCustomItem ? (Number.isFinite(inputPrice) && inputPrice > 0 ? inputPrice : null) : catalogPrice;
+    const label = isCustomItem ? (inputLabel || null) : String(catalogLabel ?? id);
+    if (price == null || !label) continue;
     const rawImage = typeof (li as { image_url?: unknown }).image_url === 'string'
       ? String((li as { image_url?: string }).image_url).trim()
       : null;
