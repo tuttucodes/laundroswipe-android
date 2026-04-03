@@ -3,7 +3,6 @@ import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS, getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount } from '@/lib/fees';
-import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 
 type DbVendor = { id: string; slug: string; name: string };
 
@@ -66,10 +65,6 @@ export async function POST(request: Request) {
 
   if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
   if (!bill) return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
-
-  if (!isWithinVendorBillCancelEditWindow(String(bill.created_at))) {
-    return NextResponse.json({ error: 'Edit window expired (1 hour after bill creation)' }, { status: 400 });
-  }
 
   const billVendorSlug = resolveBillVendorSlug(bill, vendorsById, dbVendors);
 

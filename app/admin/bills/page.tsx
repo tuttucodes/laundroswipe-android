@@ -194,7 +194,7 @@ export default function BillsPage() {
     );
   };
 
-  const canModifyBill = (b: VendorBillRow): boolean => isWithinVendorBillCancelEditWindow(b.created_at);
+  const canDeleteBill = (b: VendorBillRow): boolean => isWithinVendorBillCancelEditWindow(b.created_at);
 
   const editCatalogSlug = editingBill?.vendor_slug ?? sessionVendorSlug;
   const editBillItems = getVendorBillItems(editCatalogSlug);
@@ -373,7 +373,7 @@ export default function BillsPage() {
             {isSuperAdmin ? 'All vendor bills' : `${vendorName ?? 'Vendor'} bills`}
           </h1>
           <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>
-            View, edit line items, delete, and re-print. Edit and delete are only allowed within 1 hour of bill creation.
+            View, edit line items, delete, and re-print. Edit anytime; delete is allowed within 1 hour of bill creation.
           </p>
         </div>
         <button type="button" onClick={exportBillsToCsv} disabled={loading || bills.length === 0} className="vendor-btn-secondary" style={{ marginLeft: 'auto' }}>
@@ -412,18 +412,17 @@ export default function BillsPage() {
                 <button
                   type="button"
                   onClick={() => openEditBill(b)}
-                  disabled={!canModifyBill(b)}
                   className="vendor-btn-secondary"
-                  title={canModifyBill(b) ? 'Edit this bill' : 'Can only edit within 1 hour of bill creation'}
+                  title="Edit this bill"
                 >
                   Edit bill
                 </button>
                 <button
                   type="button"
                   onClick={() => cancelBill(b.id)}
-                  disabled={!canModifyBill(b) || cancellingId === b.id}
+                  disabled={!canDeleteBill(b) || cancellingId === b.id}
                   className="vendor-btn-secondary"
-                  title={canModifyBill(b) ? 'Delete this bill (within 1 hour of creation)' : 'Bills can only be deleted within 1 hour'}
+                  title={canDeleteBill(b) ? 'Delete this bill (within 1 hour of creation)' : 'Bills can only be deleted within 1 hour'}
                 >
                   {cancellingId === b.id ? 'Deleting…' : 'Delete bill'}
                 </button>
@@ -459,10 +458,9 @@ export default function BillsPage() {
                 onClick={() => {
                   openEditBill(viewingBill);
                 }}
-                disabled={!canModifyBill(viewingBill)}
                 className="vendor-btn-secondary"
                 style={{ flex: '1 1 140px' }}
-                title={canModifyBill(viewingBill) ? 'Edit this bill' : 'Can only edit within 1 hour of bill creation'}
+                title="Edit this bill"
               >
                 Edit bill
               </button>
@@ -490,7 +488,7 @@ export default function BillsPage() {
               </button>
             </div>
             <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 14 }}>
-              Add or remove items. You can only edit within 1 hour of when the bill was created. Totals and service fee update automatically.
+              Add or remove items anytime. Totals and service fee update automatically.
             </p>
             <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--tx)' }}>Tap to add · −1 to reduce</p>
             <div className="vendor-item-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginBottom: 14 }}>

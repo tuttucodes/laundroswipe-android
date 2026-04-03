@@ -547,7 +547,7 @@ export default function VendorPage() {
               {cancellingLatestBill ? 'Cancelling latest bill…' : 'Cancel latest bill'}
             </button>
           )}
-          {latestBill?.can_cancel && (
+          {latestBill && (
             <button
               type="button"
               onClick={() => startEditLatestBill()}
@@ -681,7 +681,7 @@ export default function VendorPage() {
             </div>
 
             <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 14 }}>
-              Add/remove items and attach an image for each item line. (Edit is allowed within 1 hour of bill creation.)
+              Add/remove items and attach an image for each item line. You can edit this bill anytime.
             </p>
 
             <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16 }}>
