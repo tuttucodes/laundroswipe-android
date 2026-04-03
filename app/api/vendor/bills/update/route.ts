@@ -38,7 +38,10 @@ export async function POST(request: Request) {
   const supabase = createServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
 
-  let body: { bill_id?: string; line_items?: Array<{ id: string; qty: number }> };
+  let body: {
+    bill_id?: string;
+    line_items?: Array<{ id: string; qty: number; image_url?: string | null }>;
+  };
   try {
     body = await request.json();
   } catch {
@@ -78,10 +81,18 @@ export async function POST(request: Request) {
   }
 
   const catalog = getVendorBillItems(billVendorSlug);
-  const existingRows = Array.isArray(bill.line_items) ? (bill.line_items as { id: string; label: string; price: number; qty: number }[]) : [];
+  const existingRows = Array.isArray(bill.line_items)
+    ? (bill.line_items as { id: string; label: string; price: number; qty: number; image_url?: string | null }[])
+    : [];
   const existingById = new Map(existingRows.map((x) => [x.id, x]));
 
-  const safeLineItems: Array<{ id: string; label: string; qty: number; price: number }> = [];
+  const safeLineItems: Array<{
+    id: string;
+    label: string;
+    qty: number;
+    price: number;
+    image_url?: string | null;
+  }> = [];
   for (const li of lineItemsIn) {
     const id = String(li?.id ?? '').trim();
     const qty = Number(li?.qty ?? 0);
@@ -99,7 +110,18 @@ export async function POST(request: Request) {
       }
     }
     if (price == null || !label) continue;
-    safeLineItems.push({ id, label, qty: Math.floor(qty), price });
+    const prev = existingById.get(id) as unknown as { image_url?: string | null } | undefined;
+    const rawInputImage = (li as { image_url?: string | null }).image_url;
+    const image_url =
+      rawInputImage === undefined
+        ? prev?.image_url ?? null
+        : (() => {
+            const s = String(rawInputImage ?? '').trim();
+            if (!s) return null;
+            return s.startsWith('data:image/') || s.startsWith('http://') || s.startsWith('https://') ? s : null;
+          })();
+
+    safeLineItems.push({ id, label, qty: Math.floor(qty), price, image_url });
   }
 
   if (safeLineItems.length === 0) {
@@ -113,7 +135,13 @@ export async function POST(request: Request) {
   const { error: updErr } = await supabase
     .from('vendor_bills')
     .update({
-      line_items: safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty })),
+      line_items: safeLineItems.map((l) => ({
+        id: l.id,
+        label: l.label,
+        price: l.price,
+        qty: l.qty,
+        image_url: l.image_url ?? null,
+      })),
       subtotal,
       convenience_fee,
       total,

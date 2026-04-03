@@ -13,6 +13,13 @@ type LookupResponse = {
     id: string;
     created_at: string;
     can_cancel: boolean;
+    line_items: Array<{
+      id: string;
+      label: string;
+      price: number;
+      qty: number;
+      image_url?: string | null;
+    }>;
   } | null;
 } | { ok: false; error: string };
 
@@ -84,7 +91,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const { data: latestBill, error: latestBillErr } = await supabase
     .from('vendor_bills')
-    .select('id, created_at')
+    .select('id, created_at, line_items')
     .eq('order_token', token)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -103,6 +110,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           id: String(latestBill.id),
           created_at: String(latestBill.created_at),
           can_cancel: latestBillCanCancel,
+          line_items: Array.isArray(latestBill.line_items) ? latestBill.line_items : [],
         }
       : null,
   } satisfies LookupResponse);

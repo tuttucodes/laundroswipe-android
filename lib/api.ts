@@ -641,7 +641,7 @@ export const LSApi = {
     customer_name?: string | null;
     customer_phone?: string | null;
     user_id?: string | null;
-    line_items: { id: string; label: string; price: number; qty: number }[];
+    line_items: { id: string; label: string; price: number; qty: number; image_url?: string | null }[];
     subtotal: number;
     convenience_fee: number;
     total: number;
@@ -853,7 +853,7 @@ export type VendorBillRow = {
   /** Present when API joins users (admin bills list). */
   user_email?: string | null;
   user_display_id?: string | null;
-  line_items: { id: string; label: string; price: number; qty: number }[];
+  line_items: { id: string; label: string; price: number; qty: number; image_url?: string | null }[];
   subtotal: number;
   convenience_fee: number;
   total: number;

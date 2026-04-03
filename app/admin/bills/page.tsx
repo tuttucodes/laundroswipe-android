@@ -10,15 +10,16 @@ import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 
-type LineItem = { id: string; label: string; price: number; qty: number };
+type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
 
 function billLineItemsToState(b: VendorBillRow): LineItem[] {
   if (!Array.isArray(b.line_items)) return [];
-  return b.line_items.map((x: { id: string; label: string; price: number; qty: number }) => ({
+  return b.line_items.map((x: { id: string; label: string; price: number; qty: number; image_url?: string | null }) => ({
     id: String(x.id),
     label: String(x.label),
     price: Number(x.price),
     qty: Math.max(1, Math.floor(Number(x.qty))),
+    image_url: x.image_url ?? null,
   }));
 }
 
@@ -208,7 +209,7 @@ export default function BillsPage() {
         next[i] = { ...next[i], qty: next[i].qty + 1 };
         return next;
       }
-      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1 }];
+      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: null }];
     });
   };
 
@@ -225,6 +226,32 @@ export default function BillsPage() {
 
   const removeEditLine = (index: number) => {
     setEditLineItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const setEditLineImageUrl = (index: number, image_url: string | null) => {
+    setEditLineItems((prev) => prev.map((l, i) => (i === index ? { ...l, image_url } : l)));
+  };
+
+  const handleEditLineImageFile = (index: number, file: File | null) => {
+    if (!file) {
+      setEditLineImageUrl(index, null);
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      setEditErr('Image is too large. Keep it under 1MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!result.startsWith('data:image/')) {
+        setEditErr('Invalid image file');
+        return;
+      }
+      setEditLineImageUrl(index, result);
+    };
+    reader.onerror = () => setEditErr('Image upload failed');
+    reader.readAsDataURL(file);
   };
 
   const openEditBill = (b: VendorBillRow) => {
@@ -248,7 +275,11 @@ export default function BillsPage() {
         headers,
         body: JSON.stringify({
           bill_id: editingBill.id,
-          line_items: editLineItems.map((l) => ({ id: l.id, qty: l.qty })),
+          line_items: editLineItems.map((l) => ({
+            id: l.id,
+            qty: l.qty,
+            image_url: l.image_url ?? null,
+          })),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -260,7 +291,13 @@ export default function BillsPage() {
       const feeBreakdown = applyServiceFeeDiscount(subtotal);
       const updated: VendorBillRow = {
         ...editingBill,
-        line_items: editLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty })),
+        line_items: editLineItems.map((l) => ({
+          id: l.id,
+          label: l.label,
+          price: l.price,
+          qty: l.qty,
+          image_url: l.image_url ?? null,
+        })),
         subtotal,
         convenience_fee: feeBreakdown.finalFee,
         total: subtotal + feeBreakdown.finalFee,
@@ -493,6 +530,27 @@ export default function BillsPage() {
                   >
                     <span>
                       {l.label} × {l.qty} @ ₹{l.price}
+                      <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        {l.image_url ? (
+                          <img
+                            src={l.image_url}
+                            alt=""
+                            style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--bd)' }}
+                          />
+                        ) : (
+                          <span aria-hidden style={{ width: 44, height: 44, display: 'inline-block', borderRadius: 8, border: '1px dashed var(--bd)' }} />
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleEditLineImageFile(idx, e.target.files?.[0] ?? null)}
+                        />
+                        {l.image_url && (
+                          <button type="button" className="vendor-btn-secondary" style={{ padding: '4px 10px' }} onClick={() => setEditLineImageUrl(idx, null)}>
+                            Remove
+                          </button>
+                        )}
+                      </div>
                     </span>
                     <span>
                       ₹{l.price * l.qty}

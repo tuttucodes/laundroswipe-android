@@ -112,6 +112,9 @@ export const PROFAB_VENDOR_BILL_ITEMS = [
   { id: 'saree_dc', label: 'Saree DC', price: 150 },
   { id: 'fancy_dress_dc', label: 'Fancy Dress DC', price: 100 },
   { id: 'blazer_dc', label: 'Blazer DC', price: 150 },
+  { id: 'turkey', label: 'Turkey', price: 20 },
+  { id: 'pyjamma', label: 'Pyjamma', price: 40 },
+  { id: 'pyjamma_dc', label: 'Pyjamma DC', price: 80 },
 ] as const;
 
 export const STARWASH_VENDOR_BILL_ITEMS = [

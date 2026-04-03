@@ -7,8 +7,8 @@ import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
-type LineItem = { id: string; label: string; price: number; qty: number };
-type LatestBill = { id: string; created_at: string; can_cancel: boolean };
+type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
+type LatestBill = { id: string; created_at: string; can_cancel: boolean; line_items: LineItem[] };
 
 export default function VendorPage() {
   const [vendorName, setVendorName] = useState('Vendor');
@@ -27,6 +27,10 @@ export default function VendorPage() {
   const [sampleCustomerPhone, setSampleCustomerPhone] = useState('');
   const [latestBill, setLatestBill] = useState<LatestBill | null>(null);
   const [cancellingLatestBill, setCancellingLatestBill] = useState(false);
+  const [editingLatestBill, setEditingLatestBill] = useState(false);
+  const [editLineItems, setEditLineItems] = useState<LineItem[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editErr, setEditErr] = useState<string | null>(null);
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
   const vendorBillItems = getVendorBillItems(vendorId);
 
@@ -60,6 +64,10 @@ export default function VendorPage() {
     setShowAnyway(false);
     setSampleMode(false);
     setLatestBill(null);
+    setEditingLatestBill(false);
+    setEditLineItems([]);
+    setEditErr(null);
+    setEditSaving(false);
     lastSavedBillFingerprintRef.current = null;
     const t = token.replace(/^#/, '').trim();
     if (!t) {
@@ -103,7 +111,7 @@ export default function VendorPage() {
         next[i] = { ...next[i], qty: next[i].qty + 1 };
         return next;
       }
-      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1 }];
+      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: null }];
     });
   };
 
@@ -120,6 +128,109 @@ export default function VendorPage() {
 
   const removeLine = (index: number) => {
     setLineItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const startEditLatestBill = () => {
+    if (!latestBill) return;
+    setEditErr(null);
+    setEditLineItems(
+      (latestBill.line_items ?? []).map((x) => ({
+        id: String(x.id),
+        label: String(x.label),
+        price: Number(x.price),
+        qty: Math.max(1, Math.floor(Number(x.qty))),
+        image_url: x.image_url ?? null,
+      })),
+    );
+    setEditingLatestBill(true);
+  };
+
+  const addEditItem = (itemId: string) => {
+    const item = vendorBillItems.find((i) => i.id === itemId);
+    if (!item) return;
+    setEditLineItems((prev) => {
+      const i = prev.findIndex((l) => l.id === itemId);
+      if (i >= 0) {
+        const next = [...prev];
+        next[i] = { ...next[i], qty: next[i].qty + 1 };
+        return next;
+      }
+      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1, image_url: null }];
+    });
+  };
+
+  const removeOneEdit = (itemId: string) => {
+    setEditLineItems((prev) => {
+      const i = prev.findIndex((l) => l.id === itemId);
+      if (i < 0) return prev;
+      const next = [...prev];
+      if (next[i].qty <= 1) return next.filter((_, j) => j !== i);
+      next[i] = { ...next[i], qty: next[i].qty - 1 };
+      return next;
+    });
+  };
+
+  const removeEditLine = (index: number) => {
+    setEditLineItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const setEditLineImageUrl = (index: number, image_url: string | null) => {
+    setEditLineItems((prev) => prev.map((l, i) => (i === index ? { ...l, image_url } : l)));
+  };
+
+  const handleEditLineImageFile = (index: number, file: File | null) => {
+    if (!file) {
+      setEditLineImageUrl(index, null);
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      setEditErr('Image is too large. Keep it under 1MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!result.startsWith('data:image/')) {
+        setEditErr('Invalid image file');
+        return;
+      }
+      setEditLineImageUrl(index, result);
+    };
+    reader.onerror = () => setEditErr('Image upload failed');
+    reader.readAsDataURL(file);
+  };
+
+  const saveEditedLatestBill = async () => {
+    if (!latestBill || editLineItems.length === 0) return;
+    setEditSaving(true);
+    setEditErr(null);
+    try {
+      const res = await fetch('/api/vendor/bills/update', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({
+          bill_id: latestBill.id,
+          line_items: editLineItems.map((l) => ({
+            id: l.id,
+            qty: l.qty,
+            image_url: l.image_url ?? null,
+          })),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        setEditErr(data?.error || 'Update failed');
+        return;
+      }
+      setLatestBill((prev) => (prev ? { ...prev, line_items: editLineItems } : prev));
+      setEditingLatestBill(false);
+      showToast('Latest bill updated', 'ok');
+    } catch {
+      setEditErr('Update failed');
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const subtotal = lineItems.reduce((s, l) => s + l.price * l.qty, 0);
@@ -359,6 +470,10 @@ export default function VendorPage() {
     setSampleCustomerName('');
     setSampleCustomerPhone('');
     setLatestBill(null);
+    setEditingLatestBill(false);
+    setEditLineItems([]);
+    setEditErr(null);
+    setEditSaving(false);
     lastSavedBillFingerprintRef.current = null;
   };
 
@@ -430,6 +545,17 @@ export default function VendorPage() {
               disabled={cancellingLatestBill}
             >
               {cancellingLatestBill ? 'Cancelling latest bill…' : 'Cancel latest bill'}
+            </button>
+          )}
+          {latestBill?.can_cancel && (
+            <button
+              type="button"
+              onClick={() => startEditLatestBill()}
+              className="vendor-btn-secondary"
+              style={{ width: '100%', marginBottom: 10 }}
+              disabled={cancellingLatestBill}
+            >
+              Edit latest bill items (add images)
             </button>
           )}
           <button type="button" onClick={() => setShowAnyway(true)} className="vendor-btn-primary" style={{ width: '100%' }}>Continue</button>
@@ -534,6 +660,122 @@ export default function VendorPage() {
               <Link href="/admin/bills" className="vendor-btn-secondary" style={{ flex: '1 1 200px', textDecoration: 'none' }}>View saved bills</Link>
             </div>
             <p style={{ marginTop: 10, fontSize: 12, color: 'var(--ts)' }}>Set your printer in <Link href="/admin/printers" style={{ color: 'var(--b)', fontWeight: 600 }}>Admin → Printers</Link> (e.g. Epson M80 79mm). On Android: install <strong>ESCPOS Bluetooth Print Service</strong> if needed, then pair and choose it in the print dialog.</p>
+          </div>
+        </div>
+      )}
+
+      {editingLatestBill && latestBill && (
+        <div className="bill-popup-overlay" onClick={() => !editSaving && setEditingLatestBill(false)}>
+          <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560, maxHeight: '90vh', overflow: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0 }}>Edit latest bill</h3>
+              <button
+                type="button"
+                disabled={editSaving}
+                onClick={() => setEditingLatestBill(false)}
+                style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--ts)', lineHeight: 1, padding: 4 }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 14 }}>
+              Add/remove items and attach an image for each item line. (Edit is allowed within 1 hour of bill creation.)
+            </p>
+
+            <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--tx)' }}>Tap an item to add one</p>
+              <div className="vendor-item-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
+                {vendorBillItems.map((i) => {
+                  const line = editLineItems.find((l) => l.id === i.id);
+                  const qty = line?.qty ?? 0;
+                  return (
+                    <div key={i.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                      <button type="button" onClick={() => addEditItem(i.id)} className={`vendor-item-btn ${qty > 0 ? 'has-qty' : ''}`}>
+                        {i.label}
+                        {qty > 0 && <span style={{ display: 'block', fontSize: 12, marginTop: 2 }}>×{qty} ₹{i.price * qty}</span>}
+                      </button>
+                      {qty > 0 && (
+                        <button type="button" onClick={() => removeOneEdit(i.id)} className="vendor-item-btn-minus">
+                          −1
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                {editLineItems.length === 0 ? (
+                  <p style={{ color: 'var(--ts)', fontSize: 13 }}>No items yet. Add items above.</p>
+                ) : (
+                  editLineItems.map((l, idx) => (
+                    <div key={`${l.id}-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--bd)', fontSize: 14, flexWrap: 'wrap' }}>
+                      <div style={{ minWidth: 220 }}>
+                        <div style={{ fontWeight: 600 }}>
+                          {l.label} × {l.qty} @ ₹{l.price}
+                        </div>
+                        <div style={{ color: 'var(--ts)', fontSize: 12, marginTop: 6 }}>{`Line total: ₹${l.price * l.qty}`}</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        {l.image_url ? (
+                          <img src={l.image_url} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--bd)', background: '#fff' }} />
+                        ) : (
+                          <span aria-hidden style={{ width: 52, height: 52, display: 'inline-block', borderRadius: 8, border: '1px dashed var(--bd)', background: '#fff' }} />
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleEditLineImageFile(idx, e.target.files?.[0] ?? null)}
+                        />
+                        {l.image_url && (
+                          <button type="button" className="vendor-item-btn-minus" style={{ minWidth: 50 }} onClick={() => setEditLineImageUrl(idx, null)}>
+                            ×
+                          </button>
+                        )}
+                        <button type="button" onClick={() => removeEditLine(idx)} className="vendor-item-btn-minus" style={{ minWidth: 50 }} aria-label="Remove line">
+                          −
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {(() => {
+                const sub = editLineItems.reduce((s, l) => s + l.price * l.qty, 0);
+                const feeBreakdown = applyServiceFeeDiscount(sub);
+                const total = sub + feeBreakdown.finalFee;
+                return (
+                  <>
+                    <p style={{ fontSize: 13, color: 'var(--ts)' }}>Total items: {editLineItems.reduce((s, l) => s + l.qty, 0)}</p>
+                    <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{sub.toFixed(2)}</p>
+                    {feeBreakdown.active && feeBreakdown.originalFee > 0 ? (
+                      <p style={{ fontWeight: 600, fontSize: 14 }}>
+                        Service fee: <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee.toFixed(2)}</span> ₹0
+                        <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--ok)' }}>(7-day discount)</span>
+                      </p>
+                    ) : (
+                      <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{feeBreakdown.finalFee.toFixed(2)}</p>
+                    )}
+                    <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
+                    <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total.toFixed(2)}</p>
+                  </>
+                );
+              })()}
+            </div>
+
+            {editErr && <p style={{ marginTop: 10, fontSize: 13, color: 'var(--er)' }}>{editErr}</p>}
+
+            <div className="vendor-action-row" style={{ marginTop: 18, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <button type="button" onClick={saveEditedLatestBill} disabled={editSaving || editLineItems.length === 0} className="vendor-btn-primary" style={{ flex: '1 1 200px' }}>
+                {editSaving ? 'Saving…' : 'Save edited bill'}
+              </button>
+              <button type="button" onClick={() => setEditingLatestBill(false)} disabled={editSaving} className="vendor-btn-secondary" style={{ flex: '1 1 140px' }}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

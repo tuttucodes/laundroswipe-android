@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
   let body: {
     token?: string;
-    line_items?: Array<{ id: string; qty: number }>;
+    line_items?: Array<{ id: string; qty: number; image_url?: string | null }>;
     order_number?: string | null;
   };
 
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   const effectiveVendorSlug = (sessionVendorSlug ?? orderVendorSlug ?? null)?.toLowerCase().trim() || null;
   const vendorBillItems = getVendorBillItems(effectiveVendorSlug);
 
-  const safeLineItems: Array<{ id: string; label: string; qty: number; price: number }> = [];
+  const safeLineItems: Array<{ id: string; label: string; qty: number; price: number; image_url?: string | null }> = [];
   for (const li of lineItems) {
     const id = String(li?.id ?? '').trim();
     const qty = Number(li?.qty ?? 0);
@@ -94,7 +94,15 @@ export async function POST(request: Request) {
     const price = priceForItemId(id, effectiveVendorSlug);
     if (price == null) continue;
     const label = vendorBillItems.find((x) => x.id === id)?.label ?? id;
-    safeLineItems.push({ id, label, qty: Math.floor(qty), price });
+    const rawImage = typeof (li as { image_url?: unknown }).image_url === 'string'
+      ? String((li as { image_url?: string }).image_url).trim()
+      : null;
+    const image_url =
+      rawImage && (rawImage.startsWith('data:image/') || rawImage.startsWith('http://') || rawImage.startsWith('https://'))
+        ? rawImage
+        : null;
+
+    safeLineItems.push({ id, label, qty: Math.floor(qty), price, image_url });
   }
 
   if (safeLineItems.length === 0) {
@@ -142,7 +150,7 @@ export async function POST(request: Request) {
       customer_name,
       customer_phone,
       user_id,
-      line_items: safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty })),
+      line_items: safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty, image_url: l.image_url })),
       subtotal,
       convenience_fee,
       total,
