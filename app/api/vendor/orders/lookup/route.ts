@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
+import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 
 type LookupResponse = {
   ok: true;
@@ -89,11 +90,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     .limit(1)
     .maybeSingle();
   if (latestBillErr) return NextResponse.json({ error: latestBillErr.message }, { status: 500 });
-  const latestBillCreatedAtMs = latestBill?.created_at ? new Date(String(latestBill.created_at)).getTime() : NaN;
   const latestBillCanCancel =
-    !!latestBill &&
-    Number.isFinite(latestBillCreatedAtMs) &&
-    Date.now() - latestBillCreatedAtMs <= 60 * 60 * 1000;
+    !!latestBill && isWithinVendorBillCancelEditWindow(String(latestBill.created_at));
 
   return NextResponse.json({
     ok: true,

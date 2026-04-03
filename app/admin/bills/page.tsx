@@ -2,10 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
+import { printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import type { VendorBillRow } from '@/lib/api';
 import { calculateServiceFee } from '@/lib/fees';
+import { getVendorBillItems } from '@/lib/constants';
+import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
+
+type LineItem = { id: string; label: string; price: number; qty: number };
+
+function billLineItemsToState(b: VendorBillRow): LineItem[] {
+  if (!Array.isArray(b.line_items)) return [];
+  return b.line_items.map((x: { id: string; label: string; price: number; qty: number }) => ({
+    id: String(x.id),
+    label: String(x.label),
+    price: Number(x.price),
+    qty: Math.max(1, Math.floor(Number(x.qty))),
+  }));
+}
 
 function billToHtml(b: VendorBillRow) {
   const totalItems = Array.isArray(b.line_items)
@@ -93,11 +108,18 @@ export default function BillsPage() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [vendorName, setVendorName] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [sessionVendorSlug, setSessionVendorSlug] = useState<string | null>(null);
+  const [editingBill, setEditingBill] = useState<VendorBillRow | null>(null);
+  const [editLineItems, setEditLineItems] = useState<LineItem[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editErr, setEditErr] = useState<string | null>(null);
 
   useEffect(() => {
     const role = typeof window !== 'undefined' ? localStorage.getItem('admin_role') : null;
     const vendorId = typeof window !== 'undefined' ? localStorage.getItem('admin_vendor_id') : null;
     setIsSuperAdmin(role === 'super_admin');
+    if (role === 'vendor' && vendorId) setSessionVendorSlug(vendorId);
+    else setSessionVendorSlug(null);
     setVendorName(
       role === 'vendor' && vendorId
         ? localStorage.getItem('admin_vendor_name') || vendorId
@@ -171,10 +193,88 @@ export default function BillsPage() {
     );
   };
 
-  const canCancelBill = (b: VendorBillRow): boolean => {
-    const created = new Date(b.created_at).getTime();
-    if (!Number.isFinite(created)) return false;
-    return Date.now() - created <= 60 * 60 * 1000;
+  const canModifyBill = (b: VendorBillRow): boolean => isWithinVendorBillCancelEditWindow(b.created_at);
+
+  const editCatalogSlug = editingBill?.vendor_slug ?? sessionVendorSlug;
+  const editBillItems = getVendorBillItems(editCatalogSlug);
+
+  const addEditItem = (itemId: string) => {
+    const item = editBillItems.find((i) => i.id === itemId);
+    if (!item) return;
+    setEditLineItems((prev) => {
+      const i = prev.findIndex((l) => l.id === itemId);
+      if (i >= 0) {
+        const next = [...prev];
+        next[i] = { ...next[i], qty: next[i].qty + 1 };
+        return next;
+      }
+      return [...prev, { id: item.id, label: item.label, price: item.price, qty: 1 }];
+    });
+  };
+
+  const removeOneEdit = (itemId: string) => {
+    setEditLineItems((prev) => {
+      const i = prev.findIndex((l) => l.id === itemId);
+      if (i < 0) return prev;
+      const next = [...prev];
+      if (next[i].qty <= 1) return next.filter((_, j) => j !== i);
+      next[i] = { ...next[i], qty: next[i].qty - 1 };
+      return next;
+    });
+  };
+
+  const removeEditLine = (index: number) => {
+    setEditLineItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const openEditBill = (b: VendorBillRow) => {
+    setEditErr(null);
+    setEditingBill(b);
+    setEditLineItems(billLineItemsToState(b));
+  };
+
+  const saveEditedBill = async () => {
+    if (!editingBill || editLineItems.length === 0) return;
+    setEditSaving(true);
+    try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+      const res = await fetch('/api/vendor/bills/update', {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({
+          bill_id: editingBill.id,
+          line_items: editLineItems.map((l) => ({ id: l.id, qty: l.qty })),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        setEditErr(data?.error || 'Update failed');
+        return;
+      }
+      const subtotal = editLineItems.reduce((s, l) => s + l.price * l.qty, 0);
+      const feeBreakdown = applyServiceFeeDiscount(subtotal);
+      const updated: VendorBillRow = {
+        ...editingBill,
+        line_items: editLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty })),
+        subtotal,
+        convenience_fee: feeBreakdown.finalFee,
+        total: subtotal + feeBreakdown.finalFee,
+      };
+      setBills((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      if (viewingBill?.id === updated.id) setViewingBill(updated);
+      setEditingBill(null);
+      setCopyMsg('Bill updated');
+      setTimeout(() => setCopyMsg(null), 2500);
+    } catch {
+      setEditErr('Update failed');
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const cancelBill = async (billId: string) => {
@@ -235,12 +335,18 @@ export default function BillsPage() {
           <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>
             {isSuperAdmin ? 'All vendor bills' : `${vendorName ?? 'Vendor'} bills`}
           </h1>
-          <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>View and re-print past bills.</p>
+          <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>
+            View, edit line items, delete, and re-print. Edit and delete are only allowed within 1 hour of bill creation.
+          </p>
         </div>
         <button type="button" onClick={exportBillsToCsv} disabled={loading || bills.length === 0} className="vendor-btn-secondary" style={{ marginLeft: 'auto' }}>
           📥 Export to Excel
         </button>
       </div>
+
+      {copyMsg && !viewingBill && !editingBill && (
+        <p style={{ marginBottom: 14, fontSize: 14, color: copyMsg.includes('failed') ? 'var(--er)' : 'var(--ok)' }}>{copyMsg}</p>
+      )}
 
       {loading ? (
         <p style={{ color: 'var(--ts)' }}>Loading…</p>
@@ -266,14 +372,19 @@ export default function BillsPage() {
                 <button type="button" onClick={() => printBill(b)} className="vendor-btn-primary">
                   Print
                 </button>
+                {canModifyBill(b) && (
+                  <button type="button" onClick={() => openEditBill(b)} className="vendor-btn-secondary">
+                    Edit bill
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => cancelBill(b.id)}
-                  disabled={!canCancelBill(b) || cancellingId === b.id}
+                  disabled={!canModifyBill(b) || cancellingId === b.id}
                   className="vendor-btn-secondary"
-                  title={canCancelBill(b) ? 'Cancel this bill' : 'Can only cancel within 1 hour'}
+                  title={canModifyBill(b) ? 'Delete this bill (within 1 hour of creation)' : 'Bills can only be deleted within 1 hour'}
                 >
-                  {cancellingId === b.id ? 'Deleting…' : 'Cancel bill'}
+                  {cancellingId === b.id ? 'Deleting…' : 'Delete bill'}
                 </button>
               </div>
             </div>
@@ -300,11 +411,126 @@ export default function BillsPage() {
                 </Link>
               </p>
             )}
-            {copyMsg && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--ok)' }}>{copyMsg}</p>}
-            <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-              <button type="button" onClick={() => printBill(viewingBill)} className="vendor-btn-primary" style={{ flex: 1 }}>Print</button>
-              <button type="button" onClick={() => copyBill(viewingBill)} className="vendor-btn-secondary" style={{ flex: 1 }}>Copy receipt</button>
-              <button type="button" onClick={() => setViewingBill(null)} className="vendor-btn-secondary" style={{ flex: 1 }}>Close</button>
+            {copyMsg && <p style={{ marginTop: 12, fontSize: 13, color: copyMsg.includes('failed') ? 'var(--er)' : 'var(--ok)' }}>{copyMsg}</p>}
+            <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+              {canModifyBill(viewingBill) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    openEditBill(viewingBill);
+                  }}
+                  className="vendor-btn-secondary"
+                  style={{ flex: '1 1 140px' }}
+                >
+                  Edit bill
+                </button>
+              )}
+              <button type="button" onClick={() => printBill(viewingBill)} className="vendor-btn-primary" style={{ flex: '1 1 140px' }}>Print</button>
+              <button type="button" onClick={() => copyBill(viewingBill)} className="vendor-btn-secondary" style={{ flex: '1 1 140px' }}>Copy receipt</button>
+              <button type="button" onClick={() => setViewingBill(null)} className="vendor-btn-secondary" style={{ flex: '1 1 140px' }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingBill && (
+        <div className="bill-popup-overlay" onClick={() => !editSaving && setEditingBill(null)}>
+          <div className="bill-popup-card" style={{ maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0 }}>Edit bill #{editingBill.order_token}</h3>
+              <button
+                type="button"
+                disabled={editSaving}
+                onClick={() => setEditingBill(null)}
+                style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--ts)', lineHeight: 1, padding: 4 }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 14 }}>
+              Add or remove items. You can only edit within 1 hour of when the bill was created. Totals and service fee update automatically.
+            </p>
+            <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--tx)' }}>Tap to add · −1 to reduce</p>
+            <div className="vendor-item-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginBottom: 14 }}>
+              {editBillItems.map((i) => {
+                const line = editLineItems.find((l) => l.id === i.id);
+                const qty = line?.qty ?? 0;
+                return (
+                  <div key={i.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <button type="button" onClick={() => addEditItem(i.id)} className={`vendor-item-btn ${qty > 0 ? 'has-qty' : ''}`}>
+                      {i.label}
+                      {qty > 0 && (
+                        <span style={{ display: 'block', fontSize: 11, marginTop: 2 }}>
+                          ×{qty} ₹{i.price * qty}
+                        </span>
+                      )}
+                    </button>
+                    {qty > 0 && (
+                      <button type="button" onClick={() => removeOneEdit(i.id)} className="vendor-item-btn-minus">
+                        −1
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              {editLineItems.length === 0 ? (
+                <p style={{ color: 'var(--ts)', fontSize: 13 }}>Add at least one line to save.</p>
+              ) : (
+                editLineItems.map((l, idx) => (
+                  <div
+                    key={`${l.id}-${idx}`}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '6px 0',
+                      borderBottom: '1px solid var(--bd)',
+                      fontSize: 13,
+                    }}
+                  >
+                    <span>
+                      {l.label} × {l.qty} @ ₹{l.price}
+                    </span>
+                    <span>
+                      ₹{l.price * l.qty}
+                      <button type="button" onClick={() => removeEditLine(idx)} className="vendor-item-btn-minus" style={{ marginLeft: 8, minWidth: 40 }} aria-label="Remove line">
+                        ×
+                      </button>
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+            {(() => {
+              const sub = editLineItems.reduce((s, l) => s + l.price * l.qty, 0);
+              const fee = applyServiceFeeDiscount(sub);
+              return (
+                <>
+                  <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{sub.toFixed(2)}</p>
+                  {fee.active && fee.originalFee > 0 ? (
+                    <p style={{ fontWeight: 600, fontSize: 14 }}>
+                      Service fee: <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{fee.originalFee.toFixed(2)}</span> ₹0
+                      <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--ok)' }}>(7-day discount)</span>
+                    </p>
+                  ) : (
+                    <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{fee.finalFee.toFixed(2)}</p>
+                  )}
+                  <p style={{ fontSize: 11, color: 'var(--ts)', marginBottom: 8 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
+                  <p style={{ fontWeight: 700, fontSize: 16 }}>Total: ₹{(sub + fee.finalFee).toFixed(2)}</p>
+                </>
+              );
+            })()}
+            {editErr && <p style={{ marginTop: 10, fontSize: 13, color: 'var(--er)' }}>{editErr}</p>}
+            <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+              <button type="button" disabled={editSaving || editLineItems.length === 0} onClick={saveEditedBill} className="vendor-btn-primary" style={{ flex: '1 1 160px' }}>
+                {editSaving ? 'Saving…' : 'Save changes'}
+              </button>
+              <button type="button" disabled={editSaving} onClick={() => setEditingBill(null)} className="vendor-btn-secondary" style={{ flex: '1 1 120px' }}>
+                Cancel
+              </button>
             </div>
           </div>
         </div>

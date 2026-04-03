@@ -142,6 +142,7 @@ type ScheduleSlot = { id: string; label: string; time_from: string; time_to: str
 type ScheduleDateRow = { date: string; enabled: boolean; slot_ids: string[] };
 type AdminNotification = { id: string; title: string; body: string | null; sent_at: string | null; scheduled_at: string | null; created_at: string };
 type VendorSummary = { id: string; slug: string; name: string; active: boolean };
+type VendorCampusListing = { campus_id: string; vendor_id: string; vendor_slug: string; vendor_name: string };
 type ServiceArea = { id: string; name: string; short_code: string; city: string | null; state: string | null; is_active: boolean };
 type LocationRequestRow = {
   id: string;
@@ -259,6 +260,10 @@ export default function AdminPage() {
   const [areaRequests, setAreaRequests] = useState<LocationRequestRow[]>([]);
   const [areaRequestsLoading, setAreaRequestsLoading] = useState(false);
   const [areaRequestsError, setAreaRequestsError] = useState<string | null>(null);
+  const [vendorCampusListings, setVendorCampusListings] = useState<VendorCampusListing[]>([]);
+  const [linkCampusId, setLinkCampusId] = useState('vit-chn');
+  const [linkVendorSlug, setLinkVendorSlug] = useState('');
+  const [linkCampusSaving, setLinkCampusSaving] = useState(false);
   const dashboardTitle = isSuperAdmin
     ? 'LaundroSwipe Super Admin'
     : `${vendorDisplayName || vendorsList.find((v) => v.slug === vendorId)?.name || vendorId || 'Vendor'} Dashboard`;
@@ -533,13 +538,26 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!loggedIn || !isSuperAdmin || !['settings', 'vendor'].includes(tab)) return;
-    Promise.all([
-      fetch('/api/admin/vendors', { credentials: 'include', headers: adminAuthHeaders() }).then((r) => r.json().catch(() => ({}))),
-      fetch('/api/admin/service-areas', { credentials: 'include', headers: adminAuthHeaders() }).then((r) => r.json().catch(() => ({}))),
-    ]).then(([v, a]) => {
-      if (Array.isArray(v?.vendors)) setVendorsList(v.vendors);
-      if (Array.isArray(a?.areas)) setAreasList(a.areas);
-    }).catch(() => {});
+    const headers = adminAuthHeaders();
+    const promises: Promise<unknown>[] = [
+      fetch('/api/admin/vendors', { credentials: 'include', headers }).then((r) => r.json().catch(() => ({}))),
+      fetch('/api/admin/service-areas', { credentials: 'include', headers }).then((r) => r.json().catch(() => ({}))),
+    ];
+    if (tab === 'settings') {
+      promises.push(fetch('/api/admin/vendor-campus', { credentials: 'include', headers }).then((r) => r.json().catch(() => ({}))));
+    }
+    Promise.all(promises)
+      .then((results) => {
+        const v = results[0] as { vendors?: VendorSummary[] };
+        const a = results[1] as { areas?: ServiceArea[] };
+        if (Array.isArray(v?.vendors)) setVendorsList(v.vendors);
+        if (Array.isArray(a?.areas)) setAreasList(a.areas);
+        if (tab === 'settings' && results[2]) {
+          const d = results[2] as { listings?: VendorCampusListing[] };
+          if (Array.isArray(d?.listings)) setVendorCampusListings(d.listings);
+        }
+      })
+      .catch(() => {});
   }, [loggedIn, isSuperAdmin, tab]);
 
   useEffect(() => {
@@ -555,6 +573,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (vendorsList.length === 0) return;
     setRegisterVendorSlug((prev) => (prev && vendorsList.some((v) => v.slug === prev) ? prev : vendorsList[0].slug));
+    setLinkVendorSlug((prev) => (prev && vendorsList.some((v) => v.slug === prev) ? prev : vendorsList[0].slug));
   }, [vendorsList]);
 
   useEffect(() => {
@@ -1690,6 +1709,101 @@ export default function AdminPage() {
                   {vendorsList.length > 0
                     ? vendorsList.map((v) => `${v.name} (${v.slug})`).join(' · ')
                     : 'No vendors loaded yet.'}
+                </div>
+              </div>
+            )}
+
+            {isSuperAdmin && (
+              <div style={{ marginTop: 20, background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.04)', maxWidth: 600 }}>
+                <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, marginBottom: 6 }}>Campus ↔ vendor listings</h2>
+                <p style={{ color: 'var(--ts)', fontSize: 13, marginBottom: 12 }}>
+                  Controls which laundry partners appear in the student app for each campus (<code style={{ fontSize: 12 }}>college_id</code>, e.g.{' '}
+                  <code style={{ fontSize: 12 }}>vit-chn</code>). Add a vendor in Vendor Directory first, then link them here.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                  <select className="fi fs" value={linkCampusId} onChange={(e) => setLinkCampusId(e.target.value)} style={{ width: '100%' }}>
+                    {COLLEGES.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.id})
+                      </option>
+                    ))}
+                  </select>
+                  <select className="fi fs" value={linkVendorSlug} onChange={(e) => setLinkVendorSlug(e.target.value)} style={{ width: '100%' }}>
+                    {vendorsList.length === 0 ? (
+                      <option value="">No vendors</option>
+                    ) : (
+                      vendorsList.map((v) => (
+                        <option key={v.slug} value={v.slug}>
+                          {v.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  className="btn bp bbl"
+                  disabled={linkCampusSaving || !linkVendorSlug.trim()}
+                  onClick={async () => {
+                    setLinkCampusSaving(true);
+                    try {
+                      const res = await fetch('/api/admin/vendor-campus', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+                        body: JSON.stringify({ campus_id: linkCampusId, vendor_slug: linkVendorSlug.trim() }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (res.ok) {
+                        showToast('Campus listing saved', 'ok');
+                        const r2 = await fetch('/api/admin/vendor-campus', { credentials: 'include', headers: adminAuthHeaders() });
+                        const d2 = await r2.json().catch(() => ({}));
+                        if (Array.isArray(d2?.listings)) setVendorCampusListings(d2.listings);
+                      } else showToast(data?.error || 'Save failed', 'er');
+                    } catch {
+                      showToast('Save failed', 'er');
+                    } finally {
+                      setLinkCampusSaving(false);
+                    }
+                  }}
+                >
+                  {linkCampusSaving ? 'Saving…' : 'Link vendor to campus'}
+                </button>
+                <div style={{ marginTop: 14, fontSize: 13, color: 'var(--ts)' }}>
+                  <div style={{ fontWeight: 600, marginBottom: 6 }}>Current links</div>
+                  {vendorCampusListings.length === 0 ? (
+                    <span>No listings loaded.</span>
+                  ) : (
+                    <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
+                      {vendorCampusListings.map((row) => (
+                        <li key={`${row.campus_id}-${row.vendor_id}`} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span>
+                            <code style={{ fontSize: 12 }}>{row.campus_id}</code> → {row.vendor_name}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn bout"
+                            style={{ fontSize: 12, padding: '4px 10px' }}
+                            onClick={async () => {
+                              const q = new URLSearchParams({ vendor_slug: row.vendor_slug, campus_id: row.campus_id });
+                              const res = await fetch(`/api/admin/vendor-campus?${q}`, {
+                                method: 'DELETE',
+                                credentials: 'include',
+                                headers: adminAuthHeaders(),
+                              });
+                              const data = await res.json().catch(() => ({}));
+                              if (res.ok) {
+                                showToast('Link removed', 'ok');
+                                setVendorCampusListings((prev) => prev.filter((x) => !(x.campus_id === row.campus_id && x.vendor_id === row.vendor_id)));
+                              } else showToast(data?.error || 'Remove failed', 'er');
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             )}

@@ -13,6 +13,10 @@ type CreateOrderBody = {
   status?: string;
   ins?: string;
   vendorName?: string;
+  /** Vendor slug (e.g. profab); preferred for campus validation */
+  vendorSlug?: string;
+  /** App college id (e.g. vit-chn); required when profile college is general / unset */
+  campusId?: string;
 };
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
@@ -45,6 +49,7 @@ export async function POST(request: Request) {
   const status = String(body.status ?? 'scheduled').trim() || 'scheduled';
   const instructions = String(body.ins ?? '').trim() || null;
   const vendorName = String(body.vendorName ?? '').trim() || null;
+  const bodyVendorSlug = String(body.vendorSlug ?? '').trim().toLowerCase();
 
   if (!orderNumber || !token || !serviceId || !serviceName || !pickupDate || !timeSlot) {
     return NextResponse.json({ error: 'Missing required order fields' }, { status: 400 });
@@ -53,7 +58,7 @@ export async function POST(request: Request) {
   const { supabase, authUserId } = context;
   const { data: userRow, error: userError } = await supabase
     .from('users')
-    .select('id, phone, terms_version')
+    .select('id, phone, terms_version, college_id')
     .eq('auth_id', authUserId)
     .maybeSingle();
 
@@ -73,8 +78,22 @@ export async function POST(request: Request) {
     );
   }
 
+  const profileCampus = String(userRow.college_id ?? '').trim().toLowerCase();
+  const bodyCampus = String(body.campusId ?? '').trim().toLowerCase();
+  let campusForBooking: string | null =
+    profileCampus && profileCampus !== 'general' ? profileCampus : bodyCampus || null;
+  if (!campusForBooking) {
+    return NextResponse.json(
+      {
+        error: 'Select your college in your profile (or your campus in the app) before booking.',
+        code: 'CAMPUS_REQUIRED',
+      },
+      { status: 400 },
+    );
+  }
+
   let vendorId: string | null = null;
-  const vendorSlug = resolveVendorSlugFromName(vendorName);
+  const vendorSlug = (bodyVendorSlug && /^[a-z0-9-]{2,40}$/.test(bodyVendorSlug) ? bodyVendorSlug : null) ?? resolveVendorSlugFromName(vendorName);
   if (vendorSlug) {
     const { data: vendorRow } = await supabase
       .from('vendors')
@@ -82,6 +101,40 @@ export async function POST(request: Request) {
       .eq('slug', vendorSlug)
       .maybeSingle();
     vendorId = vendorRow?.id ?? null;
+  }
+
+  if (!vendorId) {
+    return NextResponse.json({ error: 'Unknown laundry partner. Please pick a vendor from the list.' }, { status: 400 });
+  }
+
+  const { data: campusLink, error: campusErr } = await supabase
+    .from('vendor_campus')
+    .select('vendor_id')
+    .eq('vendor_id', vendorId)
+    .eq('campus_id', campusForBooking)
+    .maybeSingle();
+
+  let skipCampusCheck = false;
+  if (campusErr) {
+    const msg = String(campusErr.message ?? '').toLowerCase();
+    if (msg.includes('vendor_campus') || msg.includes('does not exist') || msg.includes('schema cache')) {
+      skipCampusCheck = true;
+    } else {
+      return NextResponse.json({ error: campusErr.message }, { status: 400 });
+    }
+  }
+
+  if (!skipCampusCheck && !campusLink) {
+    const { count, error: cntErr } = await supabase.from('vendor_campus').select('*', { count: 'exact', head: true });
+    if (!cntErr && (count ?? 0) > 0) {
+      return NextResponse.json(
+        {
+          error: 'This laundry partner is not available at your campus.',
+          code: 'VENDOR_CAMPUS_MISMATCH',
+        },
+        { status: 403 },
+      );
+    }
   }
 
   const { data, error } = await supabase

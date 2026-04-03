@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
-
-const CANCEL_WINDOW_MS = 60 * 60 * 1000;
+import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
   const normalized = String(vendorName ?? '').trim().toLowerCase();
@@ -52,9 +51,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const createdAtMs = new Date(String(bill.created_at)).getTime();
-  if (!Number.isFinite(createdAtMs)) return NextResponse.json({ error: 'Invalid bill timestamp' }, { status: 400 });
-  if (Date.now() - createdAtMs > CANCEL_WINDOW_MS) {
+  if (!isWithinVendorBillCancelEditWindow(String(bill.created_at))) {
     return NextResponse.json({ error: 'Cancellation window expired (1 hour)' }, { status: 400 });
   }
 

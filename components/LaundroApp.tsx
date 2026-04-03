@@ -9,7 +9,6 @@ import {
   COLLEGES,
   SERVICES,
   VENDORS,
-  VIT_VENDOR_BLOCK_ACCESS,
   statusLabel,
   statusClass,
   getScheduleDates,
@@ -30,7 +29,19 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   shoe_clean: Footprints,
 };
 
-const HOME_VENDORS = VENDORS.filter((vendor) => ['profab', 'starwash'].includes(vendor.id));
+/** UI vendor row: from static constants or from campus catalog API. */
+type VendorForUi = {
+  id: string;
+  name: string;
+  location?: string;
+  emoji?: string;
+  audienceLabel?: string;
+  comingSoon?: boolean;
+  /** If true, partner is only clickable when schedule has bookable slots (Star Wash). */
+  bookOnlyWhenSlotsAvailable?: boolean;
+  availability?: { type: 'nearby'; lat: number; lng: number; radiusKm: number };
+};
+const VIT_CHN_FALLBACK_VENDORS: VendorForUi[] = VENDORS.filter((vendor) => ['profab', 'starwash'].includes(vendor.id)).map((v) => ({ ...v }));
 
 type Screen =
   | 'splash'
@@ -182,9 +193,18 @@ const STAR_WASH_VENDOR_PROFILE: VendorProfileRow = {
   updated_at: '',
 };
 
-function defaultVendorProfileFor(vendor: (typeof VENDORS)[number]): VendorProfileRow {
+function defaultVendorProfileFor(vendor: VendorForUi): VendorProfileRow {
   if (vendor.id === 'profab') return DEFAULT_VENDOR_PROFILE;
-  return STAR_WASH_VENDOR_PROFILE;
+  if (vendor.id === 'starwash') return STAR_WASH_VENDOR_PROFILE;
+  return {
+    id: '',
+    slug: vendor.id,
+    name: vendor.name,
+    brief: `${vendor.name} is a LaundroSwipe campus partner.`,
+    pricing_details: 'See pricing in the app or on your bill.',
+    logo_url: null,
+    updated_at: '',
+  };
 }
 
 function rowToUser(r: UserRow): User {
@@ -308,6 +328,7 @@ export default function LaundroApp() {
   const [ordersListLoading, setOrdersListLoading] = useState(false);
   const [geo, setGeo] = useState<{ status: 'idle' | 'loading' | 'ok' | 'denied' | 'error'; coords?: LatLng }>({ status: 'idle' });
   const [pickupLocation, setPickupLocation] = useState('vit-chn');
+  const [homeVendors, setHomeVendors] = useState<VendorForUi[]>(() => [...VIT_CHN_FALLBACK_VENDORS]);
   const [otherAreaRequest, setOtherAreaRequest] = useState('');
   const [areaRequestSaving, setAreaRequestSaving] = useState(false);
   const [areaRequestCaptchaToken, setAreaRequestCaptchaToken] = useState('');
@@ -336,6 +357,44 @@ export default function LaundroApp() {
     () => !!user?.termsAcceptedAt && user?.termsVersion === CURRENT_TERMS_VERSION,
     [user]
   );
+
+  const effectiveCampusId = useMemo(() => {
+    const c = user?.cid;
+    if (c && c !== 'general' && COLLEGES.some((col) => col.id === c)) return c;
+    if (pickupLocation && COLLEGES.some((col) => col.id === pickupLocation)) return pickupLocation;
+    return 'vit-chn';
+  }, [user?.cid, pickupLocation]);
+
+  useEffect(() => {
+    if (!LSApi.hasSupabase) return;
+    let cancelled = false;
+    (async () => {
+      const rows = await LSApi.fetchVendorCatalog(effectiveCampusId);
+      if (cancelled) return;
+      if (rows && rows.length > 0) {
+        setHomeVendors(
+          rows.map((row) => {
+            const meta = VENDORS.find((v) => v.id === row.slug);
+            if (meta) return { ...meta };
+            return {
+              id: row.slug,
+              name: row.name,
+              location: 'On campus',
+              emoji: '🧺',
+              audienceLabel: 'Campus laundry partner',
+            };
+          }),
+        );
+      } else if (effectiveCampusId === 'vit-chn') {
+        setHomeVendors([...VIT_CHN_FALLBACK_VENDORS]);
+      } else {
+        setHomeVendors([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveCampusId]);
 
   const goToSchedule = useCallback(() => {
     if (user && !user.ph?.trim()) {
@@ -414,32 +473,6 @@ export default function LaundroApp() {
     const h = s1 * s1 + Math.cos(lat1) * Math.cos(lat2) * s2 * s2;
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
   }, []);
-
-  const isVendorAvailable = useCallback((vendor: (typeof VENDORS)[number]) => {
-    if ((vendor as { comingSoon?: boolean }).comingSoon) return { ok: false, reason: 'Coming soon' };
-    const availability = (vendor as { availability?: { type: string; lat: number; lng: number; radiusKm: number } }).availability;
-    if (!availability) return { ok: true, reason: '' };
-    if (availability.type === 'nearby') {
-      // VIT Chennai booking should not be blocked by location permission.
-      if (pickupLocation === 'vit-chn') return { ok: true, reason: '' };
-      if (!geo.coords) return { ok: false, reason: 'Enable location to check availability' };
-      const d = haversineKm(geo.coords, { lat: availability.lat, lng: availability.lng });
-      return d <= availability.radiusKm ? { ok: true, reason: '' } : { ok: false, reason: 'Not available in your region' };
-    }
-    return { ok: true, reason: '' };
-  }, [geo.coords, haversineKm, pickupLocation]);
-
-  const hasAnyBookableSlots = useMemo(() => {
-    if (scheduleDates.length === 0) return false;
-    const activeSlotIds = new Set(scheduleSlots.filter((s) => s.active).map((s) => s.id));
-    return scheduleDates.some((d) => {
-      if (!d.enabled) return false;
-      const ids = Array.isArray(d.slot_ids) ? d.slot_ids : [];
-      if (ids.length === 0) return false;
-      if (activeSlotIds.size === 0) return true;
-      return ids.some((id) => activeSlotIds.has(id));
-    });
-  }, [scheduleDates, scheduleSlots]);
 
   useEffect(() => {
     // Only ask for location when user is in the booking flow surfaces.
@@ -670,9 +703,9 @@ export default function LaundroApp() {
     }
   }, [screen, user?.sid, saveO]);
 
-  // Load schedule config every time schedule is opened (and on tab refocus while in schedule).
+  // Load schedule on home + schedule so Star Wash (slot-gated) and dates step stay accurate.
   useEffect(() => {
-    if (screen !== 'schedule' || !LSApi.hasSupabase) return;
+    if (!['home', 'schedule'].includes(screen) || !LSApi.hasSupabase) return;
     const refreshSchedule = () => {
       Promise.all([LSApi.fetchScheduleSlots(), LSApi.fetchScheduleDates()]).then(([slots, dates]) => {
         setScheduleSlots(slots ?? []);
@@ -687,7 +720,7 @@ export default function LaundroApp() {
     };
   }, [screen]);
 
-  const profileForVendor = useCallback((vendor: (typeof VENDORS)[number]): VendorProfileRow => {
+  const profileForVendor = useCallback((vendor: VendorForUi): VendorProfileRow => {
     return vendorProfilesBySlug[vendor.id] ?? defaultVendorProfileFor(vendor);
   }, [vendorProfilesBySlug]);
 
@@ -727,13 +760,52 @@ export default function LaundroApp() {
     return Boolean(row.enabled);
   }, [scheduleDates]);
 
+  const vendorHasBookableSlots = useCallback(
+    (vendorId: string) => {
+      if (scheduleDates.length === 0) return false;
+      const activeSlotIds = new Set(scheduleSlots.filter((s) => s.active).map((s) => s.id));
+      const todayStr = new Date().toISOString().split('T')[0];
+      return scheduleDates.some((d) => {
+        if (d.date < todayStr) return false;
+        if (!isDateEnabledForVendor(d.date, vendorId)) return false;
+        const ids = slotIdsForDateByVendor(d.date, vendorId);
+        if (ids.length === 0) return false;
+        if (activeSlotIds.size === 0) return true;
+        return ids.some((id) => activeSlotIds.has(id));
+      });
+    },
+    [scheduleDates, scheduleSlots, isDateEnabledForVendor, slotIdsForDateByVendor],
+  );
+
+  const isVendorAvailable = useCallback(
+    (vendor: VendorForUi) => {
+      if (vendor.comingSoon) return { ok: false, reason: 'Coming soon' };
+      if (vendor.bookOnlyWhenSlotsAvailable && !vendorHasBookableSlots(vendor.id)) {
+        return { ok: false, reason: 'No slots available right now' };
+      }
+      const availability = vendor.availability;
+      if (!availability) return { ok: true, reason: '' };
+      if (availability.type === 'nearby') {
+        // VIT Chennai booking should not be blocked by location permission.
+        if (pickupLocation === 'vit-chn') return { ok: true, reason: '' };
+        if (!geo.coords) return { ok: false, reason: 'Enable location to check availability' };
+        const d = haversineKm(geo.coords, { lat: availability.lat, lng: availability.lng });
+        return d <= availability.radiusKm ? { ok: true, reason: '' } : { ok: false, reason: 'Not available in your region' };
+      }
+      return { ok: true, reason: '' };
+    },
+    [geo.coords, haversineKm, pickupLocation, vendorHasBookableSlots],
+  );
+
   // Load vendor profiles when user is on home (refetch when entering home so admin updates show)
   useEffect(() => {
     if (screen !== 'home' || !LSApi.hasSupabase) return;
+    const slugs = homeVendors.map((v) => v.id);
+    if (slugs.length === 0) return;
     Promise.all(
-      VENDORS.map(async (v) => {
-        const p = await LSApi.fetchVendorProfile(v.id);
-        return { slug: v.id, profile: p };
+      slugs.map(async (id) => {
+        const p = await LSApi.fetchVendorProfile(id);
+        return { slug: id, profile: p };
       }),
     ).then((rows) => {
       const next: Record<string, VendorProfileRow> = {};
@@ -742,7 +814,7 @@ export default function LaundroApp() {
       });
       setVendorProfilesBySlug(next);
     });
-  }, [screen]);
+  }, [screen, homeVendors]);
 
   // Once logged in, never show login again — redirect to home
   useEffect(() => {
@@ -1118,7 +1190,7 @@ export default function LaundroApp() {
       return;
     }
     const svc = SERVICES.find((x) => x.id === sd.svc);
-    const selectedVendor = VENDORS.find((v) => v.id === sd.vendorId);
+    const selectedVendor = homeVendors.find((v) => v.id === sd.vendorId);
     setOrderSubmitting(true);
     try {
       const vendorName = selectedVendor?.name ?? 'Pro Fab Power Laundry Services';
@@ -1137,6 +1209,8 @@ export default function LaundroApp() {
           status: 'scheduled',
           ins: sd.ins ?? undefined,
           vendorName,
+          vendorSlug: sd.vendorId,
+          campusId: effectiveCampusId,
         };
         const result = await LSApi.createOrder(payload, user.sid);
         if (result.order) {
@@ -1225,7 +1299,7 @@ export default function LaundroApp() {
 
   const todayStr = new Date().toISOString().split('T')[0];
   const selectedSvc = SERVICES.find((s) => s.id === sd.svc);
-  const selectedVendor = VENDORS.find((vendor) => vendor.id === sd.vendorId);
+  const selectedVendor = homeVendors.find((vendor) => vendor.id === sd.vendorId);
   const daysFromApi = scheduleDates
     .filter((d) => d.date >= todayStr && isDateEnabledForVendor(d.date, selectedVendor?.id))
     .map((d) => formatScheduleDay(d.date));
@@ -1800,30 +1874,36 @@ export default function LaundroApp() {
                     Choose a laundry partner based on your hostel block.
                   </p>
                   <div className="dss" aria-label="Laundry partners" role="list">
-                    {HOME_VENDORS.map((v) => (
-                    (() => {
-                      const vp = profileForVendor(v);
-                      const available = isVendorAvailable(v);
-                      return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      className={`ds ${available.ok ? '' : 'dis'}`}
-                      onClick={() => available.ok && goToScheduleWithVendor(v.id)}
-                      aria-label={`Schedule with ${vp.name || v.name}`}
-                      disabled={!available.ok}
-                    >
-                      {vp.logo_url ? (
-                        <img src={vp.logo_url} alt="" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: 6 }} />
-                      ) : (
-                        <span aria-hidden style={{ width: 22, height: 22, display: 'inline-block' }} />
-                      )}
-                      <span className="dy" style={{ marginTop: 2 }}>{vp.name || v.name}</span>
-                      <span className="mo">{available.ok ? (v as { audienceLabel?: string }).audienceLabel || v.location : available.reason}</span>
-                    </button>
-                      );
-                    })()
-                    ))}
+                    {homeVendors.length === 0 ? (
+                      <p className="vd" style={{ marginBottom: 0 }}>
+                        No laundry partners are listed for your campus yet. Check your college in Profile, or contact support if this campus should be live.
+                      </p>
+                    ) : (
+                      homeVendors.map((v) => (
+                        (() => {
+                          const vp = profileForVendor(v);
+                          const available = isVendorAvailable(v);
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              className={`ds ${available.ok ? '' : 'dis'}`}
+                              onClick={() => available.ok && goToScheduleWithVendor(v.id)}
+                              aria-label={`Schedule with ${vp.name || v.name}`}
+                              disabled={!available.ok}
+                            >
+                              {vp.logo_url ? (
+                                <img src={vp.logo_url} alt="" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: 6 }} />
+                              ) : (
+                                <span aria-hidden style={{ width: 22, height: 22, display: 'inline-block' }} />
+                              )}
+                              <span className="dy" style={{ marginTop: 2 }}>{vp.name || v.name}</span>
+                              <span className="mo">{available.ok ? v.audienceLabel || v.location : available.reason}</span>
+                            </button>
+                          );
+                        })()
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -1850,30 +1930,34 @@ export default function LaundroApp() {
                 </div>
                 <p className="fn">LaundroSwipe makes pickup selection clearer for your hostel and location.</p>
                 <p className="st">Vendors available in your location</p>
-                {HOME_VENDORS.map((v) => {
-                  const vp = profileForVendor(v);
-                  return (
-                    <div
-                      key={v.id}
-                      className="oc oc-row"
-                      style={{ marginBottom: 10 }}
-                      onClick={() => setViewingVendor(vp)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingVendor(vp); } }}
-                    >
-                      {vp.logo_url ? (
-                        <img src={vp.logo_url} alt="" className="oc-logo" />
-                      ) : (
-                        <span aria-hidden style={{ width: 40, height: 40, display: 'inline-block', flexShrink: 0 }} />
-                      )}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span className="nm oc-vendor-name">{vp.name || v.name}</span>
-                        <span className="vd" style={{ fontSize: 12 }}>{(v as { audienceLabel?: string }).audienceLabel || v.location}</span>
+                {homeVendors.length === 0 ? (
+                  <p className="vd">None yet for this campus.</p>
+                ) : (
+                  homeVendors.map((v) => {
+                    const vp = profileForVendor(v);
+                    return (
+                      <div
+                        key={v.id}
+                        className="oc oc-row"
+                        style={{ marginBottom: 10 }}
+                        onClick={() => setViewingVendor(vp)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingVendor(vp); } }}
+                      >
+                        {vp.logo_url ? (
+                          <img src={vp.logo_url} alt="" className="oc-logo" />
+                        ) : (
+                          <span aria-hidden style={{ width: 40, height: 40, display: 'inline-block', flexShrink: 0 }} />
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span className="nm oc-vendor-name">{vp.name || v.name}</span>
+                          <span className="vd" style={{ fontSize: 12 }}>{v.audienceLabel || v.location}</span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
                 <div className="hiw">
                   <div className="hiws">
                     <div className="hiwn">1</div>
@@ -1930,43 +2014,48 @@ export default function LaundroApp() {
                     <p className="vd" style={{ marginBottom: 12 }}>
                       VIT Chennai split: Pro Fab for A, D1, D2 blocks · Star Wash for B, C, E blocks.
                     </p>
-                    {HOME_VENDORS.map((v) => (
-                      (() => {
-                        const vp = profileForVendor(v);
-                        const isLocationAllowed = ['profab', 'starwash'].includes(v.id);
-                        const scheduleReason = hasAnyBookableSlots ? '' : 'No slots available right now';
-                        const canPick = isVendorAvailable(v).ok && !!isLocationAllowed && !scheduleReason;
-                        const vendorTitle = vp.name || v.name;
-                        return (
-                      <div
-                        key={v.id}
-                        className={`ssc vendor-card ${canPick ? '' : 'coming-soon'}`}
-                        onClick={() => canPick && handleSelectVendor(v.id)}
-                        onKeyDown={(e) => e.key === 'Enter' && canPick && handleSelectVendor(v.id)}
-                        role="button"
-                        tabIndex={canPick ? 0 : -1}
-                      >
-                        {vp.logo_url ? (
-                          <img src={vp.logo_url} alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
-                        ) : (
-                          <span aria-hidden style={{ width: 44, height: 44, display: 'inline-block', flexShrink: 0 }} />
-                        )}
-                        <div className="inf">
-                          <div className="sn">
-                            {vendorTitle}{' '}
-                            {!canPick && (
-                              <span style={{ fontWeight: 700, color: 'var(--tm)' }}>
-                                ({scheduleReason || isVendorAvailable(v).reason || 'Not available'})
-                              </span>
-                            )}
-                          </div>
-                          <div className="sd">{(v as { audienceLabel?: string }).audienceLabel || v.location}</div>
-                        </div>
-                        <span className="aw" style={{ fontSize: 20, opacity: canPick ? 1 : 0.35 }}>→</span>
-                      </div>
-                        );
-                      })()
-                    ))}
+                    {homeVendors.length === 0 ? (
+                      <p className="vd" style={{ marginBottom: 12 }}>
+                        No vendors for this campus yet. If you think this is a mistake, contact support.
+                      </p>
+                    ) : (
+                      homeVendors.map((v) => (
+                        (() => {
+                          const vp = profileForVendor(v);
+                          const avail = isVendorAvailable(v);
+                          const canPick = avail.ok;
+                          const vendorTitle = vp.name || v.name;
+                          return (
+                            <div
+                              key={v.id}
+                              className={`ssc vendor-card ${canPick ? '' : 'coming-soon'}`}
+                              onClick={() => canPick && handleSelectVendor(v.id)}
+                              onKeyDown={(e) => e.key === 'Enter' && canPick && handleSelectVendor(v.id)}
+                              role="button"
+                              tabIndex={canPick ? 0 : -1}
+                            >
+                              {vp.logo_url ? (
+                                <img src={vp.logo_url} alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10, flexShrink: 0 }} />
+                              ) : (
+                                <span aria-hidden style={{ width: 44, height: 44, display: 'inline-block', flexShrink: 0 }} />
+                              )}
+                              <div className="inf">
+                                <div className="sn">
+                                  {vendorTitle}{' '}
+                                  {!canPick && (
+                                    <span style={{ fontWeight: 700, color: 'var(--tm)' }}>
+                                      ({avail.reason || 'Not available'})
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="sd">{v.audienceLabel || v.location}</div>
+                              </div>
+                              <span className="aw" style={{ fontSize: 20, opacity: canPick ? 1 : 0.35 }}>→</span>
+                            </div>
+                          );
+                        })()
+                      ))
+                    )}
                     <button type="button" className="btn bout bbl" style={{ marginTop: 16 }} onClick={() => go('home')}>
                       Back
                     </button>

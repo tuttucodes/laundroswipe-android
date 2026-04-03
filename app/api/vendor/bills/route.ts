@@ -76,8 +76,12 @@ export async function GET(request: Request) {
     const u = b.user_id ? userMap.get(String(b.user_id)) : undefined;
     const nameFromUser = u ? (u.full_name ?? u.email ?? null) : null;
     const phoneFromUser = u?.phone ?? null;
+    const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
+    const byVendorName = resolveVendorSlugFromName(b.vendor_name, dbVendors);
+    const billVendorSlug = (byVendorId ?? byVendorName ?? null) as string | null;
     return {
       ...b,
+      vendor_slug: billVendorSlug,
       customer_name: b.customer_name ?? nameFromUser,
       customer_phone: b.customer_phone ?? phoneFromUser,
       user_email: u?.email ?? null,

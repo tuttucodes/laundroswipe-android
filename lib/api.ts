@@ -1,5 +1,13 @@
 import { supabase, hasSupabase } from './supabase';
 
+export type VendorCatalogRow = {
+  slug: string;
+  name: string;
+  profile_name: string | null;
+  logo_url: string | null;
+  brief: string | null;
+};
+
 export type UserRow = {
   id: string;
   full_name: string | null;
@@ -130,6 +138,18 @@ export const LSApi = {
     }
   },
 
+  async fetchVendorCatalog(campusId: string): Promise<VendorCatalogRow[] | null> {
+    try {
+      const res = await fetch(`/api/vendors/catalog?campus_id=${encodeURIComponent(campusId)}`);
+      const data = (await res.json().catch(() => ({}))) as { vendors?: VendorCatalogRow[]; error?: string };
+      if (!res.ok) return null;
+      return Array.isArray(data.vendors) ? data.vendors : [];
+    } catch (e) {
+      console.error('fetchVendorCatalog exception', e);
+      return null;
+    }
+  },
+
   async createOrder(
     order: {
       on: string;
@@ -141,6 +161,8 @@ export const LSApi = {
       status: string;
       ins?: string;
       vendorName?: string;
+      vendorSlug?: string;
+      campusId?: string;
     },
     userId: string
   ): Promise<{ order: OrderRow | null; error?: string; code?: string }> {
@@ -837,6 +859,8 @@ export type VendorBillRow = {
   total: number;
   vendor_name?: string | null;
   vendor_id?: string | null;
+  /** Set by GET /api/vendor/bills for catalog / edit UI */
+  vendor_slug?: string | null;
   cancelled_at?: string | null;
   cancelled_by_role?: string | null;
   created_at: string;
