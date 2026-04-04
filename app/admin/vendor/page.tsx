@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { printThermalReceipt, printThermalReceiptDirect } from '@/lib/thermal-print';
+import { BluetoothPrinterPanel } from '@/components/vendor/BluetoothPrinterPanel';
+import { printThermalReceiptDirect } from '@/lib/thermal-print';
+import {
+  buildVendorReceiptEscPos,
+  printEscPosViaBluetooth,
+  type VendorReceiptInput,
+} from '@/lib/printing';
+import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
@@ -45,7 +52,9 @@ export default function VendorPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [catalogFromApi, setCatalogFromApi] = useState<QuickItem[] | null>(null);
+  const [blePrefs, setBlePrefs] = useState(() => getBlePrinterPreferences());
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
+  const refreshBlePrefs = () => setBlePrefs(getBlePrinterPreferences());
   const vendorBillItems = getVendorBillItems(vendorId);
   const catalogBase: QuickItem[] =
     catalogFromApi ??
@@ -507,6 +516,46 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
     return lines.join('\n');
   };
 
+  const buildVendorReceiptInput = (): VendorReceiptInput => {
+    const o = order as OrderRow | null;
+    const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
+    const tokenLabel = sampleMode ? 'SAMPLE' : o?.token ?? '';
+    const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
+    const customerLabel = sampleMode
+      ? sampleCustomerName.trim() || 'Walk-in Customer'
+      : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
+    const phoneLabel = sampleMode ? sampleCustomerPhone.trim() || '—' : (u.phone ?? '—').toString().slice(0, 14);
+    const regPlain = sampleMode ? '' : String(u.reg_no ?? '').trim();
+    const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
+    const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
+    const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
+    const serviceFeeLine =
+      feeBreakdown.active && feeBreakdown.originalFee > 0
+        ? `Service fee: Rs.0 (discounted from Rs.${feeBreakdown.originalFee.toFixed(2)} for 7 days)`
+        : `Service fee: Rs.${serviceFee.toFixed(2)}`;
+    const p = getBlePrinterPreferences();
+    return {
+      vendorName,
+      tokenLabel,
+      orderLabel,
+      customerLabel,
+      phoneLabel,
+      customerDisplayId: sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24),
+      regNo: regPlain || undefined,
+      hostelBlock: blockPlain || undefined,
+      roomNumber: roomPlain || undefined,
+      dateStr: new Date().toLocaleString(),
+      lineItems: lineItems.map((l) => ({ label: l.label, qty: l.qty, price: l.price })),
+      totalItems,
+      subtotal,
+      serviceFeeLine,
+      total,
+      footer: 'Thank you!',
+      showQr: p.showPaymentQr && !!p.paymentQrPayload.trim(),
+      paymentQrPayload: p.paymentQrPayload.trim() || undefined,
+    };
+  };
+
   const handleCopyReceipt = async () => {
     if (lineItems.length === 0) {
       showToast('Add at least one item', 'er');
@@ -569,8 +618,37 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
 
   const doPrint = async () => {
     const title = sampleMode ? 'Sample Bill' : `Bill #${order?.token ?? ''}`;
+    const html = buildReceiptHtml();
+    const plain = buildReceiptPlainText();
+    const prefs = getBlePrinterPreferences();
+
+    if (prefs.preferBluetoothEscPos) {
+      try {
+        const paper = getEffectiveEscPosPaperSize();
+        const input = buildVendorReceiptInput();
+        const bytes = buildVendorReceiptEscPos(paper, input);
+        const ble = await printEscPosViaBluetooth(bytes);
+        if (ble === 'printed') {
+          showToast('Sent to Bluetooth printer', 'ok');
+          return;
+        }
+        if (ble === 'not-connected') {
+          showToast('No BLE printer connected — opening print dialog…', 'ok');
+        } else if (ble === 'unavailable') {
+          showToast('Web Bluetooth not available — opening print dialog…', 'ok');
+        } else if (ble === 'error') {
+          showToast('Bluetooth print failed — opening print dialog…', 'er');
+        }
+      } catch {
+        showToast('Bluetooth print error — opening print dialog…', 'er');
+      }
+    }
+
     const config = getPrinterConfigForPrint();
-    const result = await printThermalReceiptDirect(title, buildReceiptHtml(), buildReceiptPlainText(), { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true });
+    const result = await printThermalReceiptDirect(title, html, plain, {
+      printer: config ?? undefined,
+      forceDialog: config?.forceDialog ?? true,
+    });
     if (result === 'blocked') {
       showToast('Allow pop-ups to print, or try again', 'er');
     } else if (result === 'dialog') {
@@ -941,6 +1019,25 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
             <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
 
+            <BluetoothPrinterPanel onPrefsChange={refreshBlePrefs} />
+
+            {blePrefs.showReceiptPreview && lineItems.length > 0 && (
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: 14,
+                  borderRadius: 10,
+                  border: '1px solid var(--bd)',
+                  background: 'var(--bg)',
+                  maxHeight: 280,
+                  overflow: 'auto',
+                }}
+              >
+                <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: 'var(--ts)' }}>Receipt preview (text)</p>
+                <pre style={{ margin: 0, fontSize: 12, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{buildReceiptPlainText()}</pre>
+              </div>
+            )}
+
             <div className="vendor-action-row" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <button type="button" onClick={handlePrint} className="vendor-btn-primary" style={{ flex: '1 1 200px' }}>Print bill</button>
               <button type="button" onClick={handleCopyReceipt} disabled={lineItems.length === 0} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>Copy receipt</button>
@@ -956,7 +1053,11 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
               <button type="button" onClick={handleNewBill} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>New bill</button>
               <Link href="/admin/bills" className="vendor-btn-secondary" style={{ flex: '1 1 200px', textDecoration: 'none' }}>View saved bills</Link>
             </div>
-            <p style={{ marginTop: 10, fontSize: 12, color: 'var(--ts)' }}>Set your printer in <Link href="/admin/printers" style={{ color: 'var(--b)', fontWeight: 600 }}>Admin → Printers</Link> (e.g. Epson M80 79mm). On Android: install <strong>ESCPOS Bluetooth Print Service</strong> if needed, then pair and choose it in the print dialog.</p>
+            <p style={{ marginTop: 10, fontSize: 12, color: 'var(--ts)' }}>
+              Use the <strong>Bluetooth thermal</strong> section above for direct ESC/POS over Web Bluetooth, or set paper width in{' '}
+              <Link href="/admin/printers" style={{ color: 'var(--b)', fontWeight: 600 }}>Admin → Printers</Link>. For the system dialog on Android, install{' '}
+              <strong>ESCPOS Bluetooth Print Service</strong> if needed.
+            </p>
           </div>
         </div>
       )}
