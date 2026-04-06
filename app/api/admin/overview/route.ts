@@ -97,7 +97,7 @@ export async function GET(request: Request) {
       return String(o.vendor_slug ?? '').toLowerCase() === vendorSlug;
     });
 
-  const bills = (billsRes.data ?? [])
+  const billsFiltered = (billsRes.data ?? [])
     .filter((b: any) => {
       if (!vendorSlug) return true;
       const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
@@ -110,6 +110,17 @@ export async function GET(request: Request) {
       const byVendorName = resolveVendorSlugFromName(b.vendor_name, dbVendors);
       return { ...b, vendor_slug: (byVendorId ?? byVendorName ?? null) as string | null };
     });
+
+  // Deduplicate: only keep the latest bill per order_token
+  const latestBillByToken = new Map<string, any>();
+  for (const b of billsFiltered) {
+    const token = String(b.order_token ?? '');
+    const existing = latestBillByToken.get(token);
+    if (!existing || new Date(b.created_at as string) > new Date(existing.created_at as string)) {
+      latestBillByToken.set(token, b);
+    }
+  }
+  const bills = Array.from(latestBillByToken.values());
 
   const vendorsPayload =
     session.role === 'super_admin'

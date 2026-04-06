@@ -79,7 +79,7 @@ export async function GET(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Client-side vendor filter fallback (for bills without vendor_id but matching vendor_name)
-  const raw = vendorSlug
+  const vendorFiltered = vendorSlug
     ? (data ?? []).filter((b: any) => {
         if (vendorDbId && b.vendor_id === vendorDbId) return true;
         const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
@@ -88,6 +88,17 @@ export async function GET(request: Request) {
         return String(billVendorSlug ?? '').toLowerCase() === vendorSlug;
       })
     : (data ?? []);
+
+  // Deduplicate: only keep the latest bill per order_token (handles pre-upsert duplicates)
+  const latestByToken = new Map<string, any>();
+  for (const b of vendorFiltered) {
+    const token = String(b.order_token ?? '');
+    const existing = latestByToken.get(token);
+    if (!existing || new Date(b.created_at as string) > new Date(existing.created_at as string)) {
+      latestByToken.set(token, b);
+    }
+  }
+  const raw = Array.from(latestByToken.values());
 
   const userIds = Array.from(new Set(raw.map((b: any) => b.user_id).filter(Boolean))) as string[];
   let userMap = new Map<string, { full_name: string | null; email: string | null; phone: string | null; display_id: string | null }>();
