@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { BluetoothPrinterPanel } from '@/components/vendor/BluetoothPrinterPanel';
-import { printThermalReceiptDirect, printFullPageBill } from '@/lib/thermal-print';
+import { printThermalReceiptDirect } from '@/lib/thermal-print';
 import {
   buildVendorReceiptEscPos,
   printEscPosViaBluetooth,
@@ -650,9 +650,17 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
       }
     }
 
-    const ok = printFullPageBill(title, html);
-    if (!ok) {
+    const config = getPrinterConfigForPrint();
+    const result = await printThermalReceiptDirect(title, html, plain, {
+      printer: config ?? undefined,
+      forceDialog: config?.forceDialog ?? true,
+    });
+    if (result === 'blocked') {
       showToast('Allow pop-ups to print, or try again', 'er');
+    } else if (result === 'dialog') {
+      showToast('Select ESCPOS Bluetooth Print Service in the print dialog', 'ok');
+    } else {
+      showToast('Sent to printer', 'ok');
     }
   };
 
