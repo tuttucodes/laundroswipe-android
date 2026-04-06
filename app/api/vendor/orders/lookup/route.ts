@@ -13,6 +13,9 @@ type LookupResponse = {
     id: string;
     created_at: string;
     can_cancel: boolean;
+    total_items: number;
+    subtotal: number;
+    total: number;
     line_items: Array<{
       id: string;
       label: string;
@@ -70,7 +73,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       .eq('order_token', token),
     supabase
       .from('vendor_bills')
-      .select('id, created_at, line_items')
+      .select('id, created_at, line_items, subtotal, total')
       .eq('order_token', token)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -114,6 +117,11 @@ export async function POST(request: Request): Promise<NextResponse> {
           id: String(latestBill.id),
           created_at: String(latestBill.created_at),
           can_cancel: latestBillCanCancel,
+          total_items: Array.isArray(latestBill.line_items)
+            ? (latestBill.line_items as Array<{ qty?: number }>).reduce((s, i) => s + (Number(i.qty) || 0), 0)
+            : 0,
+          subtotal: Number(latestBill.subtotal) || 0,
+          total: Number(latestBill.total) || 0,
           line_items: Array.isArray(latestBill.line_items) ? latestBill.line_items : [],
         }
       : null,

@@ -9,6 +9,7 @@ export default function AdminPickupPage() {
   const [lookupErr, setLookupErr] = useState('');
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [user, setUser] = useState<UserRow | null>(null);
+  const [billInfo, setBillInfo] = useState<{ total_items: number; subtotal: number; total: number } | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
 
@@ -50,6 +51,7 @@ export default function AdminPickupPage() {
       }
       setOrder(data.order as OrderRow);
       setUser((data.user ?? null) as UserRow | null);
+      setBillInfo(data.latest_bill ? { total_items: data.latest_bill.total_items ?? 0, subtotal: data.latest_bill.subtotal ?? 0, total: data.latest_bill.total ?? 0 } : null);
       showToast('Order loaded', 'ok');
     } catch {
       setLookupErr('Order lookup failed');
@@ -112,6 +114,13 @@ export default function AdminPickupPage() {
             <p><strong style={{ color: 'var(--tx)' }}>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Service:</strong> {order.service_name} &nbsp;|&nbsp; <strong>Date:</strong> {order.pickup_date}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Status:</strong> {order.status}</p>
+            {billInfo && (
+              <p style={{ marginTop: 4 }}>
+                <strong style={{ color: 'var(--tx)' }}>Bill:</strong>{' '}
+                {billInfo.total_items} item{billInfo.total_items !== 1 ? 's' : ''} · ₹{billInfo.total.toFixed(2)}
+              </p>
+            )}
+            {!billInfo && <p style={{ marginTop: 4, color: 'var(--ts)', fontStyle: 'italic' }}>No bill generated yet</p>}
           </div>
           {order.status !== 'delivered' && (
             <button

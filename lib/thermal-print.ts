@@ -247,6 +247,62 @@ export function printThermalReceipt(title: string, bodyHtml: string, paperWidthM
   return true;
 }
 
+/**
+ * Opens a new window with a full-page (A4-friendly) bill and triggers the system print dialog.
+ * Use this for regular / inbuilt printers (not thermal receipt printers).
+ */
+export function printFullPageBill(title: string, bodyHtml: string): boolean {
+  const w = window.open('', '_blank', 'width=600,height=800,menubar=no,toolbar=no');
+  if (!w) return false;
+  const styles = `
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:14px;line-height:1.5;background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.receipt{max-width:400px;margin:24px auto;padding:24px;border:1px solid #ddd;border-radius:8px}
+h2{text-align:center;font-size:22px;font-weight:700;margin:0 0 4px}
+.meta{text-align:center;font-size:13px;color:#666;margin:0 0 2px}
+p{margin:3px 0;font-size:14px}
+.center{text-align:center}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th,td{padding:6px 4px;text-align:left;vertical-align:top;border-bottom:1px solid #eee}
+th{font-weight:700;border-bottom:2px solid #333}
+.qty-col{width:12%;text-align:center}
+.desc-col{width:58%}
+.amt-col{width:30%;text-align:right}
+.row-divider{border-top:1px solid #333;margin:10px 0}
+.totals{margin-top:8px}
+.totals p{display:flex;justify-content:space-between;padding:2px 0}
+.total{font-weight:700;font-size:16px;border-top:2px solid #333;padding-top:6px;margin-top:6px}
+.conv{font-size:13px;color:#666}
+.foot{text-align:center;margin-top:16px;font-size:14px;color:#666}
+.no-print{}
+@media print{
+  .no-print{display:none!important}
+  .receipt{border:none;margin:0 auto;padding:0}
+  @page{size:A4;margin:20mm}
+}
+`;
+  const closeLink = '<p class="no-print" style="margin-top:12px;text-align:center"><a href="#" onclick="window.close();return false" style="color:#666;font-size:11px">Close window after printing</a></p>';
+  const doc = w.document;
+  doc.open();
+  doc.write(
+    '<!DOCTYPE html><html><head>' +
+      '<meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + escapeHtml(title) + '</title>' +
+      '<style>' + styles + '</style></head><body>' +
+      '<div class="receipt">' +
+      bodyHtml +
+      closeLink +
+      '</div></body></html>'
+  );
+  doc.close();
+  w.focus();
+  setTimeout(() => {
+    try { w.print(); } catch (_) { /* ignore */ }
+  }, 500);
+  return true;
+}
+
 function escapeHtml(s: string): string {
   const div = typeof document !== 'undefined' ? document.createElement('div') : null;
   if (div) {
