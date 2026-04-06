@@ -937,15 +937,7 @@ export default function AdminPage() {
                 </div>
                 <div className="admin-stat-card">
                   <div className="admin-stat-value" style={{ color: 'var(--ok)', fontSize: 20 }}>₹{totalRevenue.toFixed(0)}</div>
-                  <div className="admin-stat-label">Total revenue (sum of bill totals)</div>
-                </div>
-                <div className="admin-stat-card">
-                  <div className="admin-stat-value" style={{ color: 'var(--b)' }}>₹{subtotalExcludingFees.toFixed(0)}</div>
-                  <div className="admin-stat-label">Laundry subtotal before service fee</div>
-                </div>
-                <div className="admin-stat-card">
-                  <div className="admin-stat-value" style={{ color: 'var(--o)' }}>₹{totalConvenienceFee.toFixed(0)}</div>
-                  <div className="admin-stat-label">Total service fee (on saved bills)</div>
+                  <div className="admin-stat-label">Total revenue</div>
                 </div>
                 <div className="admin-stat-card">
                   <div className="admin-stat-value" style={{ color: 'var(--o)' }}>{active}</div>
@@ -969,17 +961,20 @@ export default function AdminPage() {
                 ))}
               </div>
             )}
-            {/* Weekly Revenue Breakdown */}
+            {/* Weekly Revenue Breakdown with split */}
             {!loading && weeklyRevenue.length > 0 && (
               <div style={{ marginBottom: 24 }}>
-                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, marginBottom: 10, color: 'var(--t)' }}>Weekly Revenue</h3>
+                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, marginBottom: 4, color: 'var(--t)' }}>Weekly Revenue</h3>
+                <p style={{ fontSize: 12, color: 'var(--ts)', margin: '0 0 10px' }}>Subtotal (laundry) + Service fee = Total</p>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ borderBottom: '2px solid var(--bd)' }}>
                         <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Week</th>
                         <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Bills</th>
-                        <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Revenue</th>
+                        <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Subtotal</th>
+                        <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Service fee</th>
+                        <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Total</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -989,9 +984,18 @@ export default function AdminPage() {
                             {new Date(w.date_from + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {new Date(w.date_to + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'right' }}>{w.bill_count}</td>
+                          <td style={{ padding: '8px 12px', textAlign: 'right' }}>₹{w.subtotal.toLocaleString('en-IN')}</td>
+                          <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--o)' }}>₹{(w.total - w.subtotal).toLocaleString('en-IN')}</td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--ok)' }}>₹{w.total.toLocaleString('en-IN')}</td>
                         </tr>
                       ))}
+                      <tr style={{ borderTop: '2px solid var(--bd)' }}>
+                        <td style={{ padding: '8px 12px', fontWeight: 700 }}>Total</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{weeklyRevenue.reduce((s, w) => s + w.bill_count, 0)}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>₹{weeklyRevenue.reduce((s, w) => s + w.subtotal, 0).toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--o)' }}>₹{weeklyRevenue.reduce((s, w) => s + (w.total - w.subtotal), 0).toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--ok)' }}>₹{weeklyRevenue.reduce((s, w) => s + w.total, 0).toLocaleString('en-IN')}</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
