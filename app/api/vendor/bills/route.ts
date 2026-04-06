@@ -89,16 +89,16 @@ export async function GET(request: Request) {
       })
     : (data ?? []);
 
-  // Deduplicate: only keep the latest bill per order_token (handles pre-upsert duplicates)
-  const latestByToken = new Map<string, any>();
+  // Deduplicate: only remove exact duplicates (same token + same total amount).
+  // Bills with same token but different amounts are intentional (different billing runs).
+  const seen = new Set<string>();
+  const raw: any[] = [];
   for (const b of vendorFiltered) {
-    const token = String(b.order_token ?? '');
-    const existing = latestByToken.get(token);
-    if (!existing || new Date(b.created_at as string) > new Date(existing.created_at as string)) {
-      latestByToken.set(token, b);
-    }
+    const dedupKey = `${b.order_token}|${Number(b.total ?? 0).toFixed(2)}`;
+    if (seen.has(dedupKey)) continue; // skip duplicate (same token + same amount)
+    seen.add(dedupKey);
+    raw.push(b);
   }
-  const raw = Array.from(latestByToken.values());
 
   const userIds = Array.from(new Set(raw.map((b: any) => b.user_id).filter(Boolean))) as string[];
   let userMap = new Map<string, { full_name: string | null; email: string | null; phone: string | null; display_id: string | null }>();

@@ -50,14 +50,29 @@ export async function POST(request: Request) {
   const lineItems = Array.isArray(body.line_items) ? body.line_items : [];
   if (lineItems.length === 0) return NextResponse.json({ error: 'line_items is required' }, { status: 400 });
 
-  // Load order so we can trust customer info + vendor_id.
-  const { data: orders, error: orderErr } = await supabase
-    .from('orders')
-    .select('id, order_number, token, user_id, vendor_id, vendor_name')
-    .eq('token', token)
-    .limit(1);
-  if (orderErr) return NextResponse.json({ error: orderErr.message }, { status: 500 });
-  const order = Array.isArray(orders) ? orders[0] : null;
+  // === Batch 1: Load order, vendors, and existing bill in parallel ===
+  const [orderRes, vendorsRes, existingBillRes] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('id, order_number, token, user_id, vendor_id, vendor_name')
+      .eq('token', token)
+      .limit(1),
+    supabase
+      .from('vendors')
+      .select('id, slug, name'),
+    // Check for existing active bill
+    supabase
+      .from('vendor_bills')
+      .select('id, line_items, subtotal, total')
+      .eq('order_token', token)
+      .is('cancelled_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  if (orderRes.error) return NextResponse.json({ error: orderRes.error.message }, { status: 500 });
+  const order = Array.isArray(orderRes.data) ? orderRes.data[0] : null;
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
   if (session.role === 'vendor') {
@@ -68,12 +83,9 @@ export async function POST(request: Request) {
     }
   }
 
-  const { data: dbVendors } = await supabase
-    .from('vendors')
-    .select('id, slug, name');
   const vendorsBySlug = new Map<string, { id: string; slug: string; name: string }>();
   const vendorsById = new Map<string, { id: string; slug: string; name: string }>();
-  for (const row of dbVendors ?? []) {
+  for (const row of vendorsRes.data ?? []) {
     const v = row as { id: string; slug: string; name: string };
     vendorsBySlug.set(String(v.slug).toLowerCase().trim(), v);
     vendorsById.set(String(v.id), v);
@@ -86,15 +98,25 @@ export async function POST(request: Request) {
     resolveVendorSlugFromName(order.vendor_name);
   const effectiveVendorSlug = (sessionVendorSlug ?? orderVendorSlug ?? null)?.toLowerCase().trim() || null;
 
-  let billOverrides: unknown = {};
-  if (effectiveVendorSlug) {
-    const { data: prof } = await supabase
-      .from('vendor_profiles')
-      .select('bill_item_overrides')
-      .eq('slug', effectiveVendorSlug)
-      .maybeSingle();
-    billOverrides = prof?.bill_item_overrides ?? {};
-  }
+  // === Batch 2: Load vendor profile overrides + user info in parallel ===
+  const [profRes, userRes] = await Promise.all([
+    effectiveVendorSlug
+      ? supabase
+          .from('vendor_profiles')
+          .select('bill_item_overrides')
+          .eq('slug', effectiveVendorSlug)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    order.user_id
+      ? supabase
+          .from('users')
+          .select('full_name, email, phone, reg_no, hostel_block, room_number')
+          .eq('id', order.user_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+
+  const billOverrides = profRes.data?.bill_item_overrides ?? {};
   const mergedCatalog = mergeVendorBillItemsFromDbRow(effectiveVendorSlug, billOverrides);
 
   const safeLineItems: Array<{ id: string; label: string; qty: number; price: number; image_url?: string | null }> = [];
@@ -146,80 +168,46 @@ export async function POST(request: Request) {
     (session.role === 'vendor' ? session.vendorId ?? null : null) ??
     (order.vendor_name ? String(order.vendor_name) : null);
 
-  // Best-effort vendor_id assignment.
   const vendor_id = order.vendor_id ?? vendorFromSlug?.id ?? null;
 
   const user_id = order.user_id ?? null;
-  let customer_name: string | null = null;
-  let customer_phone: string | null = null;
-  let customer_reg_no: string | null = null;
-  let customer_hostel_block: string | null = null;
-  let customer_room_number: string | null = null;
-  if (user_id) {
-    const { data: urow } = await supabase
-      .from('users')
-      .select('full_name, email, phone, reg_no, hostel_block, room_number')
-      .eq('id', user_id)
-      .maybeSingle();
-    if (urow) {
-      customer_name = (urow.full_name as string | null) ?? (urow.email as string | null) ?? null;
-      customer_phone = (urow.phone as string | null) ?? null;
-      customer_reg_no = urow.reg_no != null ? String(urow.reg_no).trim() || null : null;
-      customer_hostel_block = urow.hostel_block != null ? String(urow.hostel_block).trim() || null : null;
-      customer_room_number = urow.room_number != null ? String(urow.room_number).trim() || null : null;
-    }
-  }
+  const urow = userRes.data as { full_name?: string | null; email?: string | null; phone?: string | null; reg_no?: string | null; hostel_block?: string | null; room_number?: string | null } | null;
+  const customer_name = urow ? ((urow.full_name as string | null) ?? (urow.email as string | null) ?? null) : null;
+  const customer_phone = urow ? ((urow.phone as string | null) ?? null) : null;
+  const customer_reg_no = urow?.reg_no != null ? String(urow.reg_no).trim() || null : null;
+  const customer_hostel_block = urow?.hostel_block != null ? String(urow.hostel_block).trim() || null : null;
+  const customer_room_number = urow?.room_number != null ? String(urow.room_number).trim() || null : null;
 
   const newLineItemsPayload = safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty, image_url: l.image_url }));
 
-  // --- Upsert logic: check for existing active (non-cancelled) bill for this token ---
+  // --- Upsert: use existing bill result from batch 1 ---
   type ExistingBill = { id: string; line_items: unknown; subtotal: number; total: number };
-  const fetchExistingBill = async (): Promise<ExistingBill | null> => {
-    const q1 = await supabase
+  let existingBill: ExistingBill | null = null;
+  if (existingBillRes.error && existingBillRes.error.code === '42703') {
+    const fallback = await supabase
       .from('vendor_bills')
       .select('id, line_items, subtotal, total')
       .eq('order_token', token)
-      .is('cancelled_at', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (q1.error && q1.error.code === '42703') {
-      // cancelled_at column doesn't exist yet — fallback without it
-      const q2 = await supabase
-        .from('vendor_bills')
-        .select('id, line_items, subtotal, total')
-        .eq('order_token', token)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (q2.error) throw new Error(q2.error.message);
-      return (q2.data as ExistingBill) ?? null;
-    }
-    if (q1.error) throw new Error(q1.error.message);
-    return (q1.data as ExistingBill) ?? null;
-  };
-
-  let existingBill: ExistingBill | null;
-  try {
-    existingBill = await fetchExistingBill();
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Failed to check existing bill' }, { status: 500 });
+    if (!fallback.error) existingBill = (fallback.data ?? null) as ExistingBill | null;
+  } else if (!existingBillRes.error) {
+    existingBill = (existingBillRes.data ?? null) as ExistingBill | null;
   }
 
   if (existingBill) {
-    // Compare line items: same items+qty+price = identical bill, just return it
-    const existingItems = Array.isArray(existingBill.line_items) ? existingBill.line_items as Array<{ id: string; qty: number; price: number }> : [];
+    const eb = existingBill;
+    const existingItems = Array.isArray(eb.line_items) ? eb.line_items as Array<{ id: string; qty: number; price: number }> : [];
     const normalize = (items: Array<{ id: string; qty: number; price: number }>) =>
       [...items].sort((a, b) => a.id.localeCompare(b.id)).map((i) => `${i.id}:${i.qty}:${i.price}`).join('|');
     const existingFingerprint = normalize(existingItems);
     const newFingerprint = normalize(newLineItemsPayload);
 
     if (existingFingerprint === newFingerprint) {
-      // Identical bill already exists — return it without creating a duplicate
-      return NextResponse.json({ ok: true, billId: existingBill.id, reused: true });
+      return NextResponse.json({ ok: true, billId: eb.id, reused: true });
     }
 
-    // Items changed — update the existing bill instead of creating a new one
     const { error: updErr } = await supabase
       .from('vendor_bills')
       .update({
@@ -233,10 +221,10 @@ export async function POST(request: Request) {
         customer_hostel_block,
         customer_room_number,
       })
-      .eq('id', existingBill.id);
+      .eq('id', eb.id);
 
     if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
-    return NextResponse.json({ ok: true, billId: existingBill.id, updated: true });
+    return NextResponse.json({ ok: true, billId: eb.id, updated: true });
   }
 
   // No existing active bill — create a new one
@@ -265,4 +253,3 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, billId: data?.id, created: true });
 }
-

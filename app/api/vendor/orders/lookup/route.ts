@@ -56,47 +56,51 @@ export async function POST(request: Request): Promise<NextResponse> {
   const token = normalizeToken(body.token ?? '');
   if (!token) return NextResponse.json({ error: 'token is required' }, { status: 400 });
 
-  const { data: orders, error: ordersErr } = await supabase
-    .from('orders')
-    .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, created_at, delivery_confirmed_at, delivery_comments, vendor_name, vendor_id')
-    .eq('token', token)
-    .order('created_at', { ascending: false })
-    .limit(1);
+  // === All queries in parallel ===
+  const [ordersRes, billCountRes, latestBillRes] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, created_at, delivery_confirmed_at, delivery_comments, vendor_name, vendor_id')
+      .eq('token', token)
+      .order('created_at', { ascending: false })
+      .limit(1),
+    supabase
+      .from('vendor_bills')
+      .select('*', { count: 'exact', head: true })
+      .eq('order_token', token),
+    supabase
+      .from('vendor_bills')
+      .select('id, created_at, line_items')
+      .eq('order_token', token)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
-  if (ordersErr) return NextResponse.json({ error: ordersErr.message }, { status: 500 });
-  const order = Array.isArray(orders) ? orders[0] : null;
+  if (ordersRes.error) return NextResponse.json({ error: ordersRes.error.message }, { status: 500 });
+  const order = Array.isArray(ordersRes.data) ? ordersRes.data[0] : null;
   if (!order) return NextResponse.json({ ok: false, error: 'Order not found' }, { status: 404 });
 
-  const { data: userRow, error: userErr } = order.user_id
-    ? await supabase.from('users').select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id').eq('id', order.user_id).maybeSingle()
-    : { data: null, error: null };
-
-  if (userErr) return NextResponse.json({ error: userErr.message }, { status: 500 });
+  // Fetch user in parallel only if order has user_id (most will)
+  const userPromise = order.user_id
+    ? supabase.from('users').select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id').eq('id', order.user_id).maybeSingle()
+    : Promise.resolve({ data: null, error: null });
 
   const vendorSlug = resolveVendorSlugFromSession(session);
   if (vendorSlug) {
-    // Enforce only that the order is assigned to this vendor.
     const orderVendorSlug = resolveVendorSlugFromOrderVendorName(order.vendor_name);
     if (orderVendorSlug && orderVendorSlug !== vendorSlug) {
       return NextResponse.json({ ok: false, error: 'Forbidden for this vendor' }, { status: 403 });
     }
   }
 
-  const { count, error: countErr } = await supabase
-    .from('vendor_bills')
-    .select('*', { count: 'exact', head: true })
-    .eq('order_token', token);
+  if (billCountRes.error) return NextResponse.json({ error: billCountRes.error.message }, { status: 500 });
+  if (latestBillRes.error) return NextResponse.json({ error: latestBillRes.error.message }, { status: 500 });
 
-  if (countErr) return NextResponse.json({ error: countErr.message }, { status: 500 });
+  const { data: userRow, error: userErr } = await userPromise;
+  if (userErr) return NextResponse.json({ error: userErr.message }, { status: 500 });
 
-  const { data: latestBill, error: latestBillErr } = await supabase
-    .from('vendor_bills')
-    .select('id, created_at, line_items')
-    .eq('order_token', token)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (latestBillErr) return NextResponse.json({ error: latestBillErr.message }, { status: 500 });
+  const latestBill = latestBillRes.data;
   const latestBillCanCancel =
     !!latestBill && isWithinVendorBillCancelEditWindow(String(latestBill.created_at));
 
@@ -104,7 +108,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     ok: true,
     order,
     user: userRow ?? null,
-    existing_bills_count: count ?? 0,
+    existing_bills_count: billCountRes.count ?? 0,
     latest_bill: latestBill
       ? {
           id: String(latestBill.id),
@@ -115,4 +119,3 @@ export async function POST(request: Request): Promise<NextResponse> {
       : null,
   } satisfies LookupResponse);
 }
-

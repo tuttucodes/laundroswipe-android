@@ -1,9 +1,11 @@
--- Mark duplicate bills as cancelled so only the latest bill per token is active.
--- For each order_token with multiple active bills, keep the newest and cancel the rest.
+-- Mark exact duplicate bills as cancelled.
+-- Only deduplicates when both order_token AND total match (same token, same amount).
+-- Bills with same token but different amounts are intentional and kept.
 WITH ranked AS (
   SELECT id,
          order_token,
-         ROW_NUMBER() OVER (PARTITION BY order_token ORDER BY created_at DESC) AS rn
+         total,
+         ROW_NUMBER() OVER (PARTITION BY order_token, total ORDER BY created_at DESC) AS rn
   FROM vendor_bills
   WHERE cancelled_at IS NULL
 )

@@ -116,16 +116,15 @@ export async function GET(request: Request) {
     return String(billVendorSlug ?? '').toLowerCase() === vendorSlug;
   });
 
-  // Deduplicate: only keep the latest bill per order_token
-  const latestByToken = new Map<string, any>();
+  // Deduplicate: only remove exact duplicates (same token + same total amount)
+  const seenBills = new Set<string>();
+  const filtered: any[] = [];
   for (const b of vendorFiltered) {
-    const token = String(b.order_token ?? '');
-    const existing = latestByToken.get(token);
-    if (!existing || new Date(b.created_at as string) > new Date(existing.created_at as string)) {
-      latestByToken.set(token, b);
-    }
+    const dedupKey = `${b.order_token}|${Number(b.total ?? 0).toFixed(2)}`;
+    if (seenBills.has(dedupKey)) continue;
+    seenBills.add(dedupKey);
+    filtered.push(b);
   }
-  const filtered = Array.from(latestByToken.values());
 
   const buckets = new Map<string, BucketData>();
   for (const bill of filtered) {
