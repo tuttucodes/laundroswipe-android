@@ -215,6 +215,10 @@ export default function AdminPage() {
     /** Sum of convenience_fee across saved bills. */
     totalConvenienceFee: number;
   }>({ count: 0, totalRevenue: 0, subtotalExcludingFees: 0, totalConvenienceFee: 0 });
+  const [billByToken, setBillByToken] = useState<Map<string, { total: number; subtotal: number }>>(new Map());
+  type WeeklyRevenueBucket = { date_from: string; date_to: string; bill_count: number; subtotal: number; total: number };
+  const [weeklyRevenue, setWeeklyRevenue] = useState<WeeklyRevenueBucket[]>([]);
+  const [weeklyRevenueLoading, setWeeklyRevenueLoading] = useState(false);
   const [tab, setTab] = useState<Tab>('orders');
   const [filter, setFilter] = useState('all');
   const [superVendorFilter, setSuperVendorFilter] = useState('all');
@@ -437,9 +441,40 @@ export default function AdminPage() {
         );
 
         setBills({ count: bl.length, ...agg });
+
+        // Build bill-by-token map for showing revenue per order
+        const tokenMap = new Map<string, { total: number; subtotal: number }>();
+        for (const b of bl) {
+          const t = String(b.order_token ?? '');
+          if (!t) continue;
+          const existing = tokenMap.get(t);
+          const tot = Number(b.total ?? 0);
+          const sub = Number(b.subtotal ?? 0);
+          // Keep latest (highest) if duplicates
+          if (!existing || tot > existing.total) {
+            tokenMap.set(t, { total: tot, subtotal: sub });
+          }
+        }
+        setBillByToken(tokenMap);
       })
       .finally(() => setLoading(false));
   }, [loggedIn, isSuperAdmin, vendorId, superVendorFilter]);
+
+  // Fetch weekly revenue
+  useEffect(() => {
+    if (!loggedIn) return;
+    setWeeklyRevenueLoading(true);
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    fetch('/api/vendor/revenue?days=7', { credentials: 'include', headers })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || !data?.ok) return;
+        setWeeklyRevenue((data.revenue ?? []) as WeeklyRevenueBucket[]);
+      })
+      .catch(() => {})
+      .finally(() => setWeeklyRevenueLoading(false));
+  }, [loggedIn]);
 
   useEffect(() => {
     if (!loggedIn || tab !== 'schedule') return;
@@ -934,6 +969,34 @@ export default function AdminPage() {
                 ))}
               </div>
             )}
+            {/* Weekly Revenue Breakdown */}
+            {!loading && weeklyRevenue.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, marginBottom: 10, color: 'var(--t)' }}>Weekly Revenue</h3>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid var(--bd)' }}>
+                        <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Week</th>
+                        <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Bills</th>
+                        <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: 'var(--tm)', fontSize: 12, textTransform: 'uppercase' }}>Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {weeklyRevenue.map((w, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid var(--bd)' }}>
+                          <td style={{ padding: '8px 12px', fontWeight: 500 }}>
+                            {new Date(w.date_from + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {new Date(w.date_to + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                          </td>
+                          <td style={{ padding: '8px 12px', textAlign: 'right' }}>{w.bill_count}</td>
+                          <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--ok)' }}>₹{w.total.toLocaleString('en-IN')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
             {!loading && (
               <div className="admin-filter-row">
                 {isSuperAdmin && (
@@ -993,6 +1056,7 @@ export default function AdminPage() {
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Order</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Token</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Customer</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Bill</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Status</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Action</th>
                       </tr>
@@ -1003,6 +1067,9 @@ export default function AdminPage() {
                           <td style={{ padding: '14px 16px', fontSize: 14 }}>{o.order_number}</td>
                           <td style={{ padding: '14px 16px', fontFamily: 'var(--fd)', fontWeight: 800, color: 'var(--o)' }}>#{o.token}</td>
                           <td style={{ padding: '14px 16px', fontSize: 14 }}>{o.user}</td>
+                          <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 600, color: billByToken.has(o.token) ? 'var(--ok)' : 'var(--tm)' }}>
+                            {billByToken.has(o.token) ? `₹${billByToken.get(o.token)!.total}` : '—'}
+                          </td>
                           <td style={{ padding: '14px 16px' }}>
                             <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: statusBadge(o.status) === 'b-sch' ? '#FEF3C7' : statusBadge(o.status) === 'b-del' ? '#DCFCE7' : 'var(--bl)', color: statusBadge(o.status) === 'b-sch' ? '#92400E' : statusBadge(o.status) === 'b-del' ? 'var(--ok)' : 'var(--b)' }}>{statusLabel(o.status)}</span>
                           </td>
@@ -1028,6 +1095,9 @@ export default function AdminPage() {
                           <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: statusBadge(o.status) === 'b-sch' ? '#FEF3C7' : statusBadge(o.status) === 'b-del' ? '#DCFCE7' : 'var(--bl)', color: statusBadge(o.status) === 'b-sch' ? '#92400E' : statusBadge(o.status) === 'b-del' ? 'var(--ok)' : 'var(--b)' }}>{statusLabel(o.status)}</span>
                         </div>
                         <div className="admin-order-card-meta">{o.order_number} · {o.user}</div>
+                        {billByToken.has(o.token) && (
+                          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ok)', marginTop: 4 }}>₹{billByToken.get(o.token)!.total}</div>
+                        )}
                         {o.status !== 'delivered' && (
                           <div className="admin-order-card-actions">
                             <button type="button" onClick={() => advanceStatus(o.id)} className="admin-advance-btn">Advance</button>
