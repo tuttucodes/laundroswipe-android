@@ -21,6 +21,11 @@ export async function GET(request: Request) {
   const supabase = createServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
 
+  const url = new URL(request.url);
+  const page = Math.max(1, Number(url.searchParams.get('page') || '1'));
+  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || '50')));
+  const offset = (page - 1) * limit;
+
   const vendorSlug = session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? '' : '';
   const { data: vendorsData, error: vendorsError } = await supabase
     .from('vendors')
@@ -29,21 +34,36 @@ export async function GET(request: Request) {
   const dbVendors = (vendorsData ?? []) as DbVendor[];
   const vendorsById = new Map<string, string>(dbVendors.map((v) => [String(v.id), v.slug]));
 
+  // For vendor-scoped queries, filter server-side by vendor_id when possible
+  const vendorDbId = vendorSlug
+    ? dbVendors.find((v) => v.slug === vendorSlug)?.id ?? null
+    : null;
+
   let data: any[] | null = null;
   let error: { message: string; code?: string } | null = null;
-  const withCancelCols = await supabase
-    .from('vendor_bills')
-    .select(
-      'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at, cancelled_by_role',
-    )
-    .order('created_at', { ascending: false });
+  let totalCount = 0;
+
+  const buildQuery = (cols: string) => {
+    let q = supabase
+      .from('vendor_bills')
+      .select(cols, { count: 'exact' })
+      .order('created_at', { ascending: false });
+    // Server-side vendor filter
+    if (vendorDbId) q = q.eq('vendor_id', vendorDbId);
+    q = q.range(offset, offset + limit - 1);
+    return q;
+  };
+
+  const withCancelCols = await buildQuery(
+    'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at, cancelled_by_role',
+  );
   data = withCancelCols.data as any[] | null;
   error = withCancelCols.error as { message: string; code?: string } | null;
+  totalCount = (withCancelCols as any).count ?? 0;
   if (error?.code === '42703') {
-    const fallback = await supabase
-      .from('vendor_bills')
-      .select('id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at')
-      .order('created_at', { ascending: false });
+    const fallback = await buildQuery(
+      'id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at',
+    );
     data = ((fallback.data as any[] | null) ?? []).map((row) => ({
       ...row,
       customer_reg_no: null,
@@ -53,17 +73,21 @@ export async function GET(request: Request) {
       cancelled_by_role: null,
     }));
     error = fallback.error as { message: string; code?: string } | null;
+    totalCount = (fallback as any).count ?? 0;
   }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const raw = (data ?? []).filter((b: any) => {
-    if (!vendorSlug) return true;
-    const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
-    const byVendorName = resolveVendorSlugFromName(b.vendor_name, dbVendors);
-    const billVendorSlug = (byVendorId ?? byVendorName ?? null) as string | null;
-    return String(billVendorSlug ?? '').toLowerCase() === vendorSlug;
-  });
+  // Client-side vendor filter fallback (for bills without vendor_id but matching vendor_name)
+  const raw = vendorSlug
+    ? (data ?? []).filter((b: any) => {
+        if (vendorDbId && b.vendor_id === vendorDbId) return true;
+        const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
+        const byVendorName = resolveVendorSlugFromName(b.vendor_name, dbVendors);
+        const billVendorSlug = (byVendorId ?? byVendorName ?? null) as string | null;
+        return String(billVendorSlug ?? '').toLowerCase() === vendorSlug;
+      })
+    : (data ?? []);
 
   const userIds = Array.from(new Set(raw.map((b: any) => b.user_id).filter(Boolean))) as string[];
   let userMap = new Map<string, { full_name: string | null; email: string | null; phone: string | null; display_id: string | null }>();
@@ -94,6 +118,13 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({ ok: true, bills: rows });
+  return NextResponse.json({
+    ok: true,
+    bills: rows,
+    page,
+    limit,
+    total: totalCount,
+    total_pages: Math.ceil(totalCount / limit),
+  });
 }
 

@@ -170,6 +170,76 @@ export async function POST(request: Request) {
     }
   }
 
+  const newLineItemsPayload = safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty, image_url: l.image_url }));
+
+  // --- Upsert logic: check for existing active (non-cancelled) bill for this token ---
+  type ExistingBill = { id: string; line_items: unknown; subtotal: number; total: number };
+  const fetchExistingBill = async (): Promise<ExistingBill | null> => {
+    const q1 = await supabase
+      .from('vendor_bills')
+      .select('id, line_items, subtotal, total')
+      .eq('order_token', token)
+      .is('cancelled_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (q1.error && q1.error.code === '42703') {
+      // cancelled_at column doesn't exist yet — fallback without it
+      const q2 = await supabase
+        .from('vendor_bills')
+        .select('id, line_items, subtotal, total')
+        .eq('order_token', token)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (q2.error) throw new Error(q2.error.message);
+      return (q2.data as ExistingBill) ?? null;
+    }
+    if (q1.error) throw new Error(q1.error.message);
+    return (q1.data as ExistingBill) ?? null;
+  };
+
+  let existingBill: ExistingBill | null;
+  try {
+    existingBill = await fetchExistingBill();
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? 'Failed to check existing bill' }, { status: 500 });
+  }
+
+  if (existingBill) {
+    // Compare line items: same items+qty+price = identical bill, just return it
+    const existingItems = Array.isArray(existingBill.line_items) ? existingBill.line_items as Array<{ id: string; qty: number; price: number }> : [];
+    const normalize = (items: Array<{ id: string; qty: number; price: number }>) =>
+      [...items].sort((a, b) => a.id.localeCompare(b.id)).map((i) => `${i.id}:${i.qty}:${i.price}`).join('|');
+    const existingFingerprint = normalize(existingItems);
+    const newFingerprint = normalize(newLineItemsPayload);
+
+    if (existingFingerprint === newFingerprint) {
+      // Identical bill already exists — return it without creating a duplicate
+      return NextResponse.json({ ok: true, billId: existingBill.id, reused: true });
+    }
+
+    // Items changed — update the existing bill instead of creating a new one
+    const { error: updErr } = await supabase
+      .from('vendor_bills')
+      .update({
+        line_items: newLineItemsPayload,
+        subtotal,
+        convenience_fee,
+        total,
+        customer_name,
+        customer_phone,
+        customer_reg_no,
+        customer_hostel_block,
+        customer_room_number,
+      })
+      .eq('id', existingBill.id);
+
+    if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
+    return NextResponse.json({ ok: true, billId: existingBill.id, updated: true });
+  }
+
+  // No existing active bill — create a new one
   const { data, error } = await supabase
     .from('vendor_bills')
     .insert({
@@ -182,7 +252,7 @@ export async function POST(request: Request) {
       customer_hostel_block,
       customer_room_number,
       user_id,
-      line_items: safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty, image_url: l.image_url })),
+      line_items: newLineItemsPayload,
       subtotal,
       convenience_fee,
       total,
@@ -193,6 +263,6 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, billId: data?.id });
+  return NextResponse.json({ ok: true, billId: data?.id, created: true });
 }
 

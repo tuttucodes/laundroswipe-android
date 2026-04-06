@@ -606,9 +606,15 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
         showToast(data?.error || 'Save failed', 'er');
         return;
       }
+      lastSavedBillFingerprintRef.current = billFingerprint();
       setBillAlreadyGenerated(true);
-      setLatestBill(null);
-      showToast('Bill saved', 'ok');
+      if (data.reused) {
+        showToast('Bill already exists (no changes)', 'ok');
+      } else if (data.updated) {
+        showToast('Bill updated with new items', 'ok');
+      } else {
+        showToast('Bill saved', 'ok');
+      }
     } catch {
       showToast('Save failed', 'er');
     } finally {
@@ -730,7 +736,14 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.ok) {
         lastSavedBillFingerprintRef.current = fingerprint;
-        showToast('Bill saved. Printing…', 'ok');
+        setBillAlreadyGenerated(true);
+        if (data.reused) {
+          showToast('Printing (bill unchanged)…', 'ok');
+        } else if (data.updated) {
+          showToast('Bill updated. Printing…', 'ok');
+        } else {
+          showToast('Bill saved. Printing…', 'ok');
+        }
       } else {
         showToast('Printing…', 'er');
       }
