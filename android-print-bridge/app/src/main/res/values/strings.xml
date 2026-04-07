@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LaundroSwipe Printer Guide</string>
+    <!-- REQUIRED: your live site (Vendor Bill or Printers page). Example: https://yoursite.com/admin/vendor -->
+    <string name="web_load_url" translatable="false">https://example.com/admin/vendor</string>
+    <!-- Optional default MAC (or use in-app picker). Placeholder = no build-time default. -->
+    <string name="printer_bluetooth_mac" translatable="false">00:00:00:00:00:00</string>
+
+    <string name="menu_change_printer">Change printer</string>
+    <string name="setup_headline">Choose your printer</string>
+    <string name="setup_body">Pair your thermal printer in Android Settings → Bluetooth first. This app reads your already-paired devices—tap the correct one. Likely printers are sorted to the top.</string>
+    <string name="btn_refresh_paired">Refresh list</string>
+    <string name="btn_bluetooth_settings">Bluetooth settings</string>
+    <string name="btn_enter_mac_manually">Enter address manually</string>
+    <string name="btn_continue_to_app">Continue to LaundroSwipe</string>
+    <string name="empty_no_paired">No paired Bluetooth devices yet. Open Bluetooth settings, pair your printer, then tap Refresh list.</string>
+    <string name="row_likely_printer">Likely thermal / receipt printer</string>
+
+    <string name="mac_hint">00:11:22:33:44:55</string>
+    <string name="dialog_manual_mac_title">Printer address</string>
+    <string name="dialog_manual_mac_message">If your device does not appear, type its Bluetooth MAC (from the printer box or your router’s paired list).</string>
+    <string name="dialog_save">Save</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="toast_invalid_mac">That doesn’t look like a MAC (use format 00:11:22:33:44:55).</string>
+    <string name="toast_printer_saved">Printer saved</string>
+    <string name="toast_select_printer">Select a printer from the list or enter an address.</string>
+    <string name="toast_bt_permission">Bluetooth permission is needed to list paired printers. You can still open the site; use Settings to allow Bluetooth for this app.</string>
+</resources>

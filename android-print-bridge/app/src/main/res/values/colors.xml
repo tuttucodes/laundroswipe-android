@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ls_primary">#1D4ED8</color>
+    <color name="ls_primary_dark">#1E40AF</color>
+    <color name="ls_surface">#F8FAFC</color>
+    <color name="ls_on_surface">#0F172A</color>
+    <color name="ls_on_surface_variant">#64748B</color>
+    <color name="ls_card_stroke_selected">#1D4ED8</color>
+    <color name="ls_card_stroke_default">#E2E8F0</color>
+</resources>
