@@ -1,3 +1,4 @@
+import { tryNativeEscPosPrint } from '@/lib/native-print-bridge';
 import { BluetoothPrinterService, isWebBluetoothAvailable } from './bluetooth/BluetoothPrinterService';
 import { PrintQueue } from './queue/PrintQueue';
 import { ESCPOSBuilder, type PaperSize } from './escpos/ESCPOSBuilder';
@@ -17,13 +18,17 @@ export {
   type BleConnectionState,
 } from './bluetooth/BluetoothPrinterService';
 export { PrintQueue } from './queue/PrintQueue';
+export { isNativeEscPosBridgeAvailable, tryNativeEscPosPrint } from '@/lib/native-print-bridge';
 
 export type BluetoothPrintResult = 'printed' | 'not-connected' | 'unavailable' | 'disabled' | 'error';
 
 /**
- * Send raw ESC/POS to the connected BLE printer with queue + timeout.
+ * Raw ESC/POS: Android WebView native bridge first (Classic BT), then BLE when enabled.
  */
 export async function printEscPosViaBluetooth(bytes: Uint8Array): Promise<BluetoothPrintResult> {
+  const native = await tryNativeEscPosPrint(bytes);
+  if (native === 'ok') return 'printed';
+
   const prefs = getBlePrinterPreferences();
   if (!prefs.preferBluetoothEscPos) return 'disabled';
   if (!isWebBluetoothAvailable()) return 'unavailable';

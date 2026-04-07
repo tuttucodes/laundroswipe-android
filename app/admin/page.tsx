@@ -134,7 +134,10 @@ type Tab =
   | 'vendor'
   | 'gatepass'
   | 'settings'
-  | 'area_requests';
+  | 'area_requests'
+  | 'bills_overview'
+  | 'bills_by_date'
+  | 'bills_by_block';
 type AdminRole = 'super_admin' | 'vendor';
 type VendorId = string;
 
@@ -188,6 +191,9 @@ const TAB_FROM_QUERY: Tab[] = [
   'gatepass',
   'settings',
   'area_requests',
+  'bills_overview',
+  'bills_by_date',
+  'bills_by_block',
 ];
 
 export default function AdminPage() {
@@ -268,6 +274,17 @@ export default function AdminPage() {
   const [linkCampusId, setLinkCampusId] = useState('vit-chn');
   const [linkVendorSlug, setLinkVendorSlug] = useState('');
   const [linkCampusSaving, setLinkCampusSaving] = useState(false);
+
+  // Bills management state
+  const [billsOverviewLoading, setBillsOverviewLoading] = useState(false);
+  const [billsOverviewData, setBillsOverviewData] = useState<{ total_count: number } | null>(null);
+  const [billsDateFrom, setBillsDateFrom] = useState('');
+  const [billsDateTo, setBillsDateTo] = useState('');
+  const [billsByDateLoading, setBillsByDateLoading] = useState(false);
+  const [billsByDateData, setBillsByDateData] = useState<Array<{ date: string; count: number; amount: number }>>([]);
+  const [billsByBlockLoading, setBillsByBlockLoading] = useState(false);
+  const [billsByBlockData, setBillsByBlockData] = useState<Array<{ block: string; count: number; amount: number }>>([]);
+
   const dashboardTitle = isSuperAdmin
     ? 'LaundroSwipe Super Admin'
     : `${vendorDisplayName || vendorsList.find((v) => v.slug === vendorId)?.name || vendorId || 'Vendor'} Dashboard`;
@@ -344,6 +361,34 @@ export default function AdminPage() {
       })
       .finally(() => setAreaRequestsLoading(false));
   }, [loggedIn, isSuperAdmin, tab]);
+
+  useEffect(() => {
+    if (!loggedIn || tab !== 'bills_overview') return;
+
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers = token ? ({ Authorization: `Bearer ${token}` } as Record<string, string>) : {};
+
+    setBillsOverviewLoading(true);
+    fetch('/api/admin/bills/overview', { credentials: 'include', headers })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (r.status === 401) {
+          sessionStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_logged');
+          setLoggedIn(false);
+          return null;
+        }
+        if (!r.ok) return null;
+        return data as { total_count: number };
+      })
+      .then((data) => {
+        if (data) setBillsOverviewData(data);
+      })
+      .catch(() => {
+        setBillsOverviewData(null);
+      })
+      .finally(() => setBillsOverviewLoading(false));
+  }, [loggedIn, tab]);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -890,13 +935,21 @@ export default function AdminPage() {
                 📦 Items &amp; rates
               </Link>
             )}
-            <Link href="/admin/printers" className="admin-nav-link" onClick={closeMenu}>🖨️ Printers</Link>
+            <Link href="/admin/printers#android-print-apk" className="admin-nav-link" onClick={closeMenu}>
+              🖨️ Printers
+            </Link>
             {!isSuperAdmin && (
               <button type="button" onClick={() => { setTab('schedule'); closeMenu(); }} className={`admin-nav-btn ${tab === 'schedule' ? 'active' : ''}`}>
                 📅 Schedule &amp; time slots
               </button>
             )}
             <button type="button" onClick={() => { setTab('vendor'); closeMenu(); }} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
+            <div className="admin-drawer-section">
+              <span className="admin-drawer-section-label">Bills</span>
+              <button type="button" onClick={() => { setTab('bills_overview'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_overview' ? 'active' : ''}`}>📊 Bills delivered count</button>
+              <button type="button" onClick={() => { setTab('bills_by_date'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_by_date' ? 'active' : ''}`}>📅 Bills by date</button>
+              <button type="button" onClick={() => { setTab('bills_by_block'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_by_block' ? 'active' : ''}`}>🏢 Bills by block</button>
+            </div>
           </div>
           {isSuperAdmin && (
             <>
@@ -1690,6 +1743,156 @@ export default function AdminPage() {
                 </button>
               </div>
             )}
+          </>
+        )}
+        {tab === 'bills_overview' && (
+          <>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Bills Delivered Count</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Total number of bills/tokens delivered</p>
+            {billsOverviewLoading ? (
+              <p style={{ color: 'var(--ts)' }}>Loading…</p>
+            ) : billsOverviewData ? (
+              <div className="admin-stat-grid">
+                <div className="admin-stat-card">
+                  <div className="admin-stat-value" style={{ color: 'var(--b)' }}>{billsOverviewData.total_count}</div>
+                  <div className="admin-stat-label">Total bills delivered</div>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: 'var(--ts)' }}>No data available</p>
+            )}
+          </>
+        )}
+        {tab === 'bills_by_date' && (
+          <>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Bills by Date Range</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Filter bills by date and time period</p>
+            <div style={{ marginBottom: 24, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div className="fg">
+                <label className="fl">From date</label>
+                <input type="datetime-local" className="fi" value={billsDateFrom} onChange={(e) => setBillsDateFrom(e.target.value)} />
+              </div>
+              <div className="fg">
+                <label className="fl">To date</label>
+                <input type="datetime-local" className="fi" value={billsDateTo} onChange={(e) => setBillsDateTo(e.target.value)} />
+              </div>
+              <button
+                type="button"
+                className="btn bp"
+                disabled={billsByDateLoading || !billsDateFrom || !billsDateTo}
+                onClick={async () => {
+                  if (!billsDateFrom || !billsDateTo) return;
+                  setBillsByDateLoading(true);
+                  try {
+                    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+                    const headers = token ? ({ Authorization: `Bearer ${token}` } as Record<string, string>) : {};
+                    const res = await fetch(`/api/admin/bills/by-date?from=${encodeURIComponent(billsDateFrom)}&to=${encodeURIComponent(billsDateTo)}`, {
+                      credentials: 'include',
+                      headers,
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && Array.isArray(data.bills)) {
+                      setBillsByDateData(data.bills);
+                    } else {
+                      showToast('Failed to load bills', 'er');
+                      setBillsByDateData([]);
+                    }
+                  } catch {
+                    showToast('Failed to load bills', 'er');
+                    setBillsByDateData([]);
+                  } finally {
+                    setBillsByDateLoading(false);
+                  }
+                }}
+              >
+                {billsByDateLoading ? 'Loading…' : 'Search'}
+              </button>
+            </div>
+            {billsByDateData.length > 0 ? (
+              <table className="admin-table" style={{ width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '12px' }}>Date</th>
+                    <th style={{ textAlign: 'right', padding: '12px' }}>Bill Count</th>
+                    <th style={{ textAlign: 'right', padding: '12px' }}>Total Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {billsByDateData.map((bill, idx) => (
+                    <tr key={idx} style={{ borderTop: '1px solid var(--bd)' }}>
+                      <td style={{ padding: '12px' }}>{new Date(bill.date).toLocaleString('en-IN')}</td>
+                      <td style={{ textAlign: 'right', padding: '12px' }}>{bill.count}</td>
+                      <td style={{ textAlign: 'right', padding: '12px' }}>₹{bill.amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : billsByDateData.length === 0 && !billsByDateLoading ? (
+              <p style={{ color: 'var(--ts)' }}>No bills found for the selected date range</p>
+            ) : null}
+          </>
+        )}
+        {tab === 'bills_by_block' && (
+          <>
+            <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Bills by Hostel Block</h1>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Bills grouped by hostel block</p>
+            {billsByBlockLoading ? (
+              <p style={{ color: 'var(--ts)' }}>Loading…</p>
+            ) : (
+              <button
+                type="button"
+                className="btn bp"
+                disabled={billsByBlockLoading}
+                onClick={async () => {
+                  setBillsByBlockLoading(true);
+                  try {
+                    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+                    const headers = token ? ({ Authorization: `Bearer ${token}` } as Record<string, string>) : {};
+                    const res = await fetch('/api/admin/bills/by-block', {
+                      credentials: 'include',
+                      headers,
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && Array.isArray(data.bills)) {
+                      setBillsByBlockData(data.bills);
+                    } else {
+                      showToast('Failed to load bills', 'er');
+                      setBillsByBlockData([]);
+                    }
+                  } catch {
+                    showToast('Failed to load bills', 'er');
+                    setBillsByBlockData([]);
+                  } finally {
+                    setBillsByBlockLoading(false);
+                  }
+                }}
+                style={{ marginBottom: 24 }}
+              >
+                {billsByBlockLoading ? 'Loading…' : 'Refresh'}
+              </button>
+            )}
+            {billsByBlockData.length > 0 ? (
+              <table className="admin-table" style={{ width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '12px' }}>Hostel Block</th>
+                    <th style={{ textAlign: 'right', padding: '12px' }}>Bill Count</th>
+                    <th style={{ textAlign: 'right', padding: '12px' }}>Total Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {billsByBlockData.map((bill, idx) => (
+                    <tr key={idx} style={{ borderTop: '1px solid var(--bd)' }}>
+                      <td style={{ padding: '12px' }}>{bill.block || 'No hostel block'}</td>
+                      <td style={{ textAlign: 'right', padding: '12px' }}>{bill.count}</td>
+                      <td style={{ textAlign: 'right', padding: '12px' }}>₹{bill.amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : billsByBlockData.length === 0 && !billsByBlockLoading ? (
+              <p style={{ color: 'var(--ts)' }}>No bills found</p>
+            ) : null}
           </>
         )}
         {tab === 'gatepass' && (

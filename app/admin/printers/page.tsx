@@ -11,6 +11,8 @@ import {
   setPreferPrintDialog,
   type PrinterModelId,
 } from '@/lib/printer-settings';
+import { BluetoothPrinterPanel } from '@/components/vendor/BluetoothPrinterPanel';
+import { PrintBridgeApkCta } from '@/components/vendor/PrintBridgeApkCta';
 import { printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 
@@ -91,7 +93,10 @@ export default function AdminPrintersPage() {
         showToast('Allow pop-ups to open print window', 'er');
         return;
       }
-      showToast(result === 'serial' || result === 'ble' ? 'Sent to printer' : 'Select ESCPOS in the print dialog', 'ok');
+      showToast(
+        result === 'serial' || result === 'ble' || result === 'native' ? 'Sent to printer' : 'Select ESCPOS in the print dialog',
+        'ok',
+      );
     } catch (e) {
       showToast((e as Error).message || 'Print failed', 'er');
     } finally {
@@ -109,7 +114,8 @@ export default function AdminPrintersPage() {
         getTestReceiptPlain(),
         { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true }
       );
-      if (result === 'serial') showToast('Serial/Bluetooth printer selected. Future prints will use it.', 'ok');
+      if (result === 'native') showToast('LaundroSwipe Android shell sent data to the printer.', 'ok');
+      else if (result === 'serial') showToast('Serial/Bluetooth printer selected. Future prints will use it.', 'ok');
       else if (result === 'ble') showToast('BLE printer selected. Future prints will use it.', 'ok');
       else if (result === 'dialog') showToast('Select ESCPOS Bluetooth Print Service in the print dialog', 'ok');
       else showToast('Allow pop-ups or try again', 'er');
@@ -131,9 +137,20 @@ export default function AdminPrintersPage() {
         <Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>Vendor Bill</Link>
       </p>
       <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>Printers</h1>
-      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 28 }}>
-        Add your receipt printer (e.g. 68mm or Epson M80 79mm). Set a default so bills print with the correct paper width. Use &quot;Pair printer&quot; to connect via Bluetooth/Serial for one-tap printing where supported.
+
+      <PrintBridgeApkCta variant="printersHero" />
+
+      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>
+        <strong>Also on Android:</strong> <strong>Web Bluetooth</strong> below works with <strong>BLE</strong> printers in Chrome.
+        Or use the <strong>print dialog</strong> after you add a printer model and &quot;Pair &amp; test&quot; (e.g. ESCPOS
+        Bluetooth Print Service for some Classic-BT devices).
       </p>
+      <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 28 }}>
+        Add a default printer model so receipt width matches your paper. Same settings apply on{' '}
+        <Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600 }}>Vendor Bill</Link>.
+      </p>
+
+      <BluetoothPrinterPanel />
 
       {/* Known printer models */}
       <section className="vendor-card" style={{ marginBottom: 24 }}>

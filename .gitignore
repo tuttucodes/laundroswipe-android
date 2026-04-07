@@ -15,6 +15,9 @@ yarn.lock
 config/env.js
 config/env*.local.js
 
+# Large signed APK (optional); use NEXT_PUBLIC_PRINT_BRIDGE_APK_URL or force-add to git if small team
+public/downloads/*.apk
+
 # Editor / OS
 .DS_Store
 .vscode/

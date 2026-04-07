@@ -1,9 +1,11 @@
 /**
  * Thermal receipt printing for 58mm, 68mm, and 79mm Bluetooth/USB printers.
- * - Tries direct print via Web Serial (Chrome 117+ desktop, Bluetooth SPP) or
- *   Web Bluetooth (BLE printers), then falls back to system print dialog.
+ * - Optional Android WebView bridge (Classic Bluetooth SPP) via window.LaundroSwipeAndroidPrint
+ * - Web Serial (Chrome 117+ desktop), Web Bluetooth (BLE), then system print dialog.
  * - Paper width and chars per line come from printer settings (e.g. 68mm, Epson M80 79mm).
  */
+
+import { tryNativeEscPosPrint } from '@/lib/native-print-bridge';
 
 export interface PrinterPrintConfig {
   paperWidthMm: number;
@@ -145,7 +147,7 @@ async function writeToBleCharacteristic(characteristic: BLECharacteristicLike, d
   }
 }
 
-export type DirectPrintResult = 'serial' | 'ble' | 'dialog' | 'blocked';
+export type DirectPrintResult = 'native' | 'serial' | 'ble' | 'dialog' | 'blocked';
 
 /**
  * Try to print directly to a Bluetooth thermal printer (Web Serial or Web Bluetooth),
@@ -162,6 +164,11 @@ export async function printThermalReceiptDirect(
   const config = options?.printer ?? DEFAULT_CONFIG;
   const effectiveForceDialog = forceDialog || (config && 'forceDialog' in config && config.forceDialog === true);
   const escPosBytes = buildEscPosBytes(plainText, config.charsPerLine);
+
+  if (!effectiveForceDialog) {
+    const native = await tryNativeEscPosPrint(escPosBytes);
+    if (native === 'ok') return 'native';
+  }
 
   if (!effectiveForceDialog && isSerialSupported()) {
     try {

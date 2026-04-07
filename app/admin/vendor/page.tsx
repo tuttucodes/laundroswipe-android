@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { BluetoothPrinterPanel } from '@/components/vendor/BluetoothPrinterPanel';
+import { PrintBridgeApkCta } from '@/components/vendor/PrintBridgeApkCta';
 import { printThermalReceiptDirect } from '@/lib/thermal-print';
 import {
   buildVendorReceiptEscPos,
@@ -628,26 +629,26 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
     const plain = buildReceiptPlainText();
     const prefs = getBlePrinterPreferences();
 
-    if (prefs.preferBluetoothEscPos) {
-      try {
-        const paper = getEffectiveEscPosPaperSize();
-        const input = buildVendorReceiptInput();
-        const bytes = buildVendorReceiptEscPos(paper, input);
-        const ble = await printEscPosViaBluetooth(bytes);
-        if (ble === 'printed') {
-          showToast('Sent to Bluetooth printer', 'ok');
-          return;
-        }
-        if (ble === 'not-connected') {
-          showToast('No BLE printer connected — opening print dialog…', 'ok');
-        } else if (ble === 'unavailable') {
-          showToast('Web Bluetooth not available — opening print dialog…', 'ok');
-        } else if (ble === 'error') {
-          showToast('Bluetooth print failed — opening print dialog…', 'er');
-        }
-      } catch {
-        showToast('Bluetooth print error — opening print dialog…', 'er');
+    try {
+      const paper = getEffectiveEscPosPaperSize();
+      const input = buildVendorReceiptInput();
+      const bytes = buildVendorReceiptEscPos(paper, input);
+      const direct = await printEscPosViaBluetooth(bytes);
+      if (direct === 'printed') {
+        showToast('Sent to printer', 'ok');
+        return;
       }
+      if (prefs.preferBluetoothEscPos) {
+        if (direct === 'not-connected') {
+          showToast('No Bluetooth printer connected — opening print dialog…', 'ok');
+        } else if (direct === 'unavailable') {
+          showToast('Web Bluetooth not available — opening print dialog…', 'ok');
+        } else if (direct === 'error') {
+          showToast('Direct print failed — opening print dialog…', 'er');
+        }
+      }
+    } catch {
+      showToast('Direct print error — opening print dialog…', 'er');
     }
 
     const config = getPrinterConfigForPrint();
@@ -1032,6 +1033,7 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
             <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
 
+            <PrintBridgeApkCta />
             <BluetoothPrinterPanel onPrefsChange={refreshBlePrefs} />
 
             {blePrefs.showReceiptPreview && lineItems.length > 0 && (

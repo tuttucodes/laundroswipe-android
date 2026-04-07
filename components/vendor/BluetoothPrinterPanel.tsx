@@ -107,10 +107,18 @@ export function BluetoothPrinterPanel({
         Bluetooth thermal (Web Bluetooth · ESC/POS)
       </h2>
       <p style={{ color: 'var(--ts)', fontSize: 13, lineHeight: 1.55, marginBottom: 14 }}>
-        Sends raw ESC/POS over <strong>BLE</strong> when a printer is connected. Classic Bluetooth SPP is{' '}
-        <strong>not</strong> available in the browser — use a BLE-capable printer, or Chrome on Android. In a WebView,
-        enable Web Bluetooth (e.g. <code style={{ fontSize: 12 }}>setWebContentsDebuggingEnabled</code> + flags) or open
-        this page in Chrome. <Link href="/admin/printers" style={{ color: 'var(--b)', fontWeight: 600 }}>Admin → Printers</Link> still sets paper width for the HTML print path.
+        Sends raw ESC/POS over <strong>BLE</strong> when a printer is connected. <strong>Classic Bluetooth (SPP)</strong>{' '}
+        cannot run inside a normal browser tab — that is what Play Store “print service” apps add. To avoid a third-party
+        app, ship the small <strong>LaundroSwipe Android shell</strong> in the repo under{' '}
+        <code style={{ fontSize: 12 }}>android-print-bridge/</code> (WebView + SPP); the site calls{' '}
+        <code style={{ fontSize: 12 }}>window.LaundroSwipeAndroidPrint.printEscPosBase64</code> automatically before BLE
+        and before the print dialog. The <code style={{ fontSize: 12 }}>android-print-bridge/</code> app uses{' '}
+        <a href="https://github.com/DantSu/ESCPOS-ThermalPrinter-Android" target="_blank" rel="noreferrer" style={{ color: 'var(--b)', fontWeight: 600 }}>
+          DantSu/ESCPOS-ThermalPrinter-Android
+        </a>{' '}
+        (MIT, JitPack) for Bluetooth SPP. In Chrome without the shell, use a BLE printer or the print
+        dialog. <Link href="/admin/printers" style={{ color: 'var(--b)', fontWeight: 600 }}>Admin → Printers</Link> sets
+        paper width for the HTML path.
       </p>
 
       {!webOk && (
