@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ClipboardList, Plus, RefreshCw, Tags, Truck } from 'lucide-react';
@@ -167,16 +167,19 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     [onUnauthorized],
   );
 
-  useEffect(() => {
-    let cancelled = false;
+  useLayoutEffect(() => {
     const cached = readVendorDashboardCache();
     if (cached) {
       setMetrics(cached);
       setLoading(false);
-      setRefreshing(true);
-    } else {
-      setLoading(true);
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hadCache = readVendorDashboardCache() !== null;
+    if (hadCache) setRefreshing(true);
+    else setLoading(true);
     setLoadError(null);
     loadDashboard()
       .then((res) => {
@@ -187,7 +190,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
           setLoadError(null);
         } else if (!('unauthorized' in res && res.unauthorized)) {
           setLoadError(res.error ?? 'Could not load');
-          if (!cached) setMetrics(null);
+          if (!hadCache) setMetrics(null);
         }
       })
       .finally(() => {
