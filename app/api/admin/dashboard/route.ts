@@ -31,6 +31,7 @@ type RpcDeliveredRow = {
 };
 
 type RpcBlockRow = RpcDeliveredRow & { block_key: string };
+type RpcBillBlockRow = Omit<RpcDeliveredRow, 'delivery_date'> & { bill_date: string; block_key: string };
 
 type RpcBillSavedRow = {
   bill_date: string;
@@ -124,6 +125,11 @@ export async function GET(request: Request) {
   }
 
   // One parallel batch: revenue RPCs + block rollup + open/delivered order scans (saves a full RTT vs sequential batches)
+  const blockFromIso =
+    blockFrom && /^\d{4}-\d{2}-\d{2}$/.test(blockFrom) ? istYmdStartIso(blockFrom) : from30Iso;
+  const blockToIso =
+    blockTo && /^\d{4}-\d{2}-\d{2}$/.test(blockTo) ? istYmdEndIso(blockTo) : toIso;
+
   const [
     rpc7d,
     rpc30d,
@@ -132,6 +138,7 @@ export async function GET(request: Request) {
     bill7,
     bill30,
     colBlock,
+    billBlock,
     openRes,
     deliveredRes,
     delivered30Res,
@@ -170,9 +177,13 @@ export async function GET(request: Request) {
     }),
     supabase.rpc('get_delivered_revenue_by_block_and_date', {
       p_vendor_id: vendorDbId,
-      p_from:
-        blockFrom && /^\d{4}-\d{2}-\d{2}$/.test(blockFrom) ? istYmdStartIso(blockFrom) : from30Iso,
-      p_to: blockTo && /^\d{4}-\d{2}-\d{2}$/.test(blockTo) ? istYmdEndIso(blockTo) : toIso,
+      p_from: blockFromIso,
+      p_to: blockToIso,
+    }),
+    supabase.rpc('get_bill_saved_revenue_by_block_and_date', {
+      p_vendor_id: vendorDbId,
+      p_from: blockFromIso,
+      p_to: blockToIso,
     }),
     openQuery,
     delivered7Query,
@@ -265,8 +276,27 @@ export async function GET(request: Request) {
   const sumBilled30 = sumFilledDayRows(billed30Filled);
 
   const blockRows = (!colBlock.error ? (colBlock.data ?? []) : []) as RpcBlockRow[];
+  if (colBlock.error && process.env.NODE_ENV === 'development') {
+    console.warn('[dashboard] get_delivered_revenue_by_block_and_date:', colBlock.error.message);
+  }
+
+  const billBlockRows = (!billBlock.error ? (billBlock.data ?? []) : []) as RpcBillBlockRow[];
+  if (billBlock.error && process.env.NODE_ENV === 'development') {
+    console.warn('[dashboard] get_bill_saved_revenue_by_block_and_date:', billBlock.error.message);
+  }
+
   const collected_by_block = blockRows.map((r) => ({
     delivery_date: String(r.delivery_date).slice(0, 10),
+    block_key: String(r.block_key),
+    bill_count: Number(r.bill_count),
+    item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
+    subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
+    convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
+    total: Math.round(Number(r.total_sum) * 100) / 100,
+  }));
+
+  const billed_by_block = billBlockRows.map((r) => ({
+    bill_date: String(r.bill_date).slice(0, 10),
     block_key: String(r.block_key),
     bill_count: Number(r.bill_count),
     item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
@@ -302,6 +332,7 @@ export async function GET(request: Request) {
       by_date: collected30Filled,
     },
     collected_by_block,
+    billed_by_block,
     open_tokens: {
       count: openRes.data?.length ?? 0,
       by_status: byStatus,

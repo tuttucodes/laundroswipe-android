@@ -558,6 +558,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 .vd-rev-bar-billed{background:var(--b)}
 .vd-rev-bar-delivered{background:color-mix(in srgb,var(--ok) 78%,var(--b) 22%)}
 .vd-rev-chart-xlab{font-size:10px;color:var(--ts);text-align:center;line-height:1.15;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vd-blocks-subtitle{font-family:var(--fd);font-size:16px;margin:20px 0 8px;color:var(--tx)}
+.vd-blocks-subtitle:first-of-type{margin-top:4px}
+.vd-block-unknown{font-style:italic;color:var(--tm);font-weight:600}
+.vd-block-unknown-inline{font-style:italic;color:var(--tm);font-weight:600}
 @media(max-width:640px){
   .vd-nav{gap:6px}
   .vd-nav-btn{flex:1 1 calc(50% - 4px);justify-content:center;font-size:13px;padding:10px 8px}

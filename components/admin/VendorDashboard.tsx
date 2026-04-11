@@ -76,12 +76,33 @@ export type VendorDashboardMetrics = {
     convenience_fee: number;
     total: number;
   }>;
+  billed_by_block: Array<{
+    bill_date: string;
+    block_key: string;
+    bill_count: number;
+    item_qty_sum: number;
+    subtotal: number;
+    convenience_fee: number;
+    total: number;
+  }>;
   open_tokens: { count: number; by_status: Record<string, number> };
   delivered_7d: { count: number; by_date: { date: string; count: number }[] };
   delivered_30d: { count: number; by_date: { date: string; count: number }[] };
 };
 
 type Section = 'overview' | 'delivered' | 'revenue' | 'blocks';
+
+type BlockDrillState =
+  | { kind: 'delivery'; delivery_date: string; block_key: string; expected_bill_count: number }
+  | { kind: 'billed'; bill_date: string; block_key: string; expected_bill_count: number };
+
+function compareBlockKeys(a: string, b: string): number {
+  const na = a === 'No block';
+  const nb = b === 'No block';
+  if (na && !nb) return 1;
+  if (!na && nb) return -1;
+  return a.localeCompare(b);
+}
 
 function adminAuthHeaders(): Record<string, string> {
   const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
@@ -142,11 +163,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
   const [deliveredDetailLoading, setDeliveredDetailLoading] = useState(false);
   const [deliveredDetailRows, setDeliveredDetailRows] = useState<DeliveredDetailRow[] | null>(null);
   const [deliveredDetailErr, setDeliveredDetailErr] = useState<string | null>(null);
-  const [blockDrill, setBlockDrill] = useState<{
-    delivery_date: string;
-    block_key: string;
-    expected_bill_count: number;
-  } | null>(null);
+  const [blockDrill, setBlockDrill] = useState<BlockDrillState | null>(null);
   const [blockDetailLoading, setBlockDetailLoading] = useState(false);
   const [blockDetailRows, setBlockDetailRows] = useState<BlockDetailRow[] | null>(null);
   const [blockDetailErr, setBlockDetailErr] = useState<string | null>(null);
@@ -154,6 +171,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     orders_on_day: number;
     rows_matched: number;
     expected_bill_count: number;
+    context: 'delivery' | 'billed';
   } | null>(null);
 
   const openOrdersShortcut = useCallback(
@@ -253,19 +271,33 @@ export function VendorDashboard({ onUnauthorized }: Props) {
   }, [section]);
 
   const loadBlockDrill = useCallback(
-    async (payload: { delivery_date: string; block_key: string; expected_bill_count: number }) => {
+    async (payload: BlockDrillState) => {
       setBlockDetailLoading(true);
       setBlockDetailErr(null);
       setBlockDetailMeta(null);
       try {
-        const q = new URLSearchParams({
-          date: payload.delivery_date,
-          block_key: payload.block_key,
-        });
-        const r = await fetch(`/api/admin/orders/block-day-detail?${q}`, {
-          credentials: 'include',
-          headers: adminAuthHeaders(),
-        });
+        let r: Response;
+        if (payload.kind === 'delivery') {
+          const q = new URLSearchParams({
+            date: payload.delivery_date,
+            block_key: payload.block_key,
+          });
+          r = await fetch(`/api/admin/orders/block-day-detail?${q}`, {
+            credentials: 'include',
+            headers: adminAuthHeaders(),
+          });
+        } else {
+          const q = new URLSearchParams({
+            date: payload.bill_date,
+            block_key: payload.block_key,
+          });
+          if (blockFrom) q.set('block_from', blockFrom);
+          if (blockTo) q.set('block_to', blockTo);
+          r = await fetch(`/api/admin/orders/bill-day-block-detail?${q}`, {
+            credentials: 'include',
+            headers: adminAuthHeaders(),
+          });
+        }
         if (r.status === 401) {
           onUnauthorized();
           return;
@@ -278,16 +310,26 @@ export function VendorDashboard({ onUnauthorized }: Props) {
         }
         const list = (d.rows ?? []) as BlockDetailRow[];
         setBlockDetailRows(list);
-        setBlockDetailMeta({
-          orders_on_day: Number(d.orders_on_day) || 0,
-          rows_matched: Number(d.rows_matched) || list.length,
-          expected_bill_count: payload.expected_bill_count,
-        });
+        if (payload.kind === 'delivery') {
+          setBlockDetailMeta({
+            orders_on_day: Number(d.orders_on_day) || 0,
+            rows_matched: Number(d.rows_matched) || list.length,
+            expected_bill_count: payload.expected_bill_count,
+            context: 'delivery',
+          });
+        } else {
+          setBlockDetailMeta({
+            orders_on_day: Number(d.bills_in_range_on_day) || 0,
+            rows_matched: Number(d.rows_matched) || list.length,
+            expected_bill_count: payload.expected_bill_count,
+            context: 'billed',
+          });
+        }
       } finally {
         setBlockDetailLoading(false);
       }
     },
-    [onUnauthorized],
+    [blockFrom, blockTo, onUnauthorized],
   );
 
   useEffect(() => {
@@ -355,6 +397,18 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     }
     return [...byDate.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   }, [metrics?.collected_by_block]);
+
+  const billedBlocksGrouped = useMemo(() => {
+    const rows = metrics?.billed_by_block ?? [];
+    const byDate = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const k = r.bill_date;
+      const arr = byDate.get(k) ?? [];
+      arr.push(r);
+      byDate.set(k, arr);
+    }
+    return [...byDate.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  }, [metrics?.billed_by_block]);
 
   const navBtn = (id: Section, label: string) => (
     <button
@@ -848,12 +902,11 @@ export function VendorDashboard({ onUnauthorized }: Props) {
         <div className="vendor-card vd-panel">
           {!blockDrill ? (
             <>
-              <h2 className="vd-panel-title">Hostel block × delivery date</h2>
+              <h2 className="vd-panel-title">Hostel block breakdown</h2>
               <p className="vd-panel-desc">
-                Each delivered order with a bill rolls up by hostel block: the saved bill&apos;s <code>customer_hostel_block</code> first; if that is empty, the customer&apos;s profile <code>hostel_block</code>. Still empty →{' '}
-                <strong>No block</strong>. Rows only appear when there is at least one bill in that bucket — there is no master list of every block.{' '}
-                <strong>A</strong>, <strong>D1</strong>, and <strong>D2</strong> roll up common variants (e.g. <code>A-102</code>, <code>Block A</code>,{' '}
-                <code>Mens A</code>, <code>D 1</code>/<code>D-2</code>, stacked <code>HOSTEL</code>/<code>BLOCK</code> prefixes). Dates use India time. Tap a row for every bill in that bucket.
+                Two views use the same block rules: the saved bill&apos;s <code>customer_hostel_block</code> first; if empty, the linked customer&apos;s profile <code>hostel_block</code>. If both are empty →{' '}
+                <strong className="vd-block-unknown-inline">No block</strong> (shown explicitly whenever those bills exist).{' '}
+                <strong>A</strong>, <strong>D1</strong>, and <strong>D2</strong> roll up common variants. Dates are India time. The range below applies to <em>both</em> tables. Tap a row to list matching bills.
               </p>
               <div className="vd-filter-row">
                 <label className="vd-field">
@@ -876,11 +929,16 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                   Reset (30d)
                 </button>
               </div>
+
+              <h3 className="vd-blocks-subtitle">Bills generated × block × date</h3>
+              <p className="vd-panel-desc" style={{ marginTop: -4 }}>
+                Totals for the <strong>newest bill per token</strong> saved in the selected range, grouped by the calendar day you saved the bill and by rollup block. Includes bills with no linked order (still counted under <strong>No block</strong> when block text is missing).
+              </p>
               <div className="vd-table-wrap">
                 <table className="vd-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
+                      <th>Bill date</th>
                       <th>Block</th>
                       <th className="vd-num">Bills</th>
                       <th className="vd-num">Items</th>
@@ -888,18 +946,19 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {blocksGrouped.flatMap(([date, rows]) =>
+                    {billedBlocksGrouped.flatMap(([date, rows]) =>
                       rows
-                        .sort((a, b) => a.block_key.localeCompare(b.block_key))
+                        .sort((a, b) => compareBlockKeys(a.block_key, b.block_key))
                         .map((r) => (
                           <tr
-                            key={`${date}-${r.block_key}`}
+                            key={`b-${date}-${r.block_key}`}
                             className="vd-row-clickable"
                             role="button"
                             tabIndex={0}
                             onClick={() =>
                               setBlockDrill({
-                                delivery_date: r.delivery_date,
+                                kind: 'billed',
+                                bill_date: r.bill_date,
                                 block_key: r.block_key,
                                 expected_bill_count: r.bill_count,
                               })
@@ -908,15 +967,16 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
                                 setBlockDrill({
-                                  delivery_date: r.delivery_date,
+                                  kind: 'billed',
+                                  bill_date: r.bill_date,
                                   block_key: r.block_key,
                                   expected_bill_count: r.bill_count,
                                 });
                               }
                             }}
                           >
-                            <td>{fmtDate(r.delivery_date)}</td>
-                            <td>{r.block_key}</td>
+                            <td>{fmtDate(r.bill_date)}</td>
+                            <td className={r.block_key === 'No block' ? 'vd-block-unknown' : undefined}>{r.block_key}</td>
                             <td className="vd-num">{r.bill_count}</td>
                             <td className="vd-num">{r.item_qty_sum}</td>
                             <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
@@ -926,7 +986,65 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                   </tbody>
                 </table>
               </div>
-              {blocksGrouped.length === 0 && <p className="vd-muted">No rows in this range.</p>}
+              {billedBlocksGrouped.length === 0 && <p className="vd-muted">No bill-generated rows in this range.</p>}
+
+              <h3 className="vd-blocks-subtitle">Delivery × block × date</h3>
+              <p className="vd-panel-desc" style={{ marginTop: -4 }}>
+                Same bill per token, grouped by the day the order was marked <strong>delivered</strong> (and rollup block). Only delivered orders appear here.
+              </p>
+              <div className="vd-table-wrap">
+                <table className="vd-table">
+                  <thead>
+                    <tr>
+                      <th>Delivery date</th>
+                      <th>Block</th>
+                      <th className="vd-num">Bills</th>
+                      <th className="vd-num">Items</th>
+                      <th className="vd-num">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {blocksGrouped.flatMap(([date, rows]) =>
+                      rows
+                        .sort((a, b) => compareBlockKeys(a.block_key, b.block_key))
+                        .map((r) => (
+                          <tr
+                            key={`d-${date}-${r.block_key}`}
+                            className="vd-row-clickable"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() =>
+                              setBlockDrill({
+                                kind: 'delivery',
+                                delivery_date: r.delivery_date,
+                                block_key: r.block_key,
+                                expected_bill_count: r.bill_count,
+                              })
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setBlockDrill({
+                                  kind: 'delivery',
+                                  delivery_date: r.delivery_date,
+                                  block_key: r.block_key,
+                                  expected_bill_count: r.bill_count,
+                                });
+                              }
+                            }}
+                          >
+                            <td>{fmtDate(r.delivery_date)}</td>
+                            <td className={r.block_key === 'No block' ? 'vd-block-unknown' : undefined}>{r.block_key}</td>
+                            <td className="vd-num">{r.bill_count}</td>
+                            <td className="vd-num">{r.item_qty_sum}</td>
+                            <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
+                          </tr>
+                        )),
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {blocksGrouped.length === 0 && <p className="vd-muted">No delivery rows in this range.</p>}
             </>
           ) : (
             <>
@@ -935,16 +1053,32 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                   ← Back to block summary
                 </button>
                 <h2 className="vd-panel-title" style={{ margin: 0 }}>
-                  {fmtDate(blockDrill.delivery_date)} · {blockDrill.block_key}
+                  {blockDrill.kind === 'billed'
+                    ? `${fmtDate(blockDrill.bill_date)} · bill day`
+                    : `${fmtDate(blockDrill.delivery_date)} · delivery day`}{' '}
+                  · <span className={blockDrill.block_key === 'No block' ? 'vd-block-unknown-inline' : undefined}>{blockDrill.block_key}</span>
                 </h2>
               </div>
               <p className="vd-panel-desc">
-                One row per delivered order with a saved bill whose block rolls up to this bucket (newest bill per token, same as the summary). Reg no, block, and room show bill values when present; otherwise the linked customer profile (same order). Messy combined fields (e.g. block+room in one cell, ID in the name) are split automatically for display.
+                {blockDrill.kind === 'delivery'
+                  ? 'One row per delivered order with a saved bill whose block rolls up to this bucket (newest bill per token in the summary range). Reg no, block, and room show bill values when present; otherwise the linked customer profile.'
+                  : 'One row per bill saved on this calendar day (IST) whose block rolls up to this bucket — newest bill per token across the same date range as the summary tables. Reg no, block, and room show bill values when present; otherwise the linked customer profile when an order exists.'}{' '}
+                Messy combined fields are split automatically for display.
               </p>
               {blockDetailMeta && !blockDetailLoading && (
                 <p className="vd-muted" style={{ marginTop: 8, fontSize: 13 }}>
-                  Showing <strong>{blockDetailMeta.rows_matched}</strong> bill{blockDetailMeta.rows_matched === 1 ? '' : 's'} ·{' '}
-                  <strong>{blockDetailMeta.orders_on_day}</strong> delivered order{blockDetailMeta.orders_on_day === 1 ? '' : 's'} that day (IST)
+                  Showing <strong>{blockDetailMeta.rows_matched}</strong> bill{blockDetailMeta.rows_matched === 1 ? '' : 's'}
+                  {blockDetailMeta.context === 'delivery' ? (
+                    <>
+                      {' '}
+                      · <strong>{blockDetailMeta.orders_on_day}</strong> delivered order{blockDetailMeta.orders_on_day === 1 ? '' : 's'} that day (IST)
+                    </>
+                  ) : (
+                    <>
+                      {' '}
+                      · <strong>{blockDetailMeta.orders_on_day}</strong> bill{blockDetailMeta.orders_on_day === 1 ? '' : 's'} on this day in range (latest per token)
+                    </>
+                  )}
                   {blockDetailMeta.rows_matched !== blockDetailMeta.expected_bill_count ? (
                     <span style={{ color: 'var(--o)', marginLeft: 8 }}>
                       (summary had {blockDetailMeta.expected_bill_count}; refresh the range if this differs after a deploy)
@@ -972,7 +1106,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                     </thead>
                     <tbody>
                       {blockDetailRows.map((r) => (
-                        <tr key={r.order_id}>
+                        <tr key={`${r.token}-${r.order_id || 'x'}`}>
                           <td style={{ fontWeight: 800, color: 'var(--o)' }}>#{r.token}</td>
                           <td>{r.order_number ?? '—'}</td>
                           <td>{r.customer_name}</td>
