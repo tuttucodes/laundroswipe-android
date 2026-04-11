@@ -164,6 +164,21 @@ export function statusClass(s: string): string {
   return 's-pro';
 }
 
+/** When a vendor bill exists but the order row is still early-stage, show laundry progress in the app. */
+export function customerFacingStatusLabel(status: string, hasActiveBill: boolean): string {
+  if (hasActiveBill && (status === 'scheduled' || status === 'agent_assigned')) {
+    return 'Bill ready';
+  }
+  return statusLabel(status);
+}
+
+export function customerFacingStatusClass(status: string, hasActiveBill: boolean): string {
+  if (hasActiveBill && (status === 'scheduled' || status === 'agent_assigned')) {
+    return 's-pro';
+  }
+  return statusClass(status);
+}
+
 export function next10Days(): { date: Date; day: string; num: number; month: string; ok: boolean; full: string }[] {
   const dn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const mn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

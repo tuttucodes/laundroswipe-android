@@ -96,6 +96,32 @@ const STATUS_LABELS_MAP: Record<string, string> = {
   out_for_delivery: 'Out for Delivery',
 };
 
+type DeliveredDetailRow = {
+  order_id: string;
+  token: string;
+  order_number: string | null;
+  customer_name: string;
+  customer_phone: string;
+  customer_hostel_block: string;
+  customer_room_number: string;
+  item_qty: number;
+  total: number;
+  has_bill: boolean;
+};
+
+type BlockDetailRow = {
+  order_id: string;
+  token: string;
+  order_number: string | null;
+  customer_name: string;
+  customer_phone: string;
+  customer_reg_no: string;
+  customer_hostel_block: string;
+  customer_room_number: string;
+  item_qty: number;
+  total: number;
+};
+
 type Props = {
   onGoOrders: (filter: string) => void;
   onUnauthorized: () => void;
@@ -108,6 +134,15 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
   const [blockFrom, setBlockFrom] = useState('');
   const [blockTo, setBlockTo] = useState('');
   const [blockLoading, setBlockLoading] = useState(false);
+  const [revenueScrollId, setRevenueScrollId] = useState<string | null>(null);
+  const [deliveredDay, setDeliveredDay] = useState<string | null>(null);
+  const [deliveredDetailLoading, setDeliveredDetailLoading] = useState(false);
+  const [deliveredDetailRows, setDeliveredDetailRows] = useState<DeliveredDetailRow[] | null>(null);
+  const [deliveredDetailErr, setDeliveredDetailErr] = useState<string | null>(null);
+  const [blockDrill, setBlockDrill] = useState<{ delivery_date: string; block_key: string } | null>(null);
+  const [blockDetailLoading, setBlockDetailLoading] = useState(false);
+  const [blockDetailRows, setBlockDetailRows] = useState<BlockDetailRow[] | null>(null);
+  const [blockDetailErr, setBlockDetailErr] = useState<string | null>(null);
 
   const loadDashboard = useCallback(
     async (opts?: { block_from?: string; block_to?: string }) => {
@@ -143,6 +178,119 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
       cancelled = true;
     };
   }, [loadDashboard]);
+
+  useEffect(() => {
+    if (section !== 'revenue' || !revenueScrollId) return;
+    const t = window.setTimeout(() => {
+      document.getElementById(revenueScrollId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setRevenueScrollId(null);
+    }, 120);
+    return () => clearTimeout(t);
+  }, [section, revenueScrollId]);
+
+  const loadDeliveredDay = useCallback(
+    async (date: string) => {
+      setDeliveredDetailLoading(true);
+      setDeliveredDetailErr(null);
+      try {
+        const r = await fetch(
+          `/api/admin/orders/delivered-day-detail?date=${encodeURIComponent(date)}`,
+          { credentials: 'include', headers: adminAuthHeaders() },
+        );
+        if (r.status === 401) {
+          onUnauthorized();
+          return;
+        }
+        const d = await r.json().catch(() => null);
+        if (!d?.ok) {
+          setDeliveredDetailErr(typeof d?.error === 'string' ? d.error : 'Failed to load');
+          setDeliveredDetailRows([]);
+          return;
+        }
+        setDeliveredDetailRows((d.rows ?? []) as DeliveredDetailRow[]);
+      } finally {
+        setDeliveredDetailLoading(false);
+      }
+    },
+    [onUnauthorized],
+  );
+
+  useEffect(() => {
+    if (!deliveredDay) {
+      setDeliveredDetailRows(null);
+      setDeliveredDetailErr(null);
+      return;
+    }
+    void loadDeliveredDay(deliveredDay);
+  }, [deliveredDay, loadDeliveredDay]);
+
+  useEffect(() => {
+    if (section !== 'delivered') setDeliveredDay(null);
+  }, [section]);
+
+  const loadBlockDrill = useCallback(
+    async (delivery_date: string, block_key: string) => {
+      setBlockDetailLoading(true);
+      setBlockDetailErr(null);
+      try {
+        const q = new URLSearchParams({
+          date: delivery_date,
+          block_key,
+        });
+        const r = await fetch(`/api/admin/orders/block-day-detail?${q}`, {
+          credentials: 'include',
+          headers: adminAuthHeaders(),
+        });
+        if (r.status === 401) {
+          onUnauthorized();
+          return;
+        }
+        const d = await r.json().catch(() => null);
+        if (!d?.ok) {
+          setBlockDetailErr(typeof d?.error === 'string' ? d.error : 'Failed to load');
+          setBlockDetailRows([]);
+          return;
+        }
+        setBlockDetailRows((d.rows ?? []) as BlockDetailRow[]);
+      } finally {
+        setBlockDetailLoading(false);
+      }
+    },
+    [onUnauthorized],
+  );
+
+  useEffect(() => {
+    if (!blockDrill) {
+      setBlockDetailRows(null);
+      setBlockDetailErr(null);
+      return;
+    }
+    void loadBlockDrill(blockDrill.delivery_date, blockDrill.block_key);
+  }, [blockDrill, loadBlockDrill]);
+
+  useEffect(() => {
+    if (section !== 'blocks') setBlockDrill(null);
+  }, [section]);
+
+  const deliveredDailyRows = useMemo(() => {
+    if (!metrics) return [];
+    const delMap = new Map(metrics.delivered_30d.by_date.map((d) => [d.date, d.count]));
+    const colMap = new Map(metrics.collected_30d.by_date.map((d) => [d.date, d]));
+    const dates = new Set([...delMap.keys(), ...colMap.keys()]);
+    return [...dates]
+      .sort((a, b) => b.localeCompare(a))
+      .map((date) => {
+        const ordersN = delMap.get(date) ?? 0;
+        const col = colMap.get(date);
+        return {
+          date,
+          orders_delivered: ordersN,
+          item_qty: col?.item_qty_sum ?? 0,
+          bill_amount: col?.total ?? 0,
+          bill_count: col?.bill_count ?? 0,
+        };
+      });
+  }, [metrics]);
 
   const applyBlockRange = async () => {
     if (!blockFrom || !blockTo) return;
@@ -224,115 +372,221 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
 
       {section === 'overview' && (
         <div className="vd-grid-cards">
-          <button type="button" className="vd-card vd-card-green" onClick={() => setSection('revenue')}>
+          <button
+            type="button"
+            className="vd-card vd-card-green"
+            onClick={() => {
+              setSection('revenue');
+              setRevenueScrollId('vd-anchor-billed-7');
+            }}
+          >
             <span className="vd-card-icon">📈</span>
             <span className="vd-card-label">Normal revenue · 7 days</span>
             <span className="vd-card-value">{fmtMoney(metrics.billed_7d.total)}</span>
             <span className="vd-card-meta">
               {metrics.billed_7d.bill_count} bills generated · {metrics.billed_7d.item_qty_sum} items
             </span>
-            <span className="vd-card-hint">By bill date →</span>
+            <span className="vd-card-hint">Open 7-day bill table →</span>
           </button>
-          <button type="button" className="vd-card vd-card-blue" onClick={() => setSection('revenue')}>
+          <button
+            type="button"
+            className="vd-card vd-card-blue"
+            onClick={() => {
+              setSection('revenue');
+              setRevenueScrollId('vd-anchor-billed-30');
+            }}
+          >
             <span className="vd-card-icon">💰</span>
             <span className="vd-card-label">Normal revenue · 30 days</span>
             <span className="vd-card-value">{fmtMoney(metrics.billed_30d.total)}</span>
             <span className="vd-card-meta">
               {metrics.billed_30d.bill_count} bills generated · {metrics.billed_30d.item_qty_sum} items
             </span>
-            <span className="vd-card-hint">By bill date →</span>
+            <span className="vd-card-hint">Open 30-day bill table →</span>
           </button>
-          <button type="button" className="vd-card vd-card-violet" onClick={() => setSection('revenue')}>
+          <button
+            type="button"
+            className="vd-card vd-card-violet"
+            onClick={() => {
+              setSection('revenue');
+              setRevenueScrollId('vd-anchor-collected-7');
+            }}
+          >
             <span className="vd-card-icon">🚚</span>
             <span className="vd-card-label">Delivery revenue · 7 days</span>
             <span className="vd-card-value">{fmtMoney(metrics.collected_7d.total)}</span>
             <span className="vd-card-meta">
               {metrics.collected_7d.bill_count} bills on delivery days · {metrics.delivered_7d.count} orders delivered
             </span>
-            <span className="vd-card-hint">By delivery date →</span>
+            <span className="vd-card-hint">Open 7-day delivery table →</span>
           </button>
-          <button type="button" className="vd-card vd-card-teal" onClick={() => setSection('revenue')}>
+          <button
+            type="button"
+            className="vd-card vd-card-teal"
+            onClick={() => {
+              setSection('revenue');
+              setRevenueScrollId('vd-anchor-collected-30');
+            }}
+          >
             <span className="vd-card-icon">📦</span>
             <span className="vd-card-label">Delivery revenue · 30 days</span>
             <span className="vd-card-value">{fmtMoney(metrics.collected_30d.total)}</span>
             <span className="vd-card-meta">
               {metrics.collected_30d.bill_count} bills on delivery days · {metrics.delivered_30d.count} orders delivered
             </span>
-            <span className="vd-card-hint">By delivery date →</span>
+            <span className="vd-card-hint">Open 30-day delivery table →</span>
           </button>
-          <button type="button" className="vd-card vd-card-amber" onClick={() => setSection('delivered')}>
+          <button
+            type="button"
+            className="vd-card vd-card-amber"
+            onClick={() => {
+              onGoOrders('open');
+            }}
+          >
             <span className="vd-card-icon">🎫</span>
             <span className="vd-card-label">Open tokens</span>
             <span className="vd-card-value">{metrics.open_tokens.count}</span>
-            <span className="vd-card-meta">Not yet delivered</span>
-            <span className="vd-card-hint">Orders pipeline →</span>
+            <span className="vd-card-meta">Not yet delivered — pending pickup / delivery</span>
+            <span className="vd-card-hint">Open orders list →</span>
           </button>
-          <button type="button" className="vd-card vd-card-slate" onClick={() => setSection('delivered')}>
+          <button
+            type="button"
+            className="vd-card vd-card-slate"
+            onClick={() => {
+              setDeliveredDay(null);
+              setSection('delivered');
+            }}
+          >
             <span className="vd-card-icon">✅</span>
             <span className="vd-card-label">Delivered orders · 7 days</span>
             <span className="vd-card-value">{metrics.delivered_7d.count}</span>
             <span className="vd-card-meta">Count of completed deliveries</span>
-            <span className="vd-card-hint">Daily breakdown →</span>
+            <span className="vd-card-hint">Daily items &amp; drill-down →</span>
           </button>
         </div>
       )}
 
       {section === 'delivered' && (
         <div className="vendor-card vd-panel">
-          <h2 className="vd-panel-title">Delivered orders vs collected bills</h2>
-          <p className="vd-panel-desc">
-            <strong>Orders delivered</strong> counts every completed delivery. <strong>Collected</strong> rows only include days where a saved bill was linked to that delivery.
-          </p>
-          <div className="vd-table-wrap">
-            <table className="vd-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th className="vd-num">Orders delivered</th>
-                  <th className="vd-num">Bills (collected)</th>
-                  <th className="vd-num">Items (qty)</th>
-                  <th className="vd-num">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...metrics.collected_30d.by_date].reverse().map((row) => {
-                  const od = metrics.delivered_30d.by_date.find((x) => x.date === row.date)?.count ?? 0;
-                  return (
-                    <tr key={row.date}>
-                      <td>{fmtDate(row.date)}</td>
-                      <td className="vd-num">{od}</td>
-                      <td className="vd-num">{row.bill_count}</td>
-                      <td className="vd-num">{row.item_qty_sum}</td>
-                      <td className="vd-num vd-strong">{fmtMoney(row.total)}</td>
+          {!deliveredDay ? (
+            <>
+              <h2 className="vd-panel-title">Delivered — last 30 days (India date)</h2>
+              <p className="vd-panel-desc">
+                <strong>Orders</strong> = deliveries completed that day. <strong>Items</strong> / <strong>Bill amount</strong> come from saved bills linked to those orders. Tap a row to see token, contact, block, room, item qty and amount per bill.
+              </p>
+              <div className="vd-table-wrap">
+                <table className="vd-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th className="vd-num">Orders delivered</th>
+                      <th className="vd-num">Bills</th>
+                      <th className="vd-num">Items (qty)</th>
+                      <th className="vd-num">Bill total</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="vd-actions">
-            <button type="button" className="vendor-btn-primary" onClick={() => onGoOrders('all')}>
-              All orders
-            </button>
-            <button type="button" className="vendor-btn-secondary" onClick={() => onGoOrders('delivered')}>
-              Delivered only
-            </button>
-          </div>
-          <details className="vd-details">
-            <summary>Open tokens by status</summary>
-            <div className="vd-chips">
-              {STATUS_ORDER.map((s) => {
-                const count = metrics.open_tokens.by_status[s] ?? 0;
-                if (count === 0) return null;
-                return (
-                  <button key={s} type="button" className="vd-chip" onClick={() => onGoOrders(s)}>
-                    <span className="vd-chip-n">{count}</span>
-                    <span>{STATUS_LABELS_MAP[s] ?? s}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </details>
+                  </thead>
+                  <tbody>
+                    {deliveredDailyRows.map((row) => (
+                      <tr
+                        key={row.date}
+                        className="vd-row-clickable"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setDeliveredDay(row.date)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setDeliveredDay(row.date);
+                          }
+                        }}
+                      >
+                        <td>{fmtDate(row.date)}</td>
+                        <td className="vd-num">{row.orders_delivered}</td>
+                        <td className="vd-num">{row.bill_count}</td>
+                        <td className="vd-num">{row.item_qty}</td>
+                        <td className="vd-num vd-strong">{fmtMoney(row.bill_amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="vd-actions">
+                <button type="button" className="vendor-btn-primary" onClick={() => onGoOrders('all')}>
+                  All orders
+                </button>
+                <button type="button" className="vendor-btn-secondary" onClick={() => onGoOrders('open')}>
+                  Open / pending
+                </button>
+                <button type="button" className="vendor-btn-secondary" onClick={() => onGoOrders('delivered')}>
+                  Delivered only
+                </button>
+              </div>
+              <details className="vd-details">
+                <summary>Open tokens by status</summary>
+                <div className="vd-chips">
+                  {STATUS_ORDER.map((s) => {
+                    const count = metrics.open_tokens.by_status[s] ?? 0;
+                    if (count === 0) return null;
+                    return (
+                      <button key={s} type="button" className="vd-chip" onClick={() => onGoOrders(s)}>
+                        <span className="vd-chip-n">{count}</span>
+                        <span>{STATUS_LABELS_MAP[s] ?? s}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </details>
+            </>
+          ) : (
+            <>
+              <div className="vd-back-row">
+                <button type="button" className="vendor-btn-secondary" onClick={() => setDeliveredDay(null)}>
+                  ← Back to daily summary
+                </button>
+                <h2 className="vd-panel-title" style={{ margin: 0 }}>
+                  Delivered on {fmtDate(deliveredDay)}
+                </h2>
+              </div>
+              <p className="vd-panel-desc">One row per order delivered that day. Amounts from the saved bill when present.</p>
+              {deliveredDetailLoading && <p className="vd-muted">Loading…</p>}
+              {deliveredDetailErr && <p style={{ color: 'var(--er)' }}>{deliveredDetailErr}</p>}
+              {!deliveredDetailLoading && deliveredDetailRows && (
+                <div className="vd-table-wrap">
+                  <table className="vd-table" style={{ minWidth: 720 }}>
+                    <thead>
+                      <tr>
+                        <th>Token</th>
+                        <th>Name</th>
+                        <th>Mobile</th>
+                        <th>Block</th>
+                        <th>Room</th>
+                        <th className="vd-num">Items</th>
+                        <th className="vd-num">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deliveredDetailRows.map((r) => (
+                        <tr key={r.order_id}>
+                          <td style={{ fontWeight: 800, color: 'var(--o)' }}>#{r.token}</td>
+                          <td>{r.customer_name}</td>
+                          <td>{r.customer_phone}</td>
+                          <td>{r.customer_hostel_block}</td>
+                          <td>{r.customer_room_number}</td>
+                          <td className="vd-num">{r.item_qty}</td>
+                          <td className="vd-num vd-strong">{r.has_bill ? fmtMoney(r.total) : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {deliveredDetailRows.length === 0 && !deliveredDetailErr && (
+                    <p className="vd-muted" style={{ marginTop: 12 }}>
+                      No delivered orders found for this day in the recent window. If this is an older date, open <strong>All orders</strong> and filter by status.
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -371,7 +625,7 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
                 <tr>
                   <td className="vd-rw-label">
                     Bills in scope
-                    <span className="vd-rw-sub">Deduped: same token + same total = one bill</span>
+                    <span className="vd-rw-sub">Same bills as the revenue rows above — generated vs delivery-day calendar</span>
                   </td>
                   <td className="vd-num">
                     {metrics.billed_7d.bill_count} gen. / {metrics.collected_7d.bill_count} del.
@@ -384,7 +638,7 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
             </table>
           </div>
 
-          <div className="vendor-card vd-panel vd-panel-highlight">
+          <div id="vd-anchor-billed-7" className="vendor-card vd-panel vd-panel-highlight">
             <h2 className="vd-panel-title">Normal revenue — daily (bills generated)</h2>
             <p className="vd-panel-desc">
               Each row is the total <strong>bill amount</strong> for bills <strong>saved that calendar day</strong> (Asia/Kolkata). This is the usual &quot;how much did we sell today&quot; view.
@@ -424,7 +678,7 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
               </table>
             </div>
           </div>
-          <div className="vendor-card vd-panel vd-panel-highlight">
+          <div id="vd-anchor-billed-30" className="vendor-card vd-panel vd-panel-highlight">
             <h2 className="vd-panel-title">Normal revenue — last 30 days (bills generated)</h2>
             <div className="vd-table-wrap">
               <table className="vd-table">
@@ -461,7 +715,7 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
               </table>
             </div>
           </div>
-          <div className="vendor-card vd-panel">
+          <div id="vd-anchor-collected-7" className="vendor-card vd-panel">
             <h2 className="vd-panel-title">Delivery revenue — daily (when orders were delivered)</h2>
             <p className="vd-panel-desc">
               Bill totals are grouped by the day the linked order was marked <strong>delivered</strong> (not the day you created the bill). Batch delivery days look busy; other days can be ₹0 even when you billed every day — that is expected. The <strong>sum</strong> over a period should align with normal revenue once everything is delivered.
@@ -501,7 +755,7 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
               </table>
             </div>
           </div>
-          <div className="vendor-card vd-panel">
+          <div id="vd-anchor-collected-30" className="vendor-card vd-panel">
             <h2 className="vd-panel-title">Delivery revenue — last 30 days</h2>
             <p className="vd-panel-desc">Same rules as the 7-day table above.</p>
             <div className="vd-table-wrap">
@@ -551,57 +805,132 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
 
       {section === 'blocks' && (
         <div className="vendor-card vd-panel">
-          <h2 className="vd-panel-title">Hostel block × delivery date</h2>
-          <p className="vd-panel-desc">
-            Uses <code>customer_hostel_block</code> from the bill. Empty values appear as <strong>No block</strong>.{' '}
-            <strong>D1</strong> and <strong>D2</strong> roll up any suffix (spaces, hyphens, slashes, room numbers); e.g.{' '}
-            <code>D2 - 1125</code> and <code>D2/719</code> count as <strong>D2</strong>.
-          </p>
-          <div className="vd-filter-row">
-            <label className="vd-field">
-              <span>From</span>
-              <input type="date" className="fi" value={blockFrom} onChange={(e) => setBlockFrom(e.target.value)} />
-            </label>
-            <label className="vd-field">
-              <span>To</span>
-              <input type="date" className="fi" value={blockTo} onChange={(e) => setBlockTo(e.target.value)} />
-            </label>
-            <button type="button" className="vendor-btn-primary" disabled={blockLoading || !blockFrom || !blockTo} onClick={() => void applyBlockRange()}>
-              {blockLoading ? 'Loading…' : 'Apply'}
-            </button>
-            <button type="button" className="vendor-btn-secondary" disabled={blockLoading} onClick={() => void resetBlockRange()}>
-              Reset (30d)
-            </button>
-          </div>
-          <div className="vd-table-wrap">
-            <table className="vd-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Block</th>
-                  <th className="vd-num">Bills</th>
-                  <th className="vd-num">Items</th>
-                  <th className="vd-num">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {blocksGrouped.flatMap(([date, rows]) =>
-                  rows
-                    .sort((a, b) => a.block_key.localeCompare(b.block_key))
-                    .map((r) => (
-                      <tr key={`${date}-${r.block_key}`}>
-                        <td>{fmtDate(r.delivery_date)}</td>
-                        <td>{r.block_key}</td>
-                        <td className="vd-num">{r.bill_count}</td>
-                        <td className="vd-num">{r.item_qty_sum}</td>
-                        <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
+          {!blockDrill ? (
+            <>
+              <h2 className="vd-panel-title">Hostel block × delivery date</h2>
+              <p className="vd-panel-desc">
+                Uses <code>customer_hostel_block</code> from each saved bill (only delivered orders with a bill are counted). Empty values appear as{' '}
+                <strong>No block</strong>. Rows only appear when there is at least one bill in that bucket — there is no master list of every block.{' '}
+                <strong>A</strong>, <strong>D1</strong>, and <strong>D2</strong> roll up common variants (e.g. <code>A-102</code>, <code>Block A</code>,{' '}
+                <code>D2 - 1125</code>, <code>D1/719</code>). Tap a row for token, name, phone, reg no, block/room as on the bill, items and amount.
+              </p>
+              <div className="vd-filter-row">
+                <label className="vd-field">
+                  <span>From</span>
+                  <input type="date" className="fi" value={blockFrom} onChange={(e) => setBlockFrom(e.target.value)} />
+                </label>
+                <label className="vd-field">
+                  <span>To</span>
+                  <input type="date" className="fi" value={blockTo} onChange={(e) => setBlockTo(e.target.value)} />
+                </label>
+                <button
+                  type="button"
+                  className="vendor-btn-primary"
+                  disabled={blockLoading || !blockFrom || !blockTo}
+                  onClick={() => void applyBlockRange()}
+                >
+                  {blockLoading ? 'Loading…' : 'Apply'}
+                </button>
+                <button type="button" className="vendor-btn-secondary" disabled={blockLoading} onClick={() => void resetBlockRange()}>
+                  Reset (30d)
+                </button>
+              </div>
+              <div className="vd-table-wrap">
+                <table className="vd-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Block</th>
+                      <th className="vd-num">Bills</th>
+                      <th className="vd-num">Items</th>
+                      <th className="vd-num">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {blocksGrouped.flatMap(([date, rows]) =>
+                      rows
+                        .sort((a, b) => a.block_key.localeCompare(b.block_key))
+                        .map((r) => (
+                          <tr
+                            key={`${date}-${r.block_key}`}
+                            className="vd-row-clickable"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setBlockDrill({ delivery_date: r.delivery_date, block_key: r.block_key })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setBlockDrill({ delivery_date: r.delivery_date, block_key: r.block_key });
+                              }
+                            }}
+                          >
+                            <td>{fmtDate(r.delivery_date)}</td>
+                            <td>{r.block_key}</td>
+                            <td className="vd-num">{r.bill_count}</td>
+                            <td className="vd-num">{r.item_qty_sum}</td>
+                            <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
+                          </tr>
+                        )),
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {blocksGrouped.length === 0 && <p className="vd-muted">No rows in this range.</p>}
+            </>
+          ) : (
+            <>
+              <div className="vd-back-row">
+                <button type="button" className="vendor-btn-secondary" onClick={() => setBlockDrill(null)}>
+                  ← Back to block summary
+                </button>
+                <h2 className="vd-panel-title" style={{ margin: 0 }}>
+                  {fmtDate(blockDrill.delivery_date)} · {blockDrill.block_key}
+                </h2>
+              </div>
+              <p className="vd-panel-desc">One row per bill in this block bucket (same rules as the summary table).</p>
+              {blockDetailLoading && <p className="vd-muted">Loading…</p>}
+              {blockDetailErr && <p style={{ color: 'var(--er)' }}>{blockDetailErr}</p>}
+              {!blockDetailLoading && blockDetailRows && (
+                <div className="vd-table-wrap">
+                  <table className="vd-table" style={{ minWidth: 880 }}>
+                    <thead>
+                      <tr>
+                        <th>Token</th>
+                        <th>Order #</th>
+                        <th>Name</th>
+                        <th>Mobile</th>
+                        <th>Reg no</th>
+                        <th>Block</th>
+                        <th>Room</th>
+                        <th className="vd-num">Items</th>
+                        <th className="vd-num">Amount</th>
                       </tr>
-                    )),
-                )}
-              </tbody>
-            </table>
-          </div>
-          {blocksGrouped.length === 0 && <p className="vd-muted">No rows in this range.</p>}
+                    </thead>
+                    <tbody>
+                      {blockDetailRows.map((r) => (
+                        <tr key={r.order_id}>
+                          <td style={{ fontWeight: 800, color: 'var(--o)' }}>#{r.token}</td>
+                          <td>{r.order_number ?? '—'}</td>
+                          <td>{r.customer_name}</td>
+                          <td>{r.customer_phone}</td>
+                          <td>{r.customer_reg_no}</td>
+                          <td>{r.customer_hostel_block}</td>
+                          <td>{r.customer_room_number}</td>
+                          <td className="vd-num">{r.item_qty}</td>
+                          <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {blockDetailRows.length === 0 && !blockDetailErr && (
+                    <p className="vd-muted" style={{ marginTop: 12 }}>
+                      No matching bills found for this day and block in the loaded window.
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 

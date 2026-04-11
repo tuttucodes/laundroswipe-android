@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
+import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 
 type OrderWithVendorSlug = {
   vendor_slug: string | null;
@@ -63,11 +64,12 @@ export async function GET(request: Request) {
     let q = supabase
       .from('vendor_bills')
       .select(
-        'id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at',
+        'id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at',
         { count: 'exact' },
       )
       .order('created_at', { ascending: false });
     if (vendorDbId) q = q.eq('vendor_id', vendorDbId);
+    if (session.role === 'vendor') q = q.is('cancelled_at', null);
     q = q.range((billsPage - 1) * billsLimit, billsPage * billsLimit - 1);
     return q;
   };
@@ -111,13 +113,16 @@ export async function GET(request: Request) {
       return { ...b, vendor_slug: (byVendorId ?? byVendorName ?? null) as string | null };
     });
 
-  // Deduplicate: only remove exact duplicates (same token + same total amount)
-  const seenBills = new Set<string>();
+  const seenTokens = new Set<string>();
   const bills: any[] = [];
   for (const b of billsFiltered) {
-    const dedupKey = `${b.order_token}|${Number(b.total ?? 0).toFixed(2)}`;
-    if (seenBills.has(dedupKey)) continue;
-    seenBills.add(dedupKey);
+    const tokenKey = stripLeadingHashesFromToken(String(b.order_token ?? '')).toLowerCase();
+    if (!tokenKey) {
+      bills.push(b);
+      continue;
+    }
+    if (seenTokens.has(tokenKey)) continue;
+    seenTokens.add(tokenKey);
     bills.push(b);
   }
 

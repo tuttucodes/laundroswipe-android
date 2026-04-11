@@ -48,7 +48,9 @@ export async function GET(request: Request) {
       .from('vendor_bills')
       .select(cols, { count: 'exact' })
       .order('created_at', { ascending: false });
-    // Server-side vendor filter
+    if (session.role === 'vendor') {
+      q = q.is('cancelled_at', null);
+    }
     if (vendorDbId) q = q.eq('vendor_id', vendorDbId);
     q = q.range(offset, offset + limit - 1);
     return q;
@@ -89,7 +91,6 @@ export async function GET(request: Request) {
       })
     : (data ?? []);
 
-  // Show every saved row. Revenue RPCs dedupe by (token, total); UI highlights same-total / duplicate saves.
   const raw: any[] = [...vendorFiltered];
 
   const userIds = Array.from(new Set(raw.map((b: any) => b.user_id).filter(Boolean))) as string[];

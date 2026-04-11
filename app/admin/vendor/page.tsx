@@ -613,9 +613,9 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
       lastSavedBillFingerprintRef.current = billFingerprint();
       setBillAlreadyGenerated(true);
       if (data.reused) {
-        showToast('Bill already exists (no changes)', 'ok');
+        showToast('Bill is already up to date', 'ok');
       } else if (data.updated) {
-        showToast('Bill updated with new items', 'ok');
+        showToast('Bill updated', 'ok');
       } else {
         showToast('Bill saved', 'ok');
       }
@@ -749,9 +749,9 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
       lastSavedBillFingerprintRef.current = fingerprint;
       setBillAlreadyGenerated(true);
       if (data.reused) {
-        showToast('Printing (bill unchanged)…', 'ok');
+        showToast('Printing…', 'ok');
       } else if (data.updated) {
-        showToast('Bill updated. Printing…', 'ok');
+        showToast('Bill updated — printing…', 'ok');
       } else {
         showToast('Bill saved. Printing…', 'ok');
       }

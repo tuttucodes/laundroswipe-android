@@ -70,11 +70,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     supabase
       .from('vendor_bills')
       .select('*', { count: 'exact', head: true })
-      .eq('order_token', token),
+      .eq('order_token', token)
+      .is('cancelled_at', null),
     supabase
       .from('vendor_bills')
       .select('id, created_at, line_items, subtotal, total')
       .eq('order_token', token)
+      .is('cancelled_at', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),

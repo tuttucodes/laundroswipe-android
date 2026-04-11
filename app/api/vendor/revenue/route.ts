@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
+import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 
 type DbVendor = { id: string; slug: string; name: string };
 
@@ -85,7 +86,7 @@ export async function GET(request: Request) {
   {
     let query = supabase
       .from('vendor_bills')
-      .select('subtotal, convenience_fee, total, vendor_id, vendor_name, created_at, cancelled_at')
+      .select('order_token, subtotal, convenience_fee, total, vendor_id, vendor_name, created_at, cancelled_at')
       .is('cancelled_at', null)
       .order('created_at', { ascending: true });
     if (fromDate) query = query.gte('created_at', `${fromDate}T00:00:00.000Z`);
@@ -94,7 +95,7 @@ export async function GET(request: Request) {
     if (res1.error && res1.error.code === '42703') {
       let q2 = supabase
         .from('vendor_bills')
-        .select('subtotal, convenience_fee, total, vendor_id, vendor_name, created_at')
+        .select('order_token, subtotal, convenience_fee, total, vendor_id, vendor_name, created_at')
         .order('created_at', { ascending: true });
       if (fromDate) q2 = q2.gte('created_at', `${fromDate}T00:00:00.000Z`);
       if (toDate) q2 = q2.lte('created_at', `${toDate}T23:59:59.999Z`);
@@ -116,13 +117,19 @@ export async function GET(request: Request) {
     return String(billVendorSlug ?? '').toLowerCase() === vendorSlug;
   });
 
-  // Deduplicate: only remove exact duplicates (same token + same total amount)
-  const seenBills = new Set<string>();
+  const byNewestToken = [...vendorFiltered].sort(
+    (a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime(),
+  );
+  const seenTokens = new Set<string>();
   const filtered: any[] = [];
-  for (const b of vendorFiltered) {
-    const dedupKey = `${b.order_token}|${Number(b.total ?? 0).toFixed(2)}`;
-    if (seenBills.has(dedupKey)) continue;
-    seenBills.add(dedupKey);
+  for (const b of byNewestToken) {
+    const tokenKey = stripLeadingHashesFromToken(String(b.order_token ?? '')).toLowerCase();
+    if (!tokenKey) {
+      filtered.push(b);
+      continue;
+    }
+    if (seenTokens.has(tokenKey)) continue;
+    seenTokens.add(tokenKey);
     filtered.push(b);
   }
 

@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   const lineItems = Array.isArray(body.line_items) ? body.line_items : [];
   if (lineItems.length === 0) return NextResponse.json({ error: 'line_items is required' }, { status: 400 });
 
-  // === Batch 1: order + vendors (bill loaded after totals so we match reporting dedupe) ===
+  // === Batch 1: order + vendors (bill loaded after line totals for save/update) ===
   const [orderRes, vendorsRes] = await Promise.all([
     supabase
       .from('orders')
@@ -168,7 +168,7 @@ export async function POST(request: Request) {
 
   const billOrderToken = stripLeadingHashesFromToken(String(order.token ?? tokenLookup));
 
-  // Latest active bill for this token (any total) — same token + new total updates one row; same total reuses/dedupes.
+  // Latest active bill for this order token — same items reuses row; changes update that row (one bill per token).
   let existingBillRes = await supabase
     .from('vendor_bills')
     .select('id, line_items, subtotal, total')
@@ -224,7 +224,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, billId: eb.id, updated: true });
   }
 
-  // No existing active bill — create a new one (unique index may race; handle 23505)
+  // No existing active bill — insert (unique index on token may race; handle 23505)
   const { data, error } = await supabase
     .from('vendor_bills')
     .insert({
@@ -256,7 +256,6 @@ export async function POST(request: Request) {
       .from('vendor_bills')
       .select('id, line_items, subtotal, total')
       .ilike('order_token', billOrderToken)
-      .eq('total', total)
       .is('cancelled_at', null)
       .order('created_at', { ascending: false })
       .limit(1)

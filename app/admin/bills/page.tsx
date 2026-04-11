@@ -274,24 +274,14 @@ export default function BillsPage() {
 
   const billDuplicateInfo = useMemo(() => {
     const active = bills.filter((b) => !b.cancelled_at);
-    const totalToTokens = new Map<string, Set<string>>();
     const tokenTotalCounts = new Map<string, number>();
 
     for (const b of active) {
       const tok = normalizeBillTokenForDup(b.order_token);
       const tk = billTotalKeyForDup(b.total);
       if (tk === '_') continue;
-      if (!totalToTokens.has(tk)) totalToTokens.set(tk, new Set());
-      totalToTokens.get(tk)!.add(tok);
       const pairKey = `${tok}|${tk}`;
       tokenTotalCounts.set(pairKey, (tokenTotalCounts.get(pairKey) ?? 0) + 1);
-    }
-
-    const crossTokenSameTotals: { total: string; tokens: string[] }[] = [];
-    for (const [totalK, set] of totalToTokens) {
-      if (set.size >= 2) {
-        crossTokenSameTotals.push({ total: totalK, tokens: [...set].sort() });
-      }
     }
 
     const dupTokenTotalPairs: { token: string; total: string; count: number }[] = [];
@@ -302,21 +292,19 @@ export default function BillsPage() {
     }
     dupTokenTotalPairs.sort((a, b) => b.count - a.count || a.token.localeCompare(b.token));
 
-    const rowFlags = new Map<string, { crossAmount: boolean; dupTokenTotalCount?: number }>();
+    const rowFlags = new Map<string, { dupTokenTotalCount?: number }>();
     for (const b of bills) {
       if (b.cancelled_at) continue;
       const tok = normalizeBillTokenForDup(b.order_token);
       const tk = billTotalKeyForDup(b.total);
-      const set = totalToTokens.get(tk);
       const pairKey = `${tok}|${tk}`;
       const cnt = tokenTotalCounts.get(pairKey) ?? 1;
       rowFlags.set(b.id, {
-        crossAmount: !!set && set.size >= 2,
         dupTokenTotalCount: cnt >= 2 ? cnt : undefined,
       });
     }
 
-    return { crossTokenSameTotals, dupTokenTotalPairs, rowFlags };
+    return { dupTokenTotalPairs, rowFlags };
   }, [bills]);
 
   const escapeCsv = (v: string | number | null | undefined): string => {

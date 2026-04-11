@@ -516,6 +516,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 .vd-num{text-align:right!important}
 .vd-strong{font-weight:700;color:var(--ok)}
 .vd-total-row td{border-top:2px solid var(--bd);font-weight:700}
+.vd-row-clickable{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.vd-row-clickable:hover td{background:color-mix(in srgb,var(--b) 7%,transparent)}
+.vd-back-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+[id^='vd-anchor-']{scroll-margin-top:88px}
 .vd-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .vd-details{margin-top:16px;border:1px solid var(--bd);border-radius:10px;padding:12px;background:var(--bg)}
 .vd-details summary{cursor:pointer;font-weight:600;font-size:14px}

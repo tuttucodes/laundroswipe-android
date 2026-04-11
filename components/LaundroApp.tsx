@@ -9,11 +9,13 @@ import {
   COLLEGES,
   SERVICES,
   VENDORS,
-  statusLabel,
-  statusClass,
+  STATUSES,
+  customerFacingStatusLabel,
+  customerFacingStatusClass,
   getScheduleDates,
   isEveningOnlyDate,
 } from '@/lib/constants';
+import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
@@ -268,6 +270,50 @@ function rowToOrder(r: OrderRow): Order {
   };
 }
 
+function orderTokenKey(tk: string): string {
+  return stripLeadingHashesFromToken(tk).toLowerCase();
+}
+
+/** One visible row per token: prefer bill.order_id, else furthest status, else newest created_at. */
+function billMapAndVisibleOrderIds(orders: Order[], bills: VendorBillRow[]) {
+  const billByToken = new Map<string, VendorBillRow>();
+  for (const b of bills) {
+    const k = orderTokenKey(b.order_token);
+    if (!billByToken.has(k)) billByToken.set(k, b);
+  }
+  const byKey = new Map<string, Order[]>();
+  for (const o of orders) {
+    const k = orderTokenKey(o.tk);
+    const arr = byKey.get(k) ?? [];
+    arr.push(o);
+    byKey.set(k, arr);
+  }
+  const visible = new Set<string>();
+  const rank = (s: string) => {
+    const i = STATUSES.indexOf(s as (typeof STATUSES)[number]);
+    return i >= 0 ? i : -1;
+  };
+  for (const list of byKey.values()) {
+    if (list.length === 1) {
+      visible.add(list[0].id);
+      continue;
+    }
+    const k = orderTokenKey(list[0].tk);
+    const bill = billByToken.get(k);
+    let pick: Order | undefined;
+    if (bill?.order_id) pick = list.find((o) => o.id === bill.order_id);
+    if (!pick) {
+      pick = [...list].sort((a, b) => {
+        const dr = rank(b.status) - rank(a.status);
+        if (dr !== 0) return dr;
+        return String(b.ca).localeCompare(String(a.ca));
+      })[0];
+    }
+    visible.add(pick.id);
+  }
+  return { billByOrderToken: billByToken, visibleOrderIds: visible };
+}
+
 const TIME_SLOTS = [
   { id: 'afternoon', label: 'Afternoon (12–4 PM)', emoji: '☀️' },
   { id: 'evening', label: 'Evening (4:45–5:45 PM)', emoji: '🌆' },
@@ -354,6 +400,8 @@ export default function LaundroApp() {
   const [vendorProfilesBySlug, setVendorProfilesBySlug] = useState<Record<string, VendorProfileRow>>({});
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
   const [ordersListLoading, setOrdersListLoading] = useState(false);
+  /** Active vendor bills for the signed-in user; used on Home / Orders to show bill-ready state and dedupe tokens. */
+  const [userOrderBills, setUserOrderBills] = useState<VendorBillRow[]>([]);
   const [geo, setGeo] = useState<{ status: 'idle' | 'loading' | 'ok' | 'denied' | 'error'; coords?: LatLng }>({ status: 'idle' });
   const [pickupLocation, setPickupLocation] = useState('vit-chn');
   const [homeVendors, setHomeVendors] = useState<VendorForUi[]>(() => [...VIT_CHN_FALLBACK_VENDORS]);
@@ -753,6 +801,27 @@ export default function LaundroApp() {
       }).finally(() => setOrdersListLoading(false));
     }
   }, [screen, user?.sid, saveO]);
+
+  // Bills on Home / Orders / Order detail so list badges and deduping stay in sync with vendor saves
+  useEffect(() => {
+    if (!user?.sid || !LSApi.hasSupabase) return;
+    if (!['home', 'orders', 'order-detail'].includes(screen)) return;
+    LSApi.fetchVendorBillsForUser(user.sid).then((rows) => setUserOrderBills(rows ?? []));
+  }, [user?.sid, screen]);
+
+  const { billByOrderToken, visibleOrderIds } = useMemo(
+    () => billMapAndVisibleOrderIds(orders, userOrderBills),
+    [orders, userOrderBills],
+  );
+
+  const visibleOrdersSorted = useMemo(
+    () =>
+      orders
+        .filter((o) => visibleOrderIds.has(o.id))
+        .slice()
+        .sort((a, b) => String(b.ca).localeCompare(String(a.ca))),
+    [orders, visibleOrderIds],
+  );
 
   // Load schedule on home + schedule so Star Wash (slot-gated) and dates step stay accurate.
   useEffect(() => {
@@ -2140,10 +2209,12 @@ export default function LaundroApp() {
                     <div className="hiwt">Delivery</div>
                   </div>
                 </div>
-                {orders.length > 0 && (
+                {visibleOrdersSorted.length > 0 && (
                   <>
                     <p className="st">Recent orders</p>
-                    {orders.slice(0, 3).map((o) => (
+                    {visibleOrdersSorted.slice(0, 3).map((o) => {
+                      const hasBill = billByOrderToken.has(orderTokenKey(o.tk));
+                      return (
                       <div
                         key={o.id}
                         className="oc"
@@ -2154,11 +2225,11 @@ export default function LaundroApp() {
                       >
                         <div className="oc-row oc-head">
                           <span className="aotkv">#{o.tk}</span>
-                          <span className={`vdb ${statusClass(o.status)}`}>{statusLabel(o.status)}</span>
+                          <span className={`vdb ${customerFacingStatusClass(o.status, hasBill)}`}>{customerFacingStatusLabel(o.status, hasBill)}</span>
                         </div>
                         <p className="vd">{o.sl} · {o.pd}</p>
                       </div>
-                    ))}
+                    );})}
                   </>
                 )}
               </>
@@ -2366,10 +2437,12 @@ export default function LaundroApp() {
                     <div className="skeleton skeleton-card" />
                     <div className="skeleton skeleton-card" />
                   </>
-                ) : orders.length === 0 ? (
+                ) : visibleOrdersSorted.length === 0 ? (
                   <p className="fn">No orders yet. Schedule a pickup from Home.</p>
                 ) : (
-                  orders.map((o) => (
+                  visibleOrdersSorted.map((o) => {
+                    const hasBill = billByOrderToken.has(orderTokenKey(o.tk));
+                    return (
                     <div
                       key={o.id}
                       className="oc"
@@ -2380,11 +2453,11 @@ export default function LaundroApp() {
                     >
                       <div className="oc-row oc-head">
                         <span className="aotkv">#{o.tk}</span>
-                        <span className={`vdb ${statusClass(o.status)}`}>{statusLabel(o.status)}</span>
+                        <span className={`vdb ${customerFacingStatusClass(o.status, hasBill)}`}>{customerFacingStatusLabel(o.status, hasBill)}</span>
                       </div>
                       <p className="vd">{o.sl} · {o.pd} · {o.ts}</p>
                     </div>
-                  ))
+                  );})
                 )}
               </>
             )}
@@ -2393,6 +2466,8 @@ export default function LaundroApp() {
               const order = orders.find((o) => o.id === dd.oid);
               if (!order) return <p className="fn">Order not found.</p>;
               const canConfirmDelivery = order.status === 'delivered' && !order.deliveryConfirmedAt;
+              const billForOrder = billByOrderToken.get(orderTokenKey(order.tk));
+              const hasBillForOrder = Boolean(billForOrder);
               return (
                 <>
                   <div className="vc">
@@ -2400,10 +2475,26 @@ export default function LaundroApp() {
                     <div className="vd">{order.sl}</div>
                     <div className="vd">{order.pd} · {order.ts}</div>
                     <div className="vds">
-                      <span className={`vdb ${statusClass(order.status)}`}>{statusLabel(order.status)}</span>
+                      <span className={`vdb ${customerFacingStatusClass(order.status, hasBillForOrder)}`}>{customerFacingStatusLabel(order.status, hasBillForOrder)}</span>
                     </div>
                     {order.ins && <div className="vd">Instructions: {order.ins}</div>}
                   </div>
+                  {billForOrder && (
+                    <div className="vc" style={{ marginTop: 12, background: 'rgba(23,70,162,0.06)', borderColor: 'rgba(23,70,162,0.18)' }}>
+                      <div className="vn" style={{ fontSize: 15 }}>Your bill is ready</div>
+                      <p className="vd" style={{ marginBottom: 12 }}>
+                        The vendor has posted itemized charges for this pickup. Open the bill to review totals.
+                      </p>
+                      <button type="button" className="btn bp bbl" onClick={() => setViewingBill(billForOrder)}>
+                        View bill
+                      </button>
+                    </div>
+                  )}
+                  {!billForOrder && (order.status === 'scheduled' || order.status === 'agent_assigned') && (
+                    <p className="vd" style={{ marginTop: 12, fontSize: 13, color: 'var(--ts)', lineHeight: 1.55 }}>
+                      After your clothes are collected, the vendor usually posts your bill within a few days.
+                    </p>
+                  )}
                   {(order.status === 'delivered' || order.deliveryConfirmedAt) && (
                     <div className="vc" style={{ background: '#DCFCE7', borderColor: 'rgba(22,163,74,.2)' }}>
                       {order.deliveryConfirmedAt ? (

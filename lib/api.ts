@@ -726,6 +726,7 @@ export const LSApi = {
         .from('vendor_bills')
         .select('*')
         .eq('user_id', userId)
+        .is('cancelled_at', null)
         .order('created_at', { ascending: false });
       if (error) return null;
       return (data ?? []) as VendorBillRow[];

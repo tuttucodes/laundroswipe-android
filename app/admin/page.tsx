@@ -450,10 +450,16 @@ export default function AdminPage() {
         (us ?? []).forEach((u) => userMap.set(u.id, u));
         setUsers(us ?? []);
 
-        const withUser = (ords ?? []).map((o: any) => ({
-          ...o,
-          user: userMap.get(o.user_id ?? '')?.full_name ?? userMap.get(o.user_id ?? '')?.email ?? '—',
-        }));
+        const withUser = (ords ?? []).map((o: any) => {
+          const u = userMap.get(o.user_id ?? '');
+          return {
+            ...o,
+            user: u?.full_name ?? u?.email ?? '—',
+            user_phone: u?.phone ?? '',
+            user_hostel_block: u?.hostel_block ?? '',
+            user_room_number: u?.room_number ?? '',
+          };
+        });
 
         const vendorScopedOrders = !isSuperAdmin && vendorId
           ? withUser.filter((o: any) => String(o.vendor_slug ?? '').toLowerCase() === String(vendorId).toLowerCase())
@@ -901,7 +907,12 @@ export default function AdminPage() {
         return ov === sv || ov.includes(sv);
       })
     : areaScopedOrders;
-  const filtered = filter === 'all' ? vendorScopedForSuperAdmin : vendorScopedForSuperAdmin.filter((o) => o.status === filter);
+  const filtered =
+    filter === 'all'
+      ? vendorScopedForSuperAdmin
+      : filter === 'open'
+        ? vendorScopedForSuperAdmin.filter((o) => o.status !== 'delivered')
+        : vendorScopedForSuperAdmin.filter((o) => o.status === filter);
   const usersByVisibleOrders = new Set(vendorScopedForSuperAdmin.map((o) => o.user_id).filter(Boolean));
   const filteredUsers = (users ?? []).filter((u) => {
     if (isSuperAdmin && superVendorFilter !== 'all' && !usersByVisibleOrders.has(u.id)) return false;
@@ -1462,14 +1473,14 @@ export default function AdminPage() {
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
-                {['all', 'scheduled', 'processing', 'delivered'].map((f) => (
+                {(['all', 'open', 'scheduled', 'processing', 'delivered'] as const).map((f) => (
                   <button
                     key={f}
                     type="button"
                     onClick={() => setFilter(f)}
                     className={`admin-filter-btn ${filter === f ? 'active' : ''}`}
                   >
-                    {f === 'all' ? 'All' : statusLabel(f)}
+                    {f === 'all' ? 'All' : f === 'open' ? 'Open / pending' : statusLabel(f)}
                   </button>
                 ))}
               </div>
@@ -1495,17 +1506,31 @@ export default function AdminPage() {
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Order</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Token</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Customer</th>
+                        {filter === 'open' && (
+                          <>
+                            <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Mobile</th>
+                            <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Block</th>
+                            <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Room</th>
+                          </>
+                        )}
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Bill</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Status</th>
                         <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--tm)', textTransform: 'uppercase', borderBottom: '1px solid var(--bd)', background: 'var(--bg)' }}>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filtered.map((o) => (
+                      {filtered.map((o: any) => (
                         <tr key={o.id} style={{ borderBottom: '1px solid var(--bd)' }}>
                           <td style={{ padding: '14px 16px', fontSize: 14 }}>{o.order_number}</td>
                           <td style={{ padding: '14px 16px', fontFamily: 'var(--fd)', fontWeight: 800, color: 'var(--o)' }}>#{o.token}</td>
                           <td style={{ padding: '14px 16px', fontSize: 14 }}>{o.user}</td>
+                          {filter === 'open' && (
+                            <>
+                              <td style={{ padding: '14px 16px', fontSize: 13 }}>{o.user_phone || '—'}</td>
+                              <td style={{ padding: '14px 16px', fontSize: 13 }}>{o.user_hostel_block || '—'}</td>
+                              <td style={{ padding: '14px 16px', fontSize: 13 }}>{o.user_room_number || '—'}</td>
+                            </>
+                          )}
                           <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 600, color: billByToken.has(o.token) ? 'var(--ok)' : 'var(--tm)' }}>
                             {billByToken.has(o.token) ? `₹${billByToken.get(o.token)!.total}` : '—'}
                           </td>
@@ -1527,13 +1552,18 @@ export default function AdminPage() {
                   {filtered.length === 0 ? (
                     <p style={{ textAlign: 'center', padding: 24, color: 'var(--ts)', fontSize: 14 }}>No orders</p>
                   ) : (
-                    filtered.map((o) => (
+                    filtered.map((o: any) => (
                       <div key={o.id} className="admin-order-card">
                         <div className="admin-order-card-head">
                           <span className="admin-order-card-token">#{o.token}</span>
                           <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: statusBadge(o.status) === 'b-sch' ? '#FEF3C7' : statusBadge(o.status) === 'b-del' ? '#DCFCE7' : 'var(--bl)', color: statusBadge(o.status) === 'b-sch' ? '#92400E' : statusBadge(o.status) === 'b-del' ? 'var(--ok)' : 'var(--b)' }}>{statusLabel(o.status)}</span>
                         </div>
                         <div className="admin-order-card-meta">{o.order_number} · {o.user}</div>
+                        {filter === 'open' && (o.user_phone || o.user_hostel_block || o.user_room_number) && (
+                          <div style={{ fontSize: 12, color: 'var(--ts)', marginTop: 6, lineHeight: 1.5 }}>
+                            {[o.user_phone, o.user_hostel_block && `Block ${o.user_hostel_block}`, o.user_room_number && `Room ${o.user_room_number}`].filter(Boolean).join(' · ')}
+                          </div>
+                        )}
                         {billByToken.has(o.token) && (
                           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ok)', marginTop: 4 }}>₹{billByToken.get(o.token)!.total}</div>
                         )}
