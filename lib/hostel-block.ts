@@ -33,3 +33,13 @@ export function normalizeHostelBlockKey(raw: string | null | undefined): string 
 
   return u;
 }
+
+/** Rollup key for dashboards: non-empty bill snapshot wins; otherwise linked user profile block. */
+export function rollupHostelBlockKey(
+  billHostelBlock: string | null | undefined,
+  userHostelBlock: string | null | undefined,
+): string {
+  const b = String(billHostelBlock ?? '').trim();
+  if (b) return normalizeHostelBlockKey(b);
+  return normalizeHostelBlockKey(userHostelBlock);
+}

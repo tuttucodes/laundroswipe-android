@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { addDaysYmd, istYmdStartIso } from '@/lib/ist-dates';
-import { normalizeHostelBlockKey } from '@/lib/hostel-block';
+import { rollupHostelBlockKey } from '@/lib/hostel-block';
 import { segregateCustomerDisplay } from '@/lib/customer-display-segregate';
 
 type BillRow = {
@@ -227,10 +227,9 @@ export async function GET(request: Request) {
         (o.id ? billByOrderId.get(String(o.id)) : null) ?? billByTokenNorm.get(normalizeTokenKey(String(o.token)));
       if (!bill) continue;
 
-      const rollupKey = normalizeHostelBlockKey(bill.customer_hostel_block);
-      if (rollupKey !== targetKey) continue;
-
       const u = o.user_id ? userById.get(String(o.user_id)) : undefined;
+      const rollupKey = rollupHostelBlockKey(bill.customer_hostel_block, u?.hostel_block);
+      if (rollupKey !== targetKey) continue;
       const phone = bill.customer_phone?.trim() || '—';
       const itemQty = lineQtySum(bill.line_items);
       const total = Number(bill.total);

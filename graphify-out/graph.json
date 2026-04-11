@@ -9,7 +9,7 @@
       "source_file": "next.config.js",
       "source_location": "L1",
       "id": "next_config",
-      "community": 25
+      "community": 26
     },
     {
       "label": "next-env.d.ts",
@@ -17,7 +17,7 @@
       "source_file": "next-env.d.ts",
       "source_location": "L1",
       "id": "next_env_d",
-      "community": 26
+      "community": 27
     },
     {
       "label": "layout.tsx",
@@ -25,7 +25,7 @@
       "source_file": "app/admin/layout.tsx",
       "source_location": "L1",
       "id": "layout",
-      "community": 20
+      "community": 21
     },
     {
       "label": "RootLayout()",
@@ -33,7 +33,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L50",
       "id": "layout_rootlayout",
-      "community": 20
+      "community": 21
     },
     {
       "label": "manifest.ts",
@@ -41,7 +41,7 @@
       "source_file": "app/manifest.ts",
       "source_location": "L1",
       "id": "manifest",
-      "community": 21
+      "community": 22
     },
     {
       "label": "manifest()",
@@ -49,7 +49,7 @@
       "source_file": "app/manifest.ts",
       "source_location": "L3",
       "id": "manifest_manifest",
-      "community": 21
+      "community": 22
     },
     {
       "label": "page.tsx",
@@ -97,7 +97,7 @@
       "source_file": "app/admin/layout.tsx",
       "source_location": "L20",
       "id": "layout_adminlayout",
-      "community": 20
+      "community": 21
     },
     {
       "label": "getGatePassLetterHtml()",
@@ -1009,7 +1009,7 @@
       "source_file": "config/env.production.js",
       "source_location": "L1",
       "id": "env_production",
-      "community": 27
+      "community": 28
     },
     {
       "label": "env.js",
@@ -1017,7 +1017,7 @@
       "source_file": "config/env.js",
       "source_location": "L1",
       "id": "env",
-      "community": 28
+      "community": 29
     },
     {
       "label": "env.development.js",
@@ -1025,7 +1025,7 @@
       "source_file": "config/env.development.js",
       "source_location": "L1",
       "id": "env_development",
-      "community": 29
+      "community": 30
     },
     {
       "label": "api.ts",
@@ -1129,7 +1129,7 @@
       "source_file": "android-print-bridge/app/build.gradle.kts",
       "source_location": "L1",
       "id": "build_gradle",
-      "community": 30
+      "community": 31
     },
     {
       "label": "settings.gradle.kts",
@@ -1137,7 +1137,7 @@
       "source_file": "android-print-bridge/settings.gradle.kts",
       "source_location": "L1",
       "id": "settings_gradle",
-      "community": 31
+      "community": 32
     },
     {
       "label": "MainActivity.kt",
@@ -1281,7 +1281,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L1",
       "id": "bluetoothdevicepickeradapter",
-      "community": 11
+      "community": 12
     },
     {
       "label": "PairedDeviceRow",
@@ -1289,7 +1289,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L9",
       "id": "bluetoothdevicepickeradapter_paireddevicerow",
-      "community": 11
+      "community": 12
     },
     {
       "label": "BluetoothDevicePickerAdapter",
@@ -1297,7 +1297,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L15",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".submitList()",
@@ -1305,7 +1305,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L22",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_submitlist",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".selectByAddress()",
@@ -1313,7 +1313,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L29",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_selectbyaddress",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".selectedRow()",
@@ -1321,7 +1321,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L39",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_selectedrow",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".getItemCount()",
@@ -1329,7 +1329,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L42",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_getitemcount",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".onCreateViewHolder()",
@@ -1337,7 +1337,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L44",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_oncreateviewholder",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".onBindViewHolder()",
@@ -1345,7 +1345,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L50",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_onbindviewholder",
-      "community": 11
+      "community": 12
     },
     {
       "label": "VH",
@@ -1353,7 +1353,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L54",
       "id": "bluetoothdevicepickeradapter_vh",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".bind()",
@@ -1361,7 +1361,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L70",
       "id": "bluetoothdevicepickeradapter_vh_bind",
-      "community": 11
+      "community": 12
     },
     {
       "label": "BluetoothPrinterDevices.kt",
@@ -1881,7 +1881,7 @@
       "source_file": "components/home/ScrollingMarquee.tsx",
       "source_location": "L1",
       "id": "scrollingmarquee",
-      "community": 22
+      "community": 23
     },
     {
       "label": "ScrollingMarquee()",
@@ -1889,7 +1889,7 @@
       "source_file": "components/home/ScrollingMarquee.tsx",
       "source_location": "L5",
       "id": "scrollingmarquee_scrollingmarquee",
-      "community": 22
+      "community": 23
     },
     {
       "label": "BentoEcosystem.tsx",
@@ -1913,7 +1913,7 @@
       "source_file": "components/home/HeroAnimations.tsx",
       "source_location": "L1",
       "id": "heroanimations",
-      "community": 32
+      "community": 33
     },
     {
       "label": "SegmentTabs.tsx",
@@ -1921,7 +1921,7 @@
       "source_file": "components/home/SegmentTabs.tsx",
       "source_location": "L1",
       "id": "segmenttabs",
-      "community": 23
+      "community": 24
     },
     {
       "label": "SegmentTabs()",
@@ -1929,7 +1929,7 @@
       "source_file": "components/home/SegmentTabs.tsx",
       "source_location": "L35",
       "id": "segmenttabs_segmenttabs",
-      "community": 23
+      "community": 24
     },
     {
       "label": "Footer.tsx",
@@ -2001,7 +2001,7 @@
       "source_file": "components/home/TestimonialCarousel.tsx",
       "source_location": "L1",
       "id": "testimonialcarousel",
-      "community": 24
+      "community": 25
     },
     {
       "label": "TestimonialCarousel()",
@@ -2009,7 +2009,7 @@
       "source_file": "components/home/TestimonialCarousel.tsx",
       "source_location": "L16",
       "id": "testimonialcarousel_testimonialcarousel",
-      "community": 24
+      "community": 25
     },
     {
       "label": "OAuthRedirectToDashboard.tsx",
@@ -2105,7 +2105,7 @@
       "source_file": "components/vendor/PrintBridgeApkCta.tsx",
       "source_location": "L1",
       "id": "printbridgeapkcta",
-      "community": 0
+      "community": 19
     },
     {
       "label": "BluetoothPrinterPanel.tsx",
@@ -2169,7 +2169,7 @@
       "source_file": "public/sw.js",
       "source_location": "L1",
       "id": "sw",
-      "community": 33
+      "community": 34
     },
     {
       "label": "generate-env.js",
@@ -2177,7 +2177,7 @@
       "source_file": "scripts/generate-env.js",
       "source_location": "L1",
       "id": "generate_env",
-      "community": 34
+      "community": 35
     },
     {
       "label": "customer-display-segregate.ts",
@@ -2185,7 +2185,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L1",
       "id": "customer_display_segregate",
-      "community": 12
+      "community": 9
     },
     {
       "label": "clean()",
@@ -2193,7 +2193,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L11",
       "id": "customer_display_segregate_clean",
-      "community": 12
+      "community": 9
     },
     {
       "label": "isEmptyDisplay()",
@@ -2201,7 +2201,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L19",
       "id": "customer_display_segregate_isemptydisplay",
-      "community": 12
+      "community": 9
     },
     {
       "label": "escapeReg()",
@@ -2209,7 +2209,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L23",
       "id": "customer_display_segregate_escapereg",
-      "community": 12
+      "community": 9
     },
     {
       "label": "tryExtractRoomFromBlock()",
@@ -2217,7 +2217,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L30",
       "id": "customer_display_segregate_tryextractroomfromblock",
-      "community": 12
+      "community": 9
     },
     {
       "label": "stripTrailingRoomFromBlock()",
@@ -2225,7 +2225,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L66",
       "id": "customer_display_segregate_striptrailingroomfromblock",
-      "community": 12
+      "community": 9
     },
     {
       "label": "segregateHostelBlockRoom()",
@@ -2233,7 +2233,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L75",
       "id": "customer_display_segregate_segregatehostelblockroom",
-      "community": 12
+      "community": 9
     },
     {
       "label": "segregateNameAndReg()",
@@ -2241,7 +2241,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L124",
       "id": "customer_display_segregate_segregatenameandreg",
-      "community": 12
+      "community": 9
     },
     {
       "label": "segregateCustomerDisplay()",
@@ -2249,7 +2249,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L162",
       "id": "customer_display_segregate_segregatecustomerdisplay",
-      "community": 12
+      "community": 9
     },
     {
       "label": "vendor-bill-network.ts",
@@ -2281,7 +2281,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L1",
       "id": "admin_session",
-      "community": 9
+      "community": 10
     },
     {
       "label": "getSecret()",
@@ -2289,7 +2289,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L12",
       "id": "admin_session_getsecret",
-      "community": 9
+      "community": 10
     },
     {
       "label": "b64urlEncode()",
@@ -2297,7 +2297,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L17",
       "id": "admin_session_b64urlencode",
-      "community": 9
+      "community": 10
     },
     {
       "label": "b64urlDecode()",
@@ -2305,7 +2305,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L22",
       "id": "admin_session_b64urldecode",
-      "community": 9
+      "community": 10
     },
     {
       "label": "createAdminToken()",
@@ -2313,7 +2313,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L29",
       "id": "admin_session_createadmintoken",
-      "community": 9
+      "community": 10
     },
     {
       "label": "verifyAdminToken()",
@@ -2321,7 +2321,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L41",
       "id": "admin_session_verifyadmintoken",
-      "community": 9
+      "community": 10
     },
     {
       "label": "verifyAdminSession()",
@@ -2329,7 +2329,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L46",
       "id": "admin_session_verifyadminsession",
-      "community": 9
+      "community": 10
     },
     {
       "label": "getAdminSessionCookie()",
@@ -2337,7 +2337,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L66",
       "id": "admin_session_getadminsessioncookie",
-      "community": 9
+      "community": 10
     },
     {
       "label": "getAdminTokenFromRequest()",
@@ -2345,7 +2345,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L74",
       "id": "admin_session_getadmintokenfromrequest",
-      "community": 9
+      "community": 10
     },
     {
       "label": "isAdminRequest()",
@@ -2353,7 +2353,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L84",
       "id": "admin_session_isadminrequest",
-      "community": 9
+      "community": 10
     },
     {
       "label": "getAdminSessionFromRequest()",
@@ -2361,7 +2361,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L89",
       "id": "admin_session_getadminsessionfromrequest",
-      "community": 9
+      "community": 10
     },
     {
       "label": "adminSessionCookieHeader()",
@@ -2369,7 +2369,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L94",
       "id": "admin_session_adminsessioncookieheader",
-      "community": 9
+      "community": 10
     },
     {
       "label": "authenticated-user.ts",
@@ -2537,7 +2537,7 @@
       "source_file": "lib/hostel-block.ts",
       "source_location": "L1",
       "id": "hostel_block",
-      "community": 12
+      "community": 9
     },
     {
       "label": "normalizeHostelBlockKey()",
@@ -2545,7 +2545,15 @@
       "source_file": "lib/hostel-block.ts",
       "source_location": "L7",
       "id": "hostel_block_normalizehostelblockkey",
-      "community": 12
+      "community": 9
+    },
+    {
+      "label": "rollupHostelBlockKey()",
+      "file_type": "code",
+      "source_file": "lib/hostel-block.ts",
+      "source_location": "L38",
+      "id": "hostel_block_rolluphostelblockkey",
+      "community": 9
     },
     {
       "label": "print-bridge-apk.ts",
@@ -2553,7 +2561,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L1",
       "id": "print_bridge_apk",
-      "community": 0
+      "community": 19
     },
     {
       "label": "getPrintBridgeApkUrl()",
@@ -2561,7 +2569,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L10",
       "id": "print_bridge_apk_getprintbridgeapkurl",
-      "community": 0
+      "community": 19
     },
     {
       "label": "isPrintBridgeApkDirectPublicUrl()",
@@ -2569,7 +2577,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L18",
       "id": "print_bridge_apk_isprintbridgeapkdirectpublicurl",
-      "community": 0
+      "community": 19
     },
     {
       "label": "public-rate-limit.ts",
@@ -2873,7 +2881,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L1",
       "id": "printer_settings",
-      "community": 10
+      "community": 11
     },
     {
       "label": "load()",
@@ -2881,7 +2889,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L47",
       "id": "printer_settings_load",
-      "community": 10
+      "community": 11
     },
     {
       "label": "save()",
@@ -2889,7 +2897,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L61",
       "id": "printer_settings_save",
-      "community": 10
+      "community": 11
     },
     {
       "label": "getPrinterSettings()",
@@ -2897,7 +2905,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L68",
       "id": "printer_settings_getprintersettings",
-      "community": 10
+      "community": 11
     },
     {
       "label": "getDefaultPrinter()",
@@ -2905,7 +2913,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L72",
       "id": "printer_settings_getdefaultprinter",
-      "community": 10
+      "community": 11
     },
     {
       "label": "getPrinterConfigForPrint()",
@@ -2913,7 +2921,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L78",
       "id": "printer_settings_getprinterconfigforprint",
-      "community": 10
+      "community": 11
     },
     {
       "label": "getPreferPrintDialog()",
@@ -2921,7 +2929,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L87",
       "id": "printer_settings_getpreferprintdialog",
-      "community": 10
+      "community": 11
     },
     {
       "label": "setPreferPrintDialog()",
@@ -2929,7 +2937,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L91",
       "id": "printer_settings_setpreferprintdialog",
-      "community": 10
+      "community": 11
     },
     {
       "label": "addPrinter()",
@@ -2937,7 +2945,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L97",
       "id": "printer_settings_addprinter",
-      "community": 10
+      "community": 11
     },
     {
       "label": "removePrinter()",
@@ -2945,7 +2953,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L121",
       "id": "printer_settings_removeprinter",
-      "community": 10
+      "community": 11
     },
     {
       "label": "setDefaultPrinter()",
@@ -2953,7 +2961,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L132",
       "id": "printer_settings_setdefaultprinter",
-      "community": 10
+      "community": 11
     },
     {
       "label": "updatePrinterName()",
@@ -2961,7 +2969,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L140",
       "id": "printer_settings_updateprintername",
-      "community": 10
+      "community": 11
     },
     {
       "label": "vendor-bill-policy.ts",
@@ -2993,7 +3001,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L1",
       "id": "rate_limit",
-      "community": 19
+      "community": 20
     },
     {
       "label": "getClientId()",
@@ -3001,7 +3009,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L12",
       "id": "rate_limit_getclientid",
-      "community": 19
+      "community": 20
     },
     {
       "label": "checkAdminRateLimit()",
@@ -3009,7 +3017,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L18",
       "id": "rate_limit_checkadminratelimit",
-      "community": 19
+      "community": 20
     },
     {
       "label": "checkBodySize()",
@@ -3017,7 +3025,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L44",
       "id": "rate_limit_checkbodysize",
-      "community": 19
+      "community": 20
     },
     {
       "label": "fees.ts",
@@ -6433,7 +6441,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/block-day-detail/route.ts",
-      "source_location": "L235",
+      "source_location": "L234",
       "weight": 1.0,
       "_src": "route_get",
       "_tgt": "route_lineqtysum",
@@ -9199,6 +9207,30 @@
       "_tgt": "hostel_block_normalizehostelblockkey",
       "source": "hostel_block",
       "target": "hostel_block_normalizehostelblockkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/hostel-block.ts",
+      "source_location": "L38",
+      "weight": 1.0,
+      "_src": "hostel_block",
+      "_tgt": "hostel_block_rolluphostelblockkey",
+      "source": "hostel_block",
+      "target": "hostel_block_rolluphostelblockkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/hostel-block.ts",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_src": "hostel_block_rolluphostelblockkey",
+      "_tgt": "hostel_block_normalizehostelblockkey",
+      "source": "hostel_block_normalizehostelblockkey",
+      "target": "hostel_block_rolluphostelblockkey",
       "confidence_score": 1.0
     },
     {

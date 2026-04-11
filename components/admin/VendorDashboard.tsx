@@ -840,7 +840,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
             <>
               <h2 className="vd-panel-title">Hostel block × delivery date</h2>
               <p className="vd-panel-desc">
-                Uses <code>customer_hostel_block</code> from each saved bill (only delivered orders with a bill are counted). Empty values appear as{' '}
+                Each delivered order with a bill rolls up by hostel block: the saved bill&apos;s <code>customer_hostel_block</code> first; if that is empty, the customer&apos;s profile <code>hostel_block</code>. Still empty →{' '}
                 <strong>No block</strong>. Rows only appear when there is at least one bill in that bucket — there is no master list of every block.{' '}
                 <strong>A</strong>, <strong>D1</strong>, and <strong>D2</strong> roll up common variants (e.g. <code>A-102</code>, <code>Block A</code>,{' '}
                 <code>Mens A</code>, <code>D 1</code>/<code>D-2</code>, stacked <code>HOSTEL</code>/<code>BLOCK</code> prefixes). Dates use India time. Tap a row for every bill in that bucket.
