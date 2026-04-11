@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { VendorRevenueTrendCard } from './VendorRevenueTrendCard';
 
 export type VendorDashboardMetrics = {
   revenue_7d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
@@ -668,6 +669,15 @@ export function VendorDashboard({ onUnauthorized }: Props) {
               </tbody>
             </table>
           </div>
+
+          <VendorRevenueTrendCard
+            billed7={metrics.billed_7d.by_date}
+            collected7={metrics.collected_7d.by_date}
+            billed30={metrics.billed_30d.by_date}
+            collected30={metrics.collected_30d.by_date}
+            formatDayLabel={fmtDate}
+            formatMoney={fmtMoney}
+          />
 
           <div id="vd-anchor-billed-7" className="vendor-card vd-panel vd-panel-highlight">
             <h2 className="vd-panel-title">Normal revenue — daily (bills generated)</h2>
