@@ -4,6 +4,7 @@ import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
 import { applyServiceFeeDiscount } from '@/lib/fees';
 import { mergeVendorBillItemsFromDbRow } from '@/lib/vendor-bill-catalog';
+import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
   const normalized = String(vendorName ?? '').trim().toLowerCase();
@@ -13,10 +14,6 @@ function resolveVendorSlugFromName(vendorName: string | null | undefined): strin
     return normalized === candidate || normalized.includes(candidate) || candidate.includes(normalized);
   });
   return match?.id ?? null;
-}
-
-function normalizeToken(token: string): string {
-  return String(token).replace(/^#/, '').trim();
 }
 
 export async function POST(request: Request) {
@@ -44,31 +41,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }
 
-  const token = normalizeToken(body.token ?? '');
-  if (!token) return NextResponse.json({ error: 'token is required' }, { status: 400 });
+  const tokenLookup = stripLeadingHashesFromToken(body.token ?? '').toLowerCase();
+  if (!tokenLookup) return NextResponse.json({ error: 'token is required' }, { status: 400 });
 
   const lineItems = Array.isArray(body.line_items) ? body.line_items : [];
   if (lineItems.length === 0) return NextResponse.json({ error: 'line_items is required' }, { status: 400 });
 
-  // === Batch 1: Load order, vendors, and existing bill in parallel ===
-  const [orderRes, vendorsRes, existingBillRes] = await Promise.all([
+  // === Batch 1: order + vendors (bill loaded after totals so we match reporting dedupe) ===
+  const [orderRes, vendorsRes] = await Promise.all([
     supabase
       .from('orders')
       .select('id, order_number, token, user_id, vendor_id, vendor_name')
-      .eq('token', token)
+      .ilike('token', tokenLookup)
       .limit(1),
-    supabase
-      .from('vendors')
-      .select('id, slug, name'),
-    // Check for existing active bill
-    supabase
-      .from('vendor_bills')
-      .select('id, line_items, subtotal, total')
-      .eq('order_token', token)
-      .is('cancelled_at', null)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+    supabase.from('vendors').select('id, slug, name'),
   ]);
 
   if (orderRes.error) return NextResponse.json({ error: orderRes.error.message }, { status: 500 });
@@ -180,21 +166,32 @@ export async function POST(request: Request) {
 
   const newLineItemsPayload = safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty, image_url: l.image_url }));
 
-  // --- Upsert: use existing bill result from batch 1 ---
-  type ExistingBill = { id: string; line_items: unknown; subtotal: number; total: number };
-  let existingBill: ExistingBill | null = null;
-  if (existingBillRes.error && existingBillRes.error.code === '42703') {
-    const fallback = await supabase
+  const billOrderToken = stripLeadingHashesFromToken(String(order.token ?? tokenLookup));
+
+  // Latest active bill for this token (any total) — same token + new total updates one row; same total reuses/dedupes.
+  let existingBillRes = await supabase
+    .from('vendor_bills')
+    .select('id, line_items, subtotal, total')
+    .ilike('order_token', billOrderToken)
+    .is('cancelled_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingBillRes.error?.code === '42703') {
+    existingBillRes = await supabase
       .from('vendor_bills')
       .select('id, line_items, subtotal, total')
-      .eq('order_token', token)
+      .ilike('order_token', billOrderToken)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!fallback.error) existingBill = (fallback.data ?? null) as ExistingBill | null;
-  } else if (!existingBillRes.error) {
-    existingBill = (existingBillRes.data ?? null) as ExistingBill | null;
   }
+
+  type ExistingBill = { id: string; line_items: unknown; subtotal: number; total: number };
+  let existingBill: ExistingBill | null = existingBillRes.error
+    ? null
+    : ((existingBillRes.data ?? null) as ExistingBill | null);
 
   if (existingBill) {
     const eb = existingBill;
@@ -227,12 +224,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, billId: eb.id, updated: true });
   }
 
-  // No existing active bill — create a new one
+  // No existing active bill — create a new one (unique index may race; handle 23505)
   const { data, error } = await supabase
     .from('vendor_bills')
     .insert({
       order_id: order.id,
-      order_token: token,
+      order_token: billOrderToken,
       order_number: body.order_number ?? order.order_number ?? null,
       customer_name,
       customer_phone,
@@ -250,6 +247,49 @@ export async function POST(request: Request) {
     .select('id')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, billId: data?.id, created: true });
+  if (!error) {
+    return NextResponse.json({ ok: true, billId: data?.id, created: true });
+  }
+
+  if (error.code === '23505') {
+    const { data: row, error: fetchErr } = await supabase
+      .from('vendor_bills')
+      .select('id, line_items, subtotal, total')
+      .ilike('order_token', billOrderToken)
+      .eq('total', total)
+      .is('cancelled_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (fetchErr || !row) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    const conflictBill = row as ExistingBill;
+    const existingItems = Array.isArray(conflictBill.line_items)
+      ? (conflictBill.line_items as Array<{ id: string; qty: number; price: number }>)
+      : [];
+    const normalize = (items: Array<{ id: string; qty: number; price: number }>) =>
+      [...items].sort((a, b) => a.id.localeCompare(b.id)).map((i) => `${i.id}:${i.qty}:${i.price}`).join('|');
+    if (normalize(existingItems) === normalize(newLineItemsPayload)) {
+      return NextResponse.json({ ok: true, billId: conflictBill.id, reused: true });
+    }
+    const { error: updErr } = await supabase
+      .from('vendor_bills')
+      .update({
+        line_items: newLineItemsPayload,
+        subtotal,
+        convenience_fee,
+        total,
+        customer_name,
+        customer_phone,
+        customer_reg_no,
+        customer_hostel_block,
+        customer_room_number,
+      })
+      .eq('id', conflictBill.id);
+    if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
+    return NextResponse.json({ ok: true, billId: conflictBill.id, updated: true });
+  }
+
+  return NextResponse.json({ error: error.message }, { status: 500 });
 }
