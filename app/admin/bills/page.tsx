@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { printThermalReceiptDirect } from '@/lib/thermal-print';
+import { escPosPlainToThermalReceiptHtml, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
-import { buildVendorReceiptEscPos, printEscPosViaBluetooth } from '@/lib/printing';
+import {
+  buildVendorReceiptEscPos,
+  formatVendorReceiptEscPosPlain,
+  printEscPosViaBluetooth,
+  savedVendorBillToReceiptInput,
+} from '@/lib/printing';
 import { getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import type { VendorBillRow } from '@/lib/api';
 import { calculateServiceFee } from '@/lib/fees';
@@ -296,49 +301,25 @@ export default function BillsPage() {
 
   const printBill = async (b: VendorBillRow) => {
     const title = `Bill #${b.order_token}`;
-    const html = billToHtml(b);
-    const plain = billToPlainText(b);
-
-    // Try proper ESC/POS receipt first (native Android bridge or BLE) — same layout as screenshot
-    try {
-      const paper = getEffectiveEscPosPaperSize();
-      const totalItems = Array.isArray(b.line_items)
-        ? b.line_items.reduce((s: number, l: { qty: number }) => s + Number(l.qty || 0), 0)
-        : 0;
-      const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
-      const serviceFeeLine =
-        Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
-          ? `Service fee: Rs.0 (discounted from Rs.${originalFee.toFixed(2)} for 7 days)`
-          : `Service fee: Rs.${Number(b.convenience_fee ?? 0).toFixed(2)}`;
-      const bytes = buildVendorReceiptEscPos(paper, {
-        vendorName: b.vendor_name ?? 'LaundroSwipe',
-        tokenLabel: b.order_token,
-        orderLabel: b.order_number ?? '—',
-        customerLabel: b.customer_name ?? '—',
-        phoneLabel: b.customer_phone ?? '—',
-        customerDisplayId: b.user_display_id ?? '—',
-        regNo: b.customer_reg_no ?? undefined,
-        hostelBlock: b.customer_hostel_block ?? undefined,
-        roomNumber: b.customer_room_number ?? undefined,
-        dateStr: b.created_at ? new Date(b.created_at).toLocaleString() : new Date().toLocaleString(),
-        lineItems: Array.isArray(b.line_items)
-          ? b.line_items.map((l: { label: string; qty: number; price: number }) => ({ label: l.label, qty: l.qty, price: l.price }))
-          : [],
-        totalItems,
-        subtotal: Number(b.subtotal ?? 0),
-        serviceFeeLine,
-        total: Number(b.total ?? 0),
-        footer: 'Thank you!',
-      });
-      const direct = await printEscPosViaBluetooth(bytes);
-      if (direct === 'printed') return;
-    } catch { /* fall through to system dialog */ }
-
-    // Fallback: system print dialog with thermal receipt layout
+    const paper = getEffectiveEscPosPaperSize();
+    const input = savedVendorBillToReceiptInput(b);
+    const escPosPayload = buildVendorReceiptEscPos(paper, input);
+    const plain = formatVendorReceiptEscPosPlain(paper, input);
     const config = getPrinterConfigForPrint();
-    await printThermalReceiptDirect(title, html, plain, {
+    const chars = config?.charsPerLine ?? 46;
+    const bodyHtml = escPosPlainToThermalReceiptHtml(plain, chars);
+
+    try {
+      const direct = await printEscPosViaBluetooth(escPosPayload);
+      if (direct === 'printed') return;
+    } catch {
+      /* fall through to system dialog */
+    }
+
+    await printThermalReceiptDirect(title, bodyHtml, plain, {
       printer: config ?? undefined,
       forceDialog: config?.forceDialog ?? true,
+      escPosPayload,
     });
   };
 

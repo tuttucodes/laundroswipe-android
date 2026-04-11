@@ -362,7 +362,7 @@ export async function GET(request: Request) {
     total,
   }));
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     ok: true,
     revenue_7d: {
       ...sumBuckets(rev7dBuckets),
@@ -403,4 +403,6 @@ export async function GET(request: Request) {
       by_date: ordersDeliveredByDate(delivered30Res.data ?? []),
     },
   });
+  res.headers.set('Cache-Control', 'private, max-age=10, stale-while-revalidate=120');
+  return res;
 }

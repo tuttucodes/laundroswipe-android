@@ -1,3 +1,5 @@
+import { formatTestEscPosPlain, paperSizeFromCharsPerLine } from '@/lib/printing';
+
 /**
  * Thermal receipt printing for 58mm, 68mm, and 79mm Bluetooth/USB printers.
  * - Optional Android WebView bridge (Classic Bluetooth SPP) via window.LaundroSwipeAndroidPrint
@@ -46,6 +48,7 @@ td{text-align:left;vertical-align:top}
 .total{font-weight:700;font-size:17px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
 .conv{font-size:13px}
 .foot{text-align:center;margin-top:2.5mm;font-size:15px}
+.escpos-plain-receipt{margin:0 auto;padding:0;box-sizing:border-box;font-size:12px;line-height:1.35;white-space:pre;overflow-x:auto;word-break:break-all}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
@@ -150,6 +153,91 @@ async function writeToBleCharacteristic(characteristic: BLECharacteristicLike, d
 export type DirectPrintResult = 'native' | 'serial' | 'ble' | 'dialog' | 'blocked';
 
 /**
+ * HTML body (inside `.receipt`) for printer test — same monospace layout as `buildTestEscPosReceipt`.
+ */
+export function getThermalTestReceiptBodyHtml(charsPerLine: number = DEFAULT_CONFIG.charsPerLine): string {
+  const paper = paperSizeFromCharsPerLine(charsPerLine);
+  const plain = formatTestEscPosPlain(paper);
+  return escPosPlainToThermalReceiptHtml(plain, charsPerLine);
+}
+
+export function getThermalTestReceiptPlainText(charsPerLine: number = DEFAULT_CONFIG.charsPerLine): string {
+  const paper = paperSizeFromCharsPerLine(charsPerLine);
+  return formatTestEscPosPlain(paper);
+}
+
+/** Monospace `<pre>` matching POS column widths (chars per line). */
+export function escPosPlainToThermalReceiptHtml(plainText: string, charsPerLine: number): string {
+  return (
+    '<pre class="escpos-plain-receipt" style="width:' +
+    charsPerLine +
+    'ch;max-width:100%">' +
+    escapeHtml(plainText) +
+    '</pre>'
+  );
+}
+
+/** Match BLE / ESC/POS paper labels to @page width used by thermal preview HTML. */
+export function paperWidthMmFromLabel(size: '58mm' | '76mm' | '80mm'): number {
+  if (size === '58mm') return 58;
+  if (size === '76mm') return 76;
+  return 78;
+}
+
+export type ThermalReceiptWindowOptions = {
+  /** Hide the “ESCPOS Bluetooth Print Service” hint. */
+  omitEscposServiceHint?: boolean;
+};
+
+/**
+ * Opens a narrow window with thermal receipt HTML and triggers the print dialog.
+ */
+export function openThermalReceiptWindow(
+  title: string,
+  bodyHtml: string,
+  paperWidthMm: number = DEFAULT_CONFIG.paperWidthMm,
+  options?: ThermalReceiptWindowOptions,
+): boolean {
+  const omitEscposServiceHint = options?.omitEscposServiceHint === true;
+  const w = window.open('', '_blank', 'width=360,height=640,menubar=no,toolbar=no,scrollbars=yes');
+  if (!w) return false;
+  const styles = getThermalStyles(paperWidthMm);
+  const escposHint = omitEscposServiceHint
+    ? ''
+    : '<p class="escpos-hint"><strong>In the print dialog, select: ESCPOS Bluetooth Print Service</strong> (then choose your printer if asked).</p>';
+  const closeLink =
+    '<p class="no-print" style="margin-top:8px"><a href="#" onclick="window.close();return false" style="color:#666;font-size:10px">Close window after printing</a></p>';
+  const doc = w.document;
+  doc.open();
+  doc.write(
+    '<!DOCTYPE html><html><head>' +
+      '<meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' +
+      escapeHtml(title) +
+      '</title>' +
+      '<style>' +
+      styles +
+      '</style></head><body>' +
+      escposHint +
+      '<div class="receipt">' +
+      bodyHtml +
+      closeLink +
+      '</div></body></html>',
+  );
+  doc.close();
+  w.focus();
+  setTimeout(() => {
+    try {
+      w.print();
+    } catch (_) {
+      // ignore
+    }
+  }, 500);
+  return true;
+}
+
+/**
  * Try to print directly to a Bluetooth thermal printer (Web Serial or Web Bluetooth),
  * then fall back to system print dialog. Returns which method was used.
  * Call from a user gesture (e.g. button click).
@@ -158,12 +246,15 @@ export async function printThermalReceiptDirect(
   title: string,
   bodyHtml: string,
   plainText: string,
-  options?: { forceDialog?: boolean; printer?: PrinterPrintConfig }
+  options?: { forceDialog?: boolean; printer?: PrinterPrintConfig; escPosPayload?: Uint8Array }
 ): Promise<DirectPrintResult> {
   const forceDialog = options?.forceDialog === true;
   const config = options?.printer ?? DEFAULT_CONFIG;
   const effectiveForceDialog = forceDialog || (config && 'forceDialog' in config && config.forceDialog === true);
-  const escPosBytes = buildEscPosBytes(plainText, config.charsPerLine);
+  const escPosBytes =
+    options?.escPosPayload && options.escPosPayload.length > 0
+      ? options.escPosPayload
+      : buildEscPosBytes(plainText, config.charsPerLine);
 
   if (!effectiveForceDialog) {
     const native = await tryNativeEscPosPrint(escPosBytes);
@@ -220,38 +311,9 @@ export async function printThermalReceiptDirect(
 /**
  * Opens a new window with the receipt HTML and triggers the system print dialog.
  * Use when direct print is not available (e.g. Android with Classic-only printer).
- * paperWidthMm defaults to 58 if not provided.
  */
 export function printThermalReceipt(title: string, bodyHtml: string, paperWidthMm: number = DEFAULT_CONFIG.paperWidthMm): boolean {
-  const w = window.open('', '_blank', 'width=320,height=480,menubar=no,toolbar=no');
-  if (!w) return false;
-  const styles = getThermalStyles(paperWidthMm);
-  const escposHint = '<p class="escpos-hint"><strong>In the print dialog, select: ESCPOS Bluetooth Print Service</strong> (then choose your printer if asked).</p>';
-  const closeLink = '<p class="no-print" style="margin-top:8px"><a href="#" onclick="window.close();return false" style="color:#666;font-size:10px">Close window after printing</a></p>';
-  const doc = w.document;
-  doc.open();
-  doc.write(
-    '<!DOCTYPE html><html><head>' +
-      '<meta charset="UTF-8">' +
-      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<title>' + escapeHtml(title) + '</title>' +
-      '<style>' + styles + '</style></head><body>' +
-      escposHint +
-      '<div class="receipt">' +
-      bodyHtml +
-      closeLink +
-      '</div></body></html>'
-  );
-  doc.close();
-  w.focus();
-  setTimeout(() => {
-    try {
-      w.print();
-    } catch (_) {
-      // ignore
-    }
-  }, 500);
-  return true;
+  return openThermalReceiptWindow(title, bodyHtml, paperWidthMm);
 }
 
 /**

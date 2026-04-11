@@ -32,6 +32,29 @@ function adminAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+const VENDOR_DASH_CACHE_KEY = 'laundroswipe_vendor_dashboard_v1';
+
+function readVendorDashboardCache(): VendorDashboardMetrics | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(VENDOR_DASH_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { v: 1; metrics: VendorDashboardMetrics };
+    if (parsed?.v !== 1 || !parsed.metrics || typeof parsed.metrics !== 'object') return null;
+    return parsed.metrics;
+  } catch {
+    return null;
+  }
+}
+
+function writeVendorDashboardCache(metrics: VendorDashboardMetrics) {
+  try {
+    sessionStorage.setItem(VENDOR_DASH_CACHE_KEY, JSON.stringify({ v: 1, metrics }));
+  } catch {
+    /* */
+  }
+}
+
 const STATUS_ORDER = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery'] as const;
 const STATUS_LABELS_MAP: Record<string, string> = {
   scheduled: 'Scheduled',
@@ -146,21 +169,32 @@ export function VendorDashboard({ onUnauthorized }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const cached = readVendorDashboardCache();
+    if (cached) {
+      setMetrics(cached);
+      setLoading(false);
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setLoadError(null);
     loadDashboard()
       .then((res) => {
         if (cancelled) return;
         if (res.ok) {
           setMetrics(res.metrics);
+          writeVendorDashboardCache(res.metrics);
           setLoadError(null);
         } else if (!('unauthorized' in res && res.unauthorized)) {
           setLoadError(res.error ?? 'Could not load');
-          setMetrics(null);
+          if (!cached) setMetrics(null);
         }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -177,6 +211,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     const res = await loadDashboard(opts);
     if (res.ok) {
       setMetrics(res.metrics);
+      if (!opts?.block_from && !opts?.block_to) writeVendorDashboardCache(res.metrics);
     } else if (!('unauthorized' in res && res.unauthorized)) {
       setLoadError(res.error ?? 'Refresh failed');
     }

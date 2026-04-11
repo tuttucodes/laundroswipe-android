@@ -1,5 +1,14 @@
+import { calculateServiceFee } from '@/lib/fees';
+import type { VendorBillRow } from '@/lib/api';
 import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
-import { ESCPOSBuilder, type PaperSize } from '../escpos/ESCPOSBuilder';
+import {
+  ESCPOSBuilder,
+  type PaperSize,
+  escposPlainDivider,
+  escposPlainLineCenter,
+  escposPlainTableRow,
+} from '../escpos/ESCPOSBuilder';
+import { sanitizeReceiptText } from '../escpos/CharacterEncodings';
 
 export type VendorReceiptLine = { label: string; qty: number; price: number };
 
@@ -84,4 +93,80 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   b.feed(4).cut(false);
 
   return b.build();
+}
+
+/**
+ * Plain-text lines matching `buildVendorReceiptEscPos` (same widths as `tableRow` / `divider`).
+ * Use for the browser print dialog and as the text fallback when wrapping to ESC/POS bytes.
+ */
+export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorReceiptInput): string {
+  const lines: string[] = [];
+  lines.push(sanitizeReceiptText('LaundroSwipe'));
+  lines.push(sanitizeReceiptText(input.vendorName));
+  lines.push(escposPlainDivider(paper));
+  lines.push(sanitizeReceiptText(`Token: #${input.tokenLabel}  Order: ${input.orderLabel}`));
+  lines.push(sanitizeReceiptText(`Customer ID: ${input.customerDisplayId}`));
+  lines.push(sanitizeReceiptText(`Customer: ${input.customerLabel}`));
+  lines.push(sanitizeReceiptText(`Phone: ${input.phoneLabel}`));
+  if (input.regNo?.trim()) lines.push(sanitizeReceiptText(`Reg no: ${input.regNo.trim()}`));
+  if (input.hostelBlock?.trim() || input.roomNumber?.trim()) {
+    const parts = [
+      input.hostelBlock?.trim() ? `Block ${input.hostelBlock.trim()}` : '',
+      input.roomNumber?.trim() ? `Room ${input.roomNumber.trim()}` : '',
+    ].filter(Boolean);
+    if (parts.length) lines.push(sanitizeReceiptText(`Hostel: ${parts.join(' · ')}`));
+  }
+  lines.push(sanitizeReceiptText(`Date: ${input.dateStr}`));
+  lines.push(escposPlainDivider(paper));
+  lines.push(escposPlainTableRow(paper, 'Qty', 'Description', 'Amount'));
+  for (const l of input.lineItems) {
+    const amt = money(l.price * l.qty);
+    const desc = `${l.label} @${money(l.price)}`;
+    lines.push(escposPlainTableRow(paper, String(l.qty), desc, amt));
+  }
+  lines.push(escposPlainDivider(paper));
+  lines.push(sanitizeReceiptText(`Total items: ${input.totalItems}`));
+  lines.push(sanitizeReceiptText(`Subtotal: ${money(input.subtotal)}`));
+  lines.push(sanitizeReceiptText(input.serviceFeeLine));
+  lines.push(sanitizeReceiptText(`TOTAL: ${money(input.total)}`));
+  if (input.showQr && input.paymentQrPayload?.trim()) {
+    lines.push('');
+    const q = input.paymentQrPayload.trim();
+    lines.push(sanitizeReceiptText(q.length > 90 ? `[QR on paper] ${q.slice(0, 87)}…` : `[QR on paper] ${q}`));
+  }
+  lines.push('');
+  lines.push(escposPlainLineCenter(paper, sanitizeReceiptText(input.footer ?? 'Thank you!')));
+  return lines.join('\n');
+}
+
+/** Same `VendorReceiptInput` shape as `buildVendorReceiptEscPos` uses for saved bills (no payment QR). */
+export function savedVendorBillToReceiptInput(b: VendorBillRow): VendorReceiptInput {
+  const totalItems = Array.isArray(b.line_items)
+    ? b.line_items.reduce((s, l) => s + Number(l.qty || 0), 0)
+    : 0;
+  const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
+  const serviceFeeLine =
+    Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
+      ? `Service fee: Rs.0 (discounted from Rs.${originalFee.toFixed(2)} for 7 days)`
+      : `Service fee: Rs.${Number(b.convenience_fee ?? 0).toFixed(2)}`;
+  return {
+    vendorName: b.vendor_name ?? 'LaundroSwipe',
+    tokenLabel: b.order_token,
+    orderLabel: b.order_number ?? '—',
+    customerLabel: b.customer_name ?? '—',
+    phoneLabel: b.customer_phone ?? '—',
+    customerDisplayId: b.user_display_id ?? '—',
+    regNo: b.customer_reg_no ?? undefined,
+    hostelBlock: b.customer_hostel_block ?? undefined,
+    roomNumber: b.customer_room_number ?? undefined,
+    dateStr: b.created_at ? new Date(b.created_at).toLocaleString() : new Date().toLocaleString(),
+    lineItems: Array.isArray(b.line_items)
+      ? b.line_items.map((l) => ({ label: l.label, qty: l.qty, price: l.price }))
+      : [],
+    totalItems,
+    subtotal: Number(b.subtotal ?? 0),
+    serviceFeeLine,
+    total: Number(b.total ?? 0),
+    footer: 'Thank you!',
+  };
 }

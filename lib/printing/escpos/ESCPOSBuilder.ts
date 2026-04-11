@@ -21,11 +21,48 @@ import { encodeAsciiLines, sanitizeReceiptText } from './CharacterEncodings';
 
 export type PaperSize = '58mm' | '76mm' | '80mm';
 
-const PAPER_FONT_A_CHARS: Record<PaperSize, number> = {
+/** Font A characters per line (must stay in sync with `tableRow` / receipt layout). */
+export const PAPER_FONT_A_CHARS: Record<PaperSize, number> = {
   '58mm': 32,
   '76mm': 42,
   '80mm': 48,
 };
+
+/** Plain-text line matching ESC/POS `divider()` for preview windows (BLE / native path). */
+export function escposPlainDivider(paper: PaperSize, char = '-'): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const c = char.slice(0, 1) || '-';
+  return c.repeat(w);
+}
+
+/** Plain-text line matching ESC/POS `tableRow()` for preview windows. */
+export function escposPlainTableRow(paper: PaperSize, left: string, mid: string, right: string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const lw = Math.min(5, Math.max(3, Math.floor(w * 0.14)));
+  const rw = Math.min(10, Math.max(6, Math.floor(w * 0.3)));
+  const mw = Math.max(4, w - lw - rw);
+  const L = sanitizeReceiptText(left).slice(0, lw).padEnd(lw);
+  const R = sanitizeReceiptText(right).slice(0, rw).padStart(rw);
+  const M = sanitizeReceiptText(mid).slice(0, mw).padEnd(mw);
+  return L + M + R;
+}
+
+/** Right-aligned line within paper width (matches typical `align('right').text(...)`). */
+export function escposPlainLineRight(paper: PaperSize, text: string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const t = sanitizeReceiptText(text);
+  if (t.length >= w) return t.slice(0, w);
+  return t.padStart(w);
+}
+
+/** Centered line within paper width. */
+export function escposPlainLineCenter(paper: PaperSize, text: string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const t = sanitizeReceiptText(text);
+  if (t.length >= w) return t.slice(0, w);
+  const pad = Math.max(0, Math.floor((w - t.length) / 2));
+  return ' '.repeat(pad) + t;
+}
 
 const PAPER_MAX_DOTS: Record<PaperSize, number> = {
   '58mm': 384,
@@ -148,23 +185,14 @@ export class ESCPOSBuilder {
   }
 
   divider(char = '-'): this {
-    const c = char.slice(0, 1) || '-';
-    const line = c.repeat(this.charsPerLine);
-    return this.text(line);
+    return this.text(escposPlainDivider(this.paper, char));
   }
 
   /**
    * Three columns: left (e.g. qty), mid (description), right (amount). Widths sum to chars/line.
    */
   tableRow(left: string, mid: string, right: string): this {
-    const w = this.charsPerLine;
-    const lw = Math.min(5, Math.max(3, Math.floor(w * 0.14)));
-    const rw = Math.min(10, Math.max(6, Math.floor(w * 0.3)));
-    const mw = Math.max(4, w - lw - rw);
-    const L = sanitizeReceiptText(left).slice(0, lw).padEnd(lw);
-    const R = sanitizeReceiptText(right).slice(0, rw).padStart(rw);
-    const M = sanitizeReceiptText(mid).slice(0, mw).padEnd(mw);
-    return this.text(L + M + R);
+    return this.text(escposPlainTableRow(this.paper, left, mid, right));
   }
 
   /** Code128: GS k m n d1..dn (m = 0x49) */

@@ -39,7 +39,9 @@ export async function GET(request: Request) {
 
   const overrides = parseBillItemOverrides(data?.bill_item_overrides);
   const items = mergeVendorBillItemsFromDbRow(slug, data?.bill_item_overrides);
-  return NextResponse.json({ ok: true, slug, items, overrides });
+  const res = NextResponse.json({ ok: true, slug, items, overrides });
+  res.headers.set('Cache-Control', 'private, max-age=60, stale-while-revalidate=300');
+  return res;
 }
 
 export async function PUT(request: Request) {

@@ -13,29 +13,9 @@ import {
 } from '@/lib/printer-settings';
 import { BluetoothPrinterPanel } from '@/components/vendor/BluetoothPrinterPanel';
 import { PrintBridgeApkCta } from '@/components/vendor/PrintBridgeApkCta';
-import { printThermalReceiptDirect } from '@/lib/thermal-print';
+import { buildTestEscPosReceipt, paperSizeFromCharsPerLine } from '@/lib/printing';
+import { getThermalTestReceiptBodyHtml, getThermalTestReceiptPlainText, printThermalReceiptDirect } from '@/lib/thermal-print';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
-
-function getTestReceiptHtml(): string {
-  const date = new Date().toLocaleString();
-  return `
-<h2>LaundroSwipe</h2>
-<p class="meta">Printer test</p>
-<p><strong>Date:</strong> ${date}</p>
-<p>If you see this on paper, your printer is set up correctly.</p>
-<p class="foot">Thank you!</p>
-`;
-}
-
-function getTestReceiptPlain(): string {
-  return [
-    'LaundroSwipe',
-    'Printer test',
-    `Date: ${new Date().toLocaleString()}`,
-    'If you see this on paper, your printer is set up correctly.',
-    'Thank you!',
-  ].join('\n');
-}
 
 export default function AdminPrintersPage() {
   const [settings, setSettings] = useState(getPrinterSettings());
@@ -81,13 +61,16 @@ export default function AdminPrintersPage() {
 
   const handleTestPrint = async () => {
     const config = getPrinterConfigForPrint();
+    const chars = config?.charsPerLine ?? 46;
+    const escPosPaper = paperSizeFromCharsPerLine(chars);
+    const escPosPayload = buildTestEscPosReceipt(escPosPaper);
     setTesting(true);
     try {
       const result = await printThermalReceiptDirect(
         'Printer test',
-        getTestReceiptHtml(),
-        getTestReceiptPlain(),
-        { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true }
+        getThermalTestReceiptBodyHtml(chars),
+        getThermalTestReceiptPlainText(chars),
+        { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true, escPosPayload }
       );
       if (result === 'blocked') {
         showToast('Allow pop-ups to open print window', 'er');
@@ -108,11 +91,14 @@ export default function AdminPrintersPage() {
     setPairing(true);
     try {
       const config = getPrinterConfigForPrint();
+      const chars = config?.charsPerLine ?? 46;
+      const escPosPaper = paperSizeFromCharsPerLine(chars);
+      const escPosPayload = buildTestEscPosReceipt(escPosPaper);
       const result = await printThermalReceiptDirect(
         'Pair printer',
-        getTestReceiptHtml(),
-        getTestReceiptPlain(),
-        { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true }
+        getThermalTestReceiptBodyHtml(chars),
+        getThermalTestReceiptPlainText(chars),
+        { printer: config ?? undefined, forceDialog: config?.forceDialog ?? true, escPosPayload }
       );
       if (result === 'native') showToast('LaundroSwipe Android shell sent data to the printer.', 'ok');
       else if (result === 'serial') showToast('Serial/Bluetooth printer selected. Future prints will use it.', 'ok');
@@ -239,7 +225,7 @@ export default function AdminPrintersPage() {
           />
           <span style={{ fontSize: 14 }}>Always use print dialog (select ESCPOS Bluetooth Print Service)</span>
         </label>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <button type="button" onClick={handlePairPrinter} disabled={pairing} className="btn bp">
             {pairing ? 'Opening…' : 'Pair printer'}
           </button>
@@ -247,6 +233,9 @@ export default function AdminPrintersPage() {
             {testing ? 'Printing…' : 'Test print'}
           </button>
         </div>
+        <p style={{ fontSize: 12, color: 'var(--tm)', marginTop: 10, marginBottom: 0 }}>
+          Test print uses the same ESC/POS layout as Vendor Bill (monospace columns in the print dialog; native / serial / BLE get raw bytes).
+        </p>
       </section>
 
       {toast && (

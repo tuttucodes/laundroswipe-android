@@ -1,13 +1,30 @@
 import { tryNativeEscPosPrint } from '@/lib/native-print-bridge';
 import { BluetoothPrinterService, isWebBluetoothAvailable } from './bluetooth/BluetoothPrinterService';
 import { PrintQueue } from './queue/PrintQueue';
-import { ESCPOSBuilder, type PaperSize } from './escpos/ESCPOSBuilder';
+import {
+  ESCPOSBuilder,
+  type PaperSize,
+  escposPlainDivider,
+  escposPlainTableRow,
+  escposPlainLineRight,
+  escposPlainLineCenter,
+} from './escpos/ESCPOSBuilder';
 import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
 
 export type { PaperSize } from './escpos/ESCPOSBuilder';
-export { ESCPOSBuilder, paperSizeFromCharsPerLine } from './escpos/ESCPOSBuilder';
+export {
+  ESCPOSBuilder,
+  paperSizeFromCharsPerLine,
+  escposPlainDivider,
+  escposPlainTableRow,
+  escposPlainLineRight,
+  escposPlainLineCenter,
+  PAPER_FONT_A_CHARS,
+} from './escpos/ESCPOSBuilder';
 export {
   buildVendorReceiptEscPos,
+  formatVendorReceiptEscPosPlain,
+  savedVendorBillToReceiptInput,
   type VendorReceiptInput,
   type VendorReceiptLine,
 } from './receipt/vendorReceipt';
@@ -71,4 +88,21 @@ export function buildTestEscPosReceipt(paper: PaperSize): Uint8Array {
   b.feed(2).align('center').text('OK — ' + paper);
   b.feed(4).cut(false);
   return b.build();
+}
+
+/** Plain-text mirror of `buildTestEscPosReceipt` (browser print + byte fallback). */
+export function formatTestEscPosPlain(paper: PaperSize): string {
+  const lines: string[] = [];
+  lines.push('LaundroSwipe');
+  lines.push('Bluetooth test print');
+  lines.push(new Date().toLocaleString());
+  lines.push(escposPlainDivider(paper));
+  lines.push(escposPlainTableRow(paper, 'Qty', 'Item', 'Amt'));
+  lines.push(escposPlainTableRow(paper, '2', 'Wash & fold', 'Rs.120.00'));
+  lines.push(escposPlainTableRow(paper, '1', 'Iron', 'Rs.45.00'));
+  lines.push(escposPlainDivider(paper));
+  lines.push(escposPlainLineRight(paper, 'TOTAL: Rs.165.00'));
+  lines.push('');
+  lines.push(escposPlainLineCenter(paper, 'OK — ' + paper));
+  return lines.join('\n');
 }

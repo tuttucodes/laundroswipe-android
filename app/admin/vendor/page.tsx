@@ -2,14 +2,23 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { BluetoothPrinterPanel } from '@/components/vendor/BluetoothPrinterPanel';
-import { PrintBridgeApkCta } from '@/components/vendor/PrintBridgeApkCta';
-import { printThermalReceiptDirect } from '@/lib/thermal-print';
+import dynamic from 'next/dynamic';
+import { escPosPlainToThermalReceiptHtml, printThermalReceiptDirect } from '@/lib/thermal-print';
 import {
   buildVendorReceiptEscPos,
+  formatVendorReceiptEscPosPlain,
   printEscPosViaBluetooth,
   type VendorReceiptInput,
 } from '@/lib/printing';
+
+const BluetoothPrinterPanel = dynamic(
+  () => import('@/components/vendor/BluetoothPrinterPanel').then((m) => ({ default: m.BluetoothPrinterPanel })),
+  { ssr: false },
+);
+const PrintBridgeApkCta = dynamic(
+  () => import('@/components/vendor/PrintBridgeApkCta').then((m) => ({ default: m.PrintBridgeApkCta })),
+  { ssr: false },
+);
 import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
@@ -19,6 +28,9 @@ import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
 type LatestBill = { id: string; created_at: string; can_cancel: boolean; line_items: LineItem[] };
 type QuickItem = { id: string; label: string; price: number; image_url?: string | null };
+
+const VENDOR_CATALOG_CACHE_PREFIX = 'laundroswipe_vendor_catalog_v1_';
+const CATALOG_TTL_MS = 10 * 60 * 1000;
 
 export default function VendorPage() {
   const [vendorName, setVendorName] = useState('Vendor');
@@ -54,10 +66,8 @@ export default function VendorPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [catalogFromApi, setCatalogFromApi] = useState<QuickItem[] | null>(null);
-  const [blePrefs, setBlePrefs] = useState(() => getBlePrinterPreferences());
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
   const billPersistInFlightRef = useRef(false);
-  const refreshBlePrefs = () => setBlePrefs(getBlePrinterPreferences());
   const vendorBillItems = getVendorBillItems(vendorId);
   const catalogBase: QuickItem[] =
     catalogFromApi ??
@@ -116,6 +126,25 @@ export default function VendorPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !vendorId) return;
+    const cacheKey = VENDOR_CATALOG_CACHE_PREFIX + vendorId;
+    try {
+      const raw = sessionStorage.getItem(cacheKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { at: number; items: QuickItem[] };
+        if (Array.isArray(parsed.items) && Date.now() - (parsed.at ?? 0) < CATALOG_TTL_MS) {
+          setCatalogFromApi(
+            parsed.items.map((i) => ({
+              id: String(i.id),
+              label: String(i.label),
+              price: Number(i.price),
+              image_url: typeof i.image_url === 'string' ? i.image_url : null,
+            })),
+          );
+        }
+      }
+    } catch {
+      /* */
+    }
     const t = sessionStorage.getItem('admin_token');
     const headers: Record<string, string> = {};
     if (t) headers.Authorization = `Bearer ${t}`;
@@ -130,14 +159,18 @@ export default function VendorPage() {
           setCatalogFromApi(null);
           return;
         }
-        setCatalogFromApi(
-          items.map((i) => ({
-            id: i.id,
-            label: i.label,
-            price: Number(i.price),
-            image_url: i.image_url ?? null,
-          })),
-        );
+        const mapped = items.map((i) => ({
+          id: i.id,
+          label: i.label,
+          price: Number(i.price),
+          image_url: i.image_url ?? null,
+        }));
+        setCatalogFromApi(mapped);
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), items: mapped }));
+        } catch {
+          /* */
+        }
       })
       .catch(() => setCatalogFromApi(null));
   }, [vendorId]);
@@ -439,50 +472,6 @@ export default function VendorPage() {
     return `${orderToken}|${itemsKey}|${subtotal}|${total}`;
   };
 
-  const buildReceiptHtml = () => {
-    const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
-    const rows = lineItems.length
-      ? lineItems.map((l) => `<tr><td class="qty-col">${l.qty}</td><td class="desc-col">${l.label}<br/><span class="meta">@₹${l.price.toFixed(2)}</span></td><td class="amt-col">₹${(l.price * l.qty).toFixed(2)}</td></tr>`).join('')
-      : '<tr><td class="qty-col">0</td><td class="desc-col">No items</td><td class="amt-col">₹0.00</td></tr>';
-    const o = order as OrderRow | null;
-    const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
-    const tokenLabel = sampleMode ? 'SAMPLE' : o?.token ?? '';
-    const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
-    const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 20);
-    const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
-    const regLabel = sampleMode ? '' : String(u.reg_no ?? '').trim();
-    const blockLabel = sampleMode ? '' : String(u.hostel_block ?? '').trim();
-    const roomLabel = sampleMode ? '' : String(u.room_number ?? '').trim();
-    const dateStr = new Date().toLocaleString();
-    const serviceFeeHtml = feeBreakdown.active && feeBreakdown.originalFee > 0
-      ? `<span>Service fee (7-day discount)</span><span><s>₹${feeBreakdown.originalFee.toFixed(2)}</s> ₹0.00</span>`
-      : `<span>Service fee</span><span>₹${serviceFee.toFixed(2)}</span>`;
-    return `
-<h2>LaundroSwipe</h2>
-<p class="meta center">${vendorName}</p>
-<p class="center">Token: #${tokenLabel}</p>
-<p class="center">Order: ${orderLabel}</p>
-<p class="center">Customer: ${customerLabel}</p>
-<p class="center">Phone: ${phoneLabel}</p>
-${regLabel ? `<p class="center">Reg no: ${regLabel}</p>` : ''}
-${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block ${blockLabel}`, roomLabel && `Room ${roomLabel}`].filter(Boolean).join(' · ')}</p>` : ''}
-<p class="center">Date: ${dateStr}</p>
-<div class="row-divider"></div>
-<table>
-<thead><tr><th class="qty-col">Qty</th><th class="desc-col">Description</th><th class="amt-col">Amount</th></tr></thead>
-<tbody>${rows}</tbody>
-</table>
-<div class="row-divider"></div>
-<div class="totals">
-  <p><span>Total items</span><span>${totalItems}</span></p>
-  <p><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></p>
-  <p class="conv">${serviceFeeHtml}</p>
-  <p class="total"><span>Total</span><span>₹${total.toFixed(2)}</span></p>
-</div>
-<p class="foot">Thank you!</p>
-`;
-  };
-
   const buildReceiptPlainText = () => {
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow>;
@@ -632,15 +621,17 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
 
   const doPrint = async () => {
     const title = sampleMode ? 'Sample Bill' : `Bill #${order?.token ?? ''}`;
-    const html = buildReceiptHtml();
-    const plain = buildReceiptPlainText();
+    const paper = getEffectiveEscPosPaperSize();
+    const input = buildVendorReceiptInput();
+    const escPosPayload = buildVendorReceiptEscPos(paper, input);
+    const plain = formatVendorReceiptEscPosPlain(paper, input);
+    const config = getPrinterConfigForPrint();
+    const chars = config?.charsPerLine ?? 46;
+    const bodyHtml = escPosPlainToThermalReceiptHtml(plain, chars);
     const prefs = getBlePrinterPreferences();
 
     try {
-      const paper = getEffectiveEscPosPaperSize();
-      const input = buildVendorReceiptInput();
-      const bytes = buildVendorReceiptEscPos(paper, input);
-      const direct = await printEscPosViaBluetooth(bytes);
+      const direct = await printEscPosViaBluetooth(escPosPayload);
       if (direct === 'printed') {
         showToast('Sent to printer', 'ok');
         return;
@@ -658,10 +649,10 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
       showToast('Direct print error — opening print dialog…', 'er');
     }
 
-    const config = getPrinterConfigForPrint();
-    const result = await printThermalReceiptDirect(title, html, plain, {
+    const result = await printThermalReceiptDirect(title, bodyHtml, plain, {
       printer: config ?? undefined,
       forceDialog: config?.forceDialog ?? true,
+      escPosPayload,
     });
     if (result === 'blocked') {
       showToast('Allow pop-ups to print, or try again', 'er');
@@ -1049,24 +1040,7 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
 
             <PrintBridgeApkCta />
-            <BluetoothPrinterPanel onPrefsChange={refreshBlePrefs} />
-
-            {blePrefs.showReceiptPreview && lineItems.length > 0 && (
-              <div
-                style={{
-                  marginTop: 16,
-                  padding: 14,
-                  borderRadius: 10,
-                  border: '1px solid var(--bd)',
-                  background: 'var(--bg)',
-                  maxHeight: 280,
-                  overflow: 'auto',
-                }}
-              >
-                <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: 'var(--ts)' }}>Receipt preview (text)</p>
-                <pre style={{ margin: 0, fontSize: 12, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{buildReceiptPlainText()}</pre>
-              </div>
-            )}
+            <BluetoothPrinterPanel />
 
             <div className="vendor-action-row" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <button

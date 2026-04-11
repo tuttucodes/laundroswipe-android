@@ -16,7 +16,6 @@ export interface BlePrinterPreferences {
   printDensity: BlePrintDensity;
   /** Reconnect to last BLE printer on load (getDevices + connect). */
   autoConnect: boolean;
-  showReceiptPreview: boolean;
   printTimeoutMs: number;
   /** Optional UPI / payment string for QR on receipt */
   paymentQrPayload: string;
@@ -30,7 +29,6 @@ const defaults: BlePrinterPreferences = {
   paperSize: '80mm',
   printDensity: 'medium',
   autoConnect: true,
-  showReceiptPreview: false,
   printTimeoutMs: 15000,
   paymentQrPayload: '',
   showPaymentQr: false,
@@ -41,17 +39,18 @@ function load(): BlePrinterPreferences {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return defaults;
-    const p = JSON.parse(raw) as Partial<BlePrinterPreferences>;
+    const p = JSON.parse(raw) as Partial<BlePrinterPreferences> & Record<string, unknown>;
     return {
-      ...defaults,
-      ...p,
+      preferBluetoothEscPos: typeof p.preferBluetoothEscPos === 'boolean' ? p.preferBluetoothEscPos : defaults.preferBluetoothEscPos,
       paperSize: p.paperSize === '58mm' || p.paperSize === '76mm' || p.paperSize === '80mm' ? p.paperSize : defaults.paperSize,
       printDensity:
         p.printDensity === 'light' || p.printDensity === 'medium' || p.printDensity === 'dark'
           ? p.printDensity
           : defaults.printDensity,
+      autoConnect: typeof p.autoConnect === 'boolean' ? p.autoConnect : defaults.autoConnect,
       printTimeoutMs: typeof p.printTimeoutMs === 'number' && p.printTimeoutMs >= 5000 ? p.printTimeoutMs : defaults.printTimeoutMs,
       paymentQrPayload: typeof p.paymentQrPayload === 'string' ? p.paymentQrPayload : '',
+      showPaymentQr: typeof p.showPaymentQr === 'boolean' ? p.showPaymentQr : defaults.showPaymentQr,
     };
   } catch {
     return defaults;

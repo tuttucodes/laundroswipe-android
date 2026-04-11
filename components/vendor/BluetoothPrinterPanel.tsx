@@ -199,15 +199,6 @@ export function BluetoothPrinterPanel({
           <span>Auto-reconnect last printer on this page</span>
         </label>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
-          <input
-            type="checkbox"
-            checked={prefs.showReceiptPreview}
-            onChange={(e) => patchPrefs({ showReceiptPreview: e.target.checked })}
-          />
-          <span>Show receipt preview (text) before printing</span>
-        </label>
-
         <div>
           <label className="fl" style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600 }}>
             Paper width (ESC/POS)
