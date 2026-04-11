@@ -63,5 +63,8 @@ export async function GET(request: Request) {
       return a.block.localeCompare(b.block);
     });
 
-  return NextResponse.json({ bills_by_block: data });
+  return NextResponse.json({
+    bills_by_block: data,
+    bills: data.map((row) => ({ block: row.block, count: row.count, amount: row.amount })),
+  });
 }

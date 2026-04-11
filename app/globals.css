@@ -473,6 +473,63 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
   .vendor-item-btn{min-height:58px}
 }
 
+/* Vendor admin dashboard (single delivery-based view) */
+.vd-root{max-width:960px;margin:0 auto}
+.vd-header{margin-bottom:20px}
+.vd-title{font-family:var(--fd);font-size:clamp(22px,4vw,28px);margin:0 0 6px;color:var(--tx)}
+.vd-sub{font-size:14px;color:var(--ts);margin:0;line-height:1.5}
+.vd-nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;padding:4px;background:var(--bg);border-radius:12px;border:1px solid var(--bd)}
+.vd-nav-btn{padding:12px 16px;border-radius:10px;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--tm);cursor:pointer;min-height:44px;transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent}
+.vd-nav-btn:hover{background:var(--bg-card);color:var(--tx)}
+.vd-nav-btn-active{background:var(--b);color:#fff!important}
+.vd-nav-btn-active:hover{background:var(--b);color:#fff!important}
+.vd-grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px;margin-bottom:24px}
+.vd-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border-radius:14px;padding:18px 20px;border:2px solid transparent;cursor:pointer;transition:transform .12s,box-shadow .15s;-webkit-tap-highlight-color:transparent}
+.vd-card:active{transform:scale(.99)}
+.vd-card-green{background:#F0FDF4;border-color:#bbf7d0}
+.vd-card-blue{background:#EFF6FF;border-color:#bfdbfe}
+.vd-card-amber{background:#FFFBEB;border-color:#fde68a}
+.vd-card-violet{background:#F5F3FF;border-color:#ddd6fe}
+.vd-card-icon{font-size:22px;margin-bottom:6px}
+.vd-card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ts);margin-bottom:4px}
+.vd-card-value{font-size:26px;font-weight:800;line-height:1.1;margin-bottom:4px;color:var(--tx)}
+.vd-card-meta{font-size:13px;color:var(--tm)}
+.vd-card-hint{font-size:11px;margin-top:10px;font-weight:600;color:var(--b)}
+.vd-panel{margin-bottom:20px}
+.vd-panel-title{font-family:var(--fd);font-size:18px;margin:0 0 8px}
+.vd-panel-desc{font-size:13px;color:var(--ts);margin:0 0 16px;line-height:1.5}
+.vd-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+.vd-table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
+.vd-table th,.vd-table td{padding:10px 12px;border-bottom:1px solid var(--bd);text-align:left}
+.vd-table th{font-weight:600;color:var(--tm);font-size:12px;text-transform:uppercase}
+.vd-num{text-align:right!important}
+.vd-strong{font-weight:700;color:var(--ok)}
+.vd-total-row td{border-top:2px solid var(--bd);font-weight:700}
+.vd-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.vd-details{margin-top:16px;border:1px solid var(--bd);border-radius:10px;padding:12px;background:var(--bg)}
+.vd-details summary{cursor:pointer;font-weight:600;font-size:14px}
+.vd-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.vd-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg-card);cursor:pointer;font-size:13px;min-height:44px}
+.vd-chip-n{font-weight:800;color:var(--b)}
+.vd-stack{display:flex;flex-direction:column;gap:16px}
+.vd-filter-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px}
+.vd-field{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--tm)}
+.vd-muted{color:var(--ts);font-size:13px}
+.vd-muted.small{font-size:12px}
+.vd-quicklinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:8px}
+.vd-link{text-decoration:none;text-align:center}
+.vd-skeleton{background:linear-gradient(90deg,var(--bd) 25%,var(--bg) 50%,var(--bd) 75%);background-size:200% 100%;animation:vdShine 1.2s ease-in-out infinite;border-radius:10px}
+@keyframes vdShine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.vd-skeleton-title{height:32px;max-width:240px;margin-bottom:20px}
+.vd-skeleton-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.vd-skeleton-card{height:120px}
+@media(max-width:640px){
+  .vd-nav{gap:6px}
+  .vd-nav-btn{flex:1 1 calc(50% - 4px);justify-content:center;font-size:13px;padding:10px 8px}
+  .vd-table{font-size:12px;min-width:480px}
+  .vd-table th,.vd-table td{padding:8px 10px}
+}
+
 /* Gate pass: official letter with letterhead (on-screen preview; print uses dedicated window) */
 .gatepass-letter{background:#fff;border-radius:14px;padding:0;max-width:600px;box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid var(--bd);overflow:hidden}
 .gatepass-letterhead{text-align:center;padding:32px 28px 24px;background:linear-gradient(180deg,#f8fafc 0%,#fff 100%);border-bottom:2px solid var(--b)}

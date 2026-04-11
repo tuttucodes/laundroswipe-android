@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { COLLEGES } from '@/lib/constants';
 import { formatServiceFeeTiers } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
+import { VendorDashboard } from '@/components/admin/VendorDashboard';
 
 const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered'];
 const STATUS_LABELS = ['Scheduled', 'Agent Assigned', 'Picked Up', 'Processing', 'Ready', 'Out for Delivery', 'Delivered'];
@@ -343,6 +344,11 @@ export default function AdminPage() {
         savedRole !== 'super_admin'
       ) {
         /* vendors: schedule allowed; other super-only tabs blocked */
+      } else if (
+        (t === 'bills_overview' || t === 'bills_by_date' || t === 'bills_by_block') &&
+        savedRole !== 'super_admin'
+      ) {
+        setTab('dashboard');
       } else {
         setTab(t);
       }
@@ -540,9 +546,9 @@ export default function AdminPage() {
       .finally(() => setWeeklyRevenueLoading(false));
   }, [loggedIn]);
 
-  // Dashboard metrics fetch
+  // Dashboard metrics fetch (super admin legacy dashboard only; vendors use VendorDashboard)
   useEffect(() => {
-    if (!loggedIn) return;
+    if (!loggedIn || !isSuperAdmin) return;
     setDashboardLoading(true);
     fetch('/api/admin/dashboard', { credentials: 'include', headers: adminAuthHeaders() })
       .then(async (r) => {
@@ -552,7 +558,7 @@ export default function AdminPage() {
       })
       .catch(() => {})
       .finally(() => setDashboardLoading(false));
-  }, [loggedIn]);
+  }, [loggedIn, isSuperAdmin]);
 
   const fetchRevDetail = (days: 7 | 30, from?: string, to?: string) => {
     setRevDetailLoading(true);
@@ -997,12 +1003,16 @@ export default function AdminPage() {
               </button>
             )}
             <button type="button" onClick={() => { setTab('vendor'); closeMenu(); }} className={`admin-nav-btn ${tab === 'vendor' ? 'active' : ''}`}>🧺 Vendor</button>
-            <div className="admin-drawer-section">
-              <span className="admin-drawer-section-label">Bills</span>
-              <button type="button" onClick={() => { setTab('bills_overview'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_overview' ? 'active' : ''}`}>📊 Bills delivered count</button>
-              <button type="button" onClick={() => { setTab('bills_by_date'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_by_date' ? 'active' : ''}`}>📅 Bills by date</button>
-              <button type="button" onClick={() => { setTab('bills_by_block'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_by_block' ? 'active' : ''}`}>🏢 Bills by block</button>
-            </div>
+            {isSuperAdmin && (
+              <>
+                <span className="admin-drawer-section-label" style={{ marginTop: 10 }}>
+                  Bills
+                </span>
+                <button type="button" onClick={() => { setTab('bills_overview'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_overview' ? 'active' : ''}`}>📊 Bills delivered count</button>
+                <button type="button" onClick={() => { setTab('bills_by_date'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_by_date' ? 'active' : ''}`}>📅 Bills by date</button>
+                <button type="button" onClick={() => { setTab('bills_by_block'); closeMenu(); }} className={`admin-nav-btn ${tab === 'bills_by_block' ? 'active' : ''}`}>🏢 Bills by block</button>
+              </>
+            )}
           </div>
           {isSuperAdmin && (
             <>
@@ -1027,7 +1037,16 @@ export default function AdminPage() {
       </aside>
 
       <main className="admin-main">
-        {tab === 'dashboard' && (() => {
+        {tab === 'dashboard' && !isSuperAdmin && (
+          <VendorDashboard
+            onGoOrders={(f) => {
+              setTab('orders');
+              setFilter(f);
+            }}
+            onUnauthorized={() => setLoggedIn(false)}
+          />
+        )}
+        {tab === 'dashboard' && isSuperAdmin && (() => {
           const STATUS_ORDER = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery'];
           const STATUS_LABELS_MAP: Record<string, string> = {
             scheduled: 'Scheduled', agent_assigned: 'Agent Assigned', picked_up: 'Picked Up',
@@ -2098,7 +2117,7 @@ export default function AdminPage() {
             )}
           </>
         )}
-        {tab === 'bills_overview' && (
+        {tab === 'bills_overview' && isSuperAdmin && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Bills Delivered Count</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Total number of bills/tokens delivered</p>
@@ -2116,7 +2135,7 @@ export default function AdminPage() {
             )}
           </>
         )}
-        {tab === 'bills_by_date' && (
+        {tab === 'bills_by_date' && isSuperAdmin && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Bills by Date Range</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Filter bills by date and time period</p>
@@ -2185,7 +2204,7 @@ export default function AdminPage() {
             ) : null}
           </>
         )}
-        {tab === 'bills_by_block' && (
+        {tab === 'bills_by_block' && isSuperAdmin && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Bills by Hostel Block</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Bills grouped by hostel block</p>

@@ -71,5 +71,5 @@ export async function GET(request: Request) {
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  return NextResponse.json({ bills_by_date: data });
+  return NextResponse.json({ bills_by_date: data, bills: data });
 }
