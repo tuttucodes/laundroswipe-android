@@ -2,93 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ClipboardList, Plus, RefreshCw, Tags, Truck } from 'lucide-react';
+import { normalizeVendorDashboardPayload } from '@/lib/vendor-dashboard-normalize';
+import type { VendorDashboardMetrics } from '@/lib/vendor-dashboard-types';
 import { VendorRevenueTrendCard } from './VendorRevenueTrendCard';
 
-export type VendorDashboardMetrics = {
-  revenue_7d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
-  revenue_30d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
-  billed_7d: {
-    total: number;
-    bill_count: number;
-    item_qty_sum: number;
-    subtotal: number;
-    convenience_fee: number;
-    by_date: Array<{
-      date: string;
-      bill_count: number;
-      item_qty_sum: number;
-      subtotal: number;
-      convenience_fee: number;
-      total: number;
-    }>;
-  };
-  billed_30d: {
-    total: number;
-    bill_count: number;
-    item_qty_sum: number;
-    subtotal: number;
-    convenience_fee: number;
-    by_date: Array<{
-      date: string;
-      bill_count: number;
-      item_qty_sum: number;
-      subtotal: number;
-      convenience_fee: number;
-      total: number;
-    }>;
-  };
-  collected_7d: {
-    total: number;
-    bill_count: number;
-    item_qty_sum: number;
-    subtotal: number;
-    convenience_fee: number;
-    by_date: Array<{
-      date: string;
-      bill_count: number;
-      item_qty_sum: number;
-      subtotal: number;
-      convenience_fee: number;
-      total: number;
-    }>;
-  };
-  collected_30d: {
-    total: number;
-    bill_count: number;
-    item_qty_sum: number;
-    subtotal: number;
-    convenience_fee: number;
-    by_date: Array<{
-      date: string;
-      bill_count: number;
-      item_qty_sum: number;
-      subtotal: number;
-      convenience_fee: number;
-      total: number;
-    }>;
-  };
-  collected_by_block: Array<{
-    delivery_date: string;
-    block_key: string;
-    bill_count: number;
-    item_qty_sum: number;
-    subtotal: number;
-    convenience_fee: number;
-    total: number;
-  }>;
-  billed_by_block: Array<{
-    bill_date: string;
-    block_key: string;
-    bill_count: number;
-    item_qty_sum: number;
-    subtotal: number;
-    convenience_fee: number;
-    total: number;
-  }>;
-  open_tokens: { count: number; by_status: Record<string, number> };
-  delivered_7d: { count: number; by_date: { date: string; count: number }[] };
-  delivered_30d: { count: number; by_date: { date: string; count: number }[] };
-};
+export type { VendorDashboardMetrics };
 
 type Section = 'overview' | 'delivered' | 'revenue' | 'blocks';
 
@@ -149,7 +69,10 @@ type Props = {
   onUnauthorized: () => void;
 };
 
-/** Vendors use Pickup/Delivery + Delivered drill-down instead of the legacy Orders tab. */
+/**
+ * Vendor-facing metrics hub (admin session). Loads normalized payloads from `GET /api/admin/dashboard`;
+ * drill-downs: delivered day, block day, bill day × block — see `lib/vendor-dashboard-types.ts`.
+ */
 export function VendorDashboard({ onUnauthorized }: Props) {
   const router = useRouter();
   const [section, setSection] = useState<Section>('overview');
@@ -173,6 +96,8 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     expected_bill_count: number;
     context: 'delivery' | 'billed';
   } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const openOrdersShortcut = useCallback(
     (filter: string) => {
@@ -196,12 +121,22 @@ export function VendorDashboard({ onUnauthorized }: Props) {
       const r = await fetch(url, { credentials: 'include', headers: adminAuthHeaders() });
       if (r.status === 401) {
         onUnauthorized();
-        return null;
+        return { ok: false as const, unauthorized: true };
       }
       const d = await r.json().catch(() => null);
-      if (!d?.ok) return null;
-      const { ok: _ok, ...rest } = d as { ok: boolean } & VendorDashboardMetrics;
-      return rest;
+      if (!d || typeof d !== 'object') {
+        return { ok: false as const, error: 'Invalid response' };
+      }
+      if (!(d as { ok?: boolean }).ok) {
+        const msg = typeof (d as { error?: string }).error === 'string' ? (d as { error: string }).error : 'Request failed';
+        return { ok: false as const, error: msg };
+      }
+      const { ok: _ok, ...rest } = d as { ok: boolean } & Record<string, unknown>;
+      const metricsNorm = normalizeVendorDashboardPayload(rest);
+      if (!metricsNorm) {
+        return { ok: false as const, error: 'Dashboard data shape mismatch — deploy the latest API.' };
+      }
+      return { ok: true as const, metrics: metricsNorm };
     },
     [onUnauthorized],
   );
@@ -209,9 +144,17 @@ export function VendorDashboard({ onUnauthorized }: Props) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadError(null);
     loadDashboard()
-      .then((d) => {
-        if (!cancelled && d) setMetrics(d);
+      .then((res) => {
+        if (cancelled) return;
+        if (res.ok) {
+          setMetrics(res.metrics);
+          setLoadError(null);
+        } else if (!('unauthorized' in res && res.unauthorized)) {
+          setLoadError(res.error ?? 'Could not load');
+          setMetrics(null);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -220,6 +163,22 @@ export function VendorDashboard({ onUnauthorized }: Props) {
       cancelled = true;
     };
   }, [loadDashboard]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setLoadError(null);
+    const opts =
+      blockFrom && blockTo && /^\d{4}-\d{2}-\d{2}$/.test(blockFrom) && /^\d{4}-\d{2}-\d{2}$/.test(blockTo)
+        ? { block_from: blockFrom, block_to: blockTo }
+        : undefined;
+    const res = await loadDashboard(opts);
+    if (res.ok) {
+      setMetrics(res.metrics);
+    } else if (!('unauthorized' in res && res.unauthorized)) {
+      setLoadError(res.error ?? 'Refresh failed');
+    }
+    setRefreshing(false);
+  }, [blockFrom, blockTo, loadDashboard]);
 
   useEffect(() => {
     if (section !== 'revenue' || !revenueScrollId) return;
@@ -369,8 +328,8 @@ export function VendorDashboard({ onUnauthorized }: Props) {
   const applyBlockRange = async () => {
     if (!blockFrom || !blockTo) return;
     setBlockLoading(true);
-    const d = await loadDashboard({ block_from: blockFrom, block_to: blockTo });
-    if (d) setMetrics(d);
+    const res = await loadDashboard({ block_from: blockFrom, block_to: blockTo });
+    if (res.ok) setMetrics(res.metrics);
     setBlockLoading(false);
   };
 
@@ -378,8 +337,8 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     setBlockFrom('');
     setBlockTo('');
     setBlockLoading(true);
-    const d = await loadDashboard();
-    if (d) setMetrics(d);
+    const res = await loadDashboard();
+    if (res.ok) setMetrics(res.metrics);
     setBlockLoading(false);
   };
 
@@ -414,6 +373,10 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     <button
       key={id}
       type="button"
+      role="tab"
+      id={`vd-tab-${id}`}
+      aria-selected={section === id}
+      aria-controls="vd-dashboard-panel"
       className={`vd-nav-btn ${section === id ? 'vd-nav-btn-active' : ''}`}
       onClick={() => setSection(id)}
     >
@@ -423,7 +386,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
 
   if (loading && !metrics) {
     return (
-      <div className="vd-root">
+      <div className="vd-root vd-root-interactive">
         <div className="vd-skeleton vd-skeleton-title" />
         <div className="vd-skeleton-grid">
           {[1, 2, 3, 4].map((i) => (
@@ -435,32 +398,87 @@ export function VendorDashboard({ onUnauthorized }: Props) {
   }
 
   if (!metrics) {
-    return <p style={{ color: 'var(--ts)' }}>Could not load dashboard.</p>;
+    return (
+      <div className="vd-root vd-root-interactive">
+        <div className="vendor-card vd-panel vd-panel-highlight">
+          <h2 className="vd-panel-title">Could not load dashboard</h2>
+          <p className="vd-panel-desc">{loadError ?? 'Check your connection and try again.'}</p>
+          <button type="button" className="vendor-btn-primary" onClick={() => void handleRefresh()}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="vd-root">
-      <header className="vd-header">
-        <h1 className="vd-title">Dashboard</h1>
-        <p className="vd-sub">
-          <strong>Normal revenue</strong> = total on bills you generated (grouped by the day you saved the bill in India time).{' '}
-          <strong>Delivery revenue</strong> = the same bill totals moved to the day the order was marked <em>delivered</em> (good for batch delivery).{' '}
-          Grand totals for a period usually match; only the <em>per-day</em> breakdown differs.
-        </p>
+    <div className="vd-root vd-root-interactive">
+      <header className="vd-sticky-head">
+        <div className="vd-sticky-inner">
+          <div className="vd-toolbar">
+            <div className="vd-toolbar-text">
+              <h1 className="vd-title">Dashboard</h1>
+              <p className="vd-toolbar-tagline">Live metrics from your vendor APIs · India (IST) dates</p>
+            </div>
+            <button
+              type="button"
+              className="vd-refresh-btn"
+              onClick={() => void handleRefresh()}
+              disabled={refreshing}
+              aria-busy={refreshing}
+              aria-label="Refresh dashboard data"
+            >
+              <RefreshCw size={20} strokeWidth={2} className={refreshing ? 'vd-icon-spin' : undefined} aria-hidden />
+              <span className="vd-refresh-label">Refresh</span>
+            </button>
+          </div>
+          <div className="vd-nav vd-nav-scroll" role="tablist" aria-label="Dashboard sections">
+            {navBtn('overview', 'Overview')}
+            {navBtn('delivered', 'Delivered')}
+            {navBtn('revenue', 'Revenue')}
+            {navBtn('blocks', 'By block')}
+          </div>
+        </div>
       </header>
 
-      <div className="vd-nav" role="tablist" aria-label="Dashboard sections">
-        {navBtn('overview', 'Overview')}
-        {navBtn('delivered', 'Delivered')}
-        {navBtn('revenue', 'Revenue')}
-        {navBtn('blocks', 'By block')}
-      </div>
+      <details className="vd-about-dash">
+        <summary>How normal vs delivery revenue works</summary>
+        <p className="vd-sub">
+          <strong>Normal revenue</strong> = total on bills you generated (grouped by the day you saved the bill in India time).{' '}
+          <strong>Delivery revenue</strong> = the same bill totals counted on the day the order was marked <em>delivered</em> (batch delivery days).{' '}
+          Period totals usually match; only the per-day split differs.
+        </p>
+      </details>
 
-      {section === 'overview' && (
-        <div className="vd-grid-cards">
-          <button
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={section}
+          id="vd-dashboard-panel"
+          role="tabpanel"
+          aria-labelledby={`vd-tab-${section}`}
+          className="vd-section-motion"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {section === 'overview' && (
+        <motion.div
+          className="vd-grid-cards"
+          variants={{
+            hidden: {},
+            show: { transition: { staggerChildren: 0.055, delayChildren: 0.03 } },
+          }}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.button
             type="button"
             className="vd-card vd-card-green"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.985 }}
             onClick={() => {
               setSection('revenue');
               setRevenueScrollId('vd-anchor-billed-7');
@@ -473,10 +491,14 @@ export function VendorDashboard({ onUnauthorized }: Props) {
               {metrics.billed_7d.bill_count} bills generated · {metrics.billed_7d.item_qty_sum} items
             </span>
             <span className="vd-card-hint">Open 7-day bill table →</span>
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             className="vd-card vd-card-blue"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.985 }}
             onClick={() => {
               setSection('revenue');
               setRevenueScrollId('vd-anchor-billed-30');
@@ -489,10 +511,14 @@ export function VendorDashboard({ onUnauthorized }: Props) {
               {metrics.billed_30d.bill_count} bills generated · {metrics.billed_30d.item_qty_sum} items
             </span>
             <span className="vd-card-hint">Open 30-day bill table →</span>
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             className="vd-card vd-card-violet"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.985 }}
             onClick={() => {
               setSection('revenue');
               setRevenueScrollId('vd-anchor-collected-7');
@@ -505,10 +531,14 @@ export function VendorDashboard({ onUnauthorized }: Props) {
               {metrics.collected_7d.bill_count} bills on delivery days · {metrics.delivered_7d.count} orders delivered
             </span>
             <span className="vd-card-hint">Open 7-day delivery table →</span>
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             className="vd-card vd-card-teal"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.985 }}
             onClick={() => {
               setSection('revenue');
               setRevenueScrollId('vd-anchor-collected-30');
@@ -521,10 +551,14 @@ export function VendorDashboard({ onUnauthorized }: Props) {
               {metrics.collected_30d.bill_count} bills on delivery days · {metrics.delivered_30d.count} orders delivered
             </span>
             <span className="vd-card-hint">Open 30-day delivery table →</span>
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             className="vd-card vd-card-amber"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.985 }}
             onClick={() => {
               openOrdersShortcut('open');
             }}
@@ -534,10 +568,14 @@ export function VendorDashboard({ onUnauthorized }: Props) {
             <span className="vd-card-value">{metrics.open_tokens.count}</span>
             <span className="vd-card-meta">Not yet delivered — pending pickup / delivery</span>
             <span className="vd-card-hint">Pickup / delivery →</span>
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             className="vd-card vd-card-slate"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.985 }}
             onClick={() => {
               setDeliveredDay(null);
               setSection('delivered');
@@ -548,8 +586,8 @@ export function VendorDashboard({ onUnauthorized }: Props) {
             <span className="vd-card-value">{metrics.delivered_7d.count}</span>
             <span className="vd-card-meta">Count of completed deliveries</span>
             <span className="vd-card-hint">Daily items &amp; drill-down →</span>
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
 
       {section === 'delivered' && (
@@ -1131,8 +1169,10 @@ export function VendorDashboard({ onUnauthorized }: Props) {
           )}
         </div>
       )}
+        </motion.div>
+      </AnimatePresence>
 
-      <div className="vd-quicklinks">
+      <div className="vd-quicklinks vd-quicklinks-desktop">
         <a href="/admin/vendor" className="vendor-btn-secondary vd-link">
           Create bill
         </a>
@@ -1146,6 +1186,25 @@ export function VendorDashboard({ onUnauthorized }: Props) {
           Items &amp; rates
         </a>
       </div>
+
+      <nav className="vd-dock" aria-label="Quick navigation">
+        <a href="/admin/vendor" className="vd-dock-item">
+          <Plus size={22} strokeWidth={2.25} className="vd-dock-svg" aria-hidden />
+          <span>New bill</span>
+        </a>
+        <a href="/admin/bills" className="vd-dock-item">
+          <ClipboardList size={22} strokeWidth={2.25} className="vd-dock-svg" aria-hidden />
+          <span>Bills</span>
+        </a>
+        <a href="/admin/pickup" className="vd-dock-item">
+          <Truck size={22} strokeWidth={2.25} className="vd-dock-svg" aria-hidden />
+          <span>Pickup</span>
+        </a>
+        <a href="/admin/vendor/items" className="vd-dock-item">
+          <Tags size={22} strokeWidth={2.25} className="vd-dock-svg" aria-hidden />
+          <span>Items</span>
+        </a>
+      </nav>
     </div>
   );
 }
