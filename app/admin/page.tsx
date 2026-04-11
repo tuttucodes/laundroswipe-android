@@ -337,6 +337,8 @@ export default function AdminPage() {
     if (t && TAB_FROM_QUERY.includes(t)) {
       if (t === 'users' && savedRole !== 'super_admin') {
         /* vendors cannot open Users tab from URL */
+      } else if (t === 'orders' && savedRole !== 'super_admin') {
+        setTab('dashboard');
       } else if (
         (t === 'colleges' ||
           t === 'notifications' ||
@@ -357,6 +359,11 @@ export default function AdminPage() {
     }
     if (qs != null && qs !== '') setUserSearch(qs);
   }, [loggedIn]);
+
+  useEffect(() => {
+    if (!loggedIn || isSuperAdmin || tab !== 'orders') return;
+    setTab('dashboard');
+  }, [loggedIn, isSuperAdmin, tab]);
 
   useEffect(() => {
     if (!loggedIn || !isSuperAdmin || tab !== 'area_requests') return;
@@ -992,7 +999,9 @@ export default function AdminPage() {
           <div className="admin-drawer-section">
             <span className="admin-drawer-section-label">Overview</span>
             <button type="button" onClick={() => { setTab('dashboard'); closeMenu(); }} className={`admin-nav-btn ${tab === 'dashboard' ? 'active' : ''}`}>📊 Dashboard</button>
-            <button type="button" onClick={() => { setTab('orders'); closeMenu(); }} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
+            {isSuperAdmin && (
+              <button type="button" onClick={() => { setTab('orders'); closeMenu(); }} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
+            )}
             {isSuperAdmin && (
               <button type="button" onClick={() => { setTab('users'); closeMenu(); }} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
             )}
@@ -1051,13 +1060,7 @@ export default function AdminPage() {
 
       <main className="admin-main">
         {tab === 'dashboard' && !isSuperAdmin && (
-          <VendorDashboard
-            onGoOrders={(f) => {
-              setTab('orders');
-              setFilter(f);
-            }}
-            onUnauthorized={() => setLoggedIn(false)}
-          />
+          <VendorDashboard onUnauthorized={() => setLoggedIn(false)} />
         )}
         {tab === 'dashboard' && isSuperAdmin && (() => {
           const STATUS_ORDER = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery'];
@@ -1367,7 +1370,7 @@ export default function AdminPage() {
             </div>
           );
         })()}
-        {tab === 'orders' && (
+        {tab === 'orders' && isSuperAdmin && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Orders</h1>
             <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Manage pickups and status</p>

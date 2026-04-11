@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export type VendorDashboardMetrics = {
   revenue_7d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
@@ -123,11 +124,12 @@ type BlockDetailRow = {
 };
 
 type Props = {
-  onGoOrders: (filter: string) => void;
   onUnauthorized: () => void;
 };
 
-export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
+/** Vendors use Pickup/Delivery + Delivered drill-down instead of the legacy Orders tab. */
+export function VendorDashboard({ onUnauthorized }: Props) {
+  const router = useRouter();
   const [section, setSection] = useState<Section>('overview');
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<VendorDashboardMetrics | null>(null);
@@ -143,6 +145,18 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
   const [blockDetailLoading, setBlockDetailLoading] = useState(false);
   const [blockDetailRows, setBlockDetailRows] = useState<BlockDetailRow[] | null>(null);
   const [blockDetailErr, setBlockDetailErr] = useState<string | null>(null);
+
+  const openOrdersShortcut = useCallback(
+    (filter: string) => {
+      if (filter === 'delivered') {
+        setDeliveredDay(null);
+        setSection('delivered');
+        return;
+      }
+      router.push('/admin/pickup');
+    },
+    [router],
+  );
 
   const loadDashboard = useCallback(
     async (opts?: { block_from?: string; block_to?: string }) => {
@@ -440,14 +454,14 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
             type="button"
             className="vd-card vd-card-amber"
             onClick={() => {
-              onGoOrders('open');
+              openOrdersShortcut('open');
             }}
           >
             <span className="vd-card-icon">🎫</span>
             <span className="vd-card-label">Open tokens</span>
             <span className="vd-card-value">{metrics.open_tokens.count}</span>
             <span className="vd-card-meta">Not yet delivered — pending pickup / delivery</span>
-            <span className="vd-card-hint">Open orders list →</span>
+            <span className="vd-card-hint">Pickup / delivery →</span>
           </button>
           <button
             type="button"
@@ -511,13 +525,13 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
                 </table>
               </div>
               <div className="vd-actions">
-                <button type="button" className="vendor-btn-primary" onClick={() => onGoOrders('all')}>
-                  All orders
+                <button type="button" className="vendor-btn-primary" onClick={() => openOrdersShortcut('all')}>
+                  Pickup / delivery
                 </button>
-                <button type="button" className="vendor-btn-secondary" onClick={() => onGoOrders('open')}>
-                  Open / pending
+                <button type="button" className="vendor-btn-secondary" onClick={() => openOrdersShortcut('open')}>
+                  Open / pending (routes)
                 </button>
-                <button type="button" className="vendor-btn-secondary" onClick={() => onGoOrders('delivered')}>
+                <button type="button" className="vendor-btn-secondary" onClick={() => openOrdersShortcut('delivered')}>
                   Delivered only
                 </button>
               </div>
@@ -528,7 +542,7 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
                     const count = metrics.open_tokens.by_status[s] ?? 0;
                     if (count === 0) return null;
                     return (
-                      <button key={s} type="button" className="vd-chip" onClick={() => onGoOrders(s)}>
+                      <button key={s} type="button" className="vd-chip" onClick={() => openOrdersShortcut(s)}>
                         <span className="vd-chip-n">{count}</span>
                         <span>{STATUS_LABELS_MAP[s] ?? s}</span>
                       </button>
@@ -580,7 +594,7 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
                   </table>
                   {deliveredDetailRows.length === 0 && !deliveredDetailErr && (
                     <p className="vd-muted" style={{ marginTop: 12 }}>
-                      No delivered orders found for this day in the recent window. If this is an older date, open <strong>All orders</strong> and filter by status.
+                      No delivered orders found for this day in the recent window. For older dates, use <strong>Pickup / delivery</strong> from the menu.
                     </p>
                   )}
                 </div>
