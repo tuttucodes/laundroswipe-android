@@ -798,7 +798,7 @@ export default function BillsPage() {
           <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 8 }}>
             Showing {(billsPage - 1) * BILLS_PER_PAGE + 1}–{Math.min(billsPage * BILLS_PER_PAGE, billsTotal)} of {billsTotal} bills
           </p>
-          {(billDuplicateInfo.crossTokenSameTotals.length > 0 || billDuplicateInfo.dupTokenTotalPairs.length > 0) && (
+          {billDuplicateInfo.dupTokenTotalPairs.length > 0 && (
             <div
               className="vendor-card"
               style={{
@@ -810,27 +810,8 @@ export default function BillsPage() {
             >
               <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 10px', color: 'var(--tx)' }}>Suggestions (this page)</p>
               <p style={{ fontSize: 12, color: 'var(--ts)', margin: '0 0 12px', lineHeight: 1.45 }}>
-                Same <strong>token</strong> and <strong>total</strong> = one bill in revenue. Different tokens with the same total may be coincidence — verify you did not save twice by mistake.
+                Multiple saved rows for the <strong>same token</strong> and <strong>total</strong> are counted as one bill in reports. Delete extras if they are mistakes (within the delete window).
               </p>
-              {billDuplicateInfo.crossTokenSameTotals.map((w) => (
-                <p
-                  key={`cross-${w.total}`}
-                  style={{
-                    fontSize: 13,
-                    margin: '0 0 10px',
-                    padding: '10px 12px',
-                    background: '#FFFBEB',
-                    borderRadius: 8,
-                    borderLeft: '4px solid #F59E0B',
-                    color: '#78350F',
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <strong>Same total ₹{Number(w.total).toLocaleString('en-IN')}</strong> on tokens{' '}
-                  <strong>{w.tokens.map((t) => `#${t}`).join(', ')}</strong>
-                  — confirm these are different orders.
-                </p>
-              ))}
               {billDuplicateInfo.dupTokenTotalPairs.map((d) => (
                 <p
                   key={`dup-${d.token}-${d.total}`}
@@ -854,11 +835,7 @@ export default function BillsPage() {
           {bills.map((b) => {
             const flags = billDuplicateInfo.rowFlags.get(b.id);
             const accent =
-              flags?.dupTokenTotalCount && flags.dupTokenTotalCount >= 2
-                ? '4px solid #6366F1'
-                : flags?.crossAmount
-                  ? '4px solid #F59E0B'
-                  : undefined;
+              flags?.dupTokenTotalCount && flags.dupTokenTotalCount >= 2 ? '4px solid #6366F1' : undefined;
             return (
             <div
               key={b.id}
@@ -877,11 +854,6 @@ export default function BillsPage() {
                 <div style={{ fontSize: 13, color: 'var(--ts)', marginTop: 4 }}>{b.customer_name ?? '—'} · {b.customer_phone ?? '—'}</div>
                 <div style={{ fontSize: 12, color: 'var(--tm)', marginTop: 2 }}>{b.created_at ? new Date(b.created_at).toLocaleString() : ''}</div>
                 <div style={{ fontSize: 14, marginTop: 6, fontWeight: 600 }}>₹{b.total}</div>
-                {flags?.crossAmount && (
-                  <div style={{ fontSize: 12, color: '#B45309', marginTop: 8, fontWeight: 500 }}>
-                    Same total as another token on this page — see suggestion above.
-                  </div>
-                )}
                 {flags?.dupTokenTotalCount != null && flags.dupTokenTotalCount >= 2 && (
                   <div style={{ fontSize: 12, color: '#4338CA', marginTop: 8, fontWeight: 500 }}>
                     {flags.dupTokenTotalCount} rows same token &amp; amount — revenue uses one.
