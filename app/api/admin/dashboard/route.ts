@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
+import { getVendorsListCached } from '@/lib/supabase-metadata-cache';
 import {
   fillCollectedByDate,
   formatIstYmd,
@@ -67,11 +68,13 @@ export async function GET(request: Request) {
 
   let vendorDbId: string | null = null;
   if (vendorSlug) {
-    const vendorRes = await supabase.from('vendors').select('id').eq('slug', vendorSlug).single();
-    if (vendorRes.error || !vendorRes.data) {
+    const { data: vendors, error: vendorsErr } = await getVendorsListCached(supabase);
+    if (vendorsErr) return NextResponse.json({ error: vendorsErr.message }, { status: 500 });
+    vendorDbId =
+      vendors.find((v) => String(v.slug).toLowerCase().trim() === vendorSlug)?.id ?? null;
+    if (!vendorDbId) {
       return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
     }
-    vendorDbId = vendorRes.data.id;
   }
 
   const now = new Date();
@@ -84,8 +87,55 @@ export async function GET(request: Request) {
   const from7Iso = istYmdStartIso(ist7Start);
   const from30Iso = istYmdStartIso(ist30Start);
 
-  // Bill-created revenue (legacy; super admin dashboard cards)
-  const [rpc7d, rpc30d, del7, del30, bill7, bill30, colBlock] = await Promise.all([
+  // Build open tokens query (orders not yet delivered)
+  let openQuery = supabase
+    .from('orders')
+    .select('id, status')
+    .not('status', 'eq', 'delivered');
+
+  if (vendorDbId) {
+    openQuery = openQuery.eq('vendor_id', vendorDbId);
+  } else if (vendorSlug) {
+    const v = VENDORS.find((x) => x.id === vendorSlug);
+    if (v) openQuery = (openQuery as any).ilike('vendor_name', `%${v.name}%`);
+  }
+
+  let delivered7Query = supabase
+    .from('orders')
+    .select('id, delivery_confirmed_at, updated_at, token')
+    .eq('status', 'delivered')
+    .or(deliveredSinceOrFilter(from7Iso));
+
+  let delivered30Query = supabase
+    .from('orders')
+    .select('id, delivery_confirmed_at, updated_at, token')
+    .eq('status', 'delivered')
+    .or(deliveredSinceOrFilter(from30Iso));
+
+  if (vendorDbId) {
+    delivered7Query = delivered7Query.eq('vendor_id', vendorDbId);
+    delivered30Query = delivered30Query.eq('vendor_id', vendorDbId);
+  } else if (vendorSlug) {
+    const v = VENDORS.find((x) => x.id === vendorSlug);
+    if (v) {
+      delivered7Query = (delivered7Query as any).ilike('vendor_name', `%${v.name}%`);
+      delivered30Query = (delivered30Query as any).ilike('vendor_name', `%${v.name}%`);
+    }
+  }
+
+  // One parallel batch: revenue RPCs + block rollup + open/delivered order scans (saves a full RTT vs sequential batches)
+  const [
+    rpc7d,
+    rpc30d,
+    del7,
+    del30,
+    bill7,
+    bill30,
+    colBlock,
+    openRes,
+    deliveredRes,
+    delivered30Res,
+  ] = await Promise.all([
     supabase.rpc('get_revenue_by_date', {
       p_group_days: 1,
       p_vendor_id: vendorDbId,
@@ -124,45 +174,6 @@ export async function GET(request: Request) {
         blockFrom && /^\d{4}-\d{2}-\d{2}$/.test(blockFrom) ? istYmdStartIso(blockFrom) : from30Iso,
       p_to: blockTo && /^\d{4}-\d{2}-\d{2}$/.test(blockTo) ? istYmdEndIso(blockTo) : toIso,
     }),
-  ]);
-
-  // Build open tokens query (orders not yet delivered)
-  let openQuery = supabase
-    .from('orders')
-    .select('id, status')
-    .not('status', 'eq', 'delivered');
-
-  if (vendorDbId) {
-    openQuery = openQuery.eq('vendor_id', vendorDbId);
-  } else if (vendorSlug) {
-    const v = VENDORS.find((x) => x.id === vendorSlug);
-    if (v) openQuery = (openQuery as any).ilike('vendor_name', `%${v.name}%`);
-  }
-
-  let delivered7Query = supabase
-    .from('orders')
-    .select('id, delivery_confirmed_at, updated_at, token')
-    .eq('status', 'delivered')
-    .or(deliveredSinceOrFilter(from7Iso));
-
-  let delivered30Query = supabase
-    .from('orders')
-    .select('id, delivery_confirmed_at, updated_at, token')
-    .eq('status', 'delivered')
-    .or(deliveredSinceOrFilter(from30Iso));
-
-  if (vendorDbId) {
-    delivered7Query = delivered7Query.eq('vendor_id', vendorDbId);
-    delivered30Query = delivered30Query.eq('vendor_id', vendorDbId);
-  } else if (vendorSlug) {
-    const v = VENDORS.find((x) => x.id === vendorSlug);
-    if (v) {
-      delivered7Query = (delivered7Query as any).ilike('vendor_name', `%${v.name}%`);
-      delivered30Query = (delivered30Query as any).ilike('vendor_name', `%${v.name}%`);
-    }
-  }
-
-  const [openRes, deliveredRes, delivered30Res] = await Promise.all([
     openQuery,
     delivered7Query,
     delivered30Query,
