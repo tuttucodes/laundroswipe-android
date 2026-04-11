@@ -14,6 +14,11 @@ export function istYmdStartIso(ymd: string): string {
   return `${ymd}T00:00:00+05:30`;
 }
 
+/** End of calendar day `ymd` in Asia/Kolkata (inclusive upper bound for RPC filters). */
+export function istYmdEndIso(ymd: string): string {
+  return `${ymd}T23:59:59.999+05:30`;
+}
+
 /** Add days to a YYYY-MM-DD string (UTC date arithmetic on the calendar day). */
 export function addDaysYmd(ymd: string, delta: number): string {
   const [y, m, dd] = ymd.split('-').map(Number);

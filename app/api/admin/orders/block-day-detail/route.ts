@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
-import { formatIstYmd } from '@/lib/ist-dates';
+import { addDaysYmd, istYmdStartIso } from '@/lib/ist-dates';
 import { normalizeHostelBlockKey } from '@/lib/hostel-block';
 
 type BillRow = {
@@ -27,11 +27,6 @@ function lineQtySum(line_items: unknown): number {
   }, 0);
 }
 
-function deliveryIstDate(iso: string | null | undefined): string | null {
-  if (!iso) return null;
-  return formatIstYmd(new Date(iso));
-}
-
 function normalizeTokenKey(t: string): string {
   return String(t ?? '')
     .replace(/^#+/g, '')
@@ -39,15 +34,37 @@ function normalizeTokenKey(t: string): string {
     .toLowerCase();
 }
 
-/** One bill per order token (newest created_at), aligned with revenue RPCs. */
+function tokenVariants(raw: string): string[] {
+  const t = String(raw ?? '').trim();
+  if (!t) return [];
+  const base = t.replace(/^#+/g, '');
+  const out = new Set<string>();
+  out.add(t);
+  out.add(base);
+  out.add(`#${base}`);
+  out.add(`#${base}`.toUpperCase());
+  out.add(base.toUpperCase());
+  return [...out];
+}
+
+/** Newest bill per normalized token (matches revenue / block RPCs). */
 function latestBillPerToken(rows: BillRow[]): Map<string, BillRow> {
   const sorted = [...rows].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
   const map = new Map<string, BillRow>();
   for (const b of sorted) {
     const k = normalizeTokenKey(b.order_token);
+    if (!k) continue;
     if (!map.has(k)) map.set(k, b);
   }
   return map;
+}
+
+const CHUNK = 100;
+
+async function inChunks<T>(items: T[], fn: (chunk: T[]) => Promise<void>): Promise<void> {
+  for (let i = 0; i < items.length; i += CHUNK) {
+    await fn(items.slice(i, i + CHUNK));
+  }
 }
 
 export async function GET(request: Request) {
@@ -80,38 +97,96 @@ export async function GET(request: Request) {
 
   const targetKey = blockKeyRaw === 'No block' ? 'No block' : blockKeyRaw;
 
-  const { data: ordersRaw, error: ordErr } = await supabase
-    .from('orders')
-    .select('id, token, order_number, user_id, delivery_confirmed_at, updated_at')
-    .eq('status', 'delivered')
-    .eq('vendor_id', vendorDbId)
-    .order('updated_at', { ascending: false })
-    .limit(4000);
-  if (ordErr) return NextResponse.json({ error: ordErr.message }, { status: 500 });
+  const dayStart = istYmdStartIso(date);
+  const dayNextStart = istYmdStartIso(addDaysYmd(date, 1));
+  const sel = 'id, token, order_number, delivery_confirmed_at, updated_at';
 
-  const ordersOnDay = (ordersRaw ?? []).filter((o) => {
-    const raw = o.delivery_confirmed_at ?? o.updated_at;
-    return deliveryIstDate(raw) === date;
-  });
+  const [confirmedRes, fallbackRes] = await Promise.all([
+    supabase
+      .from('orders')
+      .select(sel)
+      .eq('status', 'delivered')
+      .eq('vendor_id', vendorDbId)
+      .not('delivery_confirmed_at', 'is', null)
+      .gte('delivery_confirmed_at', dayStart)
+      .lt('delivery_confirmed_at', dayNextStart),
+    supabase
+      .from('orders')
+      .select(sel)
+      .eq('status', 'delivered')
+      .eq('vendor_id', vendorDbId)
+      .is('delivery_confirmed_at', null)
+      .gte('updated_at', dayStart)
+      .lt('updated_at', dayNextStart),
+  ]);
 
+  if (confirmedRes.error) return NextResponse.json({ error: confirmedRes.error.message }, { status: 500 });
+  if (fallbackRes.error) return NextResponse.json({ error: fallbackRes.error.message }, { status: 500 });
+
+  const byId = new Map<string, (typeof confirmedRes.data)[0]>();
+  for (const o of confirmedRes.data ?? []) {
+    if (o?.id) byId.set(String(o.id), o);
+  }
+  for (const o of fallbackRes.data ?? []) {
+    if (o?.id) byId.set(String(o.id), o);
+  }
+  const ordersOnDay = [...byId.values()];
   if (ordersOnDay.length === 0) {
-    return NextResponse.json({ ok: true, date, block_key: targetKey, rows: [] });
+    return NextResponse.json({
+      ok: true,
+      date,
+      block_key: targetKey,
+      rows: [],
+      orders_on_day: 0,
+      rows_matched: 0,
+    });
   }
 
-  const tokens = [...new Set(ordersOnDay.map((o) => String(o.token ?? '').trim()).filter(Boolean))];
+  const orderIds = [...new Set(ordersOnDay.map((o) => o.id).filter(Boolean))] as string[];
+  const tokenSet = new Set<string>();
+  for (const o of ordersOnDay) {
+    for (const v of tokenVariants(String(o.token ?? ''))) {
+      if (v) tokenSet.add(v);
+    }
+  }
+  const tokenList = [...tokenSet];
 
-  const { data: billsRaw, error: billErr } = await supabase
-    .from('vendor_bills')
-    .select(
-      'id, order_id, order_token, line_items, total, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, created_at, cancelled_at',
-    )
-    .eq('vendor_id', vendorDbId)
-    .is('cancelled_at', null)
-    .in('order_token', tokens);
+  const billRows: BillRow[] = [];
 
-  if (billErr) return NextResponse.json({ error: billErr.message }, { status: 500 });
+  try {
+    await inChunks(orderIds, async (chunk) => {
+      if (chunk.length === 0) return;
+      const { data, error } = await supabase
+        .from('vendor_bills')
+        .select(
+          'id, order_id, order_token, line_items, total, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, created_at, cancelled_at',
+        )
+        .eq('vendor_id', vendorDbId)
+        .is('cancelled_at', null)
+        .in('order_id', chunk);
+      if (error) throw new Error(error.message);
+      billRows.push(...((data ?? []) as BillRow[]));
+    });
 
-  const byToken = latestBillPerToken((billsRaw ?? []) as BillRow[]);
+    await inChunks(tokenList, async (chunk) => {
+      if (chunk.length === 0) return;
+      const { data, error } = await supabase
+        .from('vendor_bills')
+        .select(
+          'id, order_id, order_token, line_items, total, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, created_at, cancelled_at',
+        )
+        .eq('vendor_id', vendorDbId)
+        .is('cancelled_at', null)
+        .in('order_token', chunk);
+      if (error) throw new Error(error.message);
+      billRows.push(...((data ?? []) as BillRow[]));
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Failed to load bills';
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+
+  const byToken = latestBillPerToken(billRows);
 
   const billByOrderId = new Map<string, BillRow>();
   const billByTokenNorm = new Map<string, BillRow>();
@@ -163,7 +238,18 @@ export async function GET(request: Request) {
     });
   }
 
-  rows.sort((a, b) => a.token.localeCompare(b.token));
+  rows.sort((a, b) => {
+    const ba = a.customer_hostel_block.localeCompare(b.customer_hostel_block);
+    if (ba !== 0) return ba;
+    return a.token.localeCompare(b.token);
+  });
 
-  return NextResponse.json({ ok: true, date, block_key: targetKey, rows });
+  return NextResponse.json({
+    ok: true,
+    date,
+    block_key: targetKey,
+    rows,
+    orders_on_day: ordersOnDay.length,
+    rows_matched: rows.length,
+  });
 }

@@ -141,10 +141,19 @@ export function VendorDashboard({ onUnauthorized }: Props) {
   const [deliveredDetailLoading, setDeliveredDetailLoading] = useState(false);
   const [deliveredDetailRows, setDeliveredDetailRows] = useState<DeliveredDetailRow[] | null>(null);
   const [deliveredDetailErr, setDeliveredDetailErr] = useState<string | null>(null);
-  const [blockDrill, setBlockDrill] = useState<{ delivery_date: string; block_key: string } | null>(null);
+  const [blockDrill, setBlockDrill] = useState<{
+    delivery_date: string;
+    block_key: string;
+    expected_bill_count: number;
+  } | null>(null);
   const [blockDetailLoading, setBlockDetailLoading] = useState(false);
   const [blockDetailRows, setBlockDetailRows] = useState<BlockDetailRow[] | null>(null);
   const [blockDetailErr, setBlockDetailErr] = useState<string | null>(null);
+  const [blockDetailMeta, setBlockDetailMeta] = useState<{
+    orders_on_day: number;
+    rows_matched: number;
+    expected_bill_count: number;
+  } | null>(null);
 
   const openOrdersShortcut = useCallback(
     (filter: string) => {
@@ -243,13 +252,14 @@ export function VendorDashboard({ onUnauthorized }: Props) {
   }, [section]);
 
   const loadBlockDrill = useCallback(
-    async (delivery_date: string, block_key: string) => {
+    async (payload: { delivery_date: string; block_key: string; expected_bill_count: number }) => {
       setBlockDetailLoading(true);
       setBlockDetailErr(null);
+      setBlockDetailMeta(null);
       try {
         const q = new URLSearchParams({
-          date: delivery_date,
-          block_key,
+          date: payload.delivery_date,
+          block_key: payload.block_key,
         });
         const r = await fetch(`/api/admin/orders/block-day-detail?${q}`, {
           credentials: 'include',
@@ -265,7 +275,13 @@ export function VendorDashboard({ onUnauthorized }: Props) {
           setBlockDetailRows([]);
           return;
         }
-        setBlockDetailRows((d.rows ?? []) as BlockDetailRow[]);
+        const list = (d.rows ?? []) as BlockDetailRow[];
+        setBlockDetailRows(list);
+        setBlockDetailMeta({
+          orders_on_day: Number(d.orders_on_day) || 0,
+          rows_matched: Number(d.rows_matched) || list.length,
+          expected_bill_count: payload.expected_bill_count,
+        });
       } finally {
         setBlockDetailLoading(false);
       }
@@ -277,9 +293,10 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     if (!blockDrill) {
       setBlockDetailRows(null);
       setBlockDetailErr(null);
+      setBlockDetailMeta(null);
       return;
     }
-    void loadBlockDrill(blockDrill.delivery_date, blockDrill.block_key);
+    void loadBlockDrill(blockDrill);
   }, [blockDrill, loadBlockDrill]);
 
   useEffect(() => {
@@ -826,7 +843,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                 Uses <code>customer_hostel_block</code> from each saved bill (only delivered orders with a bill are counted). Empty values appear as{' '}
                 <strong>No block</strong>. Rows only appear when there is at least one bill in that bucket — there is no master list of every block.{' '}
                 <strong>A</strong>, <strong>D1</strong>, and <strong>D2</strong> roll up common variants (e.g. <code>A-102</code>, <code>Block A</code>,{' '}
-                <code>D2 - 1125</code>, <code>D1/719</code>). Tap a row for token, name, phone, reg no, block/room as on the bill, items and amount.
+                <code>Mens A</code>, <code>D 1</code>/<code>D-2</code>, stacked <code>HOSTEL</code>/<code>BLOCK</code> prefixes). Dates use India time. Tap a row for every bill in that bucket.
               </p>
               <div className="vd-filter-row">
                 <label className="vd-field">
@@ -870,11 +887,21 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                             className="vd-row-clickable"
                             role="button"
                             tabIndex={0}
-                            onClick={() => setBlockDrill({ delivery_date: r.delivery_date, block_key: r.block_key })}
+                            onClick={() =>
+                              setBlockDrill({
+                                delivery_date: r.delivery_date,
+                                block_key: r.block_key,
+                                expected_bill_count: r.bill_count,
+                              })
+                            }
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                setBlockDrill({ delivery_date: r.delivery_date, block_key: r.block_key });
+                                setBlockDrill({
+                                  delivery_date: r.delivery_date,
+                                  block_key: r.block_key,
+                                  expected_bill_count: r.bill_count,
+                                });
                               }
                             }}
                           >
@@ -901,7 +928,20 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                   {fmtDate(blockDrill.delivery_date)} · {blockDrill.block_key}
                 </h2>
               </div>
-              <p className="vd-panel-desc">One row per bill in this block bucket (same rules as the summary table).</p>
+              <p className="vd-panel-desc">
+                One row per delivered order with a saved bill whose block rolls up to this bucket (newest bill per token, same as the summary).
+              </p>
+              {blockDetailMeta && !blockDetailLoading && (
+                <p className="vd-muted" style={{ marginTop: 8, fontSize: 13 }}>
+                  Showing <strong>{blockDetailMeta.rows_matched}</strong> bill{blockDetailMeta.rows_matched === 1 ? '' : 's'} ·{' '}
+                  <strong>{blockDetailMeta.orders_on_day}</strong> delivered order{blockDetailMeta.orders_on_day === 1 ? '' : 's'} that day (IST)
+                  {blockDetailMeta.rows_matched !== blockDetailMeta.expected_bill_count ? (
+                    <span style={{ color: 'var(--o)', marginLeft: 8 }}>
+                      (summary had {blockDetailMeta.expected_bill_count}; refresh the range if this differs after a deploy)
+                    </span>
+                  ) : null}
+                </p>
+              )}
               {blockDetailLoading && <p className="vd-muted">Loading…</p>}
               {blockDetailErr && <p style={{ color: 'var(--er)' }}>{blockDetailErr}</p>}
               {!blockDetailLoading && blockDetailRows && (
@@ -938,7 +978,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                   </table>
                   {blockDetailRows.length === 0 && !blockDetailErr && (
                     <p className="vd-muted" style={{ marginTop: 12 }}>
-                      No matching bills found for this day and block in the loaded window.
+                      No matching bills for this day and block (e.g. no saved bill, or block text on the bill maps to a different rollup).
                     </p>
                   )}
                 </div>

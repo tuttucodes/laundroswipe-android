@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
-import { fillCollectedByDate, formatIstYmd, istYmdStartIso, sumFilledDayRows } from '@/lib/ist-dates';
+import {
+  fillCollectedByDate,
+  formatIstYmd,
+  istYmdEndIso,
+  istYmdStartIso,
+  sumFilledDayRows,
+} from '@/lib/ist-dates';
 
 function deliveryDateKeyIst(iso: string): string {
   return formatIstYmd(new Date(iso));
@@ -114,8 +120,9 @@ export async function GET(request: Request) {
     }),
     supabase.rpc('get_delivered_revenue_by_block_and_date', {
       p_vendor_id: vendorDbId,
-      p_from: blockFrom ? new Date(blockFrom).toISOString() : from30Iso,
-      p_to: blockTo ? new Date(blockTo + 'T23:59:59.999Z').toISOString() : toIso,
+      p_from:
+        blockFrom && /^\d{4}-\d{2}-\d{2}$/.test(blockFrom) ? istYmdStartIso(blockFrom) : from30Iso,
+      p_to: blockTo && /^\d{4}-\d{2}-\d{2}$/.test(blockTo) ? istYmdEndIso(blockTo) : toIso,
     }),
   ]);
 

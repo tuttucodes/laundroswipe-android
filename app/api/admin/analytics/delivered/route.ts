@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
-import { fillCollectedByDate, formatIstYmd } from '@/lib/ist-dates';
+import { fillCollectedByDate, formatIstYmd, istYmdEndIso, istYmdStartIso } from '@/lib/ist-dates';
 
 /**
  * Delivery-based revenue for scripts / external tools.
@@ -39,9 +39,9 @@ export async function GET(request: Request) {
   let istStart: string;
   let istEnd: string;
 
-  if (fromParam && toParam) {
-    pFrom = new Date(fromParam).toISOString();
-    pTo = new Date(toParam + 'T23:59:59.999Z').toISOString();
+  if (fromParam && toParam && /^\d{4}-\d{2}-\d{2}$/.test(fromParam) && /^\d{4}-\d{2}-\d{2}$/.test(toParam)) {
+    pFrom = istYmdStartIso(fromParam);
+    pTo = istYmdEndIso(toParam);
     istStart = fromParam;
     istEnd = toParam;
   } else {
