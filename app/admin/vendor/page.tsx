@@ -14,6 +14,7 @@ import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
 type LatestBill = { id: string; created_at: string; can_cancel: boolean; line_items: LineItem[] };
@@ -596,13 +597,15 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
         body: JSON.stringify({
           token: orderToken,
           order_number: order.order_number ?? null,
-          line_items: lineItems.map((l) => ({
-            id: l.id,
-            qty: l.qty,
-            label: l.label,
-            price: l.price,
-            image_url: l.image_url ?? null,
-          })),
+          line_items: compactLineItemsForSavePayload(
+            lineItems.map((l) => ({
+              id: l.id,
+              qty: l.qty,
+              label: l.label,
+              price: l.price,
+              image_url: l.image_url ?? null,
+            })),
+          ),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -732,13 +735,15 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
         body: JSON.stringify({
           token: orderToken,
           order_number: currentOrder.order_number ?? null,
-          line_items: lineItems.map((l) => ({
-            id: l.id,
-            qty: l.qty,
-            label: l.label,
-            price: l.price,
-            image_url: l.image_url ?? null,
-          })),
+          line_items: compactLineItemsForSavePayload(
+            lineItems.map((l) => ({
+              id: l.id,
+              qty: l.qty,
+              label: l.label,
+              price: l.price,
+              image_url: l.image_url ?? null,
+            })),
+          ),
         }),
       });
       const data = await res.json().catch(() => ({}));

@@ -3,6 +3,7 @@ import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { addDaysYmd, istYmdStartIso } from '@/lib/ist-dates';
 import { normalizeHostelBlockKey } from '@/lib/hostel-block';
+import { segregateCustomerDisplay } from '@/lib/customer-display-segregate';
 
 type BillRow = {
   id: string;
@@ -230,23 +231,26 @@ export async function GET(request: Request) {
       if (rollupKey !== targetKey) continue;
 
       const u = o.user_id ? userById.get(String(o.user_id)) : undefined;
-      const name = bill.customer_name?.trim() || '—';
       const phone = bill.customer_phone?.trim() || '—';
-      const reg = bill.customer_reg_no?.trim() || u?.reg_no?.trim() || '—';
-      const block = bill.customer_hostel_block?.trim() || u?.hostel_block?.trim() || '—';
-      const room = bill.customer_room_number?.trim() || u?.room_number?.trim() || '—';
       const itemQty = lineQtySum(bill.line_items);
       const total = Number(bill.total);
+
+      const merged = segregateCustomerDisplay({
+        customer_name: bill.customer_name?.trim() || '',
+        customer_reg_no: bill.customer_reg_no?.trim() || u?.reg_no?.trim() || '',
+        customer_hostel_block: bill.customer_hostel_block?.trim() || u?.hostel_block?.trim() || '',
+        customer_room_number: bill.customer_room_number?.trim() || u?.room_number?.trim() || '',
+      });
 
       rows.push({
         order_id: o.id,
         token: String(o.token ?? ''),
         order_number: o.order_number ?? null,
-        customer_name: name,
+        customer_name: merged.customer_name,
         customer_phone: phone,
-        customer_reg_no: reg,
-        customer_hostel_block: block,
-        customer_room_number: room,
+        customer_reg_no: merged.customer_reg_no,
+        customer_hostel_block: merged.customer_hostel_block,
+        customer_room_number: merged.customer_room_number,
         item_qty: itemQty,
         total: Math.round(total * 100) / 100,
       });

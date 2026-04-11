@@ -9,7 +9,7 @@
       "source_file": "next.config.js",
       "source_location": "L1",
       "id": "next_config",
-      "community": 26
+      "community": 25
     },
     {
       "label": "next-env.d.ts",
@@ -17,7 +17,7 @@
       "source_file": "next-env.d.ts",
       "source_location": "L1",
       "id": "next_env_d",
-      "community": 27
+      "community": 26
     },
     {
       "label": "layout.tsx",
@@ -25,7 +25,7 @@
       "source_file": "app/admin/layout.tsx",
       "source_location": "L1",
       "id": "layout",
-      "community": 19
+      "community": 20
     },
     {
       "label": "RootLayout()",
@@ -33,7 +33,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L50",
       "id": "layout_rootlayout",
-      "community": 19
+      "community": 20
     },
     {
       "label": "manifest.ts",
@@ -41,7 +41,7 @@
       "source_file": "app/manifest.ts",
       "source_location": "L1",
       "id": "manifest",
-      "community": 22
+      "community": 21
     },
     {
       "label": "manifest()",
@@ -49,7 +49,7 @@
       "source_file": "app/manifest.ts",
       "source_location": "L3",
       "id": "manifest_manifest",
-      "community": 22
+      "community": 21
     },
     {
       "label": "page.tsx",
@@ -73,7 +73,7 @@
       "source_file": "app/not-found.tsx",
       "source_location": "L1",
       "id": "not_found",
-      "community": 14
+      "community": 15
     },
     {
       "label": "NotFound()",
@@ -81,7 +81,7 @@
       "source_file": "app/not-found.tsx",
       "source_location": "L7",
       "id": "not_found_notfound",
-      "community": 14
+      "community": 15
     },
     {
       "label": "GreenPage()",
@@ -97,7 +97,7 @@
       "source_file": "app/admin/layout.tsx",
       "source_location": "L20",
       "id": "layout_adminlayout",
-      "community": 19
+      "community": 20
     },
     {
       "label": "getGatePassLetterHtml()",
@@ -863,7 +863,7 @@
       "label": "lineQtySum()",
       "file_type": "code",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L19",
+      "source_location": "L20",
       "id": "route_lineqtysum",
       "community": 1
     },
@@ -871,7 +871,7 @@
       "label": "normalizeTokenKey()",
       "file_type": "code",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L33",
+      "source_location": "L34",
       "id": "route_normalizetokenkey",
       "community": 1
     },
@@ -879,7 +879,7 @@
       "label": "tokenVariants()",
       "file_type": "code",
       "source_file": "app/api/admin/orders/block-day-detail/route.ts",
-      "source_location": "L37",
+      "source_location": "L38",
       "id": "route_tokenvariants",
       "community": 1
     },
@@ -887,7 +887,7 @@
       "label": "latestBillPerToken()",
       "file_type": "code",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L41",
+      "source_location": "L42",
       "id": "route_latestbillpertoken",
       "community": 1
     },
@@ -895,7 +895,7 @@
       "label": "inChunks()",
       "file_type": "code",
       "source_file": "app/api/admin/orders/block-day-detail/route.ts",
-      "source_location": "L64",
+      "source_location": "L65",
       "id": "route_inchunks",
       "community": 1
     },
@@ -903,7 +903,7 @@
       "label": "deliveryIstDate()",
       "file_type": "code",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L28",
+      "source_location": "L29",
       "id": "route_deliveryistdate",
       "community": 1
     },
@@ -1009,7 +1009,7 @@
       "source_file": "config/env.production.js",
       "source_location": "L1",
       "id": "env_production",
-      "community": 28
+      "community": 27
     },
     {
       "label": "env.js",
@@ -1017,7 +1017,7 @@
       "source_file": "config/env.js",
       "source_location": "L1",
       "id": "env",
-      "community": 29
+      "community": 28
     },
     {
       "label": "env.development.js",
@@ -1025,7 +1025,7 @@
       "source_file": "config/env.development.js",
       "source_location": "L1",
       "id": "env_development",
-      "community": 30
+      "community": 29
     },
     {
       "label": "api.ts",
@@ -1129,7 +1129,7 @@
       "source_file": "android-print-bridge/app/build.gradle.kts",
       "source_location": "L1",
       "id": "build_gradle",
-      "community": 31
+      "community": 30
     },
     {
       "label": "settings.gradle.kts",
@@ -1137,7 +1137,7 @@
       "source_file": "android-print-bridge/settings.gradle.kts",
       "source_location": "L1",
       "id": "settings_gradle",
-      "community": 32
+      "community": 31
     },
     {
       "label": "MainActivity.kt",
@@ -1369,7 +1369,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L1",
       "id": "bluetoothprinterdevices",
-      "community": 16
+      "community": 17
     },
     {
       "label": "BluetoothPrinterDevices",
@@ -1377,7 +1377,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L8",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices",
-      "community": 16
+      "community": 17
     },
     {
       "label": ".isLikelyThermalPrinter()",
@@ -1385,7 +1385,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L10",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_islikelythermalprinter",
-      "community": 16
+      "community": 17
     },
     {
       "label": ".pairedRows()",
@@ -1393,7 +1393,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L25",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_pairedrows",
-      "community": 16
+      "community": 17
     },
     {
       "label": ".normalizeDisplayAddress()",
@@ -1401,7 +1401,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L41",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_normalizedisplayaddress",
-      "community": 16
+      "community": 17
     },
     {
       "label": "PrintBridge.kt",
@@ -1409,7 +1409,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L1",
       "id": "printbridge",
-      "community": 17
+      "community": 18
     },
     {
       "label": "PrintBridge",
@@ -1417,7 +1417,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L18",
       "id": "printbridge_printbridge",
-      "community": 17
+      "community": 18
     },
     {
       "label": ".bluetoothAdapter()",
@@ -1425,7 +1425,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L28",
       "id": "printbridge_printbridge_bluetoothadapter",
-      "community": 17
+      "community": 18
     },
     {
       "label": ".setPairedPrinterAddress()",
@@ -1433,7 +1433,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L36",
       "id": "printbridge_printbridge_setpairedprinteraddress",
-      "community": 17
+      "community": 18
     },
     {
       "label": ".printEscPosBase64()",
@@ -1441,7 +1441,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L60",
       "id": "printbridge_printbridge_printescposbase64",
-      "community": 17
+      "community": 18
     },
     {
       "label": "index.ts",
@@ -1801,7 +1801,7 @@
       "source_file": "components/AddToHomeScreenPrompt.tsx",
       "source_location": "L1",
       "id": "addtohomescreenprompt",
-      "community": 20
+      "community": 0
     },
     {
       "label": "dismiss()",
@@ -1809,7 +1809,7 @@
       "source_file": "components/AddToHomeScreenPrompt.tsx",
       "source_location": "L49",
       "id": "addtohomescreenprompt_dismiss",
-      "community": 20
+      "community": 0
     },
     {
       "label": "markAdded()",
@@ -1817,7 +1817,7 @@
       "source_file": "components/AddToHomeScreenPrompt.tsx",
       "source_location": "L54",
       "id": "addtohomescreenprompt_markadded",
-      "community": 20
+      "community": 0
     },
     {
       "label": "HomeContactForm.tsx",
@@ -1825,7 +1825,7 @@
       "source_file": "components/HomeContactForm.tsx",
       "source_location": "L1",
       "id": "homecontactform",
-      "community": 14
+      "community": 15
     },
     {
       "label": "handleSubmit()",
@@ -1833,7 +1833,7 @@
       "source_file": "components/HomeContactForm.tsx",
       "source_location": "L15",
       "id": "homecontactform_handlesubmit",
-      "community": 14
+      "community": 15
     },
     {
       "label": "button.tsx",
@@ -1841,7 +1841,7 @@
       "source_file": "components/ui/button.tsx",
       "source_location": "L1",
       "id": "button",
-      "community": 14
+      "community": 15
     },
     {
       "label": "Hero.tsx",
@@ -1881,7 +1881,7 @@
       "source_file": "components/home/ScrollingMarquee.tsx",
       "source_location": "L1",
       "id": "scrollingmarquee",
-      "community": 23
+      "community": 22
     },
     {
       "label": "ScrollingMarquee()",
@@ -1889,7 +1889,7 @@
       "source_file": "components/home/ScrollingMarquee.tsx",
       "source_location": "L5",
       "id": "scrollingmarquee_scrollingmarquee",
-      "community": 23
+      "community": 22
     },
     {
       "label": "BentoEcosystem.tsx",
@@ -1913,7 +1913,7 @@
       "source_file": "components/home/HeroAnimations.tsx",
       "source_location": "L1",
       "id": "heroanimations",
-      "community": 33
+      "community": 32
     },
     {
       "label": "SegmentTabs.tsx",
@@ -1921,7 +1921,7 @@
       "source_file": "components/home/SegmentTabs.tsx",
       "source_location": "L1",
       "id": "segmenttabs",
-      "community": 24
+      "community": 23
     },
     {
       "label": "SegmentTabs()",
@@ -1929,7 +1929,7 @@
       "source_file": "components/home/SegmentTabs.tsx",
       "source_location": "L35",
       "id": "segmenttabs_segmenttabs",
-      "community": 24
+      "community": 23
     },
     {
       "label": "Footer.tsx",
@@ -1945,7 +1945,7 @@
       "source_file": "components/home/Testimonials.tsx",
       "source_location": "L1",
       "id": "testimonials",
-      "community": 21
+      "community": 0
     },
     {
       "label": "prev()",
@@ -1953,7 +1953,7 @@
       "source_file": "components/home/Testimonials.tsx",
       "source_location": "L39",
       "id": "testimonials_prev",
-      "community": 21
+      "community": 0
     },
     {
       "label": "next()",
@@ -1961,7 +1961,7 @@
       "source_file": "components/home/Testimonials.tsx",
       "source_location": "L40",
       "id": "testimonials_next",
-      "community": 21
+      "community": 0
     },
     {
       "label": "MarqueeStrips.tsx",
@@ -2001,7 +2001,7 @@
       "source_file": "components/home/TestimonialCarousel.tsx",
       "source_location": "L1",
       "id": "testimonialcarousel",
-      "community": 25
+      "community": 24
     },
     {
       "label": "TestimonialCarousel()",
@@ -2009,7 +2009,7 @@
       "source_file": "components/home/TestimonialCarousel.tsx",
       "source_location": "L16",
       "id": "testimonialcarousel_testimonialcarousel",
-      "community": 25
+      "community": 24
     },
     {
       "label": "OAuthRedirectToDashboard.tsx",
@@ -2049,7 +2049,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L1",
       "id": "vendordashboard",
-      "community": 15
+      "community": 16
     },
     {
       "label": "adminAuthHeaders()",
@@ -2057,7 +2057,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L85",
       "id": "vendordashboard_adminauthheaders",
-      "community": 15
+      "community": 16
     },
     {
       "label": "applyBlockRange()",
@@ -2065,7 +2065,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L326",
       "id": "vendordashboard_applyblockrange",
-      "community": 15
+      "community": 16
     },
     {
       "label": "resetBlockRange()",
@@ -2073,7 +2073,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L334",
       "id": "vendordashboard_resetblockrange",
-      "community": 15
+      "community": 16
     },
     {
       "label": "fmtDate()",
@@ -2081,7 +2081,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L343",
       "id": "vendordashboard_fmtdate",
-      "community": 15
+      "community": 16
     },
     {
       "label": "fmtMoney()",
@@ -2089,7 +2089,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L344",
       "id": "vendordashboard_fmtmoney",
-      "community": 15
+      "community": 16
     },
     {
       "label": "navBtn()",
@@ -2097,7 +2097,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L358",
       "id": "vendordashboard_navbtn",
-      "community": 15
+      "community": 16
     },
     {
       "label": "PrintBridgeApkCta.tsx",
@@ -2105,7 +2105,7 @@
       "source_file": "components/vendor/PrintBridgeApkCta.tsx",
       "source_location": "L1",
       "id": "printbridgeapkcta",
-      "community": 18
+      "community": 19
     },
     {
       "label": "BluetoothPrinterPanel.tsx",
@@ -2169,7 +2169,7 @@
       "source_file": "public/sw.js",
       "source_location": "L1",
       "id": "sw",
-      "community": 34
+      "community": 33
     },
     {
       "label": "generate-env.js",
@@ -2177,7 +2177,79 @@
       "source_file": "scripts/generate-env.js",
       "source_location": "L1",
       "id": "generate_env",
-      "community": 35
+      "community": 34
+    },
+    {
+      "label": "customer-display-segregate.ts",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L1",
+      "id": "customer_display_segregate",
+      "community": 13
+    },
+    {
+      "label": "clean()",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L11",
+      "id": "customer_display_segregate_clean",
+      "community": 13
+    },
+    {
+      "label": "isEmptyDisplay()",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L19",
+      "id": "customer_display_segregate_isemptydisplay",
+      "community": 13
+    },
+    {
+      "label": "escapeReg()",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L23",
+      "id": "customer_display_segregate_escapereg",
+      "community": 13
+    },
+    {
+      "label": "tryExtractRoomFromBlock()",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L30",
+      "id": "customer_display_segregate_tryextractroomfromblock",
+      "community": 13
+    },
+    {
+      "label": "stripTrailingRoomFromBlock()",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L66",
+      "id": "customer_display_segregate_striptrailingroomfromblock",
+      "community": 13
+    },
+    {
+      "label": "segregateHostelBlockRoom()",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L75",
+      "id": "customer_display_segregate_segregatehostelblockroom",
+      "community": 13
+    },
+    {
+      "label": "segregateNameAndReg()",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L124",
+      "id": "customer_display_segregate_segregatenameandreg",
+      "community": 13
+    },
+    {
+      "label": "segregateCustomerDisplay()",
+      "file_type": "code",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L162",
+      "id": "customer_display_segregate_segregatecustomerdisplay",
+      "community": 13
     },
     {
       "label": "admin-session.ts",
@@ -2345,7 +2417,7 @@
       "source_file": "lib/cn.ts",
       "source_location": "L1",
       "id": "cn",
-      "community": 14
+      "community": 15
     },
     {
       "label": "cn()",
@@ -2353,7 +2425,7 @@
       "source_file": "lib/cn.ts",
       "source_location": "L4",
       "id": "cn_cn",
-      "community": 14
+      "community": 15
     },
     {
       "label": "ble-printer-settings.ts",
@@ -2417,7 +2489,7 @@
       "source_file": "lib/hostel-block.ts",
       "source_location": "L1",
       "id": "hostel_block",
-      "community": 1
+      "community": 13
     },
     {
       "label": "normalizeHostelBlockKey()",
@@ -2425,7 +2497,7 @@
       "source_file": "lib/hostel-block.ts",
       "source_location": "L7",
       "id": "hostel_block_normalizehostelblockkey",
-      "community": 1
+      "community": 13
     },
     {
       "label": "print-bridge-apk.ts",
@@ -2433,7 +2505,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L1",
       "id": "print_bridge_apk",
-      "community": 18
+      "community": 19
     },
     {
       "label": "getPrintBridgeApkUrl()",
@@ -2441,7 +2513,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L10",
       "id": "print_bridge_apk_getprintbridgeapkurl",
-      "community": 18
+      "community": 19
     },
     {
       "label": "isPrintBridgeApkDirectPublicUrl()",
@@ -2449,7 +2521,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L18",
       "id": "print_bridge_apk_isprintbridgeapkdirectpublicurl",
-      "community": 18
+      "community": 19
     },
     {
       "label": "public-rate-limit.ts",
@@ -2689,7 +2761,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L1",
       "id": "ist_dates",
-      "community": 13
+      "community": 14
     },
     {
       "label": "formatIstYmd()",
@@ -2697,7 +2769,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L5",
       "id": "ist_dates_formatistymd",
-      "community": 13
+      "community": 14
     },
     {
       "label": "istYmdStartIso()",
@@ -2705,7 +2777,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L13",
       "id": "ist_dates_istymdstartiso",
-      "community": 13
+      "community": 14
     },
     {
       "label": "istYmdEndIso()",
@@ -2713,7 +2785,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L18",
       "id": "ist_dates_istymdendiso",
-      "community": 13
+      "community": 14
     },
     {
       "label": "addDaysYmd()",
@@ -2721,7 +2793,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L23",
       "id": "ist_dates_adddaysymd",
-      "community": 13
+      "community": 14
     },
     {
       "label": "eachYmdInRange()",
@@ -2729,7 +2801,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L29",
       "id": "ist_dates_eachymdinrange",
-      "community": 13
+      "community": 14
     },
     {
       "label": "fillCollectedByDate()",
@@ -2737,7 +2809,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L46",
       "id": "ist_dates_fillcollectedbydate",
-      "community": 13
+      "community": 14
     },
     {
       "label": "sumFilledDayRows()",
@@ -2745,7 +2817,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L84",
       "id": "ist_dates_sumfilleddayrows",
-      "community": 13
+      "community": 14
     },
     {
       "label": "printer-settings.ts",
@@ -5746,10 +5818,22 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_src": "route",
+      "_tgt": "customer_display_segregate",
+      "source": "route",
+      "target": "customer_display_segregate",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L19",
+      "source_location": "L20",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_lineqtysum",
@@ -5761,7 +5845,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L33",
+      "source_location": "L34",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_normalizetokenkey",
@@ -5773,7 +5857,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/block-day-detail/route.ts",
-      "source_location": "L37",
+      "source_location": "L38",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_tokenvariants",
@@ -5785,7 +5869,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L41",
+      "source_location": "L42",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_latestbillpertoken",
@@ -5797,7 +5881,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/block-day-detail/route.ts",
-      "source_location": "L64",
+      "source_location": "L65",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_inchunks",
@@ -5809,7 +5893,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L28",
+      "source_location": "L29",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_deliveryistdate",
@@ -6229,7 +6313,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/block-day-detail/route.ts",
-      "source_location": "L148",
+      "source_location": "L149",
       "weight": 1.0,
       "_src": "route_get",
       "_tgt": "route_tokenvariants",
@@ -6241,7 +6325,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/block-day-detail/route.ts",
-      "source_location": "L157",
+      "source_location": "L158",
       "weight": 1.0,
       "_src": "route_get",
       "_tgt": "route_inchunks",
@@ -6253,7 +6337,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L107",
+      "source_location": "L108",
       "weight": 1.0,
       "_src": "route_get",
       "_tgt": "route_latestbillpertoken",
@@ -6265,7 +6349,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L113",
+      "source_location": "L114",
       "weight": 1.0,
       "_src": "route_get",
       "_tgt": "route_normalizetokenkey",
@@ -6277,7 +6361,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/block-day-detail/route.ts",
-      "source_location": "L238",
+      "source_location": "L235",
       "weight": 1.0,
       "_src": "route_get",
       "_tgt": "route_lineqtysum",
@@ -6385,7 +6469,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/orders/delivered-day-detail/route.ts",
-      "source_location": "L45",
+      "source_location": "L46",
       "weight": 1.0,
       "_src": "route_latestbillpertoken",
       "_tgt": "route_normalizetokenkey",
@@ -8227,6 +8311,246 @@
       "_tgt": "bluetoothprinterpanel_refreshprefs",
       "source": "bluetoothprinterpanel_refreshprefs",
       "target": "bluetoothprinterpanel_patchprefs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "hostel_block",
+      "source": "customer_display_segregate",
+      "target": "hostel_block",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "customer_display_segregate_clean",
+      "source": "customer_display_segregate",
+      "target": "customer_display_segregate_clean",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "customer_display_segregate_isemptydisplay",
+      "source": "customer_display_segregate",
+      "target": "customer_display_segregate_isemptydisplay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "customer_display_segregate_escapereg",
+      "source": "customer_display_segregate",
+      "target": "customer_display_segregate_escapereg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "customer_display_segregate_tryextractroomfromblock",
+      "source": "customer_display_segregate",
+      "target": "customer_display_segregate_tryextractroomfromblock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L66",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "customer_display_segregate_striptrailingroomfromblock",
+      "source": "customer_display_segregate",
+      "target": "customer_display_segregate_striptrailingroomfromblock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L75",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "customer_display_segregate_segregatehostelblockroom",
+      "source": "customer_display_segregate",
+      "target": "customer_display_segregate_segregatehostelblockroom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L124",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "customer_display_segregate_segregatenameandreg",
+      "source": "customer_display_segregate",
+      "target": "customer_display_segregate_segregatenameandreg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L162",
+      "weight": 1.0,
+      "_src": "customer_display_segregate",
+      "_tgt": "customer_display_segregate_segregatecustomerdisplay",
+      "source": "customer_display_segregate",
+      "target": "customer_display_segregate_segregatecustomerdisplay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L35",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_tryextractroomfromblock",
+      "_tgt": "customer_display_segregate_clean",
+      "source": "customer_display_segregate_clean",
+      "target": "customer_display_segregate_tryextractroomfromblock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L79",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatehostelblockroom",
+      "_tgt": "customer_display_segregate_clean",
+      "source": "customer_display_segregate_clean",
+      "target": "customer_display_segregate_segregatehostelblockroom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L128",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatenameandreg",
+      "_tgt": "customer_display_segregate_clean",
+      "source": "customer_display_segregate_clean",
+      "target": "customer_display_segregate_segregatenameandreg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L133",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatenameandreg",
+      "_tgt": "customer_display_segregate_isemptydisplay",
+      "source": "customer_display_segregate_isemptydisplay",
+      "target": "customer_display_segregate_segregatenameandreg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L173",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatecustomerdisplay",
+      "_tgt": "customer_display_segregate_isemptydisplay",
+      "source": "customer_display_segregate_isemptydisplay",
+      "target": "customer_display_segregate_segregatecustomerdisplay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L68",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_striptrailingroomfromblock",
+      "_tgt": "customer_display_segregate_escapereg",
+      "source": "customer_display_segregate_escapereg",
+      "target": "customer_display_segregate_striptrailingroomfromblock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L134",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatenameandreg",
+      "_tgt": "customer_display_segregate_escapereg",
+      "source": "customer_display_segregate_escapereg",
+      "target": "customer_display_segregate_segregatenameandreg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatehostelblockroom",
+      "_tgt": "customer_display_segregate_tryextractroomfromblock",
+      "source": "customer_display_segregate_tryextractroomfromblock",
+      "target": "customer_display_segregate_segregatehostelblockroom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatehostelblockroom",
+      "_tgt": "customer_display_segregate_striptrailingroomfromblock",
+      "source": "customer_display_segregate_striptrailingroomfromblock",
+      "target": "customer_display_segregate_segregatehostelblockroom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L179",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatecustomerdisplay",
+      "_tgt": "customer_display_segregate_segregatehostelblockroom",
+      "source": "customer_display_segregate_segregatehostelblockroom",
+      "target": "customer_display_segregate_segregatecustomerdisplay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/customer-display-segregate.ts",
+      "source_location": "L178",
+      "weight": 1.0,
+      "_src": "customer_display_segregate_segregatecustomerdisplay",
+      "_tgt": "customer_display_segregate_segregatenameandreg",
+      "source": "customer_display_segregate_segregatenameandreg",
+      "target": "customer_display_segregate_segregatecustomerdisplay",
       "confidence_score": 1.0
     },
     {

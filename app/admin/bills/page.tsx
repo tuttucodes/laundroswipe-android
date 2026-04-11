@@ -11,6 +11,7 @@ import { calculateServiceFee } from '@/lib/fees';
 import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
+import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
 
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
 type CatalogRow = { id: string; label: string; price: number; image_url?: string | null };
@@ -519,13 +520,15 @@ export default function BillsPage() {
         headers,
         body: JSON.stringify({
           bill_id: editingBill.id,
-          line_items: editLineItems.map((l) => ({
-            id: l.id,
-            qty: l.qty,
-            label: l.label,
-            price: l.price,
-            image_url: l.image_url ?? null,
-          })),
+          line_items: compactLineItemsForSavePayload(
+            editLineItems.map((l) => ({
+              id: l.id,
+              qty: l.qty,
+              label: l.label,
+              price: l.price,
+              image_url: l.image_url ?? null,
+            })),
+          ),
         }),
       });
       const data = await res.json().catch(() => ({}));

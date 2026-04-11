@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { formatIstYmd } from '@/lib/ist-dates';
+import { segregateHostelBlockRoom, segregateNameAndReg } from '@/lib/customer-display-segregate';
 
 type BillRow = {
   id: string;
@@ -118,7 +119,7 @@ export async function GET(request: Request) {
     userIds.length > 0
       ? await supabase
           .from('users')
-          .select('id, full_name, email, phone, hostel_block, room_number')
+          .select('id, full_name, email, phone, reg_no, hostel_block, room_number')
           .in('id', userIds)
       : { data: [] };
 
@@ -127,16 +128,22 @@ export async function GET(request: Request) {
   const rows = ordersOnDay.map((o) => {
     const bill = (o.id ? billByOrderId.get(String(o.id)) : null) ?? billByTokenNorm.get(normalizeTokenKey(String(o.token)));
     const u = o.user_id ? userById.get(String(o.user_id)) : null;
-    const name =
+    const nameRaw =
       bill?.customer_name?.trim() ||
       (u as { full_name?: string; email?: string } | undefined)?.full_name ||
       (u as { email?: string } | undefined)?.email ||
-      '—';
+      '';
+    const regHint = (u as { reg_no?: string } | undefined)?.reg_no?.trim() || '';
+    const nr = segregateNameAndReg(nameRaw, regHint);
+    const name = nr.name;
     const phone = bill?.customer_phone?.trim() || (u as { phone?: string } | undefined)?.phone || '—';
-    const block =
-      bill?.customer_hostel_block?.trim() || (u as { hostel_block?: string } | undefined)?.hostel_block || '—';
-    const room =
-      bill?.customer_room_number?.trim() || (u as { room_number?: string } | undefined)?.room_number || '—';
+    const blockRaw =
+      bill?.customer_hostel_block?.trim() || (u as { hostel_block?: string } | undefined)?.hostel_block || '';
+    const roomRaw =
+      bill?.customer_room_number?.trim() || (u as { room_number?: string } | undefined)?.room_number || '';
+    const br = segregateHostelBlockRoom(blockRaw, roomRaw);
+    const block = br.block;
+    const room = br.room;
     const itemQty = bill ? lineQtySum(bill.line_items) : 0;
     const total = bill ? Number(bill.total) : 0;
 

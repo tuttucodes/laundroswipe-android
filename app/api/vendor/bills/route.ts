@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
+import { getVendorsListCached } from '@/lib/supabase-metadata-cache';
 
 type DbVendor = { id: string; slug: string; name: string };
 
@@ -27,11 +28,9 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
 
   const vendorSlug = session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? '' : '';
-  const { data: vendorsData, error: vendorsError } = await supabase
-    .from('vendors')
-    .select('id, slug, name');
+  const { data: vendorsData, error: vendorsError } = await getVendorsListCached(supabase);
   if (vendorsError) return NextResponse.json({ error: vendorsError.message }, { status: 500 });
-  const dbVendors = (vendorsData ?? []) as DbVendor[];
+  const dbVendors = vendorsData as DbVendor[];
   const vendorsById = new Map<string, string>(dbVendors.map((v) => [String(v.id), v.slug]));
 
   // For vendor-scoped queries, filter server-side by vendor_id when possible

@@ -4,6 +4,7 @@ import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
 import { applyServiceFeeDiscount } from '@/lib/fees';
 import { mergeVendorBillItemsFromDbRow } from '@/lib/vendor-bill-catalog';
+import { getVendorBillOverridesCached, getVendorsListCached } from '@/lib/supabase-metadata-cache';
 
 type DbVendor = { id: string; slug: string; name: string };
 
@@ -55,8 +56,9 @@ export async function POST(request: Request) {
   const lineItemsIn = Array.isArray(body.line_items) ? body.line_items : [];
   if (lineItemsIn.length === 0) return NextResponse.json({ error: 'line_items is required' }, { status: 400 });
 
-  const { data: vendorsData } = await supabase.from('vendors').select('id, slug, name');
-  const dbVendors = (vendorsData ?? []) as DbVendor[];
+  const { data: vendorsData, error: vendorsErr } = await getVendorsListCached(supabase);
+  if (vendorsErr) return NextResponse.json({ error: vendorsErr.message }, { status: 500 });
+  const dbVendors = vendorsData as DbVendor[];
   const vendorsById = new Map<string, string>(dbVendors.map((v) => [String(v.id), v.slug]));
 
   const { data: bill, error: fetchErr } = await supabase
@@ -77,15 +79,7 @@ export async function POST(request: Request) {
     }
   }
 
-  let billOverrides: unknown = {};
-  if (billVendorSlug) {
-    const { data: prof } = await supabase
-      .from('vendor_profiles')
-      .select('bill_item_overrides')
-      .eq('slug', billVendorSlug)
-      .maybeSingle();
-    billOverrides = prof?.bill_item_overrides ?? {};
-  }
+  const { bill_item_overrides: billOverrides } = await getVendorBillOverridesCached(supabase, billVendorSlug);
   const mergedCatalog = mergeVendorBillItemsFromDbRow(billVendorSlug, billOverrides);
   const existingRows = Array.isArray(bill.line_items)
     ? (bill.line_items as { id: string; label: string; price: number; qty: number; image_url?: string | null }[])

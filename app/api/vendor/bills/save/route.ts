@@ -5,6 +5,7 @@ import { VENDORS } from '@/lib/constants';
 import { applyServiceFeeDiscount } from '@/lib/fees';
 import { mergeVendorBillItemsFromDbRow } from '@/lib/vendor-bill-catalog';
 import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
+import { getVendorBillOverridesCached, getVendorsListCached } from '@/lib/supabase-metadata-cache';
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
   const normalized = String(vendorName ?? '').trim().toLowerCase();
@@ -47,17 +48,18 @@ export async function POST(request: Request) {
   const lineItems = Array.isArray(body.line_items) ? body.line_items : [];
   if (lineItems.length === 0) return NextResponse.json({ error: 'line_items is required' }, { status: 400 });
 
-  // === Batch 1: order + vendors (bill loaded after line totals for save/update) ===
+  // === Batch 1: order + vendors (cached list — avoids repeat full-table reads on slow links) ===
   const [orderRes, vendorsRes] = await Promise.all([
     supabase
       .from('orders')
       .select('id, order_number, token, user_id, vendor_id, vendor_name')
       .ilike('token', tokenLookup)
       .limit(1),
-    supabase.from('vendors').select('id, slug, name'),
+    getVendorsListCached(supabase),
   ]);
 
   if (orderRes.error) return NextResponse.json({ error: orderRes.error.message }, { status: 500 });
+  if (vendorsRes.error) return NextResponse.json({ error: vendorsRes.error.message }, { status: 500 });
   const order = Array.isArray(orderRes.data) ? orderRes.data[0] : null;
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
@@ -71,7 +73,7 @@ export async function POST(request: Request) {
 
   const vendorsBySlug = new Map<string, { id: string; slug: string; name: string }>();
   const vendorsById = new Map<string, { id: string; slug: string; name: string }>();
-  for (const row of vendorsRes.data ?? []) {
+  for (const row of vendorsRes.data) {
     const v = row as { id: string; slug: string; name: string };
     vendorsBySlug.set(String(v.slug).toLowerCase().trim(), v);
     vendorsById.set(String(v.id), v);
@@ -84,15 +86,11 @@ export async function POST(request: Request) {
     resolveVendorSlugFromName(order.vendor_name);
   const effectiveVendorSlug = (sessionVendorSlug ?? orderVendorSlug ?? null)?.toLowerCase().trim() || null;
 
-  // === Batch 2: Load vendor profile overrides + user info in parallel ===
-  const [profRes, userRes] = await Promise.all([
-    effectiveVendorSlug
-      ? supabase
-          .from('vendor_profiles')
-          .select('bill_item_overrides')
-          .eq('slug', effectiveVendorSlug)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
+  const billOrderTokenEarly = stripLeadingHashesFromToken(String(order.token ?? tokenLookup));
+
+  // === Batch 2: profile overrides (cached) + user + latest active bill in parallel ===
+  const [profOverrides, userRes, existingBillRes] = await Promise.all([
+    getVendorBillOverridesCached(supabase, effectiveVendorSlug),
     order.user_id
       ? supabase
           .from('users')
@@ -100,9 +98,19 @@ export async function POST(request: Request) {
           .eq('id', order.user_id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from('vendor_bills')
+      .select('id, line_items, subtotal, total')
+      .ilike('order_token', billOrderTokenEarly)
+      .is('cancelled_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
-  const billOverrides = profRes.data?.bill_item_overrides ?? {};
+  const billOverrides = profOverrides.bill_item_overrides ?? {};
+  if (userRes.error) return NextResponse.json({ error: userRes.error.message }, { status: 500 });
+
   const mergedCatalog = mergeVendorBillItemsFromDbRow(effectiveVendorSlug, billOverrides);
 
   const safeLineItems: Array<{ id: string; label: string; qty: number; price: number; image_url?: string | null }> = [];
@@ -166,20 +174,12 @@ export async function POST(request: Request) {
 
   const newLineItemsPayload = safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty, image_url: l.image_url }));
 
-  const billOrderToken = stripLeadingHashesFromToken(String(order.token ?? tokenLookup));
+  const billOrderToken = billOrderTokenEarly;
 
-  // Latest active bill for this order token — same items reuses row; changes update that row (one bill per token).
-  let existingBillRes = await supabase
-    .from('vendor_bills')
-    .select('id, line_items, subtotal, total')
-    .ilike('order_token', billOrderToken)
-    .is('cancelled_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (existingBillRes.error?.code === '42703') {
-    existingBillRes = await supabase
+  // Latest active bill (fetched in batch 2). Retry without cancelled_at if column missing.
+  let resolvedExistingBillRes = existingBillRes;
+  if (resolvedExistingBillRes.error?.code === '42703') {
+    resolvedExistingBillRes = await supabase
       .from('vendor_bills')
       .select('id, line_items, subtotal, total')
       .ilike('order_token', billOrderToken)
@@ -188,10 +188,12 @@ export async function POST(request: Request) {
       .maybeSingle();
   }
 
+  if (resolvedExistingBillRes.error) {
+    return NextResponse.json({ error: resolvedExistingBillRes.error.message }, { status: 500 });
+  }
+
   type ExistingBill = { id: string; line_items: unknown; subtotal: number; total: number };
-  let existingBill: ExistingBill | null = existingBillRes.error
-    ? null
-    : ((existingBillRes.data ?? null) as ExistingBill | null);
+  let existingBill: ExistingBill | null = (resolvedExistingBillRes.data ?? null) as ExistingBill | null;
 
   if (existingBill) {
     const eb = existingBill;
