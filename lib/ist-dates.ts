@@ -6,6 +6,14 @@ export function formatIstYmd(d: Date): string {
   return d.toLocaleDateString('en-CA', { timeZone: TZ });
 }
 
+/**
+ * Start of calendar day `ymd` in Asia/Kolkata as ISO 8601 (timestamptz).
+ * Use for RPC filters so "last 7 days" matches IST calendar rows in the UI.
+ */
+export function istYmdStartIso(ymd: string): string {
+  return `${ymd}T00:00:00+05:30`;
+}
+
 /** Add days to a YYYY-MM-DD string (UTC date arithmetic on the calendar day). */
 export function addDaysYmd(ymd: string, delta: number): string {
   const [y, m, dd] = ymd.split('-').map(Number);
@@ -65,4 +73,15 @@ export function fillCollectedByDate(
         total: 0,
       },
   );
+}
+
+/** Aggregate totals from a filled day range (matches sum of daily table rows). */
+export function sumFilledDayRows(rows: CollectedDayRow[]) {
+  return {
+    total: Math.round(rows.reduce((s, r) => s + r.total, 0) * 100) / 100,
+    bill_count: rows.reduce((s, r) => s + r.bill_count, 0),
+    item_qty_sum: Math.round(rows.reduce((s, r) => s + r.item_qty_sum, 0) * 100) / 100,
+    subtotal: Math.round(rows.reduce((s, r) => s + r.subtotal, 0) * 100) / 100,
+    convenience_fee: Math.round(rows.reduce((s, r) => s + r.convenience_fee, 0) * 100) / 100,
+  };
 }

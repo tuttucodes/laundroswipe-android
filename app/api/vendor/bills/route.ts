@@ -89,16 +89,8 @@ export async function GET(request: Request) {
       })
     : (data ?? []);
 
-  // Deduplicate: only remove exact duplicates (same token + same total amount).
-  // Bills with same token but different amounts are intentional (different billing runs).
-  const seen = new Set<string>();
-  const raw: any[] = [];
-  for (const b of vendorFiltered) {
-    const dedupKey = `${b.order_token}|${Number(b.total ?? 0).toFixed(2)}`;
-    if (seen.has(dedupKey)) continue; // skip duplicate (same token + same amount)
-    seen.add(dedupKey);
-    raw.push(b);
-  }
+  // Show every saved row. Revenue RPCs dedupe by (token, total); UI highlights same-total / duplicate saves.
+  const raw: any[] = [...vendorFiltered];
 
   const userIds = Array.from(new Set(raw.map((b: any) => b.user_id).filter(Boolean))) as string[];
   let userMap = new Map<string, { full_name: string | null; email: string | null; phone: string | null; display_id: string | null }>();

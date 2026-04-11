@@ -55,6 +55,7 @@ export default function VendorPage() {
   const [catalogFromApi, setCatalogFromApi] = useState<QuickItem[] | null>(null);
   const [blePrefs, setBlePrefs] = useState(() => getBlePrinterPreferences());
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
+  const billPersistInFlightRef = useRef(false);
   const refreshBlePrefs = () => setBlePrefs(getBlePrinterPreferences());
   const vendorBillItems = getVendorBillItems(vendorId);
   const catalogBase: QuickItem[] =
@@ -583,6 +584,8 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
       showToast('Load an order first', 'er');
       return;
     }
+    if (billPersistInFlightRef.current) return;
+    billPersistInFlightRef.current = true;
     const orderToken = order.token;
     setSaving(true);
     try {
@@ -620,6 +623,7 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
       showToast('Save failed', 'er');
     } finally {
       setSaving(false);
+      billPersistInFlightRef.current = false;
     }
   };
 
@@ -715,6 +719,9 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
       await doPrint();
       return;
     }
+    if (billPersistInFlightRef.current) return;
+    billPersistInFlightRef.current = true;
+    setSaving(true);
     showToast('Saving & printing…', 'ok');
     const orderToken = currentOrder.token;
     try {
@@ -735,23 +742,26 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data?.ok) {
-        lastSavedBillFingerprintRef.current = fingerprint;
-        setBillAlreadyGenerated(true);
-        if (data.reused) {
-          showToast('Printing (bill unchanged)…', 'ok');
-        } else if (data.updated) {
-          showToast('Bill updated. Printing…', 'ok');
-        } else {
-          showToast('Bill saved. Printing…', 'ok');
-        }
-      } else {
-        showToast('Printing…', 'er');
+      if (!res.ok || !data?.ok) {
+        showToast(data?.error || 'Could not save bill before print', 'er');
+        return;
       }
+      lastSavedBillFingerprintRef.current = fingerprint;
+      setBillAlreadyGenerated(true);
+      if (data.reused) {
+        showToast('Printing (bill unchanged)…', 'ok');
+      } else if (data.updated) {
+        showToast('Bill updated. Printing…', 'ok');
+      } else {
+        showToast('Bill saved. Printing…', 'ok');
+      }
+      await doPrint();
     } catch {
-      showToast('Printing…', 'er');
+      showToast('Save failed — not printing', 'er');
+    } finally {
+      setSaving(false);
+      billPersistInFlightRef.current = false;
     }
-    await doPrint();
   };
 
   const handleNewBill = () => {
@@ -1054,7 +1064,15 @@ ${blockLabel || roomLabel ? `<p class="center">Hostel: ${[blockLabel && `Block $
             )}
 
             <div className="vendor-action-row" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <button type="button" onClick={handlePrint} className="vendor-btn-primary" style={{ flex: '1 1 200px' }}>Print bill</button>
+              <button
+                type="button"
+                onClick={() => void handlePrint()}
+                disabled={lineItems.length === 0 || (!sampleMode && !order?.token) || saving}
+                className="vendor-btn-primary"
+                style={{ flex: '1 1 200px' }}
+              >
+                {saving ? 'Saving…' : 'Print bill'}
+              </button>
               <button type="button" onClick={handleCopyReceipt} disabled={lineItems.length === 0} className="vendor-btn-secondary" style={{ flex: '1 1 200px' }}>Copy receipt</button>
               <button
                 type="button"

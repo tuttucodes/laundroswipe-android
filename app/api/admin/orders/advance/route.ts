@@ -40,9 +40,7 @@ export async function POST(request: Request) {
   // Fetch current order first (so we can validate vendor access and compute next status).
   const { data: existing, error: existingErr } = await supabase
     .from('orders')
-    .select(
-      'id, status, vendor_id, vendor_name'
-    )
+    .select('id, status, vendor_id, vendor_name, delivery_confirmed_at')
     .eq('id', orderId)
     .maybeSingle();
   if (existingErr) return NextResponse.json({ error: existingErr.message }, { status: 500 });
@@ -63,9 +61,14 @@ export async function POST(request: Request) {
 
   const nextStatus = STATUSES[currentIdx + 1];
 
+  const patch: { status: (typeof STATUSES)[number]; delivery_confirmed_at?: string } = { status: nextStatus };
+  if (nextStatus === 'delivered' && !(existing as { delivery_confirmed_at?: string | null }).delivery_confirmed_at) {
+    patch.delivery_confirmed_at = new Date().toISOString();
+  }
+
   const { data, error } = await supabase
     .from('orders')
-    .update({ status: nextStatus })
+    .update(patch)
     .eq('id', orderId)
     .select()
     .maybeSingle();

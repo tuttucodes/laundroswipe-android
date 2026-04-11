@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
+import { normalizeHostelBlockKey } from '@/lib/hostel-block';
 
 type BillByBlock = {
   block: string;
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
   // Group by block
   const billsByBlock = new Map<string, { count: number; amount: number }>();
   for (const bill of bills) {
-    const block = bill.customer_hostel_block || 'No hostel block';
+    const block = normalizeHostelBlockKey(bill.customer_hostel_block);
     const existing = billsByBlock.get(block) || { count: 0, amount: 0 };
     billsByBlock.set(block, {
       count: existing.count + 1,
@@ -57,9 +58,8 @@ export async function GET(request: Request) {
       amount: Math.round(amount * 100) / 100,
     }))
     .sort((a, b) => {
-      // Sort so "No hostel block" comes last
-      if (a.block === 'No hostel block') return 1;
-      if (b.block === 'No hostel block') return -1;
+      if (a.block === 'No block') return 1;
+      if (b.block === 'No block') return -1;
       return a.block.localeCompare(b.block);
     });
 

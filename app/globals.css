@@ -490,12 +490,23 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 .vd-card-blue{background:#EFF6FF;border-color:#bfdbfe}
 .vd-card-amber{background:#FFFBEB;border-color:#fde68a}
 .vd-card-violet{background:#F5F3FF;border-color:#ddd6fe}
+.vd-card-teal{background:#F0FDFA;border-color:#99f6e4}
+.vd-card-slate{background:#F8FAFC;border-color:#e2e8f0}
+.vd-revenue-summary{margin-bottom:20px;border-radius:14px;border:1px solid var(--bd);overflow:hidden}
+.vd-revenue-summary table{width:100%;border-collapse:collapse;font-size:14px}
+.vd-revenue-summary th,.vd-revenue-summary td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--bd)}
+.vd-revenue-summary th{background:color-mix(in srgb,var(--bg) 88%,var(--tx));font-weight:600;color:var(--tx);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.vd-revenue-summary td.vd-num{text-align:right;font-variant-numeric:tabular-nums}
+.vd-revenue-summary tr:last-child td{border-bottom:none}
+.vd-revenue-summary .vd-rw-label{font-weight:600;color:var(--tx)}
+.vd-revenue-summary .vd-rw-sub{font-size:12px;color:var(--ts);font-weight:400;display:block;margin-top:2px}
 .vd-card-icon{font-size:22px;margin-bottom:6px}
 .vd-card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ts);margin-bottom:4px}
 .vd-card-value{font-size:26px;font-weight:800;line-height:1.1;margin-bottom:4px;color:var(--tx)}
 .vd-card-meta{font-size:13px;color:var(--tm)}
 .vd-card-hint{font-size:11px;margin-top:10px;font-weight:600;color:var(--b)}
 .vd-panel{margin-bottom:20px}
+.vd-panel-highlight{border:1px solid color-mix(in srgb,var(--b) 35%,transparent);box-shadow:0 1px 0 color-mix(in srgb,var(--b) 12%,transparent)}
 .vd-panel-title{font-family:var(--fd);font-size:18px;margin:0 0 8px}
 .vd-panel-desc{font-size:13px;color:var(--ts);margin:0 0 16px;line-height:1.5}
 .vd-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}

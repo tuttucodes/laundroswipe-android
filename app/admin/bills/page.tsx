@@ -125,6 +125,19 @@ type RevenueBucket = { date_from: string; date_to: string; bill_count: number; s
 type RevenueData = { total_bills: number; grand_subtotal: number; grand_convenience_fee: number; grand_total: number; revenue: RevenueBucket[] } | null;
 type DeliveredByDate = { date: string; order_count: number; total_items: number; total_amount: number };
 
+function normalizeBillTokenForDup(t: string) {
+  return String(t ?? '')
+    .replace(/^#/, '')
+    .trim()
+    .toUpperCase();
+}
+
+function billTotalKeyForDup(total: unknown) {
+  const n = Number(total);
+  if (!Number.isFinite(n)) return '_';
+  return (Math.round(n * 100) / 100).toFixed(2);
+}
+
 export default function BillsPage() {
   const [bills, setBills] = useState<VendorBillRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,6 +271,53 @@ export default function BillsPage() {
   useEffect(() => {
     if (showRevenue) fetchRevenue(revenueDays);
   }, [showRevenue, revenueDays]);
+
+  const billDuplicateInfo = useMemo(() => {
+    const active = bills.filter((b) => !b.cancelled_at);
+    const totalToTokens = new Map<string, Set<string>>();
+    const tokenTotalCounts = new Map<string, number>();
+
+    for (const b of active) {
+      const tok = normalizeBillTokenForDup(b.order_token);
+      const tk = billTotalKeyForDup(b.total);
+      if (tk === '_') continue;
+      if (!totalToTokens.has(tk)) totalToTokens.set(tk, new Set());
+      totalToTokens.get(tk)!.add(tok);
+      const pairKey = `${tok}|${tk}`;
+      tokenTotalCounts.set(pairKey, (tokenTotalCounts.get(pairKey) ?? 0) + 1);
+    }
+
+    const crossTokenSameTotals: { total: string; tokens: string[] }[] = [];
+    for (const [totalK, set] of totalToTokens) {
+      if (set.size >= 2) {
+        crossTokenSameTotals.push({ total: totalK, tokens: [...set].sort() });
+      }
+    }
+
+    const dupTokenTotalPairs: { token: string; total: string; count: number }[] = [];
+    for (const [pairKey, count] of tokenTotalCounts) {
+      if (count < 2) continue;
+      const [token, total] = pairKey.split('|');
+      dupTokenTotalPairs.push({ token, total, count });
+    }
+    dupTokenTotalPairs.sort((a, b) => b.count - a.count || a.token.localeCompare(b.token));
+
+    const rowFlags = new Map<string, { crossAmount: boolean; dupTokenTotalCount?: number }>();
+    for (const b of bills) {
+      if (b.cancelled_at) continue;
+      const tok = normalizeBillTokenForDup(b.order_token);
+      const tk = billTotalKeyForDup(b.total);
+      const set = totalToTokens.get(tk);
+      const pairKey = `${tok}|${tk}`;
+      const cnt = tokenTotalCounts.get(pairKey) ?? 1;
+      rowFlags.set(b.id, {
+        crossAmount: !!set && set.size >= 2,
+        dupTokenTotalCount: cnt >= 2 ? cnt : undefined,
+      });
+    }
+
+    return { crossTokenSameTotals, dupTokenTotalPairs, rowFlags };
+  }, [bills]);
 
   const escapeCsv = (v: string | number | null | undefined): string => {
     const s = v == null ? '' : String(v);
@@ -750,13 +810,95 @@ export default function BillsPage() {
           <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 8 }}>
             Showing {(billsPage - 1) * BILLS_PER_PAGE + 1}–{Math.min(billsPage * BILLS_PER_PAGE, billsTotal)} of {billsTotal} bills
           </p>
-          {bills.map((b) => (
-            <div key={b.id} className="vendor-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+          {(billDuplicateInfo.crossTokenSameTotals.length > 0 || billDuplicateInfo.dupTokenTotalPairs.length > 0) && (
+            <div
+              className="vendor-card"
+              style={{
+                padding: '14px 16px',
+                marginBottom: 4,
+                background: 'var(--bg)',
+                border: '1px solid var(--bd)',
+              }}
+            >
+              <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 10px', color: 'var(--tx)' }}>Suggestions (this page)</p>
+              <p style={{ fontSize: 12, color: 'var(--ts)', margin: '0 0 12px', lineHeight: 1.45 }}>
+                Same <strong>token</strong> and <strong>total</strong> = one bill in revenue. Different tokens with the same total may be coincidence — verify you did not save twice by mistake.
+              </p>
+              {billDuplicateInfo.crossTokenSameTotals.map((w) => (
+                <p
+                  key={`cross-${w.total}`}
+                  style={{
+                    fontSize: 13,
+                    margin: '0 0 10px',
+                    padding: '10px 12px',
+                    background: '#FFFBEB',
+                    borderRadius: 8,
+                    borderLeft: '4px solid #F59E0B',
+                    color: '#78350F',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>Same total ₹{Number(w.total).toLocaleString('en-IN')}</strong> on tokens{' '}
+                  <strong>{w.tokens.map((t) => `#${t}`).join(', ')}</strong>
+                  — confirm these are different orders.
+                </p>
+              ))}
+              {billDuplicateInfo.dupTokenTotalPairs.map((d) => (
+                <p
+                  key={`dup-${d.token}-${d.total}`}
+                  style={{
+                    fontSize: 13,
+                    margin: '0 0 10px',
+                    padding: '10px 12px',
+                    background: '#EEF2FF',
+                    borderRadius: 8,
+                    borderLeft: '4px solid #6366F1',
+                    color: '#312E81',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>Token #{d.token}</strong> · ₹{Number(d.total).toLocaleString('en-IN')}: <strong>{d.count} saved rows</strong> with the same
+                  amount — counted as <strong>one</strong> bill in reports. Delete extras if they are mistakes (within the delete window).
+                </p>
+              ))}
+            </div>
+          )}
+          {bills.map((b) => {
+            const flags = billDuplicateInfo.rowFlags.get(b.id);
+            const accent =
+              flags?.dupTokenTotalCount && flags.dupTokenTotalCount >= 2
+                ? '4px solid #6366F1'
+                : flags?.crossAmount
+                  ? '4px solid #F59E0B'
+                  : undefined;
+            return (
+            <div
+              key={b.id}
+              className="vendor-card"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 14,
+                borderLeft: accent,
+              }}
+            >
               <div style={{ flex: '1 1 200px' }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--b)' }}>#{b.order_token} · {b.order_number ?? '—'}</div>
                 <div style={{ fontSize: 13, color: 'var(--ts)', marginTop: 4 }}>{b.customer_name ?? '—'} · {b.customer_phone ?? '—'}</div>
                 <div style={{ fontSize: 12, color: 'var(--tm)', marginTop: 2 }}>{b.created_at ? new Date(b.created_at).toLocaleString() : ''}</div>
                 <div style={{ fontSize: 14, marginTop: 6, fontWeight: 600 }}>₹{b.total}</div>
+                {flags?.crossAmount && (
+                  <div style={{ fontSize: 12, color: '#B45309', marginTop: 8, fontWeight: 500 }}>
+                    Same total as another token on this page — see suggestion above.
+                  </div>
+                )}
+                {flags?.dupTokenTotalCount != null && flags.dupTokenTotalCount >= 2 && (
+                  <div style={{ fontSize: 12, color: '#4338CA', marginTop: 8, fontWeight: 500 }}>
+                    {flags.dupTokenTotalCount} rows same token &amp; amount — revenue uses one.
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button type="button" onClick={() => setViewingBill(b)} className="vendor-btn-secondary">
@@ -784,7 +926,8 @@ export default function BillsPage() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
           {/* Pagination controls */}
           {billsTotalPages > 1 && (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16, padding: '12px 0' }}>

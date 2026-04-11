@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
-import { fillCollectedByDate, formatIstYmd } from '@/lib/ist-dates';
+import { fillCollectedByDate, formatIstYmd, istYmdStartIso, sumFilledDayRows } from '@/lib/ist-dates';
 
 function deliveryDateKeyIst(iso: string): string {
   return formatIstYmd(new Date(iso));
+}
+
+/** Delivered orders in range: confirmed_at >= from OR (no confirm yet, use updated_at). */
+function deliveredSinceOrFilter(fromIso: string) {
+  const q = `"${fromIso.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+  return `delivery_confirmed_at.gte.${q},and(delivery_confirmed_at.is.null,updated_at.gte.${q})`;
 }
 
 type RpcDeliveredRow = {
@@ -19,14 +25,24 @@ type RpcDeliveredRow = {
 
 type RpcBlockRow = RpcDeliveredRow & { block_key: string };
 
-function sumCollected(rows: RpcDeliveredRow[]) {
-  return {
-    total: Math.round(rows.reduce((s, r) => s + Number(r.total_sum), 0) * 100) / 100,
-    bill_count: rows.reduce((s, r) => s + Number(r.bill_count), 0),
-    item_qty_sum: Math.round(rows.reduce((s, r) => s + Number(r.item_qty_sum), 0) * 100) / 100,
-    subtotal: Math.round(rows.reduce((s, r) => s + Number(r.subtotal_sum), 0) * 100) / 100,
-    convenience_fee: Math.round(rows.reduce((s, r) => s + Number(r.convenience_fee_sum), 0) * 100) / 100,
-  };
+type RpcBillSavedRow = {
+  bill_date: string;
+  bill_count: number;
+  item_qty_sum: number;
+  subtotal_sum: number;
+  convenience_fee_sum: number;
+  total_sum: number;
+};
+
+function billSavedRowsForFill(rows: RpcBillSavedRow[]) {
+  return rows.map((r) => ({
+    delivery_date: String(r.bill_date).slice(0, 10),
+    bill_count: Number(r.bill_count),
+    item_qty_sum: Number(r.item_qty_sum),
+    subtotal_sum: Number(r.subtotal_sum),
+    convenience_fee_sum: Number(r.convenience_fee_sum),
+    total_sum: Number(r.total_sum),
+  }));
 }
 
 export async function GET(request: Request) {
@@ -54,41 +70,52 @@ export async function GET(request: Request) {
 
   const now = new Date();
   const msDay = 24 * 60 * 60 * 1000;
-  const sevenDaysAgo = new Date(now.getTime() - 7 * msDay).toISOString();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * msDay).toISOString();
+  const toIso = now.toISOString();
 
   const istToday = formatIstYmd(now);
   const ist7Start = formatIstYmd(new Date(now.getTime() - 6 * msDay));
   const ist30Start = formatIstYmd(new Date(now.getTime() - 29 * msDay));
+  const from7Iso = istYmdStartIso(ist7Start);
+  const from30Iso = istYmdStartIso(ist30Start);
 
   // Bill-created revenue (legacy; super admin dashboard cards)
-  const [rpc7d, rpc30d, del7, del30, colBlock] = await Promise.all([
+  const [rpc7d, rpc30d, del7, del30, bill7, bill30, colBlock] = await Promise.all([
     supabase.rpc('get_revenue_by_date', {
       p_group_days: 1,
       p_vendor_id: vendorDbId,
-      p_from: sevenDaysAgo,
-      p_to: now.toISOString(),
+      p_from: from7Iso,
+      p_to: toIso,
     }),
     supabase.rpc('get_revenue_by_date', {
       p_group_days: 1,
       p_vendor_id: vendorDbId,
-      p_from: thirtyDaysAgo,
-      p_to: now.toISOString(),
+      p_from: from30Iso,
+      p_to: toIso,
     }),
     supabase.rpc('get_delivered_revenue_by_date', {
       p_vendor_id: vendorDbId,
-      p_from: sevenDaysAgo,
-      p_to: now.toISOString(),
+      p_from: from7Iso,
+      p_to: toIso,
     }),
     supabase.rpc('get_delivered_revenue_by_date', {
       p_vendor_id: vendorDbId,
-      p_from: thirtyDaysAgo,
-      p_to: now.toISOString(),
+      p_from: from30Iso,
+      p_to: toIso,
+    }),
+    supabase.rpc('get_bill_saved_revenue_by_date', {
+      p_vendor_id: vendorDbId,
+      p_from: from7Iso,
+      p_to: toIso,
+    }),
+    supabase.rpc('get_bill_saved_revenue_by_date', {
+      p_vendor_id: vendorDbId,
+      p_from: from30Iso,
+      p_to: toIso,
     }),
     supabase.rpc('get_delivered_revenue_by_block_and_date', {
       p_vendor_id: vendorDbId,
-      p_from: blockFrom ? new Date(blockFrom).toISOString() : thirtyDaysAgo,
-      p_to: blockTo ? new Date(blockTo + 'T23:59:59.999Z').toISOString() : now.toISOString(),
+      p_from: blockFrom ? new Date(blockFrom).toISOString() : from30Iso,
+      p_to: blockTo ? new Date(blockTo + 'T23:59:59.999Z').toISOString() : toIso,
     }),
   ]);
 
@@ -107,15 +134,15 @@ export async function GET(request: Request) {
 
   let delivered7Query = supabase
     .from('orders')
-    .select('id, delivery_confirmed_at, token')
+    .select('id, delivery_confirmed_at, updated_at, token')
     .eq('status', 'delivered')
-    .gte('delivery_confirmed_at', sevenDaysAgo);
+    .or(deliveredSinceOrFilter(from7Iso));
 
   let delivered30Query = supabase
     .from('orders')
-    .select('id, delivery_confirmed_at, token')
+    .select('id, delivery_confirmed_at, updated_at, token')
     .eq('status', 'delivered')
-    .gte('delivery_confirmed_at', thirtyDaysAgo);
+    .or(deliveredSinceOrFilter(from30Iso));
 
   if (vendorDbId) {
     delivered7Query = delivered7Query.eq('vendor_id', vendorDbId);
@@ -143,7 +170,21 @@ export async function GET(request: Request) {
     (rpcData ?? []).map((r: any) => ({
       date: String(r.date_from),
       bill_count: Number(r.bill_count),
+      subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
+      convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
       total: Math.round(Number(r.total_sum) * 100) / 100,
+    }));
+
+  const legacyBillRowsForFill = (
+    buckets: { date: string; bill_count: number; subtotal: number; convenience_fee: number; total: number }[],
+  ) =>
+    buckets.map((b) => ({
+      delivery_date: b.date,
+      bill_count: b.bill_count,
+      item_qty_sum: 0,
+      subtotal_sum: b.subtotal,
+      convenience_fee_sum: b.convenience_fee,
+      total_sum: b.total,
     }));
 
   const rev7dBuckets = !rpc7d.error ? toRevenueBuckets(rpc7d.data ?? []) : [];
@@ -160,11 +201,12 @@ export async function GET(request: Request) {
     byStatus[s] = (byStatus[s] ?? 0) + 1;
   }
 
-  function ordersDeliveredByDate(rows: { delivery_confirmed_at: string | null }[]) {
+  function ordersDeliveredByDate(rows: { delivery_confirmed_at: string | null; updated_at: string }[]) {
     const deliveredByDate = new Map<string, number>();
     for (const o of rows) {
-      if (!o.delivery_confirmed_at) continue;
-      const d = deliveryDateKeyIst(o.delivery_confirmed_at);
+      const raw = o.delivery_confirmed_at ?? o.updated_at;
+      if (!raw) continue;
+      const d = deliveryDateKeyIst(raw);
       deliveredByDate.set(d, (deliveredByDate.get(d) ?? 0) + 1);
     }
     return Array.from(deliveredByDate.entries())
@@ -181,8 +223,28 @@ export async function GET(request: Request) {
   const collected7Filled = fillCollectedByDate(ist7Start, istToday, col7rows);
   const collected30Filled = fillCollectedByDate(ist30Start, istToday, col30rows);
 
-  const sum7 = sumCollected(col7rows);
-  const sum30 = sumCollected(col30rows);
+  const sum7 = sumFilledDayRows(collected7Filled);
+  const sum30 = sumFilledDayRows(collected30Filled);
+
+  const bill7rows = (!bill7.error ? (bill7.data ?? []) : []) as RpcBillSavedRow[];
+  const bill30rows = (!bill30.error ? (bill30.data ?? []) : []) as RpcBillSavedRow[];
+  if (bill7.error && process.env.NODE_ENV === 'development') {
+    console.warn('[dashboard] get_bill_saved_revenue_by_date:', bill7.error.message);
+  }
+
+  const billed7Filled = fillCollectedByDate(
+    ist7Start,
+    istToday,
+    bill7.error ? legacyBillRowsForFill(rev7dBuckets) : billSavedRowsForFill(bill7rows),
+  );
+  const billed30Filled = fillCollectedByDate(
+    ist30Start,
+    istToday,
+    bill30.error ? legacyBillRowsForFill(rev30dBuckets) : billSavedRowsForFill(bill30rows),
+  );
+
+  const sumBilled7 = sumFilledDayRows(billed7Filled);
+  const sumBilled30 = sumFilledDayRows(billed30Filled);
 
   const blockRows = (!colBlock.error ? (colBlock.data ?? []) : []) as RpcBlockRow[];
   const collected_by_block = blockRows.map((r) => ({
@@ -204,6 +266,14 @@ export async function GET(request: Request) {
     revenue_30d: {
       ...sumBuckets(rev30dBuckets),
       by_date: rev30dBuckets.sort((a, b) => a.date.localeCompare(b.date)),
+    },
+    billed_7d: {
+      ...sumBilled7,
+      by_date: billed7Filled,
+    },
+    billed_30d: {
+      ...sumBilled30,
+      by_date: billed30Filled,
     },
     collected_7d: {
       ...sum7,

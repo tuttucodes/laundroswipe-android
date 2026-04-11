@@ -637,9 +637,14 @@ export const LSApi = {
       const currentIdx = STATUSES.indexOf((existing as OrderRow).status);
       if (currentIdx < 0 || currentIdx >= STATUSES.length - 1) return existing as OrderRow;
       const nextStatus = STATUSES[currentIdx + 1];
+      const row = existing as OrderRow;
+      const patch: { status: string; delivery_confirmed_at?: string } = { status: nextStatus };
+      if (nextStatus === 'delivered' && !row.delivery_confirmed_at) {
+        patch.delivery_confirmed_at = new Date().toISOString();
+      }
       const { data, error } = await supabase
         .from('orders')
-        .update({ status: nextStatus })
+        .update(patch)
         .eq('id', orderId)
         .select()
         .single();

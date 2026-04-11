@@ -5,6 +5,36 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 export type VendorDashboardMetrics = {
   revenue_7d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
   revenue_30d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
+  billed_7d: {
+    total: number;
+    bill_count: number;
+    item_qty_sum: number;
+    subtotal: number;
+    convenience_fee: number;
+    by_date: Array<{
+      date: string;
+      bill_count: number;
+      item_qty_sum: number;
+      subtotal: number;
+      convenience_fee: number;
+      total: number;
+    }>;
+  };
+  billed_30d: {
+    total: number;
+    bill_count: number;
+    item_qty_sum: number;
+    subtotal: number;
+    convenience_fee: number;
+    by_date: Array<{
+      date: string;
+      bill_count: number;
+      item_qty_sum: number;
+      subtotal: number;
+      convenience_fee: number;
+      total: number;
+    }>;
+  };
   collected_7d: {
     total: number;
     bill_count: number;
@@ -178,7 +208,11 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
     <div className="vd-root">
       <header className="vd-header">
         <h1 className="vd-title">Dashboard</h1>
-        <p className="vd-sub">Revenue is counted on <strong>delivery day</strong> (when payment is collected). Bill date is separate.</p>
+        <p className="vd-sub">
+          <strong>Normal revenue</strong> = total on bills you generated (grouped by the day you saved the bill in India time).{' '}
+          <strong>Delivery revenue</strong> = the same bill totals moved to the day the order was marked <em>delivered</em> (good for batch delivery).{' '}
+          Grand totals for a period usually match; only the <em>per-day</em> breakdown differs.
+        </p>
       </header>
 
       <div className="vd-nav" role="tablist" aria-label="Dashboard sections">
@@ -192,21 +226,39 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
         <div className="vd-grid-cards">
           <button type="button" className="vd-card vd-card-green" onClick={() => setSection('revenue')}>
             <span className="vd-card-icon">📈</span>
-            <span className="vd-card-label">Collected (7 days)</span>
-            <span className="vd-card-value">{fmtMoney(metrics.collected_7d.total)}</span>
+            <span className="vd-card-label">Normal revenue · 7 days</span>
+            <span className="vd-card-value">{fmtMoney(metrics.billed_7d.total)}</span>
             <span className="vd-card-meta">
-              {metrics.collected_7d.bill_count} bills · {metrics.collected_7d.item_qty_sum} items
+              {metrics.billed_7d.bill_count} bills generated · {metrics.billed_7d.item_qty_sum} items
             </span>
-            <span className="vd-card-hint">View daily breakdown →</span>
+            <span className="vd-card-hint">By bill date →</span>
           </button>
           <button type="button" className="vd-card vd-card-blue" onClick={() => setSection('revenue')}>
             <span className="vd-card-icon">💰</span>
-            <span className="vd-card-label">Collected (30 days)</span>
+            <span className="vd-card-label">Normal revenue · 30 days</span>
+            <span className="vd-card-value">{fmtMoney(metrics.billed_30d.total)}</span>
+            <span className="vd-card-meta">
+              {metrics.billed_30d.bill_count} bills generated · {metrics.billed_30d.item_qty_sum} items
+            </span>
+            <span className="vd-card-hint">By bill date →</span>
+          </button>
+          <button type="button" className="vd-card vd-card-violet" onClick={() => setSection('revenue')}>
+            <span className="vd-card-icon">🚚</span>
+            <span className="vd-card-label">Delivery revenue · 7 days</span>
+            <span className="vd-card-value">{fmtMoney(metrics.collected_7d.total)}</span>
+            <span className="vd-card-meta">
+              {metrics.collected_7d.bill_count} bills on delivery days · {metrics.delivered_7d.count} orders delivered
+            </span>
+            <span className="vd-card-hint">By delivery date →</span>
+          </button>
+          <button type="button" className="vd-card vd-card-teal" onClick={() => setSection('revenue')}>
+            <span className="vd-card-icon">📦</span>
+            <span className="vd-card-label">Delivery revenue · 30 days</span>
             <span className="vd-card-value">{fmtMoney(metrics.collected_30d.total)}</span>
             <span className="vd-card-meta">
-              {metrics.collected_30d.bill_count} bills · {metrics.collected_30d.item_qty_sum} items
+              {metrics.collected_30d.bill_count} bills on delivery days · {metrics.delivered_30d.count} orders delivered
             </span>
-            <span className="vd-card-hint">View daily breakdown →</span>
+            <span className="vd-card-hint">By delivery date →</span>
           </button>
           <button type="button" className="vd-card vd-card-amber" onClick={() => setSection('delivered')}>
             <span className="vd-card-icon">🎫</span>
@@ -215,12 +267,12 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
             <span className="vd-card-meta">Not yet delivered</span>
             <span className="vd-card-hint">Orders pipeline →</span>
           </button>
-          <button type="button" className="vd-card vd-card-violet" onClick={() => setSection('delivered')}>
+          <button type="button" className="vd-card vd-card-slate" onClick={() => setSection('delivered')}>
             <span className="vd-card-icon">✅</span>
-            <span className="vd-card-label">Delivered orders (7d)</span>
+            <span className="vd-card-label">Delivered orders · 7 days</span>
             <span className="vd-card-value">{metrics.delivered_7d.count}</span>
-            <span className="vd-card-meta">All statuses cleared · last week</span>
-            <span className="vd-card-hint">Daily orders →</span>
+            <span className="vd-card-meta">Count of completed deliveries</span>
+            <span className="vd-card-hint">Daily breakdown →</span>
           </button>
         </div>
       )}
@@ -286,8 +338,134 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
 
       {section === 'revenue' && (
         <div className="vd-stack">
+          <div className="vd-revenue-summary vendor-card vd-panel" style={{ padding: 0, border: 'none', boxShadow: 'none', background: 'transparent' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">View</th>
+                  <th scope="col" className="vd-num">
+                    Last 7 days
+                  </th>
+                  <th scope="col" className="vd-num">
+                    Last 30 days
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="vd-rw-label">
+                    Normal revenue
+                    <span className="vd-rw-sub">Total on bills generated · by bill-save date (India)</span>
+                  </td>
+                  <td className="vd-num vd-strong">{fmtMoney(metrics.billed_7d.total)}</td>
+                  <td className="vd-num vd-strong">{fmtMoney(metrics.billed_30d.total)}</td>
+                </tr>
+                <tr>
+                  <td className="vd-rw-label">
+                    Delivery revenue
+                    <span className="vd-rw-sub">Same bills · counted on order delivered date (India)</span>
+                  </td>
+                  <td className="vd-num vd-strong">{fmtMoney(metrics.collected_7d.total)}</td>
+                  <td className="vd-num vd-strong">{fmtMoney(metrics.collected_30d.total)}</td>
+                </tr>
+                <tr>
+                  <td className="vd-rw-label">
+                    Bills in scope
+                    <span className="vd-rw-sub">Deduped: same token + same total = one bill</span>
+                  </td>
+                  <td className="vd-num">
+                    {metrics.billed_7d.bill_count} gen. / {metrics.collected_7d.bill_count} del.
+                  </td>
+                  <td className="vd-num">
+                    {metrics.billed_30d.bill_count} gen. / {metrics.collected_30d.bill_count} del.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="vendor-card vd-panel vd-panel-highlight">
+            <h2 className="vd-panel-title">Normal revenue — daily (bills generated)</h2>
+            <p className="vd-panel-desc">
+              Each row is the total <strong>bill amount</strong> for bills <strong>saved that calendar day</strong> (Asia/Kolkata). This is the usual &quot;how much did we sell today&quot; view.
+            </p>
+            <div className="vd-table-wrap">
+              <table className="vd-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th className="vd-num">Bills</th>
+                    <th className="vd-num">Items</th>
+                    <th className="vd-num">Subtotal</th>
+                    <th className="vd-num">Fees</th>
+                    <th className="vd-num">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...metrics.billed_7d.by_date].reverse().map((r) => (
+                    <tr key={r.date}>
+                      <td>{fmtDate(r.date)}</td>
+                      <td className="vd-num">{r.bill_count}</td>
+                      <td className="vd-num">{r.item_qty_sum}</td>
+                      <td className="vd-num">{fmtMoney(r.subtotal)}</td>
+                      <td className="vd-num">{fmtMoney(r.convenience_fee)}</td>
+                      <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
+                    </tr>
+                  ))}
+                  <tr className="vd-total-row">
+                    <td>Total</td>
+                    <td className="vd-num">{metrics.billed_7d.bill_count}</td>
+                    <td className="vd-num">{metrics.billed_7d.item_qty_sum}</td>
+                    <td className="vd-num">{fmtMoney(metrics.billed_7d.subtotal)}</td>
+                    <td className="vd-num">{fmtMoney(metrics.billed_7d.convenience_fee)}</td>
+                    <td className="vd-num vd-strong">{fmtMoney(metrics.billed_7d.total)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="vendor-card vd-panel vd-panel-highlight">
+            <h2 className="vd-panel-title">Normal revenue — last 30 days (bills generated)</h2>
+            <div className="vd-table-wrap">
+              <table className="vd-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th className="vd-num">Bills</th>
+                    <th className="vd-num">Items</th>
+                    <th className="vd-num">Subtotal</th>
+                    <th className="vd-num">Fees</th>
+                    <th className="vd-num">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...metrics.billed_30d.by_date].reverse().map((r) => (
+                    <tr key={r.date}>
+                      <td>{fmtDate(r.date)}</td>
+                      <td className="vd-num">{r.bill_count}</td>
+                      <td className="vd-num">{r.item_qty_sum}</td>
+                      <td className="vd-num">{fmtMoney(r.subtotal)}</td>
+                      <td className="vd-num">{fmtMoney(r.convenience_fee)}</td>
+                      <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
+                    </tr>
+                  ))}
+                  <tr className="vd-total-row">
+                    <td>Total</td>
+                    <td className="vd-num">{metrics.billed_30d.bill_count}</td>
+                    <td className="vd-num">{metrics.billed_30d.item_qty_sum}</td>
+                    <td className="vd-num">{fmtMoney(metrics.billed_30d.subtotal)}</td>
+                    <td className="vd-num">{fmtMoney(metrics.billed_30d.convenience_fee)}</td>
+                    <td className="vd-num vd-strong">{fmtMoney(metrics.billed_30d.total)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
           <div className="vendor-card vd-panel">
-            <h2 className="vd-panel-title">Last 7 days (by delivery date)</h2>
+            <h2 className="vd-panel-title">Delivery revenue — daily (when orders were delivered)</h2>
+            <p className="vd-panel-desc">
+              Bill totals are grouped by the day the linked order was marked <strong>delivered</strong> (not the day you created the bill). Batch delivery days look busy; other days can be ₹0 even when you billed every day — that is expected. The <strong>sum</strong> over a period should align with normal revenue once everything is delivered.
+            </p>
             <div className="vd-table-wrap">
               <table className="vd-table">
                 <thead>
@@ -324,7 +502,8 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
             </div>
           </div>
           <div className="vendor-card vd-panel">
-            <h2 className="vd-panel-title">Last 30 days (by delivery date)</h2>
+            <h2 className="vd-panel-title">Delivery revenue — last 30 days</h2>
+            <p className="vd-panel-desc">Same rules as the 7-day table above.</p>
             <div className="vd-table-wrap">
               <table className="vd-table">
                 <thead>
@@ -361,9 +540,9 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
             </div>
           </div>
           <details className="vd-details">
-            <summary>Bill created date (legacy, not delivery)</summary>
+            <summary>Legacy UTC bucket totals (debug)</summary>
             <p className="vd-muted small">
-              For reference: totals when bills were <em>saved</em> — 7d {fmtMoney(metrics.revenue_7d.total)} ({metrics.revenue_7d.bill_count} bills) · 30d{' '}
+              Old RPC day buckets (UTC, not India date) — 7d {fmtMoney(metrics.revenue_7d.total)} ({metrics.revenue_7d.bill_count} bills) · 30d{' '}
               {fmtMoney(metrics.revenue_30d.total)} ({metrics.revenue_30d.bill_count} bills)
             </p>
           </details>
@@ -373,7 +552,11 @@ export function VendorDashboard({ onGoOrders, onUnauthorized }: Props) {
       {section === 'blocks' && (
         <div className="vendor-card vd-panel">
           <h2 className="vd-panel-title">Hostel block × delivery date</h2>
-          <p className="vd-panel-desc">Uses <code>customer_hostel_block</code> from the bill. Empty values appear as <strong>No block</strong>. Blocks are normalized (e.g. A and a → A).</p>
+          <p className="vd-panel-desc">
+            Uses <code>customer_hostel_block</code> from the bill. Empty values appear as <strong>No block</strong>.{' '}
+            <strong>D1</strong> and <strong>D2</strong> roll up any suffix (spaces, hyphens, slashes, room numbers); e.g.{' '}
+            <code>D2 - 1125</code> and <code>D2/719</code> count as <strong>D2</strong>.
+          </p>
           <div className="vd-filter-row">
             <label className="vd-field">
               <span>From</span>

@@ -292,6 +292,8 @@ export default function AdminPage() {
   type DashboardMetrics = {
     revenue_7d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
     revenue_30d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
+    billed_7d?: { total: number; bill_count: number; item_qty_sum?: number; by_date: { date: string; bill_count: number; total: number }[] };
+    billed_30d?: { total: number; bill_count: number; item_qty_sum?: number; by_date: { date: string; bill_count: number; total: number }[] };
     open_tokens: { count: number; by_status: Record<string, number> };
     delivered_7d: { count: number; by_date: { date: string; count: number }[] };
   };
@@ -1057,15 +1059,23 @@ export default function AdminPage() {
 
           const cards: { key: keyof DashboardMetrics; label: string; icon: string; value: string; sub: string; color: string; bg: string }[] = [
             {
-              key: 'revenue_7d', icon: '📈', label: 'Revenue (last 7 days)',
-              value: dashboardMetrics ? fmtMoney(dashboardMetrics.revenue_7d.total) : '—',
-              sub: dashboardMetrics ? `${dashboardMetrics.revenue_7d.bill_count} bills` : 'Loading…',
+              key: 'revenue_7d', icon: '📈', label: 'Normal revenue (7 days, India date)',
+              value: dashboardMetrics
+                ? fmtMoney(dashboardMetrics.billed_7d?.total ?? dashboardMetrics.revenue_7d.total)
+                : '—',
+              sub: dashboardMetrics
+                ? `${dashboardMetrics.billed_7d?.bill_count ?? dashboardMetrics.revenue_7d.bill_count} bills generated`
+                : 'Loading…',
               color: '#166534', bg: '#F0FDF4',
             },
             {
-              key: 'revenue_30d', icon: '💰', label: 'Revenue (last 30 days)',
-              value: dashboardMetrics ? fmtMoney(dashboardMetrics.revenue_30d.total) : '—',
-              sub: dashboardMetrics ? `${dashboardMetrics.revenue_30d.bill_count} bills` : 'Loading…',
+              key: 'revenue_30d', icon: '💰', label: 'Normal revenue (30 days, India date)',
+              value: dashboardMetrics
+                ? fmtMoney(dashboardMetrics.billed_30d?.total ?? dashboardMetrics.revenue_30d.total)
+                : '—',
+              sub: dashboardMetrics
+                ? `${dashboardMetrics.billed_30d?.bill_count ?? dashboardMetrics.revenue_30d.bill_count} bills generated`
+                : 'Loading…',
               color: '#1E40AF', bg: '#EFF6FF',
             },
             {
