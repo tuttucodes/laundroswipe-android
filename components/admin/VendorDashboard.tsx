@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ClipboardList, Plus, RefreshCw, Tags, Truck } from 'lucide-react';
+import { displayRollupBlockKey } from '@/lib/hostel-block';
 import { normalizeVendorDashboardPayload } from '@/lib/vendor-dashboard-normalize';
 import type { VendorDashboardMetrics } from '@/lib/vendor-dashboard-types';
 import { VendorRevenueTrendCard } from './VendorRevenueTrendCard';
@@ -17,11 +18,13 @@ type BlockDrillState =
   | { kind: 'billed'; bill_date: string; block_key: string; expected_bill_count: number };
 
 function compareBlockKeys(a: string, b: string): number {
-  const na = a === 'No block';
-  const nb = b === 'No block';
+  const da = displayRollupBlockKey(a);
+  const db = displayRollupBlockKey(b);
+  const na = da === 'No block';
+  const nb = db === 'No block';
   if (na && !nb) return 1;
   if (!na && nb) return -1;
-  return a.localeCompare(b);
+  return da.localeCompare(db);
 }
 
 function adminAuthHeaders(): Record<string, string> {
@@ -997,7 +1000,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                               setBlockDrill({
                                 kind: 'billed',
                                 bill_date: r.bill_date,
-                                block_key: r.block_key,
+                                block_key: displayRollupBlockKey(r.block_key),
                                 expected_bill_count: r.bill_count,
                               })
                             }
@@ -1007,14 +1010,16 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                                 setBlockDrill({
                                   kind: 'billed',
                                   bill_date: r.bill_date,
-                                  block_key: r.block_key,
+                                  block_key: displayRollupBlockKey(r.block_key),
                                   expected_bill_count: r.bill_count,
                                 });
                               }
                             }}
                           >
                             <td>{fmtDate(r.bill_date)}</td>
-                            <td className={r.block_key === 'No block' ? 'vd-block-unknown' : undefined}>{r.block_key}</td>
+                            <td className={displayRollupBlockKey(r.block_key) === 'No block' ? 'vd-block-unknown' : undefined}>
+                              {displayRollupBlockKey(r.block_key)}
+                            </td>
                             <td className="vd-num">{r.bill_count}</td>
                             <td className="vd-num">{r.item_qty_sum}</td>
                             <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
@@ -1055,7 +1060,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                               setBlockDrill({
                                 kind: 'delivery',
                                 delivery_date: r.delivery_date,
-                                block_key: r.block_key,
+                                block_key: displayRollupBlockKey(r.block_key),
                                 expected_bill_count: r.bill_count,
                               })
                             }
@@ -1065,14 +1070,16 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                                 setBlockDrill({
                                   kind: 'delivery',
                                   delivery_date: r.delivery_date,
-                                  block_key: r.block_key,
+                                  block_key: displayRollupBlockKey(r.block_key),
                                   expected_bill_count: r.bill_count,
                                 });
                               }
                             }}
                           >
                             <td>{fmtDate(r.delivery_date)}</td>
-                            <td className={r.block_key === 'No block' ? 'vd-block-unknown' : undefined}>{r.block_key}</td>
+                            <td className={displayRollupBlockKey(r.block_key) === 'No block' ? 'vd-block-unknown' : undefined}>
+                              {displayRollupBlockKey(r.block_key)}
+                            </td>
                             <td className="vd-num">{r.bill_count}</td>
                             <td className="vd-num">{r.item_qty_sum}</td>
                             <td className="vd-num vd-strong">{fmtMoney(r.total)}</td>
@@ -1094,7 +1101,10 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                   {blockDrill.kind === 'billed'
                     ? `${fmtDate(blockDrill.bill_date)} · bill day`
                     : `${fmtDate(blockDrill.delivery_date)} · delivery day`}{' '}
-                  · <span className={blockDrill.block_key === 'No block' ? 'vd-block-unknown-inline' : undefined}>{blockDrill.block_key}</span>
+                  ·{' '}
+                  <span className={displayRollupBlockKey(blockDrill.block_key) === 'No block' ? 'vd-block-unknown-inline' : undefined}>
+                    {displayRollupBlockKey(blockDrill.block_key)}
+                  </span>
                 </h2>
               </div>
               <p className="vd-panel-desc">

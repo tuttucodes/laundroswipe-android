@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { fillCollectedByDate, formatIstYmd, istYmdEndIso, istYmdStartIso } from '@/lib/ist-dates';
+import { displayRollupBlockKey } from '@/lib/hostel-block';
 
 /**
  * Delivery-based revenue for scripts / external tools.
@@ -99,7 +100,7 @@ export async function GET(request: Request) {
     by_date: filled,
     by_block_by_date: blockRows.map((r) => ({
       date: String(r.delivery_date).slice(0, 10),
-      block: String(r.block_key),
+      block: displayRollupBlockKey(r.block_key as string | null | undefined),
       bill_count: Number(r.bill_count),
       item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
       total: Math.round(Number(r.total_sum) * 100) / 100,

@@ -1343,10 +1343,7 @@ export default function AdminPage() {
                   )}
                   <div style={{ marginTop: 14, padding: '12px 14px', background: '#F5F3FF', borderRadius: 8 }}>
                     <p style={{ fontSize: 12, color: '#5B21B6', margin: 0, fontWeight: 600 }}>
-                      Want items &amp; amounts per date?{' '}
-                      <a href="/admin/bills" style={{ color: '#5B21B6', textDecoration: 'underline' }}>
-                        Open Bills page → Show Bills Delivered Count
-                      </a>
+                      Items, bills, and amounts by delivery day are in this Delivered section above (expand a date for details).
                     </p>
                   </div>
                 </div>

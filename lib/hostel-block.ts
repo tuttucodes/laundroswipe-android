@@ -4,6 +4,23 @@
  * D1/D2: allow optional space/dash between D and digit; D10 stays literal.
  * "Block A" / trailing "… A" / repeated HOSTEL/BLOCK prefixes map to the same keys as SQL normalize_hostel_block_key().
  */
+/**
+ * Canonical block label for dashboards and drill-down: empty, whitespace, JSON null-ish strings,
+ * and case variants of "No block" map to exactly `No block` so rows are not dropped or deduped away in the UI.
+ */
+export function displayRollupBlockKey(raw: string | null | undefined): string {
+  if (raw == null) return 'No block';
+  const s = String(raw)
+    .replace(/\u00a0/g, ' ')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim();
+  if (!s) return 'No block';
+  const lower = s.toLowerCase();
+  if (lower === 'null' || lower === 'undefined') return 'No block';
+  if (lower === 'no block') return 'No block';
+  return s;
+}
+
 export function normalizeHostelBlockKey(raw: string | null | undefined): string {
   let s = String(raw ?? '')
     .replace(/\u00a0/g, ' ')

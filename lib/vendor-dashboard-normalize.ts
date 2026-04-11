@@ -1,4 +1,5 @@
 import type { VendorDashboardMetrics } from '@/lib/vendor-dashboard-types';
+import { displayRollupBlockKey } from '@/lib/hostel-block';
 
 function num(x: unknown, fallback = 0): number {
   const n = Number(x);
@@ -58,7 +59,7 @@ function parseCollectedBlockRow(r: unknown): VendorDashboardMetrics['collected_b
   if (!/^\d{4}-\d{2}-\d{2}$/.test(delivery_date)) return null;
   return {
     delivery_date,
-    block_key: str(o.block_key) || 'No block',
+    block_key: displayRollupBlockKey(str(o.block_key)),
     bill_count: num(o.bill_count),
     item_qty_sum: num(o.item_qty_sum),
     subtotal: num(o.subtotal),
@@ -74,7 +75,7 @@ function parseBilledBlockRow(r: unknown): VendorDashboardMetrics['billed_by_bloc
   if (!/^\d{4}-\d{2}-\d{2}$/.test(bill_date)) return null;
   return {
     bill_date,
-    block_key: str(o.block_key) || 'No block',
+    block_key: displayRollupBlockKey(str(o.block_key)),
     bill_count: num(o.bill_count),
     item_qty_sum: num(o.item_qty_sum),
     subtotal: num(o.subtotal),

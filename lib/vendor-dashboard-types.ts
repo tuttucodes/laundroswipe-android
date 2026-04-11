@@ -1,4 +1,10 @@
 /**
+ * TypeScript types for the Next.js app only.
+ *
+ * Do not paste this file into the Supabase SQL Editor — SQL cannot run `export` or TypeScript.
+ * Database changes belong in .sql files under supabase/migrations/ (see repo) and are applied via Supabase CLI or Dashboard SQL only.
+ *
+ * ---
  * Contract for GET /api/admin/dashboard (vendor session). Shared with `normalizeVendorDashboardPayload`.
  *
  * Vendor dashboard also calls (same session, Bearer admin_token):

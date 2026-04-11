@@ -10,6 +10,7 @@ import {
   istYmdStartIso,
   sumFilledDayRows,
 } from '@/lib/ist-dates';
+import { displayRollupBlockKey } from '@/lib/hostel-block';
 
 function deliveryDateKeyIst(iso: string): string {
   return formatIstYmd(new Date(iso));
@@ -51,6 +52,40 @@ function billSavedRowsForFill(rows: RpcBillSavedRow[]) {
     convenience_fee_sum: Number(r.convenience_fee_sum),
     total_sum: Number(r.total_sum),
   }));
+}
+
+type DashboardBlockRow = {
+  delivery_date?: string;
+  bill_date?: string;
+  block_key: string;
+  bill_count: number;
+  item_qty_sum: number;
+  subtotal: number;
+  convenience_fee: number;
+  total: number;
+};
+
+/** After displayRollupBlockKey, collapse any duplicate (date, block) pairs from the RPC. */
+function mergeDashboardBlockRows(rows: DashboardBlockRow[], dateField: 'delivery_date' | 'bill_date'): DashboardBlockRow[] {
+  const map = new Map<string, DashboardBlockRow>();
+  for (const r of rows) {
+    const d = String(r[dateField]).slice(0, 10);
+    const key = `${d}\0${r.block_key}`;
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, { ...r });
+    } else {
+      map.set(key, {
+        ...prev,
+        bill_count: prev.bill_count + r.bill_count,
+        item_qty_sum: Math.round((prev.item_qty_sum + r.item_qty_sum) * 100) / 100,
+        subtotal: Math.round((prev.subtotal + r.subtotal) * 100) / 100,
+        convenience_fee: Math.round((prev.convenience_fee + r.convenience_fee) * 100) / 100,
+        total: Math.round((prev.total + r.total) * 100) / 100,
+      });
+    }
+  }
+  return [...map.values()];
 }
 
 export async function GET(request: Request) {
@@ -285,24 +320,46 @@ export async function GET(request: Request) {
     console.warn('[dashboard] get_bill_saved_revenue_by_block_and_date:', billBlock.error.message);
   }
 
-  const collected_by_block = blockRows.map((r) => ({
-    delivery_date: String(r.delivery_date).slice(0, 10),
-    block_key: String(r.block_key),
-    bill_count: Number(r.bill_count),
-    item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
-    subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
-    convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
-    total: Math.round(Number(r.total_sum) * 100) / 100,
+  const collected_by_block = mergeDashboardBlockRows(
+    blockRows.map((r) => ({
+      delivery_date: String(r.delivery_date).slice(0, 10),
+      block_key: displayRollupBlockKey(r.block_key as string | null | undefined),
+      bill_count: Number(r.bill_count),
+      item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
+      subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
+      convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
+      total: Math.round(Number(r.total_sum) * 100) / 100,
+    })),
+    'delivery_date',
+  ).map(({ delivery_date, block_key, bill_count, item_qty_sum, subtotal, convenience_fee, total }) => ({
+    delivery_date: delivery_date!,
+    block_key,
+    bill_count,
+    item_qty_sum,
+    subtotal,
+    convenience_fee,
+    total,
   }));
 
-  const billed_by_block = billBlockRows.map((r) => ({
-    bill_date: String(r.bill_date).slice(0, 10),
-    block_key: String(r.block_key),
-    bill_count: Number(r.bill_count),
-    item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
-    subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
-    convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
-    total: Math.round(Number(r.total_sum) * 100) / 100,
+  const billed_by_block = mergeDashboardBlockRows(
+    billBlockRows.map((r) => ({
+      bill_date: String(r.bill_date).slice(0, 10),
+      block_key: displayRollupBlockKey(r.block_key as string | null | undefined),
+      bill_count: Number(r.bill_count),
+      item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
+      subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
+      convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
+      total: Math.round(Number(r.total_sum) * 100) / 100,
+    })),
+    'bill_date',
+  ).map(({ bill_date, block_key, bill_count, item_qty_sum, subtotal, convenience_fee, total }) => ({
+    bill_date: bill_date!,
+    block_key,
+    bill_count,
+    item_qty_sum,
+    subtotal,
+    convenience_fee,
+    total,
   }));
 
   return NextResponse.json({

@@ -122,10 +122,6 @@ function billToPlainText(b: VendorBillRow): string {
   ].join('\n');
 }
 
-type RevenueBucket = { date_from: string; date_to: string; bill_count: number; subtotal: number; convenience_fee: number; total: number };
-type RevenueData = { total_bills: number; grand_subtotal: number; grand_convenience_fee: number; grand_total: number; revenue: RevenueBucket[] } | null;
-type DeliveredByDate = { date: string; order_count: number; total_items: number; total_amount: number };
-
 function normalizeBillTokenForDup(t: string) {
   return String(t ?? '')
     .replace(/^#/, '')
@@ -157,13 +153,6 @@ export default function BillsPage() {
   const [editCustomQty, setEditCustomQty] = useState('1');
   const [editCustomImage, setEditCustomImage] = useState<string | null>(null);
   const [editBillCatalog, setEditBillCatalog] = useState<CatalogRow[] | null>(null);
-  const [revenueData, setRevenueData] = useState<RevenueData>(null);
-  const [revenueLoading, setRevenueLoading] = useState(false);
-  const [revenueDays, setRevenueDays] = useState(2);
-  const [showRevenue, setShowRevenue] = useState(false);
-  const [deliveredByDate, setDeliveredByDate] = useState<DeliveredByDate[] | null>(null);
-  const [deliveredLoading, setDeliveredLoading] = useState(false);
-  const [showDelivered, setShowDelivered] = useState(false);
   const [billsPage, setBillsPage] = useState(1);
   const [billsTotalPages, setBillsTotalPages] = useState(1);
   const [billsTotal, setBillsTotal] = useState(0);
@@ -236,42 +225,6 @@ export default function BillsPage() {
       })
       .catch(() => setEditBillCatalog(null));
   }, [editingBill, sessionVendorSlug, isSuperAdmin]);
-
-  const fetchRevenue = (days: number) => {
-    setRevenueLoading(true);
-    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
-    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-    fetch(`/api/vendor/revenue?days=${days}`, { credentials: 'include', headers })
-      .then(async (r) => {
-        const data = await r.json().catch(() => ({}));
-        if (!r.ok || !data?.ok) return;
-        setRevenueData(data as RevenueData);
-      })
-      .catch(() => {})
-      .finally(() => setRevenueLoading(false));
-  };
-
-  const fetchDelivered = () => {
-    setDeliveredLoading(true);
-    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
-    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-    fetch('/api/admin/orders/delivered-by-date', { credentials: 'include', headers })
-      .then(async (r) => {
-        const data = await r.json().catch(() => ({}));
-        if (!r.ok) return;
-        setDeliveredByDate((data.delivered_by_date as DeliveredByDate[]) ?? []);
-      })
-      .catch(() => {})
-      .finally(() => setDeliveredLoading(false));
-  };
-
-  useEffect(() => {
-    if (showDelivered && deliveredByDate === null) fetchDelivered();
-  }, [showDelivered]);
-
-  useEffect(() => {
-    if (showRevenue) fetchRevenue(revenueDays);
-  }, [showRevenue, revenueDays]);
 
   const billDuplicateInfo = useMemo(() => {
     const active = bills.filter((b) => !b.cancelled_at);
@@ -622,167 +575,15 @@ export default function BillsPage() {
             {isSuperAdmin ? 'All vendor bills' : `${vendorName ?? 'Vendor'} bills`}
           </h1>
           <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>
-            View, edit line items, delete, and re-print. Edit anytime; delete is allowed within 1 hour of bill creation.
+            View, edit line items, delete, and re-print. Edit anytime; delete is allowed within 1 hour of bill creation.{' '}
+            <span style={{ color: 'var(--tm)' }}>
+              Date-wise revenue and delivery-day totals are on <Link href="/admin" style={{ fontWeight: 600 }}>Dashboard</Link> (Revenue &amp; Delivered).
+            </span>
           </p>
         </div>
         <button type="button" onClick={exportBillsToCsv} disabled={loading || bills.length === 0} className="vendor-btn-secondary" style={{ marginLeft: 'auto' }}>
           📥 Export to Excel
         </button>
-      </div>
-
-      {/* Revenue Section */}
-      <div className="vendor-card" style={{ marginBottom: 20 }}>
-        <button
-          type="button"
-          className="vendor-btn-secondary"
-          style={{ width: '100%', fontWeight: 600 }}
-          onClick={() => setShowRevenue((p) => !p)}
-        >
-          {showRevenue ? 'Hide Revenue' : 'Show Date-wise Revenue'}
-        </button>
-        {showRevenue && (
-          <div style={{ marginTop: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-              <label style={{ fontSize: 13, fontWeight: 600 }}>Group by</label>
-              {[1, 2, 7, 14, 30].map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  className={revenueDays === d ? 'vendor-btn-primary' : 'vendor-btn-secondary'}
-                  style={{ minWidth: 48, padding: '6px 12px', fontSize: 13 }}
-                  onClick={() => setRevenueDays(d)}
-                >
-                  {d === 1 ? 'Daily' : d === 7 ? 'Weekly' : d === 30 ? 'Monthly' : `${d} days`}
-                </button>
-              ))}
-            </div>
-            {revenueLoading ? (
-              <p style={{ color: 'var(--ts)', fontSize: 13 }}>Loading revenue...</p>
-            ) : revenueData ? (
-              <>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
-                  <div style={{ padding: '12px 16px', background: '#EFF6FF', borderRadius: 8, flex: '1 1 120px' }}>
-                    <div style={{ fontSize: 12, color: '#3B82F6', fontWeight: 600 }}>Total Bills</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#1E40AF' }}>{revenueData.total_bills}</div>
-                  </div>
-                  <div style={{ padding: '12px 16px', background: '#F0FDF4', borderRadius: 8, flex: '1 1 120px' }}>
-                    <div style={{ fontSize: 12, color: '#22C55E', fontWeight: 600 }}>Subtotal Revenue</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#166534' }}>₹{revenueData.grand_subtotal.toLocaleString('en-IN')}</div>
-                  </div>
-                  <div style={{ padding: '12px 16px', background: '#FFFBEB', borderRadius: 8, flex: '1 1 120px' }}>
-                    <div style={{ fontSize: 12, color: '#F59E0B', fontWeight: 600 }}>Service Fees</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#92400E' }}>₹{revenueData.grand_convenience_fee.toLocaleString('en-IN')}</div>
-                  </div>
-                  <div style={{ padding: '12px 16px', background: '#F5F3FF', borderRadius: 8, flex: '1 1 120px' }}>
-                    <div style={{ fontSize: 12, color: '#8B5CF6', fontWeight: 600 }}>Grand Total</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#5B21B6' }}>₹{revenueData.grand_total.toLocaleString('en-IN')}</div>
-                  </div>
-                </div>
-                {revenueData.revenue.length > 0 ? (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                      <thead>
-                        <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
-                          <th style={{ textAlign: 'left', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Period</th>
-                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Bills</th>
-                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Subtotal</th>
-                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Fees</th>
-                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {revenueData.revenue.map((r, i) => {
-                          const label = revenueDays === 1
-                            ? new Date(r.date_from + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-                            : `${new Date(r.date_from + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - ${new Date(r.date_to + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
-                          return (
-                            <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                              <td style={{ padding: '8px 10px', fontWeight: 500 }}>{label}</td>
-                              <td style={{ padding: '8px 10px', textAlign: 'right' }}>{r.bill_count}</td>
-                              <td style={{ padding: '8px 10px', textAlign: 'right' }}>₹{r.subtotal.toLocaleString('en-IN')}</td>
-                              <td style={{ padding: '8px 10px', textAlign: 'right' }}>₹{r.convenience_fee.toLocaleString('en-IN')}</td>
-                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600 }}>₹{r.total.toLocaleString('en-IN')}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p style={{ color: 'var(--ts)', fontSize: 13 }}>No revenue data for this period.</p>
-                )}
-              </>
-            ) : null}
-          </div>
-        )}
-      </div>
-
-      {/* Delivered Orders Section */}
-      <div className="vendor-card" style={{ marginBottom: 20 }}>
-        <button
-          type="button"
-          className="vendor-btn-secondary"
-          style={{ width: '100%', fontWeight: 600 }}
-          onClick={() => setShowDelivered((p) => !p)}
-        >
-          {showDelivered ? 'Hide Delivered Orders' : 'Show Bills Delivered Count (by Date)'}
-        </button>
-        {showDelivered && (
-          <div style={{ marginTop: 14 }}>
-            {deliveredLoading ? (
-              <p style={{ color: 'var(--ts)', fontSize: 13 }}>Loading delivered orders...</p>
-            ) : deliveredByDate && deliveredByDate.length > 0 ? (
-              <>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
-                  <div style={{ padding: '12px 16px', background: '#F0FDF4', borderRadius: 8, flex: '1 1 120px' }}>
-                    <div style={{ fontSize: 12, color: '#22C55E', fontWeight: 600 }}>Total Delivered</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#166534' }}>
-                      {deliveredByDate.reduce((s, d) => s + d.order_count, 0)}
-                    </div>
-                  </div>
-                  <div style={{ padding: '12px 16px', background: '#EFF6FF', borderRadius: 8, flex: '1 1 120px' }}>
-                    <div style={{ fontSize: 12, color: '#3B82F6', fontWeight: 600 }}>Total Items</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#1E40AF' }}>
-                      {deliveredByDate.reduce((s, d) => s + d.total_items, 0)}
-                    </div>
-                  </div>
-                  <div style={{ padding: '12px 16px', background: '#F5F3FF', borderRadius: 8, flex: '1 1 120px' }}>
-                    <div style={{ fontSize: 12, color: '#8B5CF6', fontWeight: 600 }}>Total Amount</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#5B21B6' }}>
-                      ₹{deliveredByDate.reduce((s, d) => s + d.total_amount, 0).toLocaleString('en-IN')}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
-                        <th style={{ textAlign: 'left', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Date</th>
-                        <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Orders Delivered</th>
-                        <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Total Items</th>
-                        <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Total Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {deliveredByDate.map((d) => (
-                        <tr key={d.date} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                          <td style={{ padding: '8px 10px', fontWeight: 500 }}>
-                            {new Date(d.date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right' }}>{d.order_count}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right' }}>{d.total_items}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600 }}>₹{d.total_amount.toLocaleString('en-IN')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            ) : deliveredByDate !== null ? (
-              <p style={{ color: 'var(--ts)', fontSize: 13 }}>No delivered orders found.</p>
-            ) : null}
-          </div>
-        )}
       </div>
 
       {copyMsg && !viewingBill && !editingBill && (

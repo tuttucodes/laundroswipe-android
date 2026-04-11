@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { addDaysYmd, istYmdStartIso } from '@/lib/ist-dates';
-import { rollupHostelBlockKey } from '@/lib/hostel-block';
+import { displayRollupBlockKey, rollupHostelBlockKey } from '@/lib/hostel-block';
 import { segregateCustomerDisplay } from '@/lib/customer-display-segregate';
 
 type BillRow = {
@@ -96,7 +96,7 @@ export async function GET(request: Request) {
   }
   const vendorDbId = vendorRes.data.id as string;
 
-  const targetKey = blockKeyRaw === 'No block' ? 'No block' : blockKeyRaw;
+  const targetKey = displayRollupBlockKey(blockKeyRaw);
 
   const dayStart = istYmdStartIso(date);
   const dayNextStart = istYmdStartIso(addDaysYmd(date, 1));
@@ -229,7 +229,7 @@ export async function GET(request: Request) {
 
       const u = o.user_id ? userById.get(String(o.user_id)) : undefined;
       const rollupKey = rollupHostelBlockKey(bill.customer_hostel_block, u?.hostel_block);
-      if (rollupKey !== targetKey) continue;
+      if (displayRollupBlockKey(rollupKey) !== targetKey) continue;
       const phone = bill.customer_phone?.trim() || '—';
       const itemQty = lineQtySum(bill.line_items);
       const total = Number(bill.total);
