@@ -121,6 +121,7 @@ function billToPlainText(b: VendorBillRow): string {
 
 type RevenueBucket = { date_from: string; date_to: string; bill_count: number; subtotal: number; convenience_fee: number; total: number };
 type RevenueData = { total_bills: number; grand_subtotal: number; grand_convenience_fee: number; grand_total: number; revenue: RevenueBucket[] } | null;
+type DeliveredByDate = { date: string; order_count: number; total_items: number; total_amount: number };
 
 export default function BillsPage() {
   const [bills, setBills] = useState<VendorBillRow[]>([]);
@@ -144,6 +145,9 @@ export default function BillsPage() {
   const [revenueLoading, setRevenueLoading] = useState(false);
   const [revenueDays, setRevenueDays] = useState(2);
   const [showRevenue, setShowRevenue] = useState(false);
+  const [deliveredByDate, setDeliveredByDate] = useState<DeliveredByDate[] | null>(null);
+  const [deliveredLoading, setDeliveredLoading] = useState(false);
+  const [showDelivered, setShowDelivered] = useState(false);
   const [billsPage, setBillsPage] = useState(1);
   const [billsTotalPages, setBillsTotalPages] = useState(1);
   const [billsTotal, setBillsTotal] = useState(0);
@@ -230,6 +234,24 @@ export default function BillsPage() {
       .catch(() => {})
       .finally(() => setRevenueLoading(false));
   };
+
+  const fetchDelivered = () => {
+    setDeliveredLoading(true);
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    fetch('/api/admin/orders/delivered-by-date', { credentials: 'include', headers })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) return;
+        setDeliveredByDate((data.delivered_by_date as DeliveredByDate[]) ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setDeliveredLoading(false));
+  };
+
+  useEffect(() => {
+    if (showDelivered && deliveredByDate === null) fetchDelivered();
+  }, [showDelivered]);
 
   useEffect(() => {
     if (showRevenue) fetchRevenue(revenueDays);
@@ -599,6 +621,74 @@ export default function BillsPage() {
                   <p style={{ color: 'var(--ts)', fontSize: 13 }}>No revenue data for this period.</p>
                 )}
               </>
+            ) : null}
+          </div>
+        )}
+      </div>
+
+      {/* Delivered Orders Section */}
+      <div className="vendor-card" style={{ marginBottom: 20 }}>
+        <button
+          type="button"
+          className="vendor-btn-secondary"
+          style={{ width: '100%', fontWeight: 600 }}
+          onClick={() => setShowDelivered((p) => !p)}
+        >
+          {showDelivered ? 'Hide Delivered Orders' : 'Show Bills Delivered Count (by Date)'}
+        </button>
+        {showDelivered && (
+          <div style={{ marginTop: 14 }}>
+            {deliveredLoading ? (
+              <p style={{ color: 'var(--ts)', fontSize: 13 }}>Loading delivered orders...</p>
+            ) : deliveredByDate && deliveredByDate.length > 0 ? (
+              <>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+                  <div style={{ padding: '12px 16px', background: '#F0FDF4', borderRadius: 8, flex: '1 1 120px' }}>
+                    <div style={{ fontSize: 12, color: '#22C55E', fontWeight: 600 }}>Total Delivered</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#166534' }}>
+                      {deliveredByDate.reduce((s, d) => s + d.order_count, 0)}
+                    </div>
+                  </div>
+                  <div style={{ padding: '12px 16px', background: '#EFF6FF', borderRadius: 8, flex: '1 1 120px' }}>
+                    <div style={{ fontSize: 12, color: '#3B82F6', fontWeight: 600 }}>Total Items</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#1E40AF' }}>
+                      {deliveredByDate.reduce((s, d) => s + d.total_items, 0)}
+                    </div>
+                  </div>
+                  <div style={{ padding: '12px 16px', background: '#F5F3FF', borderRadius: 8, flex: '1 1 120px' }}>
+                    <div style={{ fontSize: 12, color: '#8B5CF6', fontWeight: 600 }}>Total Amount</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#5B21B6' }}>
+                      ₹{deliveredByDate.reduce((s, d) => s + d.total_amount, 0).toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
+                        <th style={{ textAlign: 'left', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Date</th>
+                        <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Orders Delivered</th>
+                        <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Total Items</th>
+                        <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Total Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deliveredByDate.map((d) => (
+                        <tr key={d.date} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '8px 10px', fontWeight: 500 }}>
+                            {new Date(d.date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right' }}>{d.order_count}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right' }}>{d.total_items}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600 }}>₹{d.total_amount.toLocaleString('en-IN')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : deliveredByDate !== null ? (
+              <p style={{ color: 'var(--ts)', fontSize: 13 }}>No delivered orders found.</p>
             ) : null}
           </div>
         )}

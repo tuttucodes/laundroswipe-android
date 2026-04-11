@@ -126,6 +126,7 @@ function printGatePassLetter(vendorName: string, orderCount: number) {
 
 type OrderWithUser = OrderRow & { user?: string };
 type Tab =
+  | 'dashboard'
   | 'orders'
   | 'users'
   | 'colleges'
@@ -182,6 +183,7 @@ function presetForSuggestedSlot(id: string): { label: string; time_from: string;
 }
 
 const TAB_FROM_QUERY: Tab[] = [
+  'dashboard',
   'orders',
   'users',
   'colleges',
@@ -225,7 +227,7 @@ export default function AdminPage() {
   type WeeklyRevenueBucket = { date_from: string; date_to: string; bill_count: number; subtotal: number; total: number };
   const [weeklyRevenue, setWeeklyRevenue] = useState<WeeklyRevenueBucket[]>([]);
   const [weeklyRevenueLoading, setWeeklyRevenueLoading] = useState(false);
-  const [tab, setTab] = useState<Tab>('orders');
+  const [tab, setTab] = useState<Tab>('dashboard');
   const [filter, setFilter] = useState('all');
   const [superVendorFilter, setSuperVendorFilter] = useState('all');
   const [orderAreaFilter, setOrderAreaFilter] = useState('all');
@@ -284,6 +286,23 @@ export default function AdminPage() {
   const [billsByDateData, setBillsByDateData] = useState<Array<{ date: string; count: number; amount: number }>>([]);
   const [billsByBlockLoading, setBillsByBlockLoading] = useState(false);
   const [billsByBlockData, setBillsByBlockData] = useState<Array<{ block: string; count: number; amount: number }>>([]);
+
+  // Dashboard metrics state
+  type DashboardMetrics = {
+    revenue_7d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
+    revenue_30d: { total: number; bill_count: number; by_date: { date: string; bill_count: number; total: number }[] };
+    open_tokens: { count: number; by_status: Record<string, number> };
+    delivered_7d: { count: number; by_date: { date: string; count: number }[] };
+  };
+  const [dashboardMetrics, setDashboardMetrics] = useState<DashboardMetrics | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [activeCard, setActiveCard] = useState<keyof DashboardMetrics | null>(null);
+  // Detail drill-down: revenue custom range
+  const [revDetailDays, setRevDetailDays] = useState<7 | 30>(7);
+  const [revDetailData, setRevDetailData] = useState<{ date_from: string; date_to: string; bill_count: number; subtotal: number; convenience_fee: number; total: number }[] | null>(null);
+  const [revDetailLoading, setRevDetailLoading] = useState(false);
+  const [revDetailFrom, setRevDetailFrom] = useState('');
+  const [revDetailTo, setRevDetailTo] = useState('');
 
   const dashboardTitle = isSuperAdmin
     ? 'LaundroSwipe Super Admin'
@@ -520,6 +539,39 @@ export default function AdminPage() {
       .catch(() => {})
       .finally(() => setWeeklyRevenueLoading(false));
   }, [loggedIn]);
+
+  // Dashboard metrics fetch
+  useEffect(() => {
+    if (!loggedIn) return;
+    setDashboardLoading(true);
+    fetch('/api/admin/dashboard', { credentials: 'include', headers: adminAuthHeaders() })
+      .then(async (r) => {
+        if (r.status === 401) { setLoggedIn(false); return; }
+        const d = await r.json().catch(() => null);
+        if (d?.ok) setDashboardMetrics(d as DashboardMetrics);
+      })
+      .catch(() => {})
+      .finally(() => setDashboardLoading(false));
+  }, [loggedIn]);
+
+  const fetchRevDetail = (days: 7 | 30, from?: string, to?: string) => {
+    setRevDetailLoading(true);
+    const params = new URLSearchParams({ days: '1' });
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (!from && !to) {
+      const d = new Date();
+      params.set('to', d.toISOString().split('T')[0]);
+      params.set('from', new Date(d.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+    }
+    fetch(`/api/vendor/revenue?${params}`, { credentials: 'include', headers: adminAuthHeaders() })
+      .then(async (r) => {
+        const d = await r.json().catch(() => null);
+        if (d?.ok) setRevDetailData(d.revenue ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setRevDetailLoading(false));
+  };
 
   useEffect(() => {
     if (!loggedIn || tab !== 'schedule') return;
@@ -920,6 +972,7 @@ export default function AdminPage() {
         <nav className="admin-drawer-nav">
           <div className="admin-drawer-section">
             <span className="admin-drawer-section-label">Overview</span>
+            <button type="button" onClick={() => { setTab('dashboard'); closeMenu(); }} className={`admin-nav-btn ${tab === 'dashboard' ? 'active' : ''}`}>📊 Dashboard</button>
             <button type="button" onClick={() => { setTab('orders'); closeMenu(); }} className={`admin-nav-btn ${tab === 'orders' ? 'active' : ''}`}>📦 Orders</button>
             {isSuperAdmin && (
               <button type="button" onClick={() => { setTab('users'); closeMenu(); }} className={`admin-nav-btn ${tab === 'users' ? 'active' : ''}`}>👥 Users</button>
@@ -974,6 +1027,306 @@ export default function AdminPage() {
       </aside>
 
       <main className="admin-main">
+        {tab === 'dashboard' && (() => {
+          const STATUS_ORDER = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery'];
+          const STATUS_LABELS_MAP: Record<string, string> = {
+            scheduled: 'Scheduled', agent_assigned: 'Agent Assigned', picked_up: 'Picked Up',
+            processing: 'Processing', ready: 'Ready', out_for_delivery: 'Out for Delivery',
+          };
+          const fmtDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+          const fmtMoney = (n: number) => '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+          const cards: { key: keyof DashboardMetrics; label: string; icon: string; value: string; sub: string; color: string; bg: string }[] = [
+            {
+              key: 'revenue_7d', icon: '📈', label: 'Revenue (last 7 days)',
+              value: dashboardMetrics ? fmtMoney(dashboardMetrics.revenue_7d.total) : '—',
+              sub: dashboardMetrics ? `${dashboardMetrics.revenue_7d.bill_count} bills` : 'Loading…',
+              color: '#166534', bg: '#F0FDF4',
+            },
+            {
+              key: 'revenue_30d', icon: '💰', label: 'Revenue (last 30 days)',
+              value: dashboardMetrics ? fmtMoney(dashboardMetrics.revenue_30d.total) : '—',
+              sub: dashboardMetrics ? `${dashboardMetrics.revenue_30d.bill_count} bills` : 'Loading…',
+              color: '#1E40AF', bg: '#EFF6FF',
+            },
+            {
+              key: 'open_tokens', icon: '🎫', label: 'Open Tokens',
+              value: dashboardMetrics ? String(dashboardMetrics.open_tokens.count) : '—',
+              sub: 'Not yet delivered',
+              color: '#92400E', bg: '#FFFBEB',
+            },
+            {
+              key: 'delivered_7d', icon: '✅', label: 'Delivered (last 7 days)',
+              value: dashboardMetrics ? String(dashboardMetrics.delivered_7d.count) : '—',
+              sub: 'Orders delivered',
+              color: '#5B21B6', bg: '#F5F3FF',
+            },
+          ];
+
+          return (
+            <div>
+              <div style={{ marginBottom: 24 }}>
+                <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 4 }}>Dashboard</h1>
+                <p style={{ color: 'var(--ts)', fontSize: 14, margin: 0 }}>Live overview — click any card to explore</p>
+              </div>
+
+              {/* 4 metric cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 20 }}>
+                {cards.map((card) => {
+                  const isActive = activeCard === card.key;
+                  return (
+                    <button
+                      key={card.key}
+                      type="button"
+                      onClick={() => {
+                        if (isActive) { setActiveCard(null); return; }
+                        setActiveCard(card.key);
+                        if (card.key === 'revenue_7d') { setRevDetailDays(7); setRevDetailData(null); fetchRevDetail(7); }
+                        if (card.key === 'revenue_30d') { setRevDetailDays(30); setRevDetailData(null); fetchRevDetail(30); }
+                      }}
+                      style={{
+                        background: isActive ? card.color : card.bg,
+                        border: `2px solid ${isActive ? card.color : 'transparent'}`,
+                        borderRadius: 12, padding: '18px 20px', textAlign: 'left', cursor: 'pointer',
+                        transition: 'all 0.15s ease', boxShadow: isActive ? `0 4px 16px ${card.color}33` : '0 1px 4px rgba(0,0,0,0.06)',
+                      }}
+                    >
+                      <div style={{ fontSize: 22, marginBottom: 6 }}>{card.icon}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: isActive ? 'rgba(255,255,255,0.8)' : 'var(--ts)', marginBottom: 4 }}>{card.label}</div>
+                      {dashboardLoading && !dashboardMetrics ? (
+                        <div style={{ height: 32, background: isActive ? 'rgba(255,255,255,0.2)' : '#E2E8F0', borderRadius: 6, marginBottom: 6 }} />
+                      ) : (
+                        <div style={{ fontSize: 28, fontWeight: 800, color: isActive ? '#fff' : card.color, lineHeight: 1.1, marginBottom: 4 }}>{card.value}</div>
+                      )}
+                      <div style={{ fontSize: 12, color: isActive ? 'rgba(255,255,255,0.75)' : 'var(--tm)' }}>{card.sub}</div>
+                      <div style={{ fontSize: 11, marginTop: 8, color: isActive ? 'rgba(255,255,255,0.7)' : card.color, fontWeight: 600 }}>
+                        {isActive ? '▲ Close' : '▼ Details'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Detail panels */}
+              {activeCard === 'revenue_7d' && dashboardMetrics && (
+                <div className="vendor-card" style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+                    <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, margin: 0 }}>Revenue — last 7 days (daily)</h3>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input type="date" value={revDetailFrom} onChange={(e) => setRevDetailFrom(e.target.value)} className="fi" style={{ fontSize: 13, padding: '6px 10px', width: 'auto' }} />
+                      <span style={{ fontSize: 12, color: 'var(--ts)' }}>to</span>
+                      <input type="date" value={revDetailTo} onChange={(e) => setRevDetailTo(e.target.value)} className="fi" style={{ fontSize: 13, padding: '6px 10px', width: 'auto' }} />
+                      <button type="button" className="vendor-btn-primary" style={{ fontSize: 13, padding: '6px 14px' }}
+                        onClick={() => { setRevDetailData(null); fetchRevDetail(7, revDetailFrom || undefined, revDetailTo || undefined); }}>
+                        Apply
+                      </button>
+                      <button type="button" className="vendor-btn-secondary" style={{ fontSize: 13, padding: '6px 14px' }}
+                        onClick={() => { setRevDetailFrom(''); setRevDetailTo(''); setRevDetailData(null); fetchRevDetail(7); }}>
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                  {revDetailLoading ? <p style={{ color: 'var(--ts)', fontSize: 13 }}>Loading…</p> : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <thead><tr style={{ borderBottom: '2px solid #E2E8F0' }}>
+                          <th style={{ textAlign: 'left', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Date</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Bills</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Subtotal</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Fees</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Total</th>
+                        </tr></thead>
+                        <tbody>
+                          {(revDetailData ?? dashboardMetrics.revenue_7d.by_date as any[]).map((r: any, i: number) => (
+                            <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              <td style={{ padding: '8px 10px', fontWeight: 500 }}>{fmtDate(r.date ?? r.date_from)}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right' }}>{r.bill_count}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right' }}>{fmtMoney(r.subtotal ?? 0)}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--o)' }}>{fmtMoney((r.convenience_fee ?? 0) || (r.total ?? 0) - (r.subtotal ?? 0))}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, color: '#166534' }}>{fmtMoney(r.total ?? 0)}</td>
+                            </tr>
+                          ))}
+                          {(() => {
+                            const src = revDetailData ?? dashboardMetrics.revenue_7d.by_date as any[];
+                            return <tr style={{ borderTop: '2px solid #E2E8F0' }}>
+                              <td style={{ padding: '8px 10px', fontWeight: 700 }}>Total</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>{src.reduce((s: number, r: any) => s + (r.bill_count ?? 0), 0)}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>{fmtMoney(src.reduce((s: number, r: any) => s + (r.subtotal ?? 0), 0))}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>{fmtMoney(src.reduce((s: number, r: any) => s + ((r.convenience_fee ?? 0) || (r.total ?? 0) - (r.subtotal ?? 0)), 0))}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#166534' }}>{fmtMoney(src.reduce((s: number, r: any) => s + (r.total ?? 0), 0))}</td>
+                            </tr>;
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeCard === 'revenue_30d' && dashboardMetrics && (
+                <div className="vendor-card" style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+                    <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, margin: 0 }}>Revenue — last 30 days (daily)</h3>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input type="date" value={revDetailFrom} onChange={(e) => setRevDetailFrom(e.target.value)} className="fi" style={{ fontSize: 13, padding: '6px 10px', width: 'auto' }} />
+                      <span style={{ fontSize: 12, color: 'var(--ts)' }}>to</span>
+                      <input type="date" value={revDetailTo} onChange={(e) => setRevDetailTo(e.target.value)} className="fi" style={{ fontSize: 13, padding: '6px 10px', width: 'auto' }} />
+                      <button type="button" className="vendor-btn-primary" style={{ fontSize: 13, padding: '6px 14px' }}
+                        onClick={() => { setRevDetailData(null); fetchRevDetail(30, revDetailFrom || undefined, revDetailTo || undefined); }}>
+                        Apply
+                      </button>
+                      <button type="button" className="vendor-btn-secondary" style={{ fontSize: 13, padding: '6px 14px' }}
+                        onClick={() => { setRevDetailFrom(''); setRevDetailTo(''); setRevDetailData(null); fetchRevDetail(30); }}>
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                  {revDetailLoading ? <p style={{ color: 'var(--ts)', fontSize: 13 }}>Loading…</p> : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <thead><tr style={{ borderBottom: '2px solid #E2E8F0' }}>
+                          <th style={{ textAlign: 'left', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Date</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Bills</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Subtotal</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Fees</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Total</th>
+                        </tr></thead>
+                        <tbody>
+                          {(revDetailData ?? dashboardMetrics.revenue_30d.by_date as any[]).map((r: any, i: number) => (
+                            <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              <td style={{ padding: '8px 10px', fontWeight: 500 }}>{fmtDate(r.date ?? r.date_from)}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right' }}>{r.bill_count}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right' }}>{fmtMoney(r.subtotal ?? 0)}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--o)' }}>{fmtMoney((r.convenience_fee ?? 0) || (r.total ?? 0) - (r.subtotal ?? 0))}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, color: '#1E40AF' }}>{fmtMoney(r.total ?? 0)}</td>
+                            </tr>
+                          ))}
+                          {(() => {
+                            const src = revDetailData ?? dashboardMetrics.revenue_30d.by_date as any[];
+                            return <tr style={{ borderTop: '2px solid #E2E8F0' }}>
+                              <td style={{ padding: '8px 10px', fontWeight: 700 }}>Total</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>{src.reduce((s: number, r: any) => s + (r.bill_count ?? 0), 0)}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>{fmtMoney(src.reduce((s: number, r: any) => s + (r.subtotal ?? 0), 0))}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>{fmtMoney(src.reduce((s: number, r: any) => s + ((r.convenience_fee ?? 0) || (r.total ?? 0) - (r.subtotal ?? 0)), 0))}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#1E40AF' }}>{fmtMoney(src.reduce((s: number, r: any) => s + (r.total ?? 0), 0))}</td>
+                            </tr>;
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeCard === 'open_tokens' && dashboardMetrics && (
+                <div className="vendor-card" style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+                    <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, margin: 0 }}>Open Tokens — by status</h3>
+                    <button type="button" className="vendor-btn-primary" style={{ fontSize: 13, padding: '6px 14px' }}
+                      onClick={() => { setTab('orders'); setFilter('all'); }}>
+                      View all orders →
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+                    {STATUS_ORDER.map((s) => {
+                      const count = dashboardMetrics.open_tokens.by_status[s] ?? 0;
+                      if (count === 0) return null;
+                      return (
+                        <div key={s} style={{ padding: '12px 16px', background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0', minWidth: 120 }}>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--b)' }}>{count}</div>
+                          <div style={{ fontSize: 12, color: 'var(--ts)', marginTop: 2 }}>{STATUS_LABELS_MAP[s] ?? s}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead><tr style={{ borderBottom: '2px solid #E2E8F0' }}>
+                        <th style={{ textAlign: 'left', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Status</th>
+                        <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Count</th>
+                        <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Action</th>
+                      </tr></thead>
+                      <tbody>
+                        {STATUS_ORDER.filter((s) => (dashboardMetrics.open_tokens.by_status[s] ?? 0) > 0).map((s) => (
+                          <tr key={s} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 500 }}>{STATUS_LABELS_MAP[s] ?? s}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>{dashboardMetrics.open_tokens.by_status[s]}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right' }}>
+                              <button type="button" className="vendor-btn-secondary" style={{ fontSize: 12, padding: '4px 10px' }}
+                                onClick={() => { setTab('orders'); setFilter(s); }}>
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {activeCard === 'delivered_7d' && dashboardMetrics && (
+                <div className="vendor-card" style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+                    <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, margin: 0 }}>Delivered orders — last 7 days</h3>
+                    <button type="button" className="vendor-btn-secondary" style={{ fontSize: 13, padding: '6px 14px' }}
+                      onClick={() => { setTab('orders'); setFilter('delivered'); }}>
+                      View all delivered →
+                    </button>
+                  </div>
+                  {dashboardMetrics.delivered_7d.by_date.length === 0 ? (
+                    <p style={{ color: 'var(--ts)', fontSize: 13 }}>No deliveries in the last 7 days.</p>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <thead><tr style={{ borderBottom: '2px solid #E2E8F0' }}>
+                          <th style={{ textAlign: 'left', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Date</th>
+                          <th style={{ textAlign: 'right', padding: '8px 10px', fontWeight: 600, color: 'var(--ts)' }}>Orders Delivered</th>
+                        </tr></thead>
+                        <tbody>
+                          {[...dashboardMetrics.delivered_7d.by_date].reverse().map((d) => (
+                            <tr key={d.date} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              <td style={{ padding: '8px 10px', fontWeight: 500 }}>{fmtDate(d.date)}</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#5B21B6' }}>{d.count}</td>
+                            </tr>
+                          ))}
+                          <tr style={{ borderTop: '2px solid #E2E8F0' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 700 }}>Total</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#5B21B6' }}>{dashboardMetrics.delivered_7d.count}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <div style={{ marginTop: 14, padding: '12px 14px', background: '#F5F3FF', borderRadius: 8 }}>
+                    <p style={{ fontSize: 12, color: '#5B21B6', margin: 0, fontWeight: 600 }}>
+                      Want items &amp; amounts per date?{' '}
+                      <a href="/admin/bills" style={{ color: '#5B21B6', textDecoration: 'underline' }}>
+                        Open Bills page → Show Bills Delivered Count
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick links */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 8 }}>
+                {[
+                  { label: '📦 All Orders', onClick: () => setTab('orders') },
+                  { label: '🧾 Create Bill', href: '/admin/vendor' },
+                  { label: '📋 Saved Bills', href: '/admin/bills' },
+                  { label: '📦 Pickup/Delivery', href: '/admin/pickup' },
+                ].map((item) => (
+                  'href' in item ? (
+                    <a key={item.label} href={item.href} className="vendor-btn-secondary" style={{ display: 'block', textAlign: 'center', padding: '10px 14px', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}>{item.label}</a>
+                  ) : (
+                    <button key={item.label} type="button" className="vendor-btn-secondary" style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600 }} onClick={item.onClick}>{item.label}</button>
+                  )
+                ))}
+              </div>
+            </div>
+          );
+        })()}
         {tab === 'orders' && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Orders</h1>
