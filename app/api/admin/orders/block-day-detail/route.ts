@@ -99,7 +99,7 @@ export async function GET(request: Request) {
 
   const dayStart = istYmdStartIso(date);
   const dayNextStart = istYmdStartIso(addDaysYmd(date, 1));
-  const sel = 'id, token, order_number, delivery_confirmed_at, updated_at';
+  const sel = 'id, token, order_number, user_id, delivery_confirmed_at, updated_at';
 
   const [confirmedRes, fallbackRes] = await Promise.all([
     supabase
@@ -181,75 +181,93 @@ export async function GET(request: Request) {
       if (error) throw new Error(error.message);
       billRows.push(...((data ?? []) as BillRow[]));
     });
+
+    type UserRow = { id: string; reg_no: string | null; hostel_block: string | null; room_number: string | null };
+    const userIds = [...new Set(ordersOnDay.map((o) => o.user_id).filter(Boolean))] as string[];
+    const userById = new Map<string, UserRow>();
+    if (userIds.length > 0) {
+      await inChunks(userIds, async (chunk) => {
+        if (chunk.length === 0) return;
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, reg_no, hostel_block, room_number')
+          .in('id', chunk);
+        if (error) throw new Error(error.message);
+        for (const u of (data ?? []) as UserRow[]) {
+          if (u?.id) userById.set(String(u.id), u);
+        }
+      });
+    }
+
+    const byToken = latestBillPerToken(billRows);
+
+    const billByOrderId = new Map<string, BillRow>();
+    const billByTokenNorm = new Map<string, BillRow>();
+    for (const b of byToken.values()) {
+      if (b.order_id) billByOrderId.set(String(b.order_id), b);
+      billByTokenNorm.set(normalizeTokenKey(b.order_token), b);
+    }
+
+    const rows: Array<{
+      order_id: string;
+      token: string;
+      order_number: string | null;
+      customer_name: string;
+      customer_phone: string;
+      customer_reg_no: string;
+      customer_hostel_block: string;
+      customer_room_number: string;
+      item_qty: number;
+      total: number;
+    }> = [];
+
+    for (const o of ordersOnDay) {
+      const bill =
+        (o.id ? billByOrderId.get(String(o.id)) : null) ?? billByTokenNorm.get(normalizeTokenKey(String(o.token)));
+      if (!bill) continue;
+
+      const rollupKey = normalizeHostelBlockKey(bill.customer_hostel_block);
+      if (rollupKey !== targetKey) continue;
+
+      const u = o.user_id ? userById.get(String(o.user_id)) : undefined;
+      const name = bill.customer_name?.trim() || '—';
+      const phone = bill.customer_phone?.trim() || '—';
+      const reg = bill.customer_reg_no?.trim() || u?.reg_no?.trim() || '—';
+      const block = bill.customer_hostel_block?.trim() || u?.hostel_block?.trim() || '—';
+      const room = bill.customer_room_number?.trim() || u?.room_number?.trim() || '—';
+      const itemQty = lineQtySum(bill.line_items);
+      const total = Number(bill.total);
+
+      rows.push({
+        order_id: o.id,
+        token: String(o.token ?? ''),
+        order_number: o.order_number ?? null,
+        customer_name: name,
+        customer_phone: phone,
+        customer_reg_no: reg,
+        customer_hostel_block: block,
+        customer_room_number: room,
+        item_qty: itemQty,
+        total: Math.round(total * 100) / 100,
+      });
+    }
+
+    rows.sort((a, b) => {
+      const ba = a.customer_hostel_block.localeCompare(b.customer_hostel_block);
+      if (ba !== 0) return ba;
+      return a.token.localeCompare(b.token);
+    });
+
+    return NextResponse.json({
+      ok: true,
+      date,
+      block_key: targetKey,
+      rows,
+      orders_on_day: ordersOnDay.length,
+      rows_matched: rows.length,
+    });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Failed to load bills';
+    const msg = e instanceof Error ? e.message : 'Failed to load block day detail';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  const byToken = latestBillPerToken(billRows);
-
-  const billByOrderId = new Map<string, BillRow>();
-  const billByTokenNorm = new Map<string, BillRow>();
-  for (const b of byToken.values()) {
-    if (b.order_id) billByOrderId.set(String(b.order_id), b);
-    billByTokenNorm.set(normalizeTokenKey(b.order_token), b);
-  }
-
-  const rows: Array<{
-    order_id: string;
-    token: string;
-    order_number: string | null;
-    customer_name: string;
-    customer_phone: string;
-    customer_reg_no: string;
-    customer_hostel_block: string;
-    customer_room_number: string;
-    item_qty: number;
-    total: number;
-  }> = [];
-
-  for (const o of ordersOnDay) {
-    const bill =
-      (o.id ? billByOrderId.get(String(o.id)) : null) ?? billByTokenNorm.get(normalizeTokenKey(String(o.token)));
-    if (!bill) continue;
-
-    const rollupKey = normalizeHostelBlockKey(bill.customer_hostel_block);
-    if (rollupKey !== targetKey) continue;
-
-    const name = bill.customer_name?.trim() || '—';
-    const phone = bill.customer_phone?.trim() || '—';
-    const reg = bill.customer_reg_no?.trim() || '—';
-    const block = bill.customer_hostel_block?.trim() || '—';
-    const room = bill.customer_room_number?.trim() || '—';
-    const itemQty = lineQtySum(bill.line_items);
-    const total = Number(bill.total);
-
-    rows.push({
-      order_id: o.id,
-      token: String(o.token ?? ''),
-      order_number: o.order_number ?? null,
-      customer_name: name,
-      customer_phone: phone,
-      customer_reg_no: reg,
-      customer_hostel_block: block,
-      customer_room_number: room,
-      item_qty: itemQty,
-      total: Math.round(total * 100) / 100,
-    });
-  }
-
-  rows.sort((a, b) => {
-    const ba = a.customer_hostel_block.localeCompare(b.customer_hostel_block);
-    if (ba !== 0) return ba;
-    return a.token.localeCompare(b.token);
-  });
-
-  return NextResponse.json({
-    ok: true,
-    date,
-    block_key: targetKey,
-    rows,
-    orders_on_day: ordersOnDay.length,
-    rows_matched: rows.length,
-  });
 }

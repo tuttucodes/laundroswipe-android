@@ -929,7 +929,7 @@ export function VendorDashboard({ onUnauthorized }: Props) {
                 </h2>
               </div>
               <p className="vd-panel-desc">
-                One row per delivered order with a saved bill whose block rolls up to this bucket (newest bill per token, same as the summary).
+                One row per delivered order with a saved bill whose block rolls up to this bucket (newest bill per token, same as the summary). Reg no, block, and room show bill values when present; otherwise the linked customer profile (same order) so updates after billing appear here.
               </p>
               {blockDetailMeta && !blockDetailLoading && (
                 <p className="vd-muted" style={{ marginTop: 8, fontSize: 13 }}>
