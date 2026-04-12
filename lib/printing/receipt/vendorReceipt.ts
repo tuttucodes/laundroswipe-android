@@ -16,16 +16,15 @@ import { sanitizeReceiptText, sanitizeReceiptTextForPreview } from '../escpos/Ch
 export type VendorReceiptLine = { label: string; qty: number; price: number; id?: string };
 
 export type VendorReceiptInput = {
-  /** Centered title (e.g. LaundroSwipe). */
+  /** Shown centered under the LaundroSwipe brand (e.g. Profab). */
   vendorName: string;
-  /** Optional centered subtitle under the title (e.g. Pro Fab Power Laundry Services). */
+  /** Unused on printed receipt (kept for API compatibility). */
   tagline?: string;
   tokenLabel: string;
   orderLabel: string;
   customerLabel: string;
   phoneLabel: string;
   customerDisplayId: string;
-  /** Shown as Email: … when set. */
   customerEmail?: string;
   regNo?: string;
   hostelBlock?: string;
@@ -34,29 +33,34 @@ export type VendorReceiptInput = {
   lineItems: VendorReceiptLine[];
   totalItems: number;
   subtotal: number;
-  /** Convenience / platform fee actually charged. */
   convenienceFee: number;
-  /** When greater than `convenienceFee`, receipt shows a two-line fee + discount block (reference layout). */
   convenienceFeeOriginal?: number;
   total: number;
   footer?: string;
   paymentQrPayload?: string;
   showQr?: boolean;
-  /** Optional extra centered lines under tagline (GSTIN, address, …). */
   taxRegLabel?: string;
   addressLines?: string[];
 };
 
-function money(n: number): string {
-  return `₹${n.toFixed(2)}`;
+const RECEIPT_BRAND = 'LaundroSwipe';
+
+/** Rupee amounts on bills (ASCII-friendly for thermal). */
+export function rsMoney(n: number): string {
+  const x = Math.round(Number(n) * 100) / 100;
+  if (!Number.isFinite(x)) return 'Rs.0.00';
+  return `Rs.${x.toFixed(2)}`;
 }
 
-/** Extra blank lines before cut. */
 const RECEIPT_TRAILING_FEED_LINES = 10;
 
+function itemDescriptionWithRate(label: string, unitPrice: number, prep: (s: string) => string): string {
+  return `${prep(label)} @${rsMoney(unitPrice)}`;
+}
+
 /** Word-wrap for the description column only (qty | desc | amt). */
-function wrapToMidWidth(label: string, mw: number, prep: (s: string) => string): string[] {
-  const safe = prep(label);
+function wrapToMidWidth(text: string, mw: number, prep: (s: string) => string): string[] {
+  const safe = prep(text);
   const words = safe.split(/\s+/).filter(Boolean);
   const chunks: string[] = [];
   let cur = '';
@@ -119,23 +123,35 @@ function printMetaLine(b: ESCPOSBuilder, label: string, value: string): void {
 }
 
 function pushServiceFeeTotalsEscPos(b: ESCPOSBuilder, charged: number, original?: number): void {
-  const showSplit = original !== undefined && original > charged;
-  if (showSplit) {
-    b.twoColumn('Service fee (7-day', money(original!));
-    b.twoColumn('discount)', money(charged));
+  if (original !== undefined && original > charged) {
+    b.twoColumn('Service fee (7-day', rsMoney(original));
+    b.twoColumn('discount)', rsMoney(charged));
+  } else if (charged === 0) {
+    b.twoColumn('Service fee (7-day discount)', rsMoney(0));
   } else {
-    b.twoColumn('Service fee', money(charged));
+    b.twoColumn('Service fee', rsMoney(charged));
+  }
+}
+
+function pushServiceFeePlain(lines: string[], paper: PaperSize, charged: number, original?: number): void {
+  const prep = sanitizeReceiptTextForPreview;
+  if (original !== undefined && original > charged) {
+    lines.push(escposPlainTwoColumnPreview(paper, 'Service fee (7-day', prep(rsMoney(original))));
+    lines.push(escposPlainTwoColumnPreview(paper, 'discount)', prep(rsMoney(charged))));
+  } else if (charged === 0) {
+    lines.push(escposPlainTwoColumnPreview(paper, 'Service fee (7-day discount)', prep(rsMoney(0))));
+  } else {
+    lines.push(escposPlainTwoColumnPreview(paper, 'Service fee', prep(rsMoney(charged))));
   }
 }
 
 /**
- * Reference-style receipt: centered business + tagline, meta block, qty | description | amount with @unit under desc, totals, Thank you!
+ * LaundroSwipe + vendor name, meta, bold item lines (Label @Rs.xx), totals, Thank you!
  */
 export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptInput): Uint8Array {
   const density = getBlePrinterPreferences().printDensity;
   const b = new ESCPOSBuilder(paper);
-  const w = PAPER_FONT_A_CHARS[paper];
-  const { lw, mw } = escposTableColumnWidths(paper);
+  const prep = sanitizeReceiptText;
   b.initialize().codePage(0).printDensity(density);
 
   if (input.showQr && input.paymentQrPayload?.trim()) {
@@ -150,14 +166,11 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
 
   b.divider('-');
   b.feed(1);
-  b.align('center').bold(true).fontSize('doubleHeight').text(sanitizeReceiptText(input.vendorName)).fontSize('normal').bold(false);
-  if (input.tagline?.trim()) {
-    b.text(sanitizeReceiptText(input.tagline.trim()));
-  }
-  if (input.taxRegLabel?.trim()) b.text(sanitizeReceiptText(input.taxRegLabel.trim()));
-  for (const line of input.addressLines ?? []) {
-    if (line?.trim()) b.text(sanitizeReceiptText(line.trim()));
-  }
+  b.align('center').bold(true).fontSize('doubleHeight').text(sanitizeReceiptText(RECEIPT_BRAND)).fontSize('normal').bold(false);
+  b.feed(1);
+  b.align('center').bold(true).text(sanitizeReceiptText(input.vendorName.trim() || 'Vendor')).bold(false);
+  b.feed(1);
+  b.divider('-');
   b.feed(1);
 
   b.align('left');
@@ -166,47 +179,45 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   printMetaLine(b, 'Order', orderNo);
   printMetaLine(b, 'Customer', input.customerLabel);
   printMetaLine(b, 'Phone', input.phoneLabel);
-  printMetaLine(b, 'Customer ID', input.customerDisplayId);
-  printMetaLine(b, 'Email', input.customerEmail ?? '');
   printMetaLine(b, 'Date', input.dateStr);
   if (input.regNo?.trim()) printMetaLine(b, 'Reg no', input.regNo.trim());
   if (input.hostelBlock?.trim()) printMetaLine(b, 'Block', input.hostelBlock.trim());
   if (input.roomNumber?.trim()) printMetaLine(b, 'Room', input.roomNumber.trim());
 
   b.feed(1);
-  b.divider('-');
-  b.bold(true).tableRow('Qty', 'Description', 'Amount').bold(false);
+  b.divider('=');
+  b.feed(1);
+  b.bold(true).tableRow('Qty', 'Item', 'Amount').bold(false);
 
-  const prep = sanitizeReceiptText;
+  const { mw } = escposTableColumnWidths(paper);
   for (const l of input.lineItems) {
-    const descLines = wrapToMidWidth(l.label, mw, prep);
+    const descFull = itemDescriptionWithRate(l.label, l.price, prep);
+    const descLines = wrapToMidWidth(descFull, mw, prep);
     const first = descLines[0] ?? '';
-    const lineTotal = l.qty * l.price;
-    b.tableRow(String(l.qty), first, money(lineTotal));
+    const lineTotal = rsMoney(l.qty * l.price);
+    b.tableRowBoldMid(String(l.qty), first, lineTotal);
     for (let i = 1; i < descLines.length; i += 1) {
-      b.text(' '.repeat(lw) + descLines[i].slice(0, mw));
+      b.tableRowMidContinuationBold(descLines[i]);
     }
-    if (l.id?.trim()) {
-      b.text(' '.repeat(lw) + prep(l.id.trim()).slice(0, mw));
-    }
-    const unitIndent = ' '.repeat(lw) + ' ';
-    b.text((unitIndent + `@${money(l.price)}`).slice(0, w));
     b.feed(1);
   }
 
   b.divider('-');
   b.feed(1);
   b.twoColumn(sanitizeReceiptText('Total items'), sanitizeReceiptText(String(input.totalItems)));
-  b.twoColumn(sanitizeReceiptText('Subtotal'), sanitizeReceiptText(money(input.subtotal)));
+  b.feed(1);
+  b.twoColumn(sanitizeReceiptText('Subtotal'), sanitizeReceiptText(rsMoney(input.subtotal)));
+  b.feed(1);
   pushServiceFeeTotalsEscPos(b, input.convenienceFee, input.convenienceFeeOriginal);
-
-  b.divider('-');
   b.feed(1);
-  const totalLine = totalLinePadded(paper, 'Total', money(input.total), prep);
+
+  b.divider('=');
+  b.feed(1);
+  const totalLine = totalLinePadded(paper, 'Total amount', rsMoney(input.total), prep);
   b.align('left').bold(true).fontSize('doubleHeight').text(totalLine).fontSize('normal').bold(false);
-  b.feed(1);
+  b.feed(2);
 
-  b.align('center').text(sanitizeReceiptText('Thank you!'));
+  b.align('center').bold(true).text(sanitizeReceiptText('Thank you!')).bold(false);
   if (input.footer?.trim()) {
     b.feed(1);
     b.text(sanitizeReceiptText(input.footer.trim()));
@@ -216,9 +227,14 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   return b.build();
 }
 
+/** Plain preview: item text in ALL CAPS so descriptions stand out without ESC/POS bold. */
+function plainItemDescForPreview(label: string, unitPrice: number, prep: (s: string) => string): string {
+  const core = prep(label).toUpperCase();
+  return `${core} @${rsMoney(unitPrice)}`;
+}
+
 export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorReceiptInput): string {
   const lines: string[] = [];
-  const w = PAPER_FONT_A_CHARS[paper];
   const { lw, mw } = escposTableColumnWidths(paper);
   const prep = sanitizeReceiptTextForPreview;
 
@@ -230,12 +246,11 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
 
   lines.push(escposPlainDivider(paper, '-'));
   lines.push('');
-  lines.push(escposPlainLineCenterPreview(paper, prep(input.vendorName)));
-  if (input.tagline?.trim()) lines.push(escposPlainLineCenterPreview(paper, prep(input.tagline.trim())));
-  if (input.taxRegLabel?.trim()) lines.push(escposPlainLineCenterPreview(paper, prep(input.taxRegLabel.trim())));
-  for (const line of input.addressLines ?? []) {
-    if (line?.trim()) lines.push(escposPlainLineCenterPreview(paper, prep(line.trim())));
-  }
+  lines.push(escposPlainLineCenterPreview(paper, prep(RECEIPT_BRAND)));
+  lines.push('');
+  lines.push(escposPlainLineCenterPreview(paper, prep(input.vendorName.trim() || 'Vendor')));
+  lines.push('');
+  lines.push(escposPlainDivider(paper, '-'));
   lines.push('');
 
   const pushMeta = (label: string, value: string) => {
@@ -247,48 +262,40 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   pushMeta('Order', (input.orderLabel ?? '').trim() || '—');
   pushMeta('Customer', input.customerLabel);
   pushMeta('Phone', input.phoneLabel);
-  pushMeta('Customer ID', input.customerDisplayId);
-  if (input.customerEmail?.trim()) pushMeta('Email', input.customerEmail.trim());
   pushMeta('Date', input.dateStr);
   if (input.regNo?.trim()) pushMeta('Reg no', input.regNo.trim());
   if (input.hostelBlock?.trim()) pushMeta('Block', input.hostelBlock.trim());
   if (input.roomNumber?.trim()) pushMeta('Room', input.roomNumber.trim());
 
   lines.push('');
-  lines.push(escposPlainDivider(paper, '-'));
-  lines.push(escposPlainTableRowPreview(paper, 'Qty', 'Description', 'Amount'));
+  lines.push(escposPlainDivider(paper, '='));
+  lines.push('');
+  lines.push(escposPlainTableRowPreview(paper, 'Qty', 'Item', 'Amount'));
 
   for (const l of input.lineItems) {
-    const descLines = wrapToMidWidth(l.label, mw, prep);
+    const descFull = plainItemDescForPreview(l.label, l.price, prep);
+    const descLines = wrapToMidWidth(descFull, mw, prep);
     const first = descLines[0] ?? '';
-    lines.push(escposPlainTableRowPreview(paper, String(l.qty), first, money(l.qty * l.price)));
+    lines.push(escposPlainTableRowPreview(paper, String(l.qty), first, rsMoney(l.qty * l.price)));
     for (let i = 1; i < descLines.length; i += 1) {
       lines.push(' '.repeat(lw) + prep(descLines[i]).slice(0, mw));
     }
-    if (l.id?.trim()) {
-      lines.push(' '.repeat(lw) + prep(l.id.trim()).slice(0, mw));
-    }
-    const unitIndent = ' '.repeat(lw) + ' ';
-    lines.push((unitIndent + `@${money(l.price)}`).slice(0, w));
     lines.push('');
   }
 
   lines.push(escposPlainDivider(paper, '-'));
   lines.push('');
   lines.push(escposPlainTwoColumnPreview(paper, 'Total items', String(input.totalItems)));
-  lines.push(escposPlainTwoColumnPreview(paper, 'Subtotal', money(input.subtotal)));
-  const showSplit =
-    input.convenienceFeeOriginal !== undefined && input.convenienceFeeOriginal > input.convenienceFee;
-  if (showSplit) {
-    lines.push(escposPlainTwoColumnPreview(paper, 'Service fee (7-day', money(input.convenienceFeeOriginal!)));
-    lines.push(escposPlainTwoColumnPreview(paper, 'discount)', money(input.convenienceFee)));
-  } else {
-    lines.push(escposPlainTwoColumnPreview(paper, 'Service fee', money(input.convenienceFee)));
-  }
-
-  lines.push(escposPlainDivider(paper, '-'));
   lines.push('');
-  lines.push(escposPlainTwoColumnPreview(paper, 'Total', money(input.total)));
+  lines.push(escposPlainTwoColumnPreview(paper, 'Subtotal', rsMoney(input.subtotal)));
+  lines.push('');
+  pushServiceFeePlain(lines, paper, input.convenienceFee, input.convenienceFeeOriginal);
+  lines.push('');
+
+  lines.push(escposPlainDivider(paper, '='));
+  lines.push('');
+  lines.push(escposPlainTwoColumnPreview(paper, 'Total amount', rsMoney(input.total)));
+  lines.push('');
   lines.push('');
   lines.push(escposPlainLineCenterPreview(paper, 'Thank you!'));
   if (input.footer?.trim()) {
@@ -311,7 +318,7 @@ export function savedVendorBillToReceiptInput(b: VendorBillRow): VendorReceiptIn
   const convenienceFeeOriginal = tierFee > convenienceFee ? tierFee : undefined;
 
   return {
-    vendorName: b.vendor_name ?? 'LaundroSwipe',
+    vendorName: b.vendor_name ?? 'Vendor',
     tagline: undefined,
     tokenLabel: b.order_token,
     orderLabel: b.order_number ?? '—',

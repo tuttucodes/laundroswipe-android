@@ -24,6 +24,7 @@ export {
   buildVendorReceiptEscPos,
   formatVendorReceiptEscPosPlain,
   savedVendorBillToReceiptInput,
+  rsMoney,
   type VendorReceiptInput,
   type VendorReceiptLine,
 } from './receipt/vendorReceipt';
@@ -72,14 +73,12 @@ export async function printEscPosViaBluetooth(bytes: Uint8Array): Promise<Blueto
 
 function testVendorReceiptInput(paper: PaperSize): VendorReceiptInput {
   return {
-    vendorName: 'LaundroSwipe',
-    tagline: 'Printer test',
+    vendorName: 'Profab',
     tokenLabel: 'SAMPLE',
     orderLabel: 'TEST-001',
     customerLabel: 'Test customer',
     phoneLabel: '9999999999',
     customerDisplayId: 'LS-0000',
-    customerEmail: 'test@example.com',
     dateStr: new Date().toLocaleString(),
     lineItems: [
       { label: 'Wash & fold', qty: 2, price: 60 },

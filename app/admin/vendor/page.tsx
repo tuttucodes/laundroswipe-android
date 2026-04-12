@@ -484,11 +484,8 @@ export default function VendorPage() {
     const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
     const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
     const p = getBlePrinterPreferences();
-    const tagline =
-      typeof window !== 'undefined' ? localStorage.getItem('admin_vendor_tagline')?.trim() || undefined : undefined;
     return {
       vendorName,
-      tagline,
       tokenLabel,
       orderLabel,
       customerLabel,

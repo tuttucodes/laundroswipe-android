@@ -241,6 +241,38 @@ export class ESCPOSBuilder {
     return this.text(escposPlainTableRow(this.paper, left, mid, right));
   }
 
+  /** Same column layout as `tableRow`, but middle column printed in bold (item line on bills). */
+  tableRowBoldMid(left: string, mid: string, right: string): this {
+    const { lw, mw, rw } = escposTableColumnWidths(this.paper);
+    const L = sanitizeReceiptText(left).slice(0, lw).padEnd(lw);
+    const M = sanitizeReceiptText(mid).slice(0, mw).padEnd(mw);
+    const R = sanitizeReceiptText(right).slice(0, rw).padStart(rw);
+    const enc = new TextEncoder();
+    this.pushRaw(ALIGN_LEFT);
+    this.parts.push(enc.encode(L));
+    this.pushRaw(BOLD_ON);
+    this.parts.push(enc.encode(M));
+    this.pushRaw(BOLD_OFF);
+    this.parts.push(enc.encode(R));
+    this.pushRaw(CMD_LF);
+    return this;
+  }
+
+  /** Wrapped item description continuation: bold middle column, empty qty/amount columns. */
+  tableRowMidContinuationBold(mid: string): this {
+    const { lw, mw, rw } = escposTableColumnWidths(this.paper);
+    const M = sanitizeReceiptText(mid).slice(0, mw).padEnd(mw);
+    const enc = new TextEncoder();
+    this.pushRaw(ALIGN_LEFT);
+    this.parts.push(enc.encode(' '.repeat(lw)));
+    this.pushRaw(BOLD_ON);
+    this.parts.push(enc.encode(M));
+    this.pushRaw(BOLD_OFF);
+    this.parts.push(enc.encode(' '.repeat(rw)));
+    this.pushRaw(CMD_LF);
+    return this;
+  }
+
   twoColumn(left: string, right: string): this {
     return this.text(escposPlainTwoColumn(this.paper, left, right));
   }
