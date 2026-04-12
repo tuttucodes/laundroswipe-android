@@ -3,16 +3,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { escPosPlainToThermalReceiptHtml, printThermalReceiptDirect } from '@/lib/thermal-print';
-import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import {
-  buildVendorReceiptEscPos,
-  formatVendorReceiptEscPosPlain,
+  buildVendorBillPrintPayload,
   printEscPosViaBluetooth,
   savedVendorBillToReceiptInput,
 } from '@/lib/printing';
-import { getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import type { VendorBillRow } from '@/lib/api';
-import { calculateServiceFee, formatServiceFeeReceiptLine } from '@/lib/fees';
 import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
@@ -32,98 +28,10 @@ function billLineItemsToState(b: VendorBillRow): LineItem[] {
   }));
 }
 
-function billToHtml(b: VendorBillRow) {
-  const totalItems = Array.isArray(b.line_items)
-    ? b.line_items.reduce((sum, l: { qty: number }) => sum + Number(l.qty || 0), 0)
-    : 0;
-  const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const rows = Array.isArray(b.line_items) && b.line_items.length
-    ? b.line_items.map((l: { label: string; qty: number; price: number }) => `<tr><td class="qty-col">${l.qty}</td><td class="desc-col">${esc(l.label)}<br/><span class="meta">@₹${Number(l.price).toFixed(2)}</span></td><td class="amt-col">₹${(Number(l.price) * Number(l.qty)).toFixed(2)}</td></tr>`).join('')
-    : '<tr><td class="qty-col">0</td><td class="desc-col">No items</td><td class="amt-col">₹0.00</td></tr>';
-  const emailLine =
-    b.user_email != null && String(b.user_email).trim() !== ''
-      ? `<p><strong>Email:</strong> ${esc(String(b.user_email))}</p>`
-      : '';
-  const idLine =
-    b.user_display_id != null && String(b.user_display_id).trim() !== ''
-      ? `<p><strong>Customer ID:</strong> ${esc(String(b.user_display_id))}</p>`
-      : '';
-  const reg = String(b.customer_reg_no ?? '').trim();
-  const blk = String(b.customer_hostel_block ?? '').trim();
-  const rm = String(b.customer_room_number ?? '').trim();
-  const regLine = reg ? `<p class="center"><strong>Reg no:</strong> ${esc(reg)}</p>` : '';
-  const hostelLine =
-    blk || rm
-      ? `<p class="center"><strong>Hostel:</strong> ${esc([blk && `Block ${blk}`, rm && `Room ${rm}`].filter(Boolean).join(' · '))}</p>`
-      : '';
-  const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
-  const conv = Number(b.convenience_fee ?? 0);
-  const discountedFeeHtml =
-    conv === 0 && originalFee > 0
-      ? `<span>Service fee (7-day discount)</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
-      : `<span>Service fee (7-day discount)</span><span>₹${conv.toFixed(2)}</span>`;
-  return `
-    <h2>LaundroSwipe</h2>
-    <p class="meta center">${esc(b.vendor_name ?? 'Vendor')}</p>
-    <p class="center">Token: #${b.order_token}</p>
-    <p class="center">Order: ${esc(String(b.order_number ?? '—'))}</p>
-    <p class="center">Customer: ${esc(b.customer_name ?? '—')}</p>
-    <p class="center">Phone: ${esc(b.customer_phone ?? '—')}</p>
-    ${idLine}
-    ${emailLine}
-    ${regLine}
-    ${hostelLine}
-    <p class="center">Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p>
-    <div class="row-divider"></div>
-    <table>
-      <thead><tr><th class="qty-col">Qty</th><th class="desc-col">Description</th><th class="amt-col">Amount</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="row-divider"></div>
-    <div class="totals">
-      <p><span>Total items</span><span>${totalItems}</span></p>
-      <p><span>Subtotal</span><span>₹${Number(b.subtotal ?? 0).toFixed(2)}</span></p>
-      <p class="conv">${discountedFeeHtml}</p>
-      <p class="total"><span>Total</span><span>₹${Number(b.total ?? 0).toFixed(2)}</span></p>
-    </div>
-    <p class="foot">Thank you!</p>
-  `;
-}
-
-function billToPlainText(b: VendorBillRow): string {
-  const items = Array.isArray(b.line_items) && b.line_items.length
-    ? b.line_items.map((l: { label: string; qty: number; price: number }) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`)
-    : [];
-  const totalItems = Array.isArray(b.line_items)
-    ? b.line_items.reduce((sum, l: { qty: number }) => sum + Number(l.qty || 0), 0)
-    : 0;
-  const extra: string[] = [];
-  if (b.user_email != null && String(b.user_email).trim() !== '') extra.push(`Email: ${b.user_email}`);
-  if (b.user_display_id != null && String(b.user_display_id).trim() !== '') extra.push(`Customer ID: ${b.user_display_id}`);
-  const regP = String(b.customer_reg_no ?? '').trim();
-  const blkP = String(b.customer_hostel_block ?? '').trim();
-  const rmP = String(b.customer_room_number ?? '').trim();
-  if (regP) extra.push(`Reg no: ${regP}`);
-  if (blkP || rmP) {
-    extra.push(`Hostel: ${[blkP && `Block ${blkP}`, rmP && `Room ${rmP}`].filter(Boolean).join(' · ')}`);
-  }
-  return [
-    'LaundroSwipe',
-    `Vendor: ${b.vendor_name ?? 'Vendor'}`,
-    `Token: #${b.order_token}  Order: ${b.order_number ?? '—'}`,
-    `Customer: ${b.customer_name ?? '—'}`,
-    `Phone: ${b.customer_phone ?? '—'}`,
-    ...extra,
-    `Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}`,
-    '---',
-    ...items,
-    '---',
-    `Total items: ${totalItems}`,
-    `Subtotal: ₹${b.subtotal}`,
-    formatServiceFeeReceiptLine(Number(b.subtotal ?? 0), Number(b.convenience_fee ?? 0), 'inr'),
-    `TOTAL: ₹${b.total}`,
-    'Thank you!',
-  ].join('\n');
+/** Same monospace receipt as Print / thermal (canonical `vendorReceipt` layout). */
+function billToHtml(b: VendorBillRow): string {
+  const payload = buildVendorBillPrintPayload(savedVendorBillToReceiptInput(b));
+  return escPosPlainToThermalReceiptHtml(payload.plain, payload.charsPerLine);
 }
 
 function normalizeBillTokenForDup(t: string) {
@@ -456,25 +364,20 @@ export default function BillsPage() {
 
   const printBill = async (b: VendorBillRow) => {
     const title = `Bill #${b.order_token}`;
-    const paper = getEffectiveEscPosPaperSize();
-    const input = savedVendorBillToReceiptInput(b);
-    const escPosPayload = buildVendorReceiptEscPos(paper, input);
-    const plain = formatVendorReceiptEscPosPlain(paper, input);
-    const config = getPrinterConfigForPrint();
-    const chars = config?.charsPerLine ?? 46;
-    const bodyHtml = escPosPlainToThermalReceiptHtml(plain, chars);
+    const payload = buildVendorBillPrintPayload(savedVendorBillToReceiptInput(b));
+    const bodyHtml = escPosPlainToThermalReceiptHtml(payload.plain, payload.charsPerLine);
 
     try {
-      const direct = await printEscPosViaBluetooth(escPosPayload);
+      const direct = await printEscPosViaBluetooth(payload.escPosPayload);
       if (direct === 'printed') return;
     } catch {
       /* fall through to system dialog */
     }
 
-    await printThermalReceiptDirect(title, bodyHtml, plain, {
-      printer: config ?? undefined,
-      forceDialog: config?.forceDialog ?? true,
-      escPosPayload,
+    await printThermalReceiptDirect(title, bodyHtml, payload.plain, {
+      printer: payload.printer ?? undefined,
+      forceDialog: payload.printer?.forceDialog ?? true,
+      escPosPayload: payload.escPosPayload,
     });
   };
 
@@ -687,7 +590,8 @@ export default function BillsPage() {
 
   const copyBill = async (b: VendorBillRow) => {
     try {
-      await navigator.clipboard.writeText(billToPlainText(b));
+      const plain = buildVendorBillPrintPayload(savedVendorBillToReceiptInput(b)).plain;
+      await navigator.clipboard.writeText(plain);
       setCopyMsg('Copied. Paste in your printer app to print.');
       setTimeout(() => setCopyMsg(null), 3000);
     } catch {

@@ -27,6 +27,7 @@ export {
   type VendorReceiptInput,
   type VendorReceiptLine,
 } from './receipt/vendorReceipt';
+export { buildVendorBillPrintPayload, type VendorBillPrintPayload } from './vendorBillPrintPayload';
 export {
   BluetoothPrinterService,
   isWebBluetoothAvailable,

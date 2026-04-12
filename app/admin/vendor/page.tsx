@@ -5,8 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { escPosPlainToThermalReceiptHtml, printThermalReceiptDirect } from '@/lib/thermal-print';
 import {
-  buildVendorReceiptEscPos,
-  formatVendorReceiptEscPosPlain,
+  buildVendorBillPrintPayload,
   printEscPosViaBluetooth,
   type VendorReceiptInput,
 } from '@/lib/printing';
@@ -19,8 +18,7 @@ const PrintBridgeApkCta = dynamic(
   () => import('@/components/vendor/PrintBridgeApkCta').then((m) => ({ default: m.PrintBridgeApkCta })),
   { ssr: false },
 );
-import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
-import { getPrinterConfigForPrint } from '@/lib/printer-settings';
+import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
@@ -519,10 +517,7 @@ export default function VendorPage() {
     };
   };
 
-  const buildReceiptPlainText = () => {
-    const paper = getEffectiveEscPosPaperSize();
-    return formatVendorReceiptEscPosPlain(paper, buildVendorReceiptInput());
-  };
+  const buildReceiptPlainText = () => buildVendorBillPrintPayload(buildVendorReceiptInput()).plain;
 
   const handleCopyReceipt = async () => {
     if (lineItems.length === 0) {
@@ -597,17 +592,13 @@ export default function VendorPage() {
 
   const doPrint = async () => {
     const title = sampleMode ? 'Sample Bill' : `Bill #${order?.token ?? ''}`;
-    const paper = getEffectiveEscPosPaperSize();
     const input = buildVendorReceiptInput();
-    const escPosPayload = buildVendorReceiptEscPos(paper, input);
-    const plain = formatVendorReceiptEscPosPlain(paper, input);
-    const config = getPrinterConfigForPrint();
-    const chars = config?.charsPerLine ?? 46;
-    const bodyHtml = escPosPlainToThermalReceiptHtml(plain, chars);
+    const payload = buildVendorBillPrintPayload(input);
+    const bodyHtml = escPosPlainToThermalReceiptHtml(payload.plain, payload.charsPerLine);
     const prefs = getBlePrinterPreferences();
 
     try {
-      const direct = await printEscPosViaBluetooth(escPosPayload);
+      const direct = await printEscPosViaBluetooth(payload.escPosPayload);
       if (direct === 'printed') {
         showToast('Sent to printer', 'ok');
         return;
@@ -625,10 +616,10 @@ export default function VendorPage() {
       showToast('Direct print error — opening print dialog…', 'er');
     }
 
-    const result = await printThermalReceiptDirect(title, bodyHtml, plain, {
-      printer: config ?? undefined,
-      forceDialog: config?.forceDialog ?? true,
-      escPosPayload,
+    const result = await printThermalReceiptDirect(title, bodyHtml, payload.plain, {
+      printer: payload.printer ?? undefined,
+      forceDialog: payload.printer?.forceDialog ?? true,
+      escPosPayload: payload.escPosPayload,
     });
     if (result === 'blocked') {
       showToast('Allow pop-ups to print, or try again', 'er');
