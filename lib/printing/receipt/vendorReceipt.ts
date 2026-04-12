@@ -37,7 +37,7 @@ export type VendorReceiptInput = {
   showQr?: boolean;
   /** Printed as Bill# (falls back to orderLabel). */
   billNumber?: string;
-  /** Right side of footer row with Items #. */
+  /** Shown on the line before policy / thank-you (e.g. vendor name). */
   cashierLabel?: string;
   /** Centered above thank-you (e.g. exchange policy). */
   policyLines?: string[];
@@ -53,11 +53,10 @@ function money(n: number): string {
 
 const DEFAULT_POLICY_LINES = ['Keep bill for your records.', 'Valid at issued location. T&C apply.'];
 
-/** Wrapped item description lines with serial prefix; `lineWidth` = chars per line. */
-function itemDescriptionLines(serial: number, label: string, lineWidth: number, prep: (s: string) => string): string[] {
+/** Wrapped item description (no serial); `lineWidth` = chars per line. */
+function wrappedLabelLines(label: string, lineWidth: number, prep: (s: string) => string): string[] {
   const safe = prep(label);
-  const prefix = `${serial}. `;
-  const innerW = Math.max(8, lineWidth - prefix.length);
+  const innerW = Math.max(8, lineWidth);
   const words = safe.split(/\s+/).filter(Boolean);
   const chunks: string[] = [];
   let cur = '';
@@ -80,8 +79,7 @@ function itemDescriptionLines(serial: number, label: string, lineWidth: number, 
   }
   if (cur) chunks.push(cur);
   if (!chunks.length) chunks.push(safe.slice(0, innerW));
-
-  return chunks.map((ln, i) => (i === 0 ? prefix + ln : ' '.repeat(prefix.length) + ln));
+  return chunks;
 }
 
 /**
@@ -133,12 +131,10 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   }
 
   b.divider('-');
-  b.bold(true).tableRow('No', 'Item / Rate', 'Amount').bold(false);
+  b.bold(true).tableRow('Qty', 'Item / Rate', 'Amount').bold(false);
 
-  let serial = 0;
   for (const l of input.lineItems) {
-    serial += 1;
-    for (const line of itemDescriptionLines(serial, l.label, w, sanitizeReceiptText)) {
+    for (const line of wrappedLabelLines(l.label, w, sanitizeReceiptText)) {
       b.text(line);
     }
     if (l.id?.trim()) b.text(`   ${sanitizeReceiptText(l.id.trim())}`);
@@ -153,7 +149,7 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   b.align('left');
 
   const cashier = sanitizeReceiptText((input.cashierLabel ?? input.vendorName ?? 'admin').trim() || 'admin');
-  b.twoColumn(`Items #: ${input.totalItems}`, `Cashier :${cashier}`);
+  b.text(`Cashier :${cashier}`);
   b.divider('-');
   b.align('center');
   const policies = input.policyLines?.length ? input.policyLines : DEFAULT_POLICY_LINES;
@@ -161,6 +157,7 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
     if (p?.trim()) b.text(sanitizeReceiptText(p.trim()));
   }
   b.text('THANK YOU AND COME AGAIN');
+  b.text(`Total items: ${input.totalItems}`);
   if (input.footer?.trim()) {
     b.feed(1);
     b.text(sanitizeReceiptText(input.footer.trim()));
@@ -213,12 +210,10 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   }
 
   lines.push(escposPlainDivider(paper, '-'));
-  lines.push(escposPlainTableRowPreview(paper, 'No', 'Item / Rate', 'Amount'));
+  lines.push(escposPlainTableRowPreview(paper, 'Qty', 'Item / Rate', 'Amount'));
 
-  let serial = 0;
   for (const l of input.lineItems) {
-    serial += 1;
-    for (const dl of itemDescriptionLines(serial, l.label, w, prep)) {
+    for (const dl of wrappedLabelLines(l.label, w, prep)) {
       lines.push(dl);
     }
     if (l.id?.trim()) lines.push(prep(`   ${l.id.trim()}`));
@@ -231,13 +226,14 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   lines.push(escposPlainLineRightPreview(paper, `Total: ${money(input.total)}`));
 
   const cashier = prep((input.cashierLabel ?? input.vendorName ?? 'admin').trim() || 'admin');
-  lines.push(escposPlainTwoColumnPreview(paper, `Items #: ${input.totalItems}`, `Cashier :${cashier}`));
+  lines.push(`Cashier :${cashier}`);
   lines.push(escposPlainDivider(paper, '-'));
   const policies = input.policyLines?.length ? input.policyLines : DEFAULT_POLICY_LINES;
   for (const p of policies) {
     if (p?.trim()) lines.push(escposPlainLineCenterPreview(paper, prep(p.trim())));
   }
   lines.push(escposPlainLineCenterPreview(paper, 'THANK YOU AND COME AGAIN'));
+  lines.push(escposPlainLineCenterPreview(paper, `Total items: ${input.totalItems}`));
   if (input.footer?.trim()) {
     lines.push('');
     lines.push(escposPlainLineCenterPreview(paper, prep(input.footer.trim())));
