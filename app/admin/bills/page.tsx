@@ -12,7 +12,7 @@ import {
 } from '@/lib/printing';
 import { getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import type { VendorBillRow } from '@/lib/api';
-import { calculateServiceFee } from '@/lib/fees';
+import { calculateServiceFee, formatServiceFeeReceiptLine } from '@/lib/fees';
 import { getVendorBillItems } from '@/lib/constants';
 import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
@@ -57,9 +57,11 @@ function billToHtml(b: VendorBillRow) {
       ? `<p class="center"><strong>Hostel:</strong> ${esc([blk && `Block ${blk}`, rm && `Room ${rm}`].filter(Boolean).join(' · '))}</p>`
       : '';
   const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
-  const discountedFeeHtml = Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
-    ? `<span>Service fee (7-day discount)</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
-    : `<span>Service fee</span><span>₹${Number(b.convenience_fee ?? 0).toFixed(2)}</span>`;
+  const conv = Number(b.convenience_fee ?? 0);
+  const discountedFeeHtml =
+    conv === 0 && originalFee > 0
+      ? `<span>Service fee (7-day discount)</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
+      : `<span>Service fee (7-day discount)</span><span>₹${conv.toFixed(2)}</span>`;
   return `
     <h2>LaundroSwipe</h2>
     <p class="meta center">${esc(b.vendor_name ?? 'Vendor')}</p>
@@ -105,7 +107,6 @@ function billToPlainText(b: VendorBillRow): string {
   if (blkP || rmP) {
     extra.push(`Hostel: ${[blkP && `Block ${blkP}`, rmP && `Room ${rmP}`].filter(Boolean).join(' · ')}`);
   }
-  const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
   return [
     'LaundroSwipe',
     `Vendor: ${b.vendor_name ?? 'Vendor'}`,
@@ -119,9 +120,7 @@ function billToPlainText(b: VendorBillRow): string {
     '---',
     `Total items: ${totalItems}`,
     `Subtotal: ₹${b.subtotal}`,
-    Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
-      ? `Service fee: ₹0 (discounted from ₹${originalFee} for 7 days)`
-      : `Service fee: ₹${b.convenience_fee}`,
+    formatServiceFeeReceiptLine(Number(b.subtotal ?? 0), Number(b.convenience_fee ?? 0), 'inr'),
     `TOTAL: ₹${b.total}`,
     'Thank you!',
   ].join('\n');
@@ -876,11 +875,13 @@ export default function BillsPage() {
                   <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{sub.toFixed(2)}</p>
                   {fee.active && fee.originalFee > 0 ? (
                     <p style={{ fontWeight: 600, fontSize: 14 }}>
-                      Service fee: <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{fee.originalFee.toFixed(2)}</span> ₹0
-                      <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--ok)' }}>(7-day discount)</span>
+                      Service fee (7-day discount):{' '}
+                      <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{fee.originalFee.toFixed(2)}</span> ₹0
                     </p>
                   ) : (
-                    <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{fee.finalFee.toFixed(2)}</p>
+                    <p style={{ fontWeight: 600, fontSize: 14 }}>
+                      Service fee (7-day discount): ₹{fee.finalFee.toFixed(2)}
+                    </p>
                   )}
                   <p style={{ fontSize: 11, color: 'var(--ts)', marginBottom: 8 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
                   <p style={{ fontWeight: 700, fontSize: 16 }}>Total: ₹{(sub + fee.finalFee).toFixed(2)}</p>

@@ -22,7 +22,7 @@ const PrintBridgeApkCta = dynamic(
 import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
-import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { applyServiceFeeDiscount, formatServiceFeeReceiptLine, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
@@ -499,9 +499,7 @@ export default function VendorPage() {
       '---',
       `Total items: ${totalItems}`,
       `Subtotal: ₹${subtotal}`,
-      feeBreakdown.active && feeBreakdown.originalFee > 0
-        ? `Service fee: ₹0 (discounted from ₹${feeBreakdown.originalFee} for 7 days)`
-        : `Service fee: ₹${serviceFee}`,
+      formatServiceFeeReceiptLine(subtotal, serviceFee, 'inr'),
       `TOTAL: ₹${total}`,
       'Thank you!',
     ];
@@ -521,10 +519,7 @@ export default function VendorPage() {
     const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
     const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
     const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
-    const serviceFeeLine =
-      feeBreakdown.active && feeBreakdown.originalFee > 0
-        ? `Service fee: Rs.0 (discounted from Rs.${feeBreakdown.originalFee.toFixed(2)} for 7 days)`
-        : `Service fee: Rs.${serviceFee.toFixed(2)}`;
+    const serviceFeeLine = formatServiceFeeReceiptLine(subtotal, serviceFee, 'rs');
     const p = getBlePrinterPreferences();
     return {
       vendorName,
@@ -1030,11 +1025,13 @@ export default function VendorPage() {
             <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{subtotal}</p>
             {feeBreakdown.active && feeBreakdown.originalFee > 0 ? (
               <p style={{ fontWeight: 600, fontSize: 14 }}>
-                Service fee: <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee}</span> ₹0
-                <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--ok)' }}>(7-day discount)</span>
+                Service fee (7-day discount):{' '}
+                <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee}</span> ₹0
               </p>
             ) : (
-              <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{serviceFee}</p>
+              <p style={{ fontWeight: 600, fontSize: 14 }}>
+                Service fee (7-day discount): ₹{serviceFee}
+              </p>
             )}
             <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
@@ -1198,11 +1195,13 @@ export default function VendorPage() {
                     <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{sub.toFixed(2)}</p>
                     {feeBreakdown.active && feeBreakdown.originalFee > 0 ? (
                       <p style={{ fontWeight: 600, fontSize: 14 }}>
-                        Service fee: <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee.toFixed(2)}</span> ₹0
-                        <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--ok)' }}>(7-day discount)</span>
+                        Service fee (7-day discount):{' '}
+                        <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee.toFixed(2)}</span> ₹0
                       </p>
                     ) : (
-                      <p style={{ fontWeight: 600, fontSize: 14 }}>Service fee: ₹{feeBreakdown.finalFee.toFixed(2)}</p>
+                      <p style={{ fontWeight: 600, fontSize: 14 }}>
+                        Service fee (7-day discount): ₹{feeBreakdown.finalFee.toFixed(2)}
+                      </p>
                     )}
                     <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
                     <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total.toFixed(2)}</p>

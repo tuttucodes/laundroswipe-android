@@ -1,4 +1,4 @@
-import { calculateServiceFee } from '@/lib/fees';
+import { formatServiceFeeReceiptLine } from '@/lib/fees';
 import type { VendorBillRow } from '@/lib/api';
 import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
 import {
@@ -144,11 +144,11 @@ export function savedVendorBillToReceiptInput(b: VendorBillRow): VendorReceiptIn
   const totalItems = Array.isArray(b.line_items)
     ? b.line_items.reduce((s, l) => s + Number(l.qty || 0), 0)
     : 0;
-  const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
-  const serviceFeeLine =
-    Number(b.convenience_fee ?? 0) === 0 && originalFee > 0
-      ? `Service fee: Rs.0 (discounted from Rs.${originalFee.toFixed(2)} for 7 days)`
-      : `Service fee: Rs.${Number(b.convenience_fee ?? 0).toFixed(2)}`;
+  const serviceFeeLine = formatServiceFeeReceiptLine(
+    Number(b.subtotal ?? 0),
+    Number(b.convenience_fee ?? 0),
+    'rs',
+  );
   return {
     vendorName: b.vendor_name ?? 'LaundroSwipe',
     tokenLabel: b.order_token,

@@ -20,7 +20,12 @@ import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
-import { SERVICE_FEE_SHORT_EXPLANATION, SERVICE_FEE_TERMS_EXPLANATION, formatServiceFeeTiers } from '@/lib/fees';
+import {
+  SERVICE_FEE_SHORT_EXPLANATION,
+  SERVICE_FEE_TERMS_EXPLANATION,
+  formatServiceFeeReceiptLine,
+  formatServiceFeeTiers,
+} from '@/lib/fees';
 
 const SERVICE_ICONS: Record<string, LucideIcon> = {
   wash_fold: Shirt,
@@ -2723,7 +2728,13 @@ export default function LaundroApp() {
               </table>
               <p style={{ textAlign: 'right', fontSize: 13, marginBottom: 2 }}>Subtotal: ₹{viewingBill.subtotal}</p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                <p style={{ textAlign: 'right', fontSize: 13, margin: 0 }}>Service fee: ₹{viewingBill.convenience_fee}</p>
+                <p style={{ textAlign: 'right', fontSize: 13, margin: 0 }}>
+                  {formatServiceFeeReceiptLine(
+                    Number(viewingBill.subtotal ?? 0),
+                    Number(viewingBill.convenience_fee ?? 0),
+                    'inr',
+                  )}
+                </p>
                 <button type="button" className="btn bout bsm" onClick={() => setShowServiceFeeInfo(true)} aria-label="Service fee details">
                   <CircleHelp size={14} />
                 </button>
