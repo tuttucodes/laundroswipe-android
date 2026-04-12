@@ -1,4 +1,4 @@
-import { formatServiceFeeReceiptLine } from '@/lib/fees';
+import { calculateServiceFee } from '@/lib/fees';
 import type { VendorBillRow } from '@/lib/api';
 import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
 import {
@@ -7,22 +7,26 @@ import {
   PAPER_FONT_A_CHARS,
   escposPlainDivider,
   escposPlainLineCenterPreview,
-  escposPlainTableRow,
   escposPlainTableRowPreview,
-  escposPlainTwoColumn,
   escposPlainTwoColumnPreview,
+  escposTableColumnWidths,
 } from '../escpos/ESCPOSBuilder';
 import { sanitizeReceiptText, sanitizeReceiptTextForPreview } from '../escpos/CharacterEncodings';
 
 export type VendorReceiptLine = { label: string; qty: number; price: number; id?: string };
 
 export type VendorReceiptInput = {
+  /** Centered title (e.g. LaundroSwipe). */
   vendorName: string;
+  /** Optional centered subtitle under the title (e.g. Pro Fab Power Laundry Services). */
+  tagline?: string;
   tokenLabel: string;
   orderLabel: string;
   customerLabel: string;
   phoneLabel: string;
   customerDisplayId: string;
+  /** Shown as Email: … when set. */
+  customerEmail?: string;
   regNo?: string;
   hostelBlock?: string;
   roomNumber?: string;
@@ -30,93 +34,108 @@ export type VendorReceiptInput = {
   lineItems: VendorReceiptLine[];
   totalItems: number;
   subtotal: number;
-  serviceFeeLine: string;
+  /** Convenience / platform fee actually charged. */
+  convenienceFee: number;
+  /** When greater than `convenienceFee`, receipt shows a two-line fee + discount block (reference layout). */
+  convenienceFeeOriginal?: number;
   total: number;
   footer?: string;
   paymentQrPayload?: string;
   showQr?: boolean;
-  /** Printed as Bill# (falls back to orderLabel). */
-  billNumber?: string;
-  /** Shown on the line before policy / thank-you (e.g. vendor name). */
-  cashierLabel?: string;
-  /** Centered above thank-you (e.g. exchange policy). */
-  policyLines?: string[];
-  /** Optional GSTIN / TRN line under business name. */
+  /** Optional extra centered lines under tagline (GSTIN, address, …). */
   taxRegLabel?: string;
-  /** Extra address lines (centered), after business name. */
   addressLines?: string[];
 };
 
 function money(n: number): string {
-  return `Rs.${n.toFixed(2)}`;
+  return `₹${n.toFixed(2)}`;
 }
 
-const DEFAULT_POLICY_LINES = ['Keep bill for your records.', 'Valid at issued location. T&C apply.'];
-
-/** Extra blank lines before cut so THANK YOU / footer clear the tear bar on common thermal printers. */
+/** Extra blank lines before cut. */
 const RECEIPT_TRAILING_FEED_LINES = 10;
 
-const ITEM_CONT_INDENT = '  ';
-
-/** Wrapped item description; continuation lines indented for scanability. */
-function wrappedLabelLines(label: string, lineWidth: number, prep: (s: string) => string): string[] {
+/** Word-wrap for the description column only (qty | desc | amt). */
+function wrapToMidWidth(label: string, mw: number, prep: (s: string) => string): string[] {
   const safe = prep(label);
-  const firstW = Math.max(8, lineWidth);
-  const contW = Math.max(6, lineWidth - ITEM_CONT_INDENT.length);
   const words = safe.split(/\s+/).filter(Boolean);
   const chunks: string[] = [];
   let cur = '';
-  let useFirstW = true;
-
   const flush = () => {
     if (cur) {
       chunks.push(cur);
       cur = '';
-      useFirstW = false;
     }
   };
-
-  const maxForLine = () => (useFirstW ? firstW : contW);
-
   for (const w of words) {
-    const mw = maxForLine();
     const next = cur ? `${cur} ${w}` : w;
     if (next.length <= mw) {
       cur = next;
       continue;
     }
     flush();
-    if (w.length <= maxForLine()) {
+    if (w.length <= mw) {
       cur = w;
     } else {
       let rest = w;
       while (rest.length > 0) {
-        const m = maxForLine();
-        if (rest.length <= m) {
-          cur = rest;
+        if (rest.length <= mw) {
+          chunks.push(rest);
           rest = '';
         } else {
-          chunks.push(rest.slice(0, m));
-          rest = rest.slice(m);
+          chunks.push(rest.slice(0, mw));
+          rest = rest.slice(mw);
         }
-        useFirstW = false;
       }
-      continue;
     }
   }
   flush();
-  if (!chunks.length) chunks.push(safe.slice(0, firstW));
+  if (!chunks.length) chunks.push(safe.slice(0, mw));
+  return chunks;
+}
 
-  return chunks.map((ln, i) => (i === 0 ? ln : ITEM_CONT_INDENT + ln));
+function totalLinePadded(paper: PaperSize, left: string, right: string, prep: (s: string) => string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const L = prep(left);
+  const R = prep(right);
+  const maxL = Math.min(L.length, Math.max(4, w - 8));
+  const maxR = Math.min(R.length, w - maxL - 1);
+  const Ls = L.slice(0, maxL);
+  const Rs = R.slice(0, maxR);
+  const pad = w - Ls.length - Rs.length;
+  if (pad >= 1) return Ls + ' '.repeat(pad) + Rs;
+  return (Ls + ' ' + Rs).slice(0, w);
+}
+
+function tokenDisplay(token: string): string {
+  const t = token.trim();
+  if (!t) return '—';
+  return t.startsWith('#') ? t : `#${t}`;
+}
+
+function printMetaLine(b: ESCPOSBuilder, label: string, value: string): void {
+  const v = value.trim();
+  if (!v || v === '—') return;
+  b.text(sanitizeReceiptText(`${label}: ${v}`));
+}
+
+function pushServiceFeeTotalsEscPos(b: ESCPOSBuilder, charged: number, original?: number): void {
+  const showSplit = original !== undefined && original > charged;
+  if (showSplit) {
+    b.twoColumn('Service fee (7-day', money(original!));
+    b.twoColumn('discount)', money(charged));
+  } else {
+    b.twoColumn('Service fee', money(charged));
+  }
 }
 
 /**
- * Build raw ESC/POS bytes — tax-invoice style layout (thermal-safe ASCII on hardware).
+ * Reference-style receipt: centered business + tagline, meta block, qty | description | amount with @unit under desc, totals, Thank you!
  */
 export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptInput): Uint8Array {
   const density = getBlePrinterPreferences().printDensity;
   const b = new ESCPOSBuilder(paper);
   const w = PAPER_FONT_A_CHARS[paper];
+  const { lw, mw } = escposTableColumnWidths(paper);
   b.initialize().codePage(0).printDensity(density);
 
   if (input.showQr && input.paymentQrPayload?.trim()) {
@@ -132,70 +151,67 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   b.divider('-');
   b.feed(1);
   b.align('center').bold(true).fontSize('doubleHeight').text(sanitizeReceiptText(input.vendorName)).fontSize('normal').bold(false);
-  b.text(sanitizeReceiptText('LaundroSwipe'));
+  if (input.tagline?.trim()) {
+    b.text(sanitizeReceiptText(input.tagline.trim()));
+  }
   if (input.taxRegLabel?.trim()) b.text(sanitizeReceiptText(input.taxRegLabel.trim()));
   for (const line of input.addressLines ?? []) {
     if (line?.trim()) b.text(sanitizeReceiptText(line.trim()));
   }
   b.feed(1);
-  b.bold(true).text('TAX INVOICE').bold(false);
-  b.feed(1);
 
   b.align('left');
-  const billTo =
-    input.phoneLabel && input.phoneLabel !== '—'
-      ? `Bill To : ${sanitizeReceiptText(input.customerLabel)} (Ph: ${sanitizeReceiptText(input.phoneLabel)})`
-      : `Bill To : ${sanitizeReceiptText(input.customerLabel)}`;
-  b.text(billTo);
-
-  const billNo = sanitizeReceiptText((input.billNumber ?? input.orderLabel).trim() || '—');
-  b.twoColumn(`Bill#: ${billNo}`, sanitizeReceiptText(input.dateStr));
-  b.text(`Token: #${sanitizeReceiptText(input.tokenLabel)}`);
-  b.text(`Customer ID: ${sanitizeReceiptText(input.customerDisplayId)}`);
-  if (input.regNo?.trim()) b.text(`Reg no: ${sanitizeReceiptText(input.regNo.trim())}`);
+  printMetaLine(b, 'Token', tokenDisplay(input.tokenLabel));
+  const orderNo = (input.orderLabel ?? '').trim() || '—';
+  printMetaLine(b, 'Order', orderNo);
+  printMetaLine(b, 'Customer', input.customerLabel);
+  printMetaLine(b, 'Phone', input.phoneLabel);
+  printMetaLine(b, 'Customer ID', input.customerDisplayId);
+  printMetaLine(b, 'Email', input.customerEmail ?? '');
+  printMetaLine(b, 'Date', input.dateStr);
+  if (input.regNo?.trim()) printMetaLine(b, 'Reg no', input.regNo.trim());
   if (input.hostelBlock?.trim() || input.roomNumber?.trim()) {
     const parts = [
       input.hostelBlock?.trim() ? `Block ${input.hostelBlock.trim()}` : '',
       input.roomNumber?.trim() ? `Room ${input.roomNumber.trim()}` : '',
     ].filter(Boolean);
-    if (parts.length) b.text(`Hostel: ${sanitizeReceiptText(parts.join(' · '))}`);
+    if (parts.length) printMetaLine(b, 'Hostel', parts.join(' · '));
   }
 
   b.feed(1);
   b.divider('-');
-  b.bold(true).tableRow('Qty', 'Item / Rate', 'Amount').bold(false);
+  b.bold(true).tableRow('Qty', 'Description', 'Amount').bold(false);
 
+  const prep = sanitizeReceiptText;
   for (const l of input.lineItems) {
-    for (const line of wrappedLabelLines(l.label, w, sanitizeReceiptText)) {
-      b.text(line);
+    const descLines = wrapToMidWidth(l.label, mw, prep);
+    const first = descLines[0] ?? '';
+    const lineTotal = l.qty * l.price;
+    b.tableRow(String(l.qty), first, money(lineTotal));
+    for (let i = 1; i < descLines.length; i += 1) {
+      b.text(' '.repeat(lw) + descLines[i].slice(0, mw));
     }
-    if (l.id?.trim()) b.text(`   ${sanitizeReceiptText(l.id.trim())}`);
-    b.tableRow(String(l.qty), `@${money(l.price)}`, money(l.price * l.qty));
+    if (l.id?.trim()) {
+      b.text(' '.repeat(lw) + prep(l.id.trim()).slice(0, mw));
+    }
+    const unitIndent = ' '.repeat(lw) + ' ';
+    b.text((unitIndent + `@${money(l.price)}`).slice(0, w));
     b.feed(1);
   }
 
-  b.divider('=');
+  b.divider('-');
   b.feed(1);
-  b.align('right');
-  b.text(`Subtotal: ${money(input.subtotal)}`);
-  b.text(sanitizeReceiptText(input.serviceFeeLine));
-  b.bold(true).fontSize('doubleHeight').text(`TOTAL: ${money(input.total)}`).fontSize('normal').bold(false);
-  b.align('left');
+  b.twoColumn(sanitizeReceiptText('Total items'), sanitizeReceiptText(String(input.totalItems)));
+  b.twoColumn(sanitizeReceiptText('Subtotal'), sanitizeReceiptText(money(input.subtotal)));
+  pushServiceFeeTotalsEscPos(b, input.convenienceFee, input.convenienceFeeOriginal);
+
+  b.divider('-');
+  b.feed(1);
+  const totalLine = totalLinePadded(paper, 'Total', money(input.total), prep);
+  b.align('left').bold(true).fontSize('doubleHeight').text(totalLine).fontSize('normal').bold(false);
   b.feed(1);
 
-  const cashier = sanitizeReceiptText((input.cashierLabel ?? input.vendorName ?? 'admin').trim() || 'admin');
-  b.text(`Cashier: ${cashier}`);
-  b.feed(1);
-  b.divider('-');
-  b.align('center');
-  b.feed(1);
-  const policies = input.policyLines?.length ? input.policyLines : DEFAULT_POLICY_LINES;
-  for (const p of policies) {
-    if (p?.trim()) b.text(sanitizeReceiptText(p.trim()));
-  }
-  b.feed(1);
-  b.bold(true).text('THANK YOU AND COME AGAIN').bold(false);
-  b.text(`Total items: ${input.totalItems}`);
+  b.align('center').text(sanitizeReceiptText('Thank you!'));
   if (input.footer?.trim()) {
     b.feed(1);
     b.text(sanitizeReceiptText(input.footer.trim()));
@@ -205,12 +221,10 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   return b.build();
 }
 
-/**
- * Plain-text mirror for browser print (Arial) and ESC/POS byte fallback — UTF-8 safe for preview.
- */
 export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorReceiptInput): string {
   const lines: string[] = [];
   const w = PAPER_FONT_A_CHARS[paper];
+  const { lw, mw } = escposTableColumnWidths(paper);
   const prep = sanitizeReceiptTextForPreview;
 
   if (input.showQr && input.paymentQrPayload?.trim()) {
@@ -222,66 +236,71 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   lines.push(escposPlainDivider(paper, '-'));
   lines.push('');
   lines.push(escposPlainLineCenterPreview(paper, prep(input.vendorName)));
-  lines.push(escposPlainLineCenterPreview(paper, prep('LaundroSwipe')));
+  if (input.tagline?.trim()) lines.push(escposPlainLineCenterPreview(paper, prep(input.tagline.trim())));
   if (input.taxRegLabel?.trim()) lines.push(escposPlainLineCenterPreview(paper, prep(input.taxRegLabel.trim())));
   for (const line of input.addressLines ?? []) {
     if (line?.trim()) lines.push(escposPlainLineCenterPreview(paper, prep(line.trim())));
   }
   lines.push('');
-  lines.push(escposPlainLineCenterPreview(paper, 'TAX INVOICE'));
-  lines.push('');
 
-  const billTo =
-    input.phoneLabel && input.phoneLabel !== '—'
-      ? `Bill To : ${prep(input.customerLabel)} (Ph: ${prep(input.phoneLabel)})`
-      : `Bill To : ${prep(input.customerLabel)}`;
-  lines.push(billTo);
-
-  const billNo = prep((input.billNumber ?? input.orderLabel).trim() || '—');
-  lines.push(escposPlainTwoColumnPreview(paper, `Bill#: ${billNo}`, prep(input.dateStr)));
-  lines.push(prep(`Token: #${input.tokenLabel}`));
-  lines.push(prep(`Customer ID: ${input.customerDisplayId}`));
-  if (input.regNo?.trim()) lines.push(prep(`Reg no: ${input.regNo.trim()}`));
+  const pushMeta = (label: string, value: string) => {
+    const v = value.trim();
+    if (!v || v === '—') return;
+    lines.push(prep(`${label}: ${v}`));
+  };
+  pushMeta('Token', tokenDisplay(input.tokenLabel));
+  pushMeta('Order', (input.orderLabel ?? '').trim() || '—');
+  pushMeta('Customer', input.customerLabel);
+  pushMeta('Phone', input.phoneLabel);
+  pushMeta('Customer ID', input.customerDisplayId);
+  if (input.customerEmail?.trim()) pushMeta('Email', input.customerEmail.trim());
+  pushMeta('Date', input.dateStr);
+  if (input.regNo?.trim()) pushMeta('Reg no', input.regNo.trim());
   if (input.hostelBlock?.trim() || input.roomNumber?.trim()) {
     const parts = [
       input.hostelBlock?.trim() ? `Block ${input.hostelBlock.trim()}` : '',
       input.roomNumber?.trim() ? `Room ${input.roomNumber.trim()}` : '',
     ].filter(Boolean);
-    if (parts.length) lines.push(prep(`Hostel: ${parts.join(' · ')}`));
+    if (parts.length) pushMeta('Hostel', parts.join(' · '));
   }
 
   lines.push('');
   lines.push(escposPlainDivider(paper, '-'));
-  lines.push(escposPlainTableRowPreview(paper, 'Qty', 'Item / Rate', 'Amount'));
+  lines.push(escposPlainTableRowPreview(paper, 'Qty', 'Description', 'Amount'));
 
   for (const l of input.lineItems) {
-    for (const dl of wrappedLabelLines(l.label, w, prep)) {
-      lines.push(dl);
+    const descLines = wrapToMidWidth(l.label, mw, prep);
+    const first = descLines[0] ?? '';
+    lines.push(escposPlainTableRowPreview(paper, String(l.qty), first, money(l.qty * l.price)));
+    for (let i = 1; i < descLines.length; i += 1) {
+      lines.push(' '.repeat(lw) + prep(descLines[i]).slice(0, mw));
     }
-    if (l.id?.trim()) lines.push(prep(`   ${l.id.trim()}`));
-    lines.push(escposPlainTableRowPreview(paper, String(l.qty), `@${money(l.price)}`, money(l.price * l.qty)));
+    if (l.id?.trim()) {
+      lines.push(' '.repeat(lw) + prep(l.id.trim()).slice(0, mw));
+    }
+    const unitIndent = ' '.repeat(lw) + ' ';
+    lines.push((unitIndent + `@${money(l.price)}`).slice(0, w));
     lines.push('');
   }
 
-  lines.push(escposPlainDivider(paper, '='));
-  lines.push('');
-  lines.push(escposPlainLineRightPreview(paper, `Subtotal: ${money(input.subtotal)}`));
-  lines.push(escposPlainLineRightPreview(paper, prep(input.serviceFeeLine)));
-  lines.push(escposPlainLineRightPreview(paper, `TOTAL: ${money(input.total)}`));
-  lines.push('');
-
-  const cashier = prep((input.cashierLabel ?? input.vendorName ?? 'admin').trim() || 'admin');
-  lines.push(`Cashier: ${cashier}`);
-  lines.push('');
   lines.push(escposPlainDivider(paper, '-'));
   lines.push('');
-  const policies = input.policyLines?.length ? input.policyLines : DEFAULT_POLICY_LINES;
-  for (const p of policies) {
-    if (p?.trim()) lines.push(escposPlainLineCenterPreview(paper, prep(p.trim())));
+  lines.push(escposPlainTwoColumnPreview(paper, 'Total items', String(input.totalItems)));
+  lines.push(escposPlainTwoColumnPreview(paper, 'Subtotal', money(input.subtotal)));
+  const showSplit =
+    input.convenienceFeeOriginal !== undefined && input.convenienceFeeOriginal > input.convenienceFee;
+  if (showSplit) {
+    lines.push(escposPlainTwoColumnPreview(paper, 'Service fee (7-day', money(input.convenienceFeeOriginal!)));
+    lines.push(escposPlainTwoColumnPreview(paper, 'discount)', money(input.convenienceFee)));
+  } else {
+    lines.push(escposPlainTwoColumnPreview(paper, 'Service fee', money(input.convenienceFee)));
   }
+
+  lines.push(escposPlainDivider(paper, '-'));
   lines.push('');
-  lines.push(escposPlainLineCenterPreview(paper, 'THANK YOU AND COME AGAIN'));
-  lines.push(escposPlainLineCenterPreview(paper, `Total items: ${input.totalItems}`));
+  lines.push(escposPlainTwoColumnPreview(paper, 'Total', money(input.total)));
+  lines.push('');
+  lines.push(escposPlainLineCenterPreview(paper, 'Thank you!'));
   if (input.footer?.trim()) {
     lines.push('');
     lines.push(escposPlainLineCenterPreview(paper, prep(input.footer.trim())));
@@ -292,30 +311,24 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   return lines.join('\n');
 }
 
-function escposPlainLineRightPreview(paper: PaperSize, text: string): string {
-  const w = PAPER_FONT_A_CHARS[paper];
-  const t = sanitizeReceiptTextForPreview(text);
-  if (t.length >= w) return t.slice(0, w);
-  return t.padStart(w);
-}
-
 export function savedVendorBillToReceiptInput(b: VendorBillRow): VendorReceiptInput {
   const totalItems = Array.isArray(b.line_items)
     ? b.line_items.reduce((s, l) => s + Number(l.qty || 0), 0)
     : 0;
-  const serviceFeeLine = formatServiceFeeReceiptLine(
-    Number(b.subtotal ?? 0),
-    Number(b.convenience_fee ?? 0),
-    'rs',
-  );
+  const subtotal = Number(b.subtotal ?? 0);
+  const convenienceFee = Number(b.convenience_fee ?? 0);
+  const tierFee = calculateServiceFee(subtotal);
+  const convenienceFeeOriginal = tierFee > convenienceFee ? tierFee : undefined;
+
   return {
     vendorName: b.vendor_name ?? 'LaundroSwipe',
+    tagline: undefined,
     tokenLabel: b.order_token,
     orderLabel: b.order_number ?? '—',
-    billNumber: b.order_number ?? undefined,
     customerLabel: b.customer_name ?? '—',
     phoneLabel: b.customer_phone ?? '—',
     customerDisplayId: b.user_display_id ?? '—',
+    customerEmail: b.user_email?.trim() || undefined,
     regNo: b.customer_reg_no ?? undefined,
     hostelBlock: b.customer_hostel_block ?? undefined,
     roomNumber: b.customer_room_number ?? undefined,
@@ -329,11 +342,10 @@ export function savedVendorBillToReceiptInput(b: VendorBillRow): VendorReceiptIn
         }))
       : [],
     totalItems,
-    subtotal: Number(b.subtotal ?? 0),
-    serviceFeeLine,
+    subtotal,
+    convenienceFee,
+    convenienceFeeOriginal,
     total: Number(b.total ?? 0),
     footer: '',
-    cashierLabel: (b.vendor_name ?? 'Vendor').trim() || 'admin',
-    policyLines: DEFAULT_POLICY_LINES,
   };
 }

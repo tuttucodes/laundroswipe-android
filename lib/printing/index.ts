@@ -1,16 +1,13 @@
 import { tryNativeEscPosPrint } from '@/lib/native-print-bridge';
 import { BluetoothPrinterService, isWebBluetoothAvailable } from './bluetooth/BluetoothPrinterService';
 import { PrintQueue } from './queue/PrintQueue';
-import {
-  ESCPOSBuilder,
-  type PaperSize,
-  escposPlainDivider,
-  escposPlainTableRow,
-  escposPlainLineRight,
-  escposPlainLineCenter,
-  escposPlainTwoColumn,
-} from './escpos/ESCPOSBuilder';
+import { type PaperSize } from './escpos/ESCPOSBuilder';
 import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
+import {
+  buildVendorReceiptEscPos,
+  formatVendorReceiptEscPosPlain,
+  type VendorReceiptInput,
+} from './receipt/vendorReceipt';
 
 export type { PaperSize } from './escpos/ESCPOSBuilder';
 export {
@@ -20,6 +17,7 @@ export {
   escposPlainTableRow,
   escposPlainLineRight,
   escposPlainLineCenter,
+  escposTableColumnWidths,
   PAPER_FONT_A_CHARS,
 } from './escpos/ESCPOSBuilder';
 export {
@@ -71,85 +69,36 @@ export async function printEscPosViaBluetooth(bytes: Uint8Array): Promise<Blueto
   }
 }
 
-/** Small test ticket — same tax-invoice section style as vendor bills. */
+function testVendorReceiptInput(paper: PaperSize): VendorReceiptInput {
+  return {
+    vendorName: 'LaundroSwipe',
+    tagline: 'Printer test',
+    tokenLabel: 'SAMPLE',
+    orderLabel: 'TEST-001',
+    customerLabel: 'Test customer',
+    phoneLabel: '9999999999',
+    customerDisplayId: 'LS-0000',
+    customerEmail: 'test@example.com',
+    dateStr: new Date().toLocaleString(),
+    lineItems: [
+      { label: 'Wash & fold', qty: 2, price: 60 },
+      { label: 'Iron', qty: 1, price: 45 },
+    ],
+    totalItems: 3,
+    subtotal: 165,
+    convenienceFee: 0,
+    convenienceFeeOriginal: 10,
+    total: 165,
+    footer: `OK — ${paper}`,
+  };
+}
+
+/** Small test ticket — same layout as live vendor bills. */
 export function buildTestEscPosReceipt(paper: PaperSize): Uint8Array {
-  const prefs = getBlePrinterPreferences();
-  const b = new ESCPOSBuilder(paper);
-  b.initialize().codePage(0).printDensity(prefs.printDensity);
-  b.divider('-');
-  b.feed(1);
-  b.align('center').bold(true).fontSize('doubleHeight').text('LaundroSwipe').fontSize('normal').bold(false);
-  b.text('Printer test');
-  b.feed(1);
-  b.bold(true).text('TAX INVOICE').bold(false);
-  b.feed(1);
-  b.align('left');
-  b.text('Bill To : Test customer');
-  b.twoColumn('Bill#: TEST', new Date().toLocaleString());
-  b.feed(1);
-  b.divider('-');
-  b.bold(true).tableRow('Qty', 'Item / Rate', 'Amount').bold(false);
-  b.text('Wash & fold');
-  b.tableRow('2', '@Rs.60.00', 'Rs.120.00');
-  b.feed(1);
-  b.text('Iron');
-  b.tableRow('1', '@Rs.45.00', 'Rs.45.00');
-  b.feed(1);
-  b.divider('=');
-  b.feed(1);
-  b.align('right');
-  b.text('Subtotal: Rs.165.00');
-  b.text('Service fee: Rs.0 (7-day discount)');
-  b.bold(true).fontSize('doubleHeight').text('TOTAL: Rs.165.00').fontSize('normal').bold(false);
-  b.align('left');
-  b.feed(1);
-  b.text('Cashier: admin');
-  b.feed(1);
-  b.divider('-');
-  b.align('center');
-  b.feed(1);
-  b.bold(true).text('THANK YOU AND COME AGAIN').bold(false);
-  b.text('Total items: 3');
-  b.feed(2).text('OK — ' + paper);
-  b.feed(10).cut(false);
-  return b.build();
+  return buildVendorReceiptEscPos(paper, testVendorReceiptInput(paper));
 }
 
 /** Plain-text mirror of `buildTestEscPosReceipt` (browser print + byte fallback). */
 export function formatTestEscPosPlain(paper: PaperSize): string {
-  const lines: string[] = [];
-  lines.push(escposPlainDivider(paper, '-'));
-  lines.push('');
-  lines.push(escposPlainLineCenter(paper, 'LaundroSwipe'));
-  lines.push(escposPlainLineCenter(paper, 'Printer test'));
-  lines.push('');
-  lines.push(escposPlainLineCenter(paper, 'TAX INVOICE'));
-  lines.push('');
-  lines.push('Bill To : Test customer');
-  lines.push(escposPlainTwoColumn(paper, 'Bill#: TEST', new Date().toLocaleString()));
-  lines.push('');
-  lines.push(escposPlainDivider(paper, '-'));
-  lines.push(escposPlainTableRow(paper, 'Qty', 'Item / Rate', 'Amount'));
-  lines.push('Wash & fold');
-  lines.push(escposPlainTableRow(paper, '2', '@Rs.60.00', 'Rs.120.00'));
-  lines.push('');
-  lines.push('Iron');
-  lines.push(escposPlainTableRow(paper, '1', '@Rs.45.00', 'Rs.45.00'));
-  lines.push('');
-  lines.push(escposPlainDivider(paper, '='));
-  lines.push('');
-  lines.push(escposPlainLineRight(paper, 'Subtotal: Rs.165.00'));
-  lines.push(escposPlainLineRight(paper, 'Service fee: Rs.0 (7-day discount)'));
-  lines.push(escposPlainLineRight(paper, 'TOTAL: Rs.165.00'));
-  lines.push('');
-  lines.push('Cashier: admin');
-  lines.push('');
-  lines.push(escposPlainDivider(paper, '-'));
-  lines.push('');
-  lines.push(escposPlainLineCenter(paper, 'THANK YOU AND COME AGAIN'));
-  lines.push(escposPlainLineCenter(paper, 'Total items: 3'));
-  lines.push('');
-  lines.push(escposPlainLineCenter(paper, 'OK — ' + paper));
-  for (let i = 0; i < 10; i += 1) lines.push('');
-  return lines.join('\n');
+  return formatVendorReceiptEscPosPlain(paper, testVendorReceiptInput(paper));
 }

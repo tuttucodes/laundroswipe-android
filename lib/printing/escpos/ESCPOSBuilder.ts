@@ -28,6 +28,15 @@ export const PAPER_FONT_A_CHARS: Record<PaperSize, number> = {
   '80mm': 48,
 };
 
+/** Column widths for `tableRow` / receipt line items (qty | description | amount). */
+export function escposTableColumnWidths(paper: PaperSize): { lw: number; mw: number; rw: number } {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const lw = Math.min(5, Math.max(3, Math.floor(w * 0.14)));
+  const rw = Math.min(10, Math.max(6, Math.floor(w * 0.3)));
+  const mw = Math.max(4, w - lw - rw);
+  return { lw, mw, rw };
+}
+
 /** Plain-text line matching ESC/POS `divider()` for preview windows (BLE / native path). */
 export function escposPlainDivider(paper: PaperSize, char = '-'): string {
   const w = PAPER_FONT_A_CHARS[paper];
@@ -37,10 +46,7 @@ export function escposPlainDivider(paper: PaperSize, char = '-'): string {
 
 /** Plain-text line matching ESC/POS `tableRow()` for preview windows. */
 export function escposPlainTableRow(paper: PaperSize, left: string, mid: string, right: string): string {
-  const w = PAPER_FONT_A_CHARS[paper];
-  const lw = Math.min(5, Math.max(3, Math.floor(w * 0.14)));
-  const rw = Math.min(10, Math.max(6, Math.floor(w * 0.3)));
-  const mw = Math.max(4, w - lw - rw);
+  const { lw, mw, rw } = escposTableColumnWidths(paper);
   const L = sanitizeReceiptText(left).slice(0, lw).padEnd(lw);
   const R = sanitizeReceiptText(right).slice(0, rw).padStart(rw);
   const M = sanitizeReceiptText(mid).slice(0, mw).padEnd(mw);
@@ -49,10 +55,7 @@ export function escposPlainTableRow(paper: PaperSize, left: string, mid: string,
 
 /** Same column layout as `escposPlainTableRow` but keeps UTF-8 for browser/Arial preview. */
 export function escposPlainTableRowPreview(paper: PaperSize, left: string, mid: string, right: string): string {
-  const w = PAPER_FONT_A_CHARS[paper];
-  const lw = Math.min(5, Math.max(3, Math.floor(w * 0.14)));
-  const rw = Math.min(10, Math.max(6, Math.floor(w * 0.3)));
-  const mw = Math.max(4, w - lw - rw);
+  const { lw, mw, rw } = escposTableColumnWidths(paper);
   const L = sanitizeReceiptTextForPreview(left).slice(0, lw).padEnd(lw);
   const R = sanitizeReceiptTextForPreview(right).slice(0, rw).padStart(rw);
   const M = sanitizeReceiptTextForPreview(mid).slice(0, mw).padEnd(mw);

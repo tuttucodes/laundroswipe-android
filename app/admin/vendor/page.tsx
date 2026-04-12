@@ -22,7 +22,7 @@ const PrintBridgeApkCta = dynamic(
 import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
-import { applyServiceFeeDiscount, formatServiceFeeReceiptLine, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
@@ -485,16 +485,18 @@ export default function VendorPage() {
     const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
     const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
     const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
-    const serviceFeeLine = formatServiceFeeReceiptLine(subtotal, serviceFee, 'rs');
     const p = getBlePrinterPreferences();
+    const tagline =
+      typeof window !== 'undefined' ? localStorage.getItem('admin_vendor_tagline')?.trim() || undefined : undefined;
     return {
       vendorName,
+      tagline,
       tokenLabel,
       orderLabel,
-      billNumber: orderLabel,
       customerLabel,
       phoneLabel,
       customerDisplayId: sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24),
+      customerEmail: sampleMode ? undefined : (u.email?.trim() || undefined),
       regNo: regPlain || undefined,
       hostelBlock: blockPlain || undefined,
       roomNumber: roomPlain || undefined,
@@ -507,10 +509,11 @@ export default function VendorPage() {
       })),
       totalItems,
       subtotal,
-      serviceFeeLine,
+      convenienceFee: serviceFee,
+      convenienceFeeOriginal:
+        feeBreakdown.originalFee > serviceFee ? feeBreakdown.originalFee : undefined,
       total,
       footer: '',
-      cashierLabel: vendorName,
       showQr: p.showPaymentQr && !!p.paymentQrPayload.trim(),
       paymentQrPayload: p.paymentQrPayload.trim() || undefined,
     };
