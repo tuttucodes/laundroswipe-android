@@ -139,6 +139,31 @@ function billTotalKeyForDup(total: unknown) {
   return (Math.round(n * 100) / 100).toFixed(2);
 }
 
+type BillListFilterFields = {
+  token: string;
+  dateFrom: string;
+  dateTo: string;
+  subtotalMin: string;
+  subtotalMax: string;
+  totalMin: string;
+  totalMax: string;
+};
+
+function buildVendorBillsQuery(page: number, limit: number, f: BillListFilterFields): URLSearchParams {
+  const p = new URLSearchParams();
+  p.set('page', String(page));
+  p.set('limit', String(limit));
+  const t = f.token.replace(/^#/, '').trim();
+  if (t) p.set('token', t);
+  if (f.dateFrom.trim()) p.set('date_from', f.dateFrom.trim());
+  if (f.dateTo.trim()) p.set('date_to', f.dateTo.trim());
+  if (f.subtotalMin.trim()) p.set('subtotal_min', f.subtotalMin.trim());
+  if (f.subtotalMax.trim()) p.set('subtotal_max', f.subtotalMax.trim());
+  if (f.totalMin.trim()) p.set('total_min', f.totalMin.trim());
+  if (f.totalMax.trim()) p.set('total_max', f.totalMax.trim());
+  return p;
+}
+
 export default function BillsPage() {
   const [bills, setBills] = useState<VendorBillRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,13 +187,60 @@ export default function BillsPage() {
   const [billsTotal, setBillsTotal] = useState(0);
   const BILLS_PER_PAGE = 50;
 
+  const [filterToken, setFilterToken] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [filterSubtotalMin, setFilterSubtotalMin] = useState('');
+  const [filterSubtotalMax, setFilterSubtotalMax] = useState('');
+  const [filterTotalMin, setFilterTotalMin] = useState('');
+  const [filterTotalMax, setFilterTotalMax] = useState('');
+
+  const [appliedToken, setAppliedToken] = useState('');
+  const [appliedDateFrom, setAppliedDateFrom] = useState('');
+  const [appliedDateTo, setAppliedDateTo] = useState('');
+  const [appliedSubtotalMin, setAppliedSubtotalMin] = useState('');
+  const [appliedSubtotalMax, setAppliedSubtotalMax] = useState('');
+  const [appliedTotalMin, setAppliedTotalMin] = useState('');
+  const [appliedTotalMax, setAppliedTotalMax] = useState('');
+
+  const appliedFilterFields: BillListFilterFields = {
+    token: appliedToken,
+    dateFrom: appliedDateFrom,
+    dateTo: appliedDateTo,
+    subtotalMin: appliedSubtotalMin,
+    subtotalMax: appliedSubtotalMax,
+    totalMin: appliedTotalMin,
+    totalMax: appliedTotalMax,
+  };
+
+  const hasActiveBillFilters = useMemo(() => {
+    return (
+      appliedToken.replace(/^#/, '').trim() !== '' ||
+      appliedDateFrom.trim() !== '' ||
+      appliedDateTo.trim() !== '' ||
+      appliedSubtotalMin.trim() !== '' ||
+      appliedSubtotalMax.trim() !== '' ||
+      appliedTotalMin.trim() !== '' ||
+      appliedTotalMax.trim() !== ''
+    );
+  }, [
+    appliedToken,
+    appliedDateFrom,
+    appliedDateTo,
+    appliedSubtotalMin,
+    appliedSubtotalMax,
+    appliedTotalMin,
+    appliedTotalMax,
+  ]);
+
   const fetchBills = (page: number) => {
     setLoading(true);
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
     const headers = token
       ? ({ Authorization: `Bearer ${token}` } as Record<string, string>)
       : ({} as Record<string, string>);
-    fetch(`/api/vendor/bills?page=${page}&limit=${BILLS_PER_PAGE}`, { credentials: 'include', headers })
+    const q = buildVendorBillsQuery(page, BILLS_PER_PAGE, appliedFilterFields);
+    fetch(`/api/vendor/bills?${q.toString()}`, { credentials: 'include', headers })
       .then(async (r) => {
         if (r.status === 401) {
           sessionStorage.removeItem('admin_token');
@@ -203,7 +275,91 @@ export default function BillsPage() {
     );
 
     fetchBills(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial load only; refetch uses Apply / pagination
   }, []);
+
+  const applyBillFilters = () => {
+    const draft: BillListFilterFields = {
+      token: filterToken,
+      dateFrom: filterDateFrom,
+      dateTo: filterDateTo,
+      subtotalMin: filterSubtotalMin,
+      subtotalMax: filterSubtotalMax,
+      totalMin: filterTotalMin,
+      totalMax: filterTotalMax,
+    };
+    setAppliedToken(draft.token);
+    setAppliedDateFrom(draft.dateFrom);
+    setAppliedDateTo(draft.dateTo);
+    setAppliedSubtotalMin(draft.subtotalMin);
+    setAppliedSubtotalMax(draft.subtotalMax);
+    setAppliedTotalMin(draft.totalMin);
+    setAppliedTotalMax(draft.totalMax);
+    setBillsPage(1);
+    setLoading(true);
+    const auth = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers = auth ? ({ Authorization: `Bearer ${auth}` } as Record<string, string>) : ({} as Record<string, string>);
+    const q = buildVendorBillsQuery(1, BILLS_PER_PAGE, draft);
+    fetch(`/api/vendor/bills?${q.toString()}`, { credentials: 'include', headers })
+      .then(async (r) => {
+        if (r.status === 401) {
+          sessionStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_logged');
+          setLoading(false);
+          return null;
+        }
+        return r.json().catch(() => ({}));
+      })
+      .then((data) => {
+        if (!data) return;
+        setBills((data.bills ?? []) as VendorBillRow[]);
+        setBillsPage(data.page ?? 1);
+        setBillsTotalPages(data.total_pages ?? 1);
+        setBillsTotal(data.total ?? 0);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  };
+
+  const clearBillFilters = () => {
+    setFilterToken('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setFilterSubtotalMin('');
+    setFilterSubtotalMax('');
+    setFilterTotalMin('');
+    setFilterTotalMax('');
+    setAppliedToken('');
+    setAppliedDateFrom('');
+    setAppliedDateTo('');
+    setAppliedSubtotalMin('');
+    setAppliedSubtotalMax('');
+    setAppliedTotalMin('');
+    setAppliedTotalMax('');
+    setBillsPage(1);
+    setLoading(true);
+    const auth = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
+    const headers = auth ? ({ Authorization: `Bearer ${auth}` } as Record<string, string>) : ({} as Record<string, string>);
+    fetch(`/api/vendor/bills?page=1&limit=${BILLS_PER_PAGE}`, { credentials: 'include', headers })
+      .then(async (r) => {
+        if (r.status === 401) {
+          sessionStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_logged');
+          setLoading(false);
+          return null;
+        }
+        return r.json().catch(() => ({}));
+      })
+      .then((data) => {
+        if (!data) return;
+        setBills((data.bills ?? []) as VendorBillRow[]);
+        setBillsPage(data.page ?? 1);
+        setBillsTotalPages(data.total_pages ?? 1);
+        setBillsTotal(data.total ?? 0);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  };
 
   useEffect(() => {
     if (!editingBill) {
@@ -566,6 +722,98 @@ export default function BillsPage() {
         </button>
       </div>
 
+      <div className="vendor-card" style={{ padding: 16, marginBottom: 20 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 6px', color: 'var(--tx)' }}>Search &amp; filters</p>
+        <p style={{ fontSize: 12, color: 'var(--ts)', margin: '0 0 14px', lineHeight: 1.45 }}>
+          Filter saved bills by token (partial match), bill date in India (IST), item subtotal, or grand total. Click <strong>Apply</strong> to run the search; pagination keeps these filters.
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            applyBillFilters();
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(168px, 1fr))',
+              gap: 12,
+              marginBottom: 12,
+            }}
+          >
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--tx)' }}>Token</label>
+              <input
+                className="vendor-input"
+                placeholder="e.g. A1B2"
+                value={filterToken}
+                onChange={(e) => setFilterToken(e.target.value.toUpperCase())}
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--tx)' }}>From date (IST)</label>
+              <input className="vendor-input" type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--tx)' }}>To date (IST)</label>
+              <input className="vendor-input" type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--tx)' }}>Subtotal min (₹)</label>
+              <input
+                className="vendor-input"
+                inputMode="decimal"
+                placeholder="0"
+                value={filterSubtotalMin}
+                onChange={(e) => setFilterSubtotalMin(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--tx)' }}>Subtotal max (₹)</label>
+              <input
+                className="vendor-input"
+                inputMode="decimal"
+                placeholder="Any"
+                value={filterSubtotalMax}
+                onChange={(e) => setFilterSubtotalMax(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--tx)' }}>Total min (₹)</label>
+              <input
+                className="vendor-input"
+                inputMode="decimal"
+                placeholder="0"
+                value={filterTotalMin}
+                onChange={(e) => setFilterTotalMin(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--tx)' }}>Total max (₹)</label>
+              <input
+                className="vendor-input"
+                inputMode="decimal"
+                placeholder="Any"
+                value={filterTotalMax}
+                onChange={(e) => setFilterTotalMax(e.target.value)}
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button type="submit" className="vendor-btn-primary" disabled={loading}>
+              Apply filters
+            </button>
+            <button type="button" className="vendor-btn-secondary" disabled={loading} onClick={() => clearBillFilters()}>
+              Clear all
+            </button>
+            {hasActiveBillFilters && (
+              <span style={{ fontSize: 12, color: 'var(--tm)' }}>Filters active · {billsTotal} matching bill{billsTotal === 1 ? '' : 's'}</span>
+            )}
+          </div>
+        </form>
+      </div>
+
       {copyMsg && !viewingBill && !editingBill && (
         <p style={{ marginBottom: 14, fontSize: 14, color: copyMsg.includes('failed') ? 'var(--er)' : 'var(--ok)' }}>{copyMsg}</p>
       )}
@@ -574,8 +822,26 @@ export default function BillsPage() {
         <p style={{ color: 'var(--ts)' }}>Loading…</p>
       ) : bills.length === 0 ? (
         <div className="vendor-card" style={{ padding: 32, textAlign: 'center', color: 'var(--ts)' }}>
-          <p style={{ marginBottom: 8 }}>No saved bills yet.</p>
-          <p style={{ margin: 0 }}><Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600 }}>Create a bill</Link> and click &quot;Save bill&quot; to see it here.</p>
+          {hasActiveBillFilters ? (
+            <>
+              <p style={{ marginBottom: 8 }}>No bills match your filters.</p>
+              <p style={{ margin: 0 }}>
+                <button type="button" className="vendor-btn-secondary" onClick={() => clearBillFilters()}>
+                  Clear filters
+                </button>
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ marginBottom: 8 }}>No saved bills yet.</p>
+              <p style={{ margin: 0 }}>
+                <Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600 }}>
+                  Create a bill
+                </Link>{' '}
+                and click &quot;Save bill&quot; to see it here.
+              </p>
+            </>
+          )}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

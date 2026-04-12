@@ -88,6 +88,65 @@ function mergeDashboardBlockRows(rows: DashboardBlockRow[], dateField: 'delivery
   return [...map.values()];
 }
 
+function blockRollupsFromRpc(
+  colBlock: { data: RpcBlockRow[] | null; error: { message: string } | null },
+  billBlock: { data: RpcBillBlockRow[] | null; error: { message: string } | null },
+) {
+  const blockRows = (!colBlock.error ? (colBlock.data ?? []) : []) as RpcBlockRow[];
+  const billBlockRows = (!billBlock.error ? (billBlock.data ?? []) : []) as RpcBillBlockRow[];
+
+  if (colBlock.error && process.env.NODE_ENV === 'development') {
+    console.warn('[dashboard] get_delivered_revenue_by_block_and_date:', colBlock.error.message);
+  }
+  if (billBlock.error && process.env.NODE_ENV === 'development') {
+    console.warn('[dashboard] get_bill_saved_revenue_by_block_and_date:', billBlock.error.message);
+  }
+
+  const collected_by_block = mergeDashboardBlockRows(
+    blockRows.map((r) => ({
+      delivery_date: String(r.delivery_date).slice(0, 10),
+      block_key: displayRollupBlockKey(r.block_key as string | null | undefined),
+      bill_count: Number(r.bill_count),
+      item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
+      subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
+      convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
+      total: Math.round(Number(r.total_sum) * 100) / 100,
+    })),
+    'delivery_date',
+  ).map(({ delivery_date, block_key, bill_count, item_qty_sum, subtotal, convenience_fee, total }) => ({
+    delivery_date: delivery_date!,
+    block_key,
+    bill_count,
+    item_qty_sum,
+    subtotal,
+    convenience_fee,
+    total,
+  }));
+
+  const billed_by_block = mergeDashboardBlockRows(
+    billBlockRows.map((r) => ({
+      bill_date: String(r.bill_date).slice(0, 10),
+      block_key: displayRollupBlockKey(r.block_key as string | null | undefined),
+      bill_count: Number(r.bill_count),
+      item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
+      subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
+      convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
+      total: Math.round(Number(r.total_sum) * 100) / 100,
+    })),
+    'bill_date',
+  ).map(({ bill_date, block_key, bill_count, item_qty_sum, subtotal, convenience_fee, total }) => ({
+    bill_date: bill_date!,
+    block_key,
+    bill_count,
+    item_qty_sum,
+    subtotal,
+    convenience_fee,
+    total,
+  }));
+
+  return { collected_by_block, billed_by_block };
+}
+
 export async function GET(request: Request) {
   const session = getAdminSessionFromRequest(request);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -98,6 +157,8 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const blockFrom = url.searchParams.get('block_from');
   const blockTo = url.searchParams.get('block_to');
+  const blocksOnly = url.searchParams.get('blocks_only') === '1';
+  const omitBlocks = url.searchParams.get('omit_blocks') === '1';
 
   const vendorSlug =
     session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? null : null;
@@ -122,6 +183,30 @@ export async function GET(request: Request) {
   const ist30Start = formatIstYmd(new Date(now.getTime() - 29 * msDay));
   const from7Iso = istYmdStartIso(ist7Start);
   const from30Iso = istYmdStartIso(ist30Start);
+
+  const blockFromIso =
+    blockFrom && /^\d{4}-\d{2}-\d{2}$/.test(blockFrom) ? istYmdStartIso(blockFrom) : from30Iso;
+  const blockToIso =
+    blockTo && /^\d{4}-\d{2}-\d{2}$/.test(blockTo) ? istYmdEndIso(blockTo) : toIso;
+
+  if (blocksOnly) {
+    const [colBlock, billBlock] = await Promise.all([
+      supabase.rpc('get_delivered_revenue_by_block_and_date', {
+        p_vendor_id: vendorDbId,
+        p_from: blockFromIso,
+        p_to: blockToIso,
+      }),
+      supabase.rpc('get_bill_saved_revenue_by_block_and_date', {
+        p_vendor_id: vendorDbId,
+        p_from: blockFromIso,
+        p_to: blockToIso,
+      }),
+    ]);
+    const { collected_by_block, billed_by_block } = blockRollupsFromRpc(colBlock, billBlock);
+    const res = NextResponse.json({ ok: true, collected_by_block, billed_by_block });
+    res.headers.set('Cache-Control', 'private, max-age=10, stale-while-revalidate=120');
+    return res;
+  }
 
   // Build open tokens query (orders not yet delivered)
   let openQuery = supabase
@@ -159,12 +244,24 @@ export async function GET(request: Request) {
     }
   }
 
-  // One parallel batch: revenue RPCs + block rollup + open/delivered order scans (saves a full RTT vs sequential batches)
-  const blockFromIso =
-    blockFrom && /^\d{4}-\d{2}-\d{2}$/.test(blockFrom) ? istYmdStartIso(blockFrom) : from30Iso;
-  const blockToIso =
-    blockTo && /^\d{4}-\d{2}-\d{2}$/.test(blockTo) ? istYmdEndIso(blockTo) : toIso;
+  const emptyColBlock = Promise.resolve({ data: [] as RpcBlockRow[], error: null });
+  const emptyBillBlock = Promise.resolve({ data: [] as RpcBillBlockRow[], error: null });
+  const blockRpcPair = omitBlocks
+    ? ([emptyColBlock, emptyBillBlock] as const)
+    : ([
+        supabase.rpc('get_delivered_revenue_by_block_and_date', {
+          p_vendor_id: vendorDbId,
+          p_from: blockFromIso,
+          p_to: blockToIso,
+        }),
+        supabase.rpc('get_bill_saved_revenue_by_block_and_date', {
+          p_vendor_id: vendorDbId,
+          p_from: blockFromIso,
+          p_to: blockToIso,
+        }),
+      ] as const);
 
+  // One parallel batch: revenue RPCs + block rollup + open/delivered order scans (saves a full RTT vs sequential batches)
   const [
     rpc7d,
     rpc30d,
@@ -210,16 +307,8 @@ export async function GET(request: Request) {
       p_from: from30Iso,
       p_to: toIso,
     }),
-    supabase.rpc('get_delivered_revenue_by_block_and_date', {
-      p_vendor_id: vendorDbId,
-      p_from: blockFromIso,
-      p_to: blockToIso,
-    }),
-    supabase.rpc('get_bill_saved_revenue_by_block_and_date', {
-      p_vendor_id: vendorDbId,
-      p_from: blockFromIso,
-      p_to: blockToIso,
-    }),
+    blockRpcPair[0],
+    blockRpcPair[1],
     openQuery,
     delivered7Query,
     delivered30Query,
@@ -310,57 +399,7 @@ export async function GET(request: Request) {
   const sumBilled7 = sumFilledDayRows(billed7Filled);
   const sumBilled30 = sumFilledDayRows(billed30Filled);
 
-  const blockRows = (!colBlock.error ? (colBlock.data ?? []) : []) as RpcBlockRow[];
-  if (colBlock.error && process.env.NODE_ENV === 'development') {
-    console.warn('[dashboard] get_delivered_revenue_by_block_and_date:', colBlock.error.message);
-  }
-
-  const billBlockRows = (!billBlock.error ? (billBlock.data ?? []) : []) as RpcBillBlockRow[];
-  if (billBlock.error && process.env.NODE_ENV === 'development') {
-    console.warn('[dashboard] get_bill_saved_revenue_by_block_and_date:', billBlock.error.message);
-  }
-
-  const collected_by_block = mergeDashboardBlockRows(
-    blockRows.map((r) => ({
-      delivery_date: String(r.delivery_date).slice(0, 10),
-      block_key: displayRollupBlockKey(r.block_key as string | null | undefined),
-      bill_count: Number(r.bill_count),
-      item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
-      subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
-      convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
-      total: Math.round(Number(r.total_sum) * 100) / 100,
-    })),
-    'delivery_date',
-  ).map(({ delivery_date, block_key, bill_count, item_qty_sum, subtotal, convenience_fee, total }) => ({
-    delivery_date: delivery_date!,
-    block_key,
-    bill_count,
-    item_qty_sum,
-    subtotal,
-    convenience_fee,
-    total,
-  }));
-
-  const billed_by_block = mergeDashboardBlockRows(
-    billBlockRows.map((r) => ({
-      bill_date: String(r.bill_date).slice(0, 10),
-      block_key: displayRollupBlockKey(r.block_key as string | null | undefined),
-      bill_count: Number(r.bill_count),
-      item_qty_sum: Math.round(Number(r.item_qty_sum) * 100) / 100,
-      subtotal: Math.round(Number(r.subtotal_sum) * 100) / 100,
-      convenience_fee: Math.round(Number(r.convenience_fee_sum) * 100) / 100,
-      total: Math.round(Number(r.total_sum) * 100) / 100,
-    })),
-    'bill_date',
-  ).map(({ bill_date, block_key, bill_count, item_qty_sum, subtotal, convenience_fee, total }) => ({
-    bill_date: bill_date!,
-    block_key,
-    bill_count,
-    item_qty_sum,
-    subtotal,
-    convenience_fee,
-    total,
-  }));
+  const { collected_by_block, billed_by_block } = blockRollupsFromRpc(colBlock, billBlock);
 
   const res = NextResponse.json({
     ok: true,

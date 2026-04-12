@@ -3,6 +3,19 @@ import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
 import { getVendorsListCached } from '@/lib/supabase-metadata-cache';
+import { istYmdEndIso, istYmdStartIso } from '@/lib/ist-dates';
+
+function escapeIlikePattern(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseOptionalNumber(v: string | null): number | null {
+  if (v == null || v.trim() === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 
 type DbVendor = { id: string; slug: string; name: string };
 
@@ -26,6 +39,16 @@ export async function GET(request: Request) {
   const page = Math.max(1, Number(url.searchParams.get('page') || '1'));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || '50')));
   const offset = (page - 1) * limit;
+
+  const tokenSearchRaw = (url.searchParams.get('token') ?? '').replace(/^#/, '').trim();
+  const dateFromParam = (url.searchParams.get('date_from') ?? '').trim();
+  const dateToParam = (url.searchParams.get('date_to') ?? '').trim();
+  const dateFromYmd = YMD_RE.test(dateFromParam) ? dateFromParam : null;
+  const dateToYmd = YMD_RE.test(dateToParam) ? dateToParam : null;
+  const totalMin = parseOptionalNumber(url.searchParams.get('total_min'));
+  const totalMax = parseOptionalNumber(url.searchParams.get('total_max'));
+  const subtotalMin = parseOptionalNumber(url.searchParams.get('subtotal_min'));
+  const subtotalMax = parseOptionalNumber(url.searchParams.get('subtotal_max'));
 
   const vendorSlug = session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? '' : '';
   const { data: vendorsData, error: vendorsError } = await getVendorsListCached(supabase);
@@ -51,6 +74,15 @@ export async function GET(request: Request) {
       q = q.is('cancelled_at', null);
     }
     if (vendorDbId) q = q.eq('vendor_id', vendorDbId);
+    if (tokenSearchRaw) {
+      q = q.ilike('order_token', `%${escapeIlikePattern(tokenSearchRaw)}%`);
+    }
+    if (dateFromYmd) q = q.gte('created_at', istYmdStartIso(dateFromYmd));
+    if (dateToYmd) q = q.lte('created_at', istYmdEndIso(dateToYmd));
+    if (totalMin !== null) q = q.gte('total', totalMin);
+    if (totalMax !== null) q = q.lte('total', totalMax);
+    if (subtotalMin !== null) q = q.gte('subtotal', subtotalMin);
+    if (subtotalMax !== null) q = q.lte('subtotal', subtotalMax);
     q = q.range(offset, offset + limit - 1);
     return q;
   };

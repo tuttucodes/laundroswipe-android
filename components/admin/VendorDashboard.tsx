@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ClipboardList, Plus, RefreshCw, Tags, Truck } from 'lucide-react';
 import { displayRollupBlockKey } from '@/lib/hostel-block';
-import { normalizeVendorDashboardPayload } from '@/lib/vendor-dashboard-normalize';
+import {
+  normalizeVendorDashboardBlocksPayload,
+  normalizeVendorDashboardPayload,
+} from '@/lib/vendor-dashboard-normalize';
 import type { VendorDashboardMetrics } from '@/lib/vendor-dashboard-types';
 import { VendorRevenueTrendCard } from './VendorRevenueTrendCard';
 
@@ -138,10 +141,11 @@ export function VendorDashboard({ onUnauthorized }: Props) {
   );
 
   const loadDashboard = useCallback(
-    async (opts?: { block_from?: string; block_to?: string }) => {
+    async (opts?: { block_from?: string; block_to?: string; omit_blocks?: boolean }) => {
       const params = new URLSearchParams();
       if (opts?.block_from) params.set('block_from', opts.block_from);
       if (opts?.block_to) params.set('block_to', opts.block_to);
+      if (opts?.omit_blocks && !opts?.block_from && !opts?.block_to) params.set('omit_blocks', '1');
       const q = params.toString();
       const url = q ? `/api/admin/dashboard?${q}` : '/api/admin/dashboard';
       const r = await fetch(url, { credentials: 'include', headers: adminAuthHeaders() });
@@ -181,24 +185,67 @@ export function VendorDashboard({ onUnauthorized }: Props) {
     if (hadCache) setRefreshing(true);
     else setLoading(true);
     setLoadError(null);
-    loadDashboard()
-      .then((res) => {
+
+    const finishLoad = () => {
+      if (!cancelled) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    };
+
+    if (hadCache) {
+      loadDashboard()
+        .then((res) => {
+          if (cancelled) return;
+          if (res.ok) {
+            setMetrics(res.metrics);
+            writeVendorDashboardCache(res.metrics);
+            setLoadError(null);
+          } else if (!('unauthorized' in res && res.unauthorized)) {
+            setLoadError(res.error ?? 'Could not load');
+          }
+        })
+        .finally(finishLoad);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void (async () => {
+      const fast = await loadDashboard({ omit_blocks: true });
+      if (cancelled) return;
+      if (!fast.ok) {
+        if (!('unauthorized' in fast && fast.unauthorized)) {
+          setLoadError(fast.error ?? 'Could not load');
+          setMetrics(null);
+        }
+        finishLoad();
+        return;
+      }
+      setMetrics(fast.metrics);
+      setLoadError(null);
+      finishLoad();
+
+      try {
+        const r = await fetch('/api/admin/dashboard?blocks_only=1', {
+          credentials: 'include',
+          headers: adminAuthHeaders(),
+        });
         if (cancelled) return;
-        if (res.ok) {
-          setMetrics(res.metrics);
-          writeVendorDashboardCache(res.metrics);
-          setLoadError(null);
-        } else if (!('unauthorized' in res && res.unauthorized)) {
-          setLoadError(res.error ?? 'Could not load');
-          if (!hadCache) setMetrics(null);
+        const raw = await r.json().catch(() => null);
+        const blocks = normalizeVendorDashboardBlocksPayload(raw);
+        if (blocks && fast.metrics) {
+          const merged = { ...fast.metrics, ...blocks };
+          setMetrics(merged);
+          writeVendorDashboardCache(merged);
+        } else {
+          writeVendorDashboardCache(fast.metrics);
         }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-          setRefreshing(false);
-        }
-      });
+      } catch {
+        if (!cancelled) writeVendorDashboardCache(fast.metrics);
+      }
+    })();
+
     return () => {
       cancelled = true;
     };

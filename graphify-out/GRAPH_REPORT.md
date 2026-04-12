@@ -1,19 +1,19 @@
 # Graph Report - .  (2026-04-12)
 
 ## Corpus Check
-- 128 files · ~95,633 words
+- 128 files · ~97,117 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 463 nodes · 685 edges · 36 communities detected
+- 482 nodes · 714 edges · 36 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## God Nodes (most connected - your core abstractions)
 1. `ESCPOSBuilder` - 25 edges
 2. `showToast()` - 22 edges
-3. `BluetoothPrinterService` - 18 edges
-4. `GET()` - 16 edges
+3. `GET()` - 19 edges
+4. `BluetoothPrinterService` - 18 edges
 5. `MainActivity` - 16 edges
 6. `POST()` - 14 edges
 7. `load()` - 10 edges
@@ -37,51 +37,51 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.03
-Nodes (47): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advanceStatus(), applySuggestedSlot(), billFingerprint(), billLineItemsToState(), billToHtml() (+39 more)
+Nodes (45): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advanceStatus(), applyBillFilters(), applySuggestedSlot(), billFingerprint(), billLineItemsToState() (+37 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.07
-Nodes (33): checkPublicRateLimit(), getClientIp(), billSavedRowsForFill(), buildResponse(), DELETE(), deliveredSinceOrFilter(), externalApkUrl(), flushScheduled() (+25 more)
+Cohesion: 0.06
+Nodes (38): checkPublicRateLimit(), getClientIp(), checkAdminRateLimit(), getClientId(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), DELETE() (+30 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.06
-Nodes (22): applyServiceFeeDiscount(), calculateServiceFee(), billMapAndVisibleOrderIds(), handleCompleteProfile(), handleConfirmDelivery(), handleConfirmOrder(), handleLoginEmail(), handleSaveEditProfile() (+14 more)
+Cohesion: 0.07
+Nodes (20): billMapAndVisibleOrderIds(), handleCompleteProfile(), handleConfirmDelivery(), handleConfirmOrder(), handleLoginEmail(), handleSaveEditProfile(), handleSaveStudentDetailsModal(), handleSetPassword() (+12 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.11
-Nodes (13): getBlePrinterPreferences(), getEffectiveEscPosPaperSize(), load(), save(), setBlePrinterPreferences(), syncEscPosPaperFromAdminPrinter(), patchPrefs(), refreshPrefs() (+5 more)
+Cohesion: 0.1
+Nodes (4): concatParts(), ESCPOSBuilder, escposPlainDivider(), escposPlainTableRow()
 
 ### Community 4 - "Community 4"
-Cohesion: 0.12
-Nodes (13): tryNativeEscPosPrint(), uint8ToBase64(), PrintQueue, buildEscPosBytes(), escapeHtml(), getThermalStyles(), isBluetoothSupported(), isSerialSupported() (+5 more)
+Cohesion: 0.11
+Nodes (10): normalizeHostelBlockKey(), rollupHostelBlockKey(), dayRow(), legacyDayRow(), normalizeVendorDashboardPayload(), num(), parseBilledBlockRow(), parseBilledSlice() (+2 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.15
-Nodes (1): ESCPOSBuilder
+Cohesion: 0.09
+Nodes (8): encodeAsciiLines(), sanitizeReceiptText(), applyServiceFeeDiscount(), calculateServiceFee(), formatServiceFeeReceiptLine(), buildVendorReceiptEscPos(), formatVendorReceiptEscPosPlain(), money()
 
 ### Community 6 - "Community 6"
 Cohesion: 0.17
 Nodes (5): BluetoothPrinterService, getBluetooth(), isWebBluetoothAvailable(), pickWritableCharacteristic(), writeChunks()
 
 ### Community 7 - "Community 7"
-Cohesion: 0.16
-Nodes (8): dayRow(), legacyDayRow(), normalizeVendorDashboardPayload(), num(), parseBilledBlockRow(), parseBilledSlice(), parseCollectedBlockRow(), str()
-
-### Community 8 - "Community 8"
 Cohesion: 0.12
 Nodes (1): MainActivity
+
+### Community 8 - "Community 8"
+Cohesion: 0.23
+Nodes (13): buildEscPosBytes(), escapeHtml(), escPosPlainToThermalReceiptHtml(), getThermalStyles(), getThermalTestReceiptBodyHtml(), isBluetoothSupported(), isSerialSupported(), openThermalReceiptWindow() (+5 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.19
 Nodes (9): customerFacingStatusClass(), customerFacingStatusLabel(), statusClass(), statusLabel(), catalogIdSet(), mergeVendorBillItems(), mergeVendorBillItemsFromDbRow(), parseBillItemOverrides() (+1 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.15
-Nodes (0): 
+Cohesion: 0.21
+Nodes (8): getBlePrinterPreferences(), getEffectiveEscPosPaperSize(), load(), save(), setBlePrinterPreferences(), syncEscPosPaperFromAdminPrinter(), patchPrefs(), refreshPrefs()
 
 ### Community 11 - "Community 11"
-Cohesion: 0.35
-Nodes (10): clean(), escapeReg(), isEmptyDisplay(), segregateCustomerDisplay(), segregateHostelBlockRoom(), segregateNameAndReg(), stripTrailingRoomFromBlock(), tryExtractRoomFromBlock() (+2 more)
+Cohesion: 0.15
+Nodes (3): tryNativeEscPosPrint(), uint8ToBase64(), PrintQueue
 
 ### Community 12 - "Community 12"
 Cohesion: 0.32
@@ -96,27 +96,27 @@ Cohesion: 0.18
 Nodes (3): BluetoothDevicePickerAdapter, PairedDeviceRow, VH
 
 ### Community 15 - "Community 15"
+Cohesion: 0.53
+Nodes (8): clean(), escapeReg(), isEmptyDisplay(), segregateCustomerDisplay(), segregateHostelBlockRoom(), segregateNameAndReg(), stripTrailingRoomFromBlock(), tryExtractRoomFromBlock()
+
+### Community 16 - "Community 16"
 Cohesion: 0.32
 Nodes (3): addDaysYmd(), eachYmdInRange(), fillCollectedByDate()
 
-### Community 16 - "Community 16"
+### Community 17 - "Community 17"
 Cohesion: 0.29
 Nodes (0): 
 
-### Community 17 - "Community 17"
+### Community 18 - "Community 18"
 Cohesion: 0.4
 Nodes (1): BluetoothPrinterDevices
 
-### Community 18 - "Community 18"
+### Community 19 - "Community 19"
 Cohesion: 0.4
 Nodes (1): PrintBridge
 
-### Community 19 - "Community 19"
-Cohesion: 0.67
-Nodes (2): checkAdminRateLimit(), getClientId()
-
 ### Community 20 - "Community 20"
-Cohesion: 0.67
+Cohesion: 0.5
 Nodes (0): 
 
 ### Community 21 - "Community 21"
@@ -214,17 +214,17 @@ Nodes (0):
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `ESCPOSBuilder` connect `Community 5` to `Community 3`?**
-  _High betweenness centrality (0.084) - this node is a cross-community bridge._
 - **What connects `PairedDeviceRow` to the rest of the system?**
   _1 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.03 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.06 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
 - **Should `Community 4` be split into smaller, more focused modules?**
-  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
+- **Should `Community 5` be split into smaller, more focused modules?**
+  _Cohesion score 0.09 - nodes in this community are weakly interconnected._

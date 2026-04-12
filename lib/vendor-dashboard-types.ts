@@ -6,6 +6,8 @@
  *
  * ---
  * Contract for GET /api/admin/dashboard (vendor session). Shared with `normalizeVendorDashboardPayload`.
+ * Optional query params: `omit_blocks=1` skips block rollup RPCs (faster first paint); then call
+ * `blocks_only=1` for `collected_by_block` + `billed_by_block` with the same `block_from` / `block_to` as the main request.
  *
  * Vendor dashboard also calls (same session, Bearer admin_token):
  * - GET /api/admin/orders/delivered-day-detail?date=

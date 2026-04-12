@@ -112,6 +112,15 @@ export default function AdminPickupPage() {
           <div style={{ fontSize: 14, lineHeight: 1.75, color: 'var(--ts)', marginBottom: 18 }}>
             <p><strong style={{ color: 'var(--tx)' }}>Order:</strong> {order.order_number} &nbsp;|&nbsp; <strong>Token:</strong> #{order.token}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Customer:</strong> {user?.full_name ?? user?.email ?? '—'}</p>
+            <p>
+              <strong style={{ color: 'var(--tx)' }}>Phone:</strong> {user?.phone ?? user?.whatsapp ?? '—'}
+              {user?.phone && user?.whatsapp && user.phone !== user.whatsapp ? (
+                <>
+                  {' '}
+                  &nbsp;|&nbsp; <strong style={{ color: 'var(--tx)' }}>WhatsApp:</strong> {user.whatsapp}
+                </>
+              ) : null}
+            </p>
             <p><strong style={{ color: 'var(--tx)' }}>Service:</strong> {order.service_name} &nbsp;|&nbsp; <strong>Date:</strong> {order.pickup_date}</p>
             <p><strong style={{ color: 'var(--tx)' }}>Status:</strong> {order.status}</p>
             {billInfo && (

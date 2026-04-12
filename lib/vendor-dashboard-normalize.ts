@@ -174,3 +174,19 @@ export function normalizeVendorDashboardPayload(raw: unknown): VendorDashboardMe
     delivered_30d,
   };
 }
+
+/** `GET /api/admin/dashboard?blocks_only=1` — merge into metrics from a fast `omit_blocks=1` load. */
+export function normalizeVendorDashboardBlocksPayload(
+  raw: unknown,
+): Pick<VendorDashboardMetrics, 'collected_by_block' | 'billed_by_block'> | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  if (!o.ok) return null;
+  const collected_by_block = Array.isArray(o.collected_by_block)
+    ? (o.collected_by_block.map(parseCollectedBlockRow).filter(Boolean) as VendorDashboardMetrics['collected_by_block'])
+    : [];
+  const billed_by_block = Array.isArray(o.billed_by_block)
+    ? (o.billed_by_block.map(parseBilledBlockRow).filter(Boolean) as VendorDashboardMetrics['billed_by_block'])
+    : [];
+  return { collected_by_block, billed_by_block };
+}
