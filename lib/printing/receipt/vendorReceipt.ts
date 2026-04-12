@@ -53,6 +53,9 @@ function money(n: number): string {
 
 const DEFAULT_POLICY_LINES = ['Keep bill for your records.', 'Valid at issued location. T&C apply.'];
 
+/** Extra blank lines before cut so THANK YOU / footer clear the tear bar on common thermal printers. */
+const RECEIPT_TRAILING_FEED_LINES = 10;
+
 /** Wrapped item description (no serial); `lineWidth` = chars per line. */
 function wrappedLabelLines(label: string, lineWidth: number, prep: (s: string) => string): string[] {
   const safe = prep(label);
@@ -162,7 +165,7 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
     b.feed(1);
     b.text(sanitizeReceiptText(input.footer.trim()));
   }
-  b.feed(4).cut(false);
+  b.feed(RECEIPT_TRAILING_FEED_LINES).cut(false);
 
   return b.build();
 }
@@ -237,6 +240,9 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   if (input.footer?.trim()) {
     lines.push('');
     lines.push(escposPlainLineCenterPreview(paper, prep(input.footer.trim())));
+  }
+  for (let i = 0; i < RECEIPT_TRAILING_FEED_LINES; i += 1) {
+    lines.push('');
   }
   return lines.join('\n');
 }

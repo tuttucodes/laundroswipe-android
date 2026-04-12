@@ -48,7 +48,7 @@ export type ServiceFeeReceiptCurrency = 'rs' | 'inr';
 
 /**
  * Single-line service fee for thermal receipts, copy/paste, and saved bills.
- * Always labels the line with "7-day discount" so every bill shows the program name.
+ * Zero fee is shown compactly as Rs.0 with 7-day discount note (fits narrow paper).
  */
 export function formatServiceFeeReceiptLine(
   subtotal: number,
@@ -56,14 +56,10 @@ export function formatServiceFeeReceiptLine(
   currency: ServiceFeeReceiptCurrency = 'rs',
 ): string {
   const sym = currency === 'inr' ? '₹' : 'Rs.';
-  const original = calculateServiceFee(subtotal);
   const fee = Math.round(Number(convenienceFeeCharged) * 100) / 100;
 
-  if (fee === 0 && original > 0) {
-    return `Service fee (7-day discount): ${sym}0 (was ${sym}${original.toFixed(2)})`;
-  }
   if (fee === 0) {
-    return `Service fee (7-day discount): ${sym}0`;
+    return `Service fee: ${sym}0 (7-day discount)`;
   }
-  return `Service fee (7-day discount): ${sym}${fee.toFixed(2)}`;
+  return `Service fee: ${sym}${fee.toFixed(2)}`;
 }

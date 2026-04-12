@@ -92,7 +92,7 @@ export function buildTestEscPosReceipt(paper: PaperSize): Uint8Array {
   b.divider('-');
   b.align('right');
   b.text('Subtotal: Rs.165.00');
-  b.text('Service fee (7-day discount): Rs.0');
+  b.text('Service fee: Rs.0 (7-day discount)');
   b.bold(true).text('Total: Rs.165.00').bold(false);
   b.align('left');
   b.text('Cashier :admin');
@@ -100,7 +100,7 @@ export function buildTestEscPosReceipt(paper: PaperSize): Uint8Array {
   b.align('center').text('THANK YOU AND COME AGAIN');
   b.text('Total items: 3');
   b.feed(2).text('OK — ' + paper);
-  b.feed(4).cut(false);
+  b.feed(10).cut(false);
   return b.build();
 }
 
@@ -121,7 +121,7 @@ export function formatTestEscPosPlain(paper: PaperSize): string {
   lines.push(escposPlainTableRow(paper, '1', '@Rs.45.00', 'Rs.45.00'));
   lines.push(escposPlainDivider(paper, '-'));
   lines.push(escposPlainLineRight(paper, 'Subtotal: Rs.165.00'));
-  lines.push(escposPlainLineRight(paper, 'Service fee (7-day discount): Rs.0'));
+  lines.push(escposPlainLineRight(paper, 'Service fee: Rs.0 (7-day discount)'));
   lines.push(escposPlainLineRight(paper, 'Total: Rs.165.00'));
   lines.push('Cashier :admin');
   lines.push(escposPlainDivider(paper, '-'));
@@ -129,5 +129,6 @@ export function formatTestEscPosPlain(paper: PaperSize): string {
   lines.push(escposPlainLineCenter(paper, 'Total items: 3'));
   lines.push('');
   lines.push(escposPlainLineCenter(paper, 'OK — ' + paper));
+  for (let i = 0; i < 10; i += 1) lines.push('');
   return lines.join('\n');
 }
