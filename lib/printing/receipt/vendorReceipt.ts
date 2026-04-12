@@ -170,13 +170,8 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   printMetaLine(b, 'Email', input.customerEmail ?? '');
   printMetaLine(b, 'Date', input.dateStr);
   if (input.regNo?.trim()) printMetaLine(b, 'Reg no', input.regNo.trim());
-  if (input.hostelBlock?.trim() || input.roomNumber?.trim()) {
-    const parts = [
-      input.hostelBlock?.trim() ? `Block ${input.hostelBlock.trim()}` : '',
-      input.roomNumber?.trim() ? `Room ${input.roomNumber.trim()}` : '',
-    ].filter(Boolean);
-    if (parts.length) printMetaLine(b, 'Hostel', parts.join(' · '));
-  }
+  if (input.hostelBlock?.trim()) printMetaLine(b, 'Block', input.hostelBlock.trim());
+  if (input.roomNumber?.trim()) printMetaLine(b, 'Room', input.roomNumber.trim());
 
   b.feed(1);
   b.divider('-');
@@ -256,13 +251,8 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   if (input.customerEmail?.trim()) pushMeta('Email', input.customerEmail.trim());
   pushMeta('Date', input.dateStr);
   if (input.regNo?.trim()) pushMeta('Reg no', input.regNo.trim());
-  if (input.hostelBlock?.trim() || input.roomNumber?.trim()) {
-    const parts = [
-      input.hostelBlock?.trim() ? `Block ${input.hostelBlock.trim()}` : '',
-      input.roomNumber?.trim() ? `Room ${input.roomNumber.trim()}` : '',
-    ].filter(Boolean);
-    if (parts.length) pushMeta('Hostel', parts.join(' · '));
-  }
+  if (input.hostelBlock?.trim()) pushMeta('Block', input.hostelBlock.trim());
+  if (input.roomNumber?.trim()) pushMeta('Room', input.roomNumber.trim());
 
   lines.push('');
   lines.push(escposPlainDivider(paper, '-'));
