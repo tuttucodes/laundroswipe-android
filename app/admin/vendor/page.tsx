@@ -484,10 +484,7 @@ export default function VendorPage() {
     const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
     const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
     const p = getBlePrinterPreferences();
-    const billMoment =
-      sampleMode || !o?.created_at ? new Date() : new Date(String(o.created_at));
     return {
-      documentTitle: 'Bill',
       vendorName,
       tokenLabel,
       orderLabel,
@@ -498,18 +495,7 @@ export default function VendorPage() {
       regNo: regPlain || undefined,
       hostelBlock: blockPlain || undefined,
       roomNumber: roomPlain || undefined,
-      dateStr: billMoment.toLocaleString('en-IN'),
-      billDateStr: billMoment.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }),
-      billTimeStr: billMoment.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      }),
+      dateStr: new Date().toLocaleString(),
       lineItems: lineItems.map((l) => ({
         label: l.label,
         qty: l.qty,
