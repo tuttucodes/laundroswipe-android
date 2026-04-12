@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-12)
 
 ## Corpus Check
-- 128 files · ~97,784 words
+- 128 files · ~97,810 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 490 nodes · 728 edges · 37 communities detected
+- 490 nodes · 727 edges · 37 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -53,7 +53,7 @@ Nodes (5): concatParts(), ESCPOSBuilder, escposPlainDivider(), escposPlainTableR
 
 ### Community 4 - "Community 4"
 Cohesion: 0.09
-Nodes (10): encodeAsciiLines(), sanitizeReceiptText(), applyServiceFeeDiscount(), calculateServiceFee(), formatServiceFeeReceiptLine(), buildVendorReceiptEscPos(), escposPlainLineRightPreview(), formatVendorReceiptEscPosPlain() (+2 more)
+Nodes (9): encodeAsciiLines(), sanitizeReceiptText(), applyServiceFeeDiscount(), calculateServiceFee(), buildVendorReceiptEscPos(), escposPlainLineRightPreview(), formatVendorReceiptEscPosPlain(), money() (+1 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.11
