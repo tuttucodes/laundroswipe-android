@@ -6,8 +6,8 @@ import {
   type PaperSize,
   PAPER_FONT_A_CHARS,
   escposPlainDivider,
-  escposPlainInvoiceRow5ContPreview,
-  escposPlainInvoiceRow5Preview,
+  escposPlainInvoiceRow4ContPreview,
+  escposPlainInvoiceRow4Preview,
   escposPlainLineCenterPreview,
   escposPlainTwoColumnPreview,
   escposInvoiceColumnWidths,
@@ -212,18 +212,16 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   if (input.roomNumber?.trim()) clipLine(b, `Room: ${input.roomNumber.trim()}`);
 
   b.divider('-');
-  b.invoiceHeaderRow5('No', 'Item', 'Qty', 'Rate', 'Amt');
+  b.invoiceHeaderRow4('Item', 'Qty', 'Rate', 'Amt');
   b.divider('-');
 
-  for (let i = 0; i < input.lineItems.length; i += 1) {
-    const l = input.lineItems[i];
-    const sr = String(i + 1);
+  for (const l of input.lineItems) {
     const descLines = wrapToDescWidth(l.label, d, prep);
     const first = descLines[0] ?? '';
     const lineTotal = rsMoney(l.qty * l.price);
-    b.invoiceRow5BoldDesc(sr, first, String(l.qty), rsMoney(l.price), lineTotal);
+    b.invoiceRow4BoldDesc(first, String(l.qty), rsMoney(l.price), lineTotal);
     for (let j = 1; j < descLines.length; j += 1) {
-      b.invoiceRow5ContinuationBold(descLines[j]);
+      b.invoiceRow4ContinuationBold(descLines[j]);
     }
   }
 
@@ -287,19 +285,17 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   if (input.roomNumber?.trim()) lines.push(prep(`Room: ${input.roomNumber.trim()}`).slice(0, w));
 
   lines.push(escposPlainDivider(paper, '-'));
-  lines.push(escposPlainInvoiceRow5Preview(paper, 'No', 'Item', 'Qty', 'Rate', 'Amt'));
+  lines.push(escposPlainInvoiceRow4Preview(paper, 'Item', 'Qty', 'Rate', 'Amt'));
   lines.push(escposPlainDivider(paper, '-'));
 
-  for (let i = 0; i < input.lineItems.length; i += 1) {
-    const l = input.lineItems[i];
-    const sr = String(i + 1);
+  for (const l of input.lineItems) {
     const descLines = wrapToDescWidth(plainItemDescForPreview(l.label, prep), d, (s) => s);
     const first = descLines[0] ?? '';
     lines.push(
-      escposPlainInvoiceRow5Preview(paper, sr, first, String(l.qty), rsMoney(l.price), rsMoney(l.qty * l.price)),
+      escposPlainInvoiceRow4Preview(paper, first, String(l.qty), rsMoney(l.price), rsMoney(l.qty * l.price)),
     );
     for (let j = 1; j < descLines.length; j += 1) {
-      lines.push(escposPlainInvoiceRow5ContPreview(paper, descLines[j]));
+      lines.push(escposPlainInvoiceRow4ContPreview(paper, descLines[j]));
     }
   }
 
