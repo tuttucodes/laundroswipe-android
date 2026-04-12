@@ -178,9 +178,10 @@ export function escPosPlainToThermalReceiptHtml(plainText: string, charsPerLine:
 }
 
 /** Match BLE / ESC/POS paper labels to @page width used by thermal preview HTML. */
-export function paperWidthMmFromLabel(size: '58mm' | '76mm' | '80mm'): number {
+export function paperWidthMmFromLabel(size: '58mm' | '76mm' | '78mm' | '80mm'): number {
   if (size === '58mm') return 58;
   if (size === '76mm') return 76;
+  if (size === '78mm') return 78;
   return 78;
 }
 

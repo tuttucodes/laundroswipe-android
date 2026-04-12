@@ -52,7 +52,8 @@ export function rsMoney(n: number): string {
   return `Rs.${x.toFixed(2)}`;
 }
 
-const RECEIPT_TRAILING_FEED_LINES = 10;
+/** Blank lines before cut — keep small to save paper on 78mm rolls. */
+const RECEIPT_TRAILING_FEED_LINES = 4;
 
 function itemDescriptionWithRate(label: string, unitPrice: number, prep: (s: string) => string): string {
   return `${prep(label)} @${rsMoney(unitPrice)}`;
@@ -161,17 +162,12 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
     } catch {
       b.text('[QR skipped]');
     }
-    b.feed(1);
   }
 
   b.divider('-');
-  b.feed(1);
   b.align('center').bold(true).fontSize('doubleHeight').text(sanitizeReceiptText(RECEIPT_BRAND)).fontSize('normal').bold(false);
-  b.feed(1);
   b.align('center').bold(true).text(sanitizeReceiptText(input.vendorName.trim() || 'Vendor')).bold(false);
-  b.feed(1);
   b.divider('-');
-  b.feed(1);
 
   b.align('left');
   printMetaLine(b, 'Token', tokenDisplay(input.tokenLabel));
@@ -184,9 +180,7 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   if (input.hostelBlock?.trim()) printMetaLine(b, 'Block', input.hostelBlock.trim());
   if (input.roomNumber?.trim()) printMetaLine(b, 'Room', input.roomNumber.trim());
 
-  b.feed(1);
   b.divider('=');
-  b.feed(1);
   b.bold(true).tableRow('Qty', 'Item', 'Amount').bold(false);
 
   const { mw } = escposTableColumnWidths(paper);
@@ -199,27 +193,19 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
     for (let i = 1; i < descLines.length; i += 1) {
       b.tableRowMidContinuationBold(descLines[i]);
     }
-    b.feed(1);
   }
 
   b.divider('-');
-  b.feed(1);
   b.twoColumn(sanitizeReceiptText('Total items'), sanitizeReceiptText(String(input.totalItems)));
-  b.feed(1);
   b.twoColumn(sanitizeReceiptText('Subtotal'), sanitizeReceiptText(rsMoney(input.subtotal)));
-  b.feed(1);
   pushServiceFeeTotalsEscPos(b, input.convenienceFee, input.convenienceFeeOriginal);
-  b.feed(1);
 
   b.divider('=');
-  b.feed(1);
   const totalLine = totalLinePadded(paper, 'Total amount', rsMoney(input.total), prep);
   b.align('left').bold(true).fontSize('doubleHeight').text(totalLine).fontSize('normal').bold(false);
-  b.feed(2);
 
   b.align('center').bold(true).text(sanitizeReceiptText('Thank you!')).bold(false);
   if (input.footer?.trim()) {
-    b.feed(1);
     b.text(sanitizeReceiptText(input.footer.trim()));
   }
   b.feed(RECEIPT_TRAILING_FEED_LINES).cut(false);
@@ -241,17 +227,12 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   if (input.showQr && input.paymentQrPayload?.trim()) {
     const q = input.paymentQrPayload.trim();
     lines.push(prep(q.length > 90 ? `[QR] ${q.slice(0, 87)}…` : `[QR] ${q}`));
-    lines.push('');
   }
 
   lines.push(escposPlainDivider(paper, '-'));
-  lines.push('');
   lines.push(escposPlainLineCenterPreview(paper, prep(RECEIPT_BRAND)));
-  lines.push('');
   lines.push(escposPlainLineCenterPreview(paper, prep(input.vendorName.trim() || 'Vendor')));
-  lines.push('');
   lines.push(escposPlainDivider(paper, '-'));
-  lines.push('');
 
   const pushMeta = (label: string, value: string) => {
     const v = value.trim();
@@ -267,9 +248,7 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   if (input.hostelBlock?.trim()) pushMeta('Block', input.hostelBlock.trim());
   if (input.roomNumber?.trim()) pushMeta('Room', input.roomNumber.trim());
 
-  lines.push('');
   lines.push(escposPlainDivider(paper, '='));
-  lines.push('');
   lines.push(escposPlainTableRowPreview(paper, 'Qty', 'Item', 'Amount'));
 
   for (const l of input.lineItems) {
@@ -280,26 +259,17 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
     for (let i = 1; i < descLines.length; i += 1) {
       lines.push(' '.repeat(lw) + prep(descLines[i]).slice(0, mw));
     }
-    lines.push('');
   }
 
   lines.push(escposPlainDivider(paper, '-'));
-  lines.push('');
   lines.push(escposPlainTwoColumnPreview(paper, 'Total items', String(input.totalItems)));
-  lines.push('');
   lines.push(escposPlainTwoColumnPreview(paper, 'Subtotal', rsMoney(input.subtotal)));
-  lines.push('');
   pushServiceFeePlain(lines, paper, input.convenienceFee, input.convenienceFeeOriginal);
-  lines.push('');
 
   lines.push(escposPlainDivider(paper, '='));
-  lines.push('');
-  lines.push(escposPlainTwoColumnPreview(paper, 'Total amount', rsMoney(input.total)));
-  lines.push('');
-  lines.push('');
+  lines.push(totalLinePadded(paper, 'Total amount', rsMoney(input.total), prep));
   lines.push(escposPlainLineCenterPreview(paper, 'Thank you!'));
   if (input.footer?.trim()) {
-    lines.push('');
     lines.push(escposPlainLineCenterPreview(paper, prep(input.footer.trim())));
   }
   for (let i = 0; i < RECEIPT_TRAILING_FEED_LINES; i += 1) {

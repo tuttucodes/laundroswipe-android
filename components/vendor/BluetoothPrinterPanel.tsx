@@ -211,6 +211,7 @@ export function BluetoothPrinterPanel({
           >
             <option value="58mm">58mm (32 chars)</option>
             <option value="76mm">76mm (42 chars)</option>
+            <option value="78mm">78mm / 3&quot; (46 chars)</option>
             <option value="80mm">80mm (48 chars)</option>
           </select>
         </div>

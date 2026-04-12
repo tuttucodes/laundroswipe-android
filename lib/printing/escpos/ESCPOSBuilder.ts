@@ -19,20 +19,24 @@ import {
 } from './ESCPOSConstants';
 import { encodeAsciiLines, sanitizeReceiptText, sanitizeReceiptTextForPreview } from './CharacterEncodings';
 
-export type PaperSize = '58mm' | '76mm' | '80mm';
+export type PaperSize = '58mm' | '76mm' | '78mm' | '80mm';
 
-/** Font A characters per line (must stay in sync with `tableRow` / receipt layout). */
+/**
+ * Font A characters per line — must match Admin → Printers `charsPerLine` for that width.
+ * 78mm (~3") roll is typically 46 chars; was incorrectly bucketed into 76mm/42 and broke tables.
+ */
 export const PAPER_FONT_A_CHARS: Record<PaperSize, number> = {
   '58mm': 32,
   '76mm': 42,
+  '78mm': 46,
   '80mm': 48,
 };
 
 /** Column widths for `tableRow` / receipt line items (qty | description | amount). */
 export function escposTableColumnWidths(paper: PaperSize): { lw: number; mw: number; rw: number } {
   const w = PAPER_FONT_A_CHARS[paper];
-  const lw = Math.min(5, Math.max(3, Math.floor(w * 0.14)));
-  const rw = Math.min(10, Math.max(6, Math.floor(w * 0.3)));
+  const lw = Math.min(5, Math.max(3, Math.floor(w * 0.12)));
+  const rw = Math.min(12, Math.max(7, Math.floor(w * 0.32)));
   const mw = Math.max(4, w - lw - rw);
   return { lw, mw, rw };
 }
@@ -113,6 +117,7 @@ export function escposPlainTwoColumnPreview(paper: PaperSize, left: string, righ
 const PAPER_MAX_DOTS: Record<PaperSize, number> = {
   '58mm': 384,
   '76mm': 576,
+  '78mm': 608,
   '80mm': 640,
 };
 
@@ -330,6 +335,7 @@ export class ESCPOSBuilder {
 
 export function paperSizeFromCharsPerLine(chars: number): PaperSize {
   if (chars <= 34) return '58mm';
-  if (chars <= 46) return '76mm';
+  if (chars <= 42) return '76mm';
+  if (chars <= 47) return '78mm';
   return '80mm';
 }
