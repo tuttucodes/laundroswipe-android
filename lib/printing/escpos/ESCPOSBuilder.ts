@@ -41,6 +41,127 @@ export function escposTableColumnWidths(paper: PaperSize): { lw: number; mw: num
   return { lw, mw, rw };
 }
 
+/** Thermal invoice line: `#` | description | qty | rate | amount (46 chars on 78mm). Four single spaces between groups. */
+export function escposInvoiceLineColumnWidths(paper: PaperSize): {
+  sw: number;
+  dw: number;
+  qw: number;
+  rw: number;
+  aw: number;
+} {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const sw = 2;
+  const qw = 3;
+  const aw = Math.min(10, Math.max(7, Math.floor(w * 0.19)));
+  const rw = Math.min(9, Math.max(6, Math.floor(w * 0.17)));
+  const gaps = 4;
+  const dw = Math.max(4, w - sw - qw - rw - aw - gaps);
+  return { sw, dw, qw, rw, aw };
+}
+
+/** Plain numeric amount for invoice columns (no Rs. prefix; fixed width). */
+export function escposMoneyPlainCol(n: number, width: number): string {
+  const x = (Math.round(Number(n) * 100) / 100).toFixed(2);
+  if (x.length <= width) return x.padStart(width);
+  return x.slice(-width);
+}
+
+function escposPlainInvoiceLineParts(
+  paper: PaperSize,
+  sr: string,
+  desc: string,
+  qty: string,
+  rateStr: string,
+  amtStr: string,
+  sanitize: (s: string) => string,
+): string {
+  const { sw, dw, qw, rw, aw } = escposInvoiceLineColumnWidths(paper);
+  const S = sanitize(sr).slice(0, sw).padEnd(sw);
+  const D = sanitize(desc).slice(0, dw).padEnd(dw);
+  const Q = sanitize(qty).slice(0, qw).padStart(qw);
+  const R = sanitize(rateStr).slice(0, rw).padStart(rw);
+  const A = sanitize(amtStr).slice(0, aw).padStart(aw);
+  return `${S} ${D} ${Q} ${R} ${A}`;
+}
+
+/** Header row aligned to invoice item columns (Sr / Item / Qty / Rate / Amt). */
+export function escposPlainInvoiceHeaderRow(paper: PaperSize): string {
+  const { sw, dw, qw, rw, aw } = escposInvoiceLineColumnWidths(paper);
+  const sr = '#'.padEnd(sw);
+  const desc = sanitizeReceiptText('Item').slice(0, dw).padEnd(dw);
+  const qty = sanitizeReceiptText('Qty').slice(0, qw).padStart(qw);
+  const rate = sanitizeReceiptText('Rate').slice(0, rw).padStart(rw);
+  const amt = sanitizeReceiptText('Amt').slice(0, aw).padStart(aw);
+  return `${sr} ${desc} ${qty} ${rate} ${amt}`;
+}
+
+export function escposPlainInvoiceHeaderRowPreview(paper: PaperSize): string {
+  const { sw, dw, qw, rw, aw } = escposInvoiceLineColumnWidths(paper);
+  const sr = '#'.padEnd(sw);
+  const desc = sanitizeReceiptTextForPreview('Item').slice(0, dw).padEnd(dw);
+  const qty = sanitizeReceiptTextForPreview('Qty').slice(0, qw).padStart(qw);
+  const rate = sanitizeReceiptTextForPreview('Rate').slice(0, rw).padStart(rw);
+  const amt = sanitizeReceiptTextForPreview('Amt').slice(0, aw).padStart(aw);
+  return `${sr} ${desc} ${qty} ${rate} ${amt}`;
+}
+
+export function escposPlainInvoiceItemRow(
+  paper: PaperSize,
+  sr: number | string,
+  desc: string,
+  qty: number | string,
+  rate: number,
+  lineAmount: number,
+): string {
+  const { rw, aw } = escposInvoiceLineColumnWidths(paper);
+  return escposPlainInvoiceLineParts(
+    paper,
+    String(sr),
+    desc,
+    String(qty),
+    escposMoneyPlainCol(rate, rw),
+    escposMoneyPlainCol(lineAmount, aw),
+    sanitizeReceiptText,
+  );
+}
+
+export function escposPlainInvoiceItemRowPreview(
+  paper: PaperSize,
+  sr: number | string,
+  desc: string,
+  qty: number | string,
+  rate: number,
+  lineAmount: number,
+): string {
+  const { rw, aw } = escposInvoiceLineColumnWidths(paper);
+  return escposPlainInvoiceLineParts(
+    paper,
+    String(sr),
+    desc,
+    String(qty),
+    escposMoneyPlainCol(rate, rw),
+    escposMoneyPlainCol(lineAmount, aw),
+    sanitizeReceiptTextForPreview,
+  );
+}
+
+/** Wrapped description continuation (blank sr/qty/rate/amt columns). */
+export function escposPlainInvoiceDescContinuation(paper: PaperSize, desc: string): string {
+  const { sw, dw, qw, rw, aw } = escposInvoiceLineColumnWidths(paper);
+  const prefix = ' '.repeat(sw + 1);
+  const M = sanitizeReceiptText(desc).slice(0, dw).padEnd(dw);
+  const tail = ` ${' '.repeat(qw)} ${' '.repeat(rw)} ${' '.repeat(aw)}`;
+  return prefix + M + tail;
+}
+
+export function escposPlainInvoiceDescContinuationPreview(paper: PaperSize, desc: string): string {
+  const { sw, dw, qw, rw, aw } = escposInvoiceLineColumnWidths(paper);
+  const prefix = ' '.repeat(sw + 1);
+  const M = sanitizeReceiptTextForPreview(desc).slice(0, dw).padEnd(dw);
+  const tail = ` ${' '.repeat(qw)} ${' '.repeat(rw)} ${' '.repeat(aw)}`;
+  return prefix + M + tail;
+}
+
 /** Plain-text line matching ESC/POS `divider()` for preview windows (BLE / native path). */
 export function escposPlainDivider(paper: PaperSize, char = '-'): string {
   const w = PAPER_FONT_A_CHARS[paper];
@@ -70,6 +191,13 @@ export function escposPlainTableRowPreview(paper: PaperSize, left: string, mid: 
 export function escposPlainLineRight(paper: PaperSize, text: string): string {
   const w = PAPER_FONT_A_CHARS[paper];
   const t = sanitizeReceiptText(text);
+  if (t.length >= w) return t.slice(0, w);
+  return t.padStart(w);
+}
+
+export function escposPlainLineRightPreview(paper: PaperSize, text: string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const t = sanitizeReceiptTextForPreview(text);
   if (t.length >= w) return t.slice(0, w);
   return t.padStart(w);
 }
@@ -274,6 +402,60 @@ export class ESCPOSBuilder {
     this.parts.push(enc.encode(M));
     this.pushRaw(BOLD_OFF);
     this.parts.push(enc.encode(' '.repeat(rw)));
+    this.pushRaw(CMD_LF);
+    return this;
+  }
+
+  /** Invoice-style column header (Sr | Item | Qty | Rate | Amt). */
+  invoiceTableHeader(): this {
+    return this.text(escposPlainInvoiceHeaderRow(this.paper));
+  }
+
+  /** One invoice line item; description column in bold. */
+  invoiceItemRowBoldDesc(
+    sr: number | string,
+    desc: string,
+    qty: number | string,
+    rate: number,
+    lineAmount: number,
+  ): this {
+    const { sw, dw, qw, rw, aw } = escposInvoiceLineColumnWidths(this.paper);
+    const S = sanitizeReceiptText(String(sr)).slice(0, sw).padEnd(sw);
+    const D = sanitizeReceiptText(desc).slice(0, dw).padEnd(dw);
+    const Q = sanitizeReceiptText(String(qty)).slice(0, qw).padStart(qw);
+    const R = escposMoneyPlainCol(rate, rw);
+    const A = escposMoneyPlainCol(lineAmount, aw);
+    const enc = new TextEncoder();
+    const sp = enc.encode(' ');
+    this.pushRaw(ALIGN_LEFT);
+    this.parts.push(enc.encode(S));
+    this.parts.push(sp);
+    this.pushRaw(BOLD_ON);
+    this.parts.push(enc.encode(D));
+    this.pushRaw(BOLD_OFF);
+    this.parts.push(sp);
+    this.parts.push(enc.encode(Q));
+    this.parts.push(sp);
+    this.parts.push(enc.encode(R));
+    this.parts.push(sp);
+    this.parts.push(enc.encode(A));
+    this.pushRaw(CMD_LF);
+    return this;
+  }
+
+  /** Wrapped item description under invoice layout (bold). */
+  invoiceItemDescContinuationBold(desc: string): this {
+    const { sw, dw, qw, rw, aw } = escposInvoiceLineColumnWidths(this.paper);
+    const prefix = ' '.repeat(sw + 1);
+    const M = sanitizeReceiptText(desc).slice(0, dw).padEnd(dw);
+    const tail = ` ${' '.repeat(qw)} ${' '.repeat(rw)} ${' '.repeat(aw)}`;
+    const enc = new TextEncoder();
+    this.pushRaw(ALIGN_LEFT);
+    this.parts.push(enc.encode(prefix));
+    this.pushRaw(BOLD_ON);
+    this.parts.push(enc.encode(M));
+    this.pushRaw(BOLD_OFF);
+    this.parts.push(enc.encode(tail));
     this.pushRaw(CMD_LF);
     return this;
   }

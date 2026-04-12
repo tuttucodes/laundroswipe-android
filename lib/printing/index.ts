@@ -72,14 +72,26 @@ export async function printEscPosViaBluetooth(bytes: Uint8Array): Promise<Blueto
 }
 
 function testVendorReceiptInput(paper: PaperSize): VendorReceiptInput {
+  const created = new Date();
   return {
+    documentTitle: 'Bill',
     vendorName: 'Profab',
+    addressLines: ['Block A, Campus'],
     tokenLabel: 'SAMPLE',
     orderLabel: 'TEST-001',
     customerLabel: 'Test customer',
     phoneLabel: '9999999999',
     customerDisplayId: 'LS-0000',
-    dateStr: new Date().toLocaleString(),
+    dateStr: created.toLocaleString('en-IN'),
+    billDateStr: created.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+    billTimeStr: created.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }),
+    hostelBlock: 'B',
+    roomNumber: '204',
     lineItems: [
       { label: 'Wash & fold', qty: 2, price: 60 },
       { label: 'Iron', qty: 1, price: 45 },
