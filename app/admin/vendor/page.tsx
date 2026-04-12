@@ -472,40 +472,6 @@ export default function VendorPage() {
     return `${orderToken}|${itemsKey}|${subtotal}|${total}`;
   };
 
-  const buildReceiptPlainText = () => {
-    const o = order as OrderRow | null;
-    const u = (user ?? {}) as Partial<UserRow>;
-    const tokenLabel = sampleMode ? 'SAMPLE' : o?.token ?? '';
-    const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
-    const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
-    const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
-    const regPlain = sampleMode ? '' : String(u.reg_no ?? '').trim();
-    const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
-    const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
-    const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
-    const lines = [
-      'LaundroSwipe',
-      `Vendor: ${vendorName}`,
-      `Token: #${tokenLabel}  Order: ${orderLabel}`,
-      `Customer ID: ${sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24)}`,
-      `Customer: ${customerLabel}`,
-      `Phone: ${phoneLabel}`,
-      ...(regPlain ? [`Reg no: ${regPlain}`] : []),
-      ...(blockPlain || roomPlain
-        ? [`Hostel: ${[blockPlain && `Block ${blockPlain}`, roomPlain && `Room ${roomPlain}`].filter(Boolean).join(' · ')}`]
-        : []),
-      '---',
-      ...lineItems.map((l) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`),
-      '---',
-      `Total items: ${totalItems}`,
-      `Subtotal: ₹${subtotal}`,
-      formatServiceFeeReceiptLine(subtotal, serviceFee, 'inr'),
-      `TOTAL: ₹${total}`,
-      'Thank you!',
-    ];
-    return lines.join('\n');
-  };
-
   const buildVendorReceiptInput = (): VendorReceiptInput => {
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
@@ -513,7 +479,7 @@ export default function VendorPage() {
     const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
     const customerLabel = sampleMode
       ? sampleCustomerName.trim() || 'Walk-in Customer'
-      : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
+      : (u.full_name ?? u.email ?? '—').toString().slice(0, 48);
     const phoneLabel = sampleMode ? sampleCustomerPhone.trim() || '—' : (u.phone ?? '—').toString().slice(0, 14);
     const regPlain = sampleMode ? '' : String(u.reg_no ?? '').trim();
     const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
@@ -525,6 +491,7 @@ export default function VendorPage() {
       vendorName,
       tokenLabel,
       orderLabel,
+      billNumber: orderLabel,
       customerLabel,
       phoneLabel,
       customerDisplayId: sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24),
@@ -532,15 +499,26 @@ export default function VendorPage() {
       hostelBlock: blockPlain || undefined,
       roomNumber: roomPlain || undefined,
       dateStr: new Date().toLocaleString(),
-      lineItems: lineItems.map((l) => ({ label: l.label, qty: l.qty, price: l.price })),
+      lineItems: lineItems.map((l) => ({
+        label: l.label,
+        qty: l.qty,
+        price: l.price,
+        id: l.id?.trim() ? l.id.trim() : undefined,
+      })),
       totalItems,
       subtotal,
       serviceFeeLine,
       total,
-      footer: 'Thank you!',
+      footer: '',
+      cashierLabel: vendorName,
       showQr: p.showPaymentQr && !!p.paymentQrPayload.trim(),
       paymentQrPayload: p.paymentQrPayload.trim() || undefined,
     };
+  };
+
+  const buildReceiptPlainText = () => {
+    const paper = getEffectiveEscPosPaperSize();
+    return formatVendorReceiptEscPosPlain(paper, buildVendorReceiptInput());
   };
 
   const handleCopyReceipt = async () => {

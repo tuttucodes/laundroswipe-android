@@ -8,6 +8,7 @@ import {
   escposPlainTableRow,
   escposPlainLineRight,
   escposPlainLineCenter,
+  escposPlainTwoColumn,
 } from './escpos/ESCPOSBuilder';
 import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
 
@@ -70,22 +71,34 @@ export async function printEscPosViaBluetooth(bytes: Uint8Array): Promise<Blueto
   }
 }
 
-/** Small test ticket for alignment checks. */
+/** Small test ticket — same tax-invoice section style as vendor bills. */
 export function buildTestEscPosReceipt(paper: PaperSize): Uint8Array {
   const prefs = getBlePrinterPreferences();
   const b = new ESCPOSBuilder(paper);
   b.initialize().codePage(0).printDensity(prefs.printDensity);
-  b.align('center').bold(true).textDoubleSize('LaundroSwipe').bold(false);
-  b.text('Bluetooth test print');
-  b.text(new Date().toLocaleString());
-  b.divider();
+  b.divider('-');
+  b.align('center').bold(true).fontSize('doubleHeight').text('LaundroSwipe').fontSize('normal').bold(false);
+  b.text('Printer test');
+  b.bold(true).text('TAX INVOICE').bold(false);
   b.align('left');
-  b.tableRow('Qty', 'Item', 'Amt');
-  b.tableRow('2', 'Wash & fold', 'Rs.120.00');
-  b.tableRow('1', 'Iron', 'Rs.45.00');
-  b.divider();
-  b.align('right').bold(true).text('TOTAL: Rs.165.00').bold(false);
-  b.feed(2).align('center').text('OK — ' + paper);
+  b.text('Bill To : Test customer');
+  b.twoColumn('Bill#: TEST', new Date().toLocaleString());
+  b.divider('-');
+  b.bold(true).tableRow('No', 'Item / Rate', 'Amount').bold(false);
+  b.text('1. Wash & fold');
+  b.tableRow('2', '@Rs.60.00', 'Rs.120.00');
+  b.text('2. Iron');
+  b.tableRow('1', '@Rs.45.00', 'Rs.45.00');
+  b.divider('-');
+  b.align('right');
+  b.text('Subtotal: Rs.165.00');
+  b.text('Service fee (7-day discount): Rs.0');
+  b.bold(true).text('Total: Rs.165.00').bold(false);
+  b.align('left');
+  b.twoColumn('Items #: 3', 'Cashier :admin');
+  b.divider('-');
+  b.align('center').text('THANK YOU AND COME AGAIN');
+  b.feed(2).text('OK — ' + paper);
   b.feed(4).cut(false);
   return b.build();
 }
@@ -93,15 +106,25 @@ export function buildTestEscPosReceipt(paper: PaperSize): Uint8Array {
 /** Plain-text mirror of `buildTestEscPosReceipt` (browser print + byte fallback). */
 export function formatTestEscPosPlain(paper: PaperSize): string {
   const lines: string[] = [];
-  lines.push('LaundroSwipe');
-  lines.push('Bluetooth test print');
-  lines.push(new Date().toLocaleString());
-  lines.push(escposPlainDivider(paper));
-  lines.push(escposPlainTableRow(paper, 'Qty', 'Item', 'Amt'));
-  lines.push(escposPlainTableRow(paper, '2', 'Wash & fold', 'Rs.120.00'));
-  lines.push(escposPlainTableRow(paper, '1', 'Iron', 'Rs.45.00'));
-  lines.push(escposPlainDivider(paper));
-  lines.push(escposPlainLineRight(paper, 'TOTAL: Rs.165.00'));
+  lines.push(escposPlainDivider(paper, '-'));
+  lines.push(escposPlainLineCenter(paper, 'LaundroSwipe'));
+  lines.push(escposPlainLineCenter(paper, 'Printer test'));
+  lines.push(escposPlainLineCenter(paper, 'TAX INVOICE'));
+  lines.push('Bill To : Test customer');
+  lines.push(escposPlainTwoColumn(paper, 'Bill#: TEST', new Date().toLocaleString()));
+  lines.push(escposPlainDivider(paper, '-'));
+  lines.push(escposPlainTableRow(paper, 'No', 'Item / Rate', 'Amount'));
+  lines.push('1. Wash & fold');
+  lines.push(escposPlainTableRow(paper, '2', '@Rs.60.00', 'Rs.120.00'));
+  lines.push('2. Iron');
+  lines.push(escposPlainTableRow(paper, '1', '@Rs.45.00', 'Rs.45.00'));
+  lines.push(escposPlainDivider(paper, '-'));
+  lines.push(escposPlainLineRight(paper, 'Subtotal: Rs.165.00'));
+  lines.push(escposPlainLineRight(paper, 'Service fee (7-day discount): Rs.0'));
+  lines.push(escposPlainLineRight(paper, 'Total: Rs.165.00'));
+  lines.push(escposPlainTwoColumn(paper, 'Items #: 3', 'Cashier :admin'));
+  lines.push(escposPlainDivider(paper, '-'));
+  lines.push(escposPlainLineCenter(paper, 'THANK YOU AND COME AGAIN'));
   lines.push('');
   lines.push(escposPlainLineCenter(paper, 'OK — ' + paper));
   return lines.join('\n');

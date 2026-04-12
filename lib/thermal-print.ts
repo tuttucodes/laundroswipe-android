@@ -22,7 +22,7 @@ const contentWidth = `${CONTENT_WIDTH_MM}mm`;
 
 function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
-  const fontCss = `font-family:"Courier New","Liberation Mono","Nimbus Mono PS",monospace;font-size:15px;font-weight:700;line-height:1.4`;
+  const fontCss = `font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:13px;font-weight:400;line-height:1.55`;
   return `
 *{margin:0;padding:0}
 html,body{width:${w};max-width:${w};min-width:${w};${fontCss};padding:1.2mm;margin:0;background:#fff;color:#000;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
@@ -48,7 +48,7 @@ td{text-align:left;vertical-align:top}
 .total{font-weight:700;font-size:17px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
 .conv{font-size:13px}
 .foot{text-align:center;margin-top:2.5mm;font-size:15px}
-.escpos-plain-receipt{margin:0 auto;padding:0;box-sizing:border-box;font-size:12px;line-height:1.35;white-space:pre;overflow-x:auto;word-break:break-all}
+.escpos-plain-receipt{margin:0 auto;padding:0;box-sizing:border-box;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:13px;font-weight:400;line-height:1.55;white-space:pre-wrap;overflow-x:auto;word-break:break-word;overflow-wrap:anywhere}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
@@ -166,12 +166,12 @@ export function getThermalTestReceiptPlainText(charsPerLine: number = DEFAULT_CO
   return formatTestEscPosPlain(paper);
 }
 
-/** Monospace `<pre>` matching POS column widths (chars per line). */
+/** `<pre>` receipt body — Arial, UTF-8; width hint in `ch` for alignment. */
 export function escPosPlainToThermalReceiptHtml(plainText: string, charsPerLine: number): string {
   return (
     '<pre class="escpos-plain-receipt" style="width:' +
     charsPerLine +
-    'ch;max-width:100%">' +
+    'ch;max-width:100%;font-family:Arial,Helvetica,sans-serif">' +
     escapeHtml(plainText) +
     '</pre>'
   );

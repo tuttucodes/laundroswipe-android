@@ -17,7 +17,7 @@ import {
   UNDERLINE_OFF,
   UNDERLINE_ON,
 } from './ESCPOSConstants';
-import { encodeAsciiLines, sanitizeReceiptText } from './CharacterEncodings';
+import { encodeAsciiLines, sanitizeReceiptText, sanitizeReceiptTextForPreview } from './CharacterEncodings';
 
 export type PaperSize = '58mm' | '76mm' | '80mm';
 
@@ -47,6 +47,18 @@ export function escposPlainTableRow(paper: PaperSize, left: string, mid: string,
   return L + M + R;
 }
 
+/** Same column layout as `escposPlainTableRow` but keeps UTF-8 for browser/Arial preview. */
+export function escposPlainTableRowPreview(paper: PaperSize, left: string, mid: string, right: string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const lw = Math.min(5, Math.max(3, Math.floor(w * 0.14)));
+  const rw = Math.min(10, Math.max(6, Math.floor(w * 0.3)));
+  const mw = Math.max(4, w - lw - rw);
+  const L = sanitizeReceiptTextForPreview(left).slice(0, lw).padEnd(lw);
+  const R = sanitizeReceiptTextForPreview(right).slice(0, rw).padStart(rw);
+  const M = sanitizeReceiptTextForPreview(mid).slice(0, mw).padEnd(mw);
+  return L + M + R;
+}
+
 /** Right-aligned line within paper width (matches typical `align('right').text(...)`). */
 export function escposPlainLineRight(paper: PaperSize, text: string): string {
   const w = PAPER_FONT_A_CHARS[paper];
@@ -62,6 +74,37 @@ export function escposPlainLineCenter(paper: PaperSize, text: string): string {
   if (t.length >= w) return t.slice(0, w);
   const pad = Math.max(0, Math.floor((w - t.length) / 2));
   return ' '.repeat(pad) + t;
+}
+
+export function escposPlainLineCenterPreview(paper: PaperSize, text: string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const t = sanitizeReceiptTextForPreview(text);
+  if (t.length >= w) return t.slice(0, w);
+  const pad = Math.max(0, Math.floor((w - t.length) / 2));
+  return ' '.repeat(pad) + t;
+}
+
+/** Left and right on one line (e.g. Bill# … · date). */
+export function escposPlainTwoColumn(paper: PaperSize, left: string, right: string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const R = sanitizeReceiptText(right);
+  const Lfull = sanitizeReceiptText(left);
+  const rLen = Math.min(R.length, w - 1);
+  const Rpart = R.slice(0, rLen);
+  const maxLeft = w - Rpart.length;
+  const L = Lfull.length <= maxLeft ? Lfull : Lfull.slice(0, Math.max(0, maxLeft - 1)) + '…';
+  return L.padEnd(w - Rpart.length) + Rpart;
+}
+
+export function escposPlainTwoColumnPreview(paper: PaperSize, left: string, right: string): string {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const R = sanitizeReceiptTextForPreview(right);
+  const Lfull = sanitizeReceiptTextForPreview(left);
+  const rLen = Math.min(R.length, w - 1);
+  const Rpart = R.slice(0, rLen);
+  const maxLeft = w - Rpart.length;
+  const L = Lfull.length <= maxLeft ? Lfull : Lfull.slice(0, Math.max(0, maxLeft - 1)) + '…';
+  return L.padEnd(w - Rpart.length) + Rpart;
 }
 
 const PAPER_MAX_DOTS: Record<PaperSize, number> = {
@@ -193,6 +236,10 @@ export class ESCPOSBuilder {
    */
   tableRow(left: string, mid: string, right: string): this {
     return this.text(escposPlainTableRow(this.paper, left, mid, right));
+  }
+
+  twoColumn(left: string, right: string): this {
+    return this.text(escposPlainTwoColumn(this.paper, left, right));
   }
 
   /** Code128: GS k m n d1..dn (m = 0x49) */

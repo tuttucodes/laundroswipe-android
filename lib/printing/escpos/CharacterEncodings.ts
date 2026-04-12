@@ -4,6 +4,20 @@
 
 const RE_RUPEE = /₹/g;
 
+/**
+ * For browser print / HTML preview only — keeps Arabic and other UTF-8 readable in Arial.
+ * ESC/POS thermal output should still use `sanitizeReceiptText`.
+ */
+export function sanitizeReceiptTextForPreview(input: string): string {
+  return input
+    .replace(RE_RUPEE, 'Rs.')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\u200e|\u200f|\u202a-\u202e/g, '')
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
+}
+
 export function sanitizeReceiptText(input: string): string {
   let s = input.replace(RE_RUPEE, 'Rs.');
   // Strip other non-ASCII that often garble on CP437
