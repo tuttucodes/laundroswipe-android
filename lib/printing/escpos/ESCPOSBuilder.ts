@@ -41,18 +41,35 @@ export function escposTableColumnWidths(paper: PaperSize): { lw: number; mw: num
   return { lw, mw, rw };
 }
 
+/** Spaces printed between Q|R and R|A so numeric columns do not run together. */
+export const ESCPOS_INVOICE_NUM_GAPS = 2;
+
 /**
- * Five-column invoice row (serial | description | qty | rate | amount). Widths sum to chars/line.
- * Matches narrow thermal invoice layout (~78mm / 46 chars).
+ * Five-column invoice row (serial | description | qty | rate | amount).
+ * Includes two single-char gaps in the numeric block; widths sum to chars/line.
  */
-export function escposInvoiceColumnWidths(paper: PaperSize): { s: number; d: number; q: number; r: number; a: number } {
+export function escposInvoiceColumnWidths(paper: PaperSize): {
+  s: number;
+  d: number;
+  q: number;
+  r: number;
+  a: number;
+} {
   const w = PAPER_FONT_A_CHARS[paper];
-  const a = Math.min(11, Math.max(8, Math.floor(w * 0.22)));
-  const r = Math.min(10, Math.max(6, Math.floor(w * 0.18)));
-  const q = Math.min(4, Math.max(3, Math.floor(w * 0.09)));
-  const s = 2;
-  const d = Math.max(6, w - s - q - r - a);
+  const g = ESCPOS_INVOICE_NUM_GAPS;
+  const a = Math.min(11, Math.max(9, Math.floor(w * 0.24)));
+  const r = Math.min(10, Math.max(7, Math.floor(w * 0.2)));
+  const q = 4;
+  const s = 3;
+  const d = Math.max(6, w - s - q - r - a - g);
   return { s, d, q, r, a };
+}
+
+function serialCell(sanitizer: (x: string) => string, raw: string, col: number): string {
+  const t = sanitizer(raw).trim();
+  const cell = sanitizer(raw).slice(0, col);
+  if (/^\d+$/.test(t)) return cell.padStart(col);
+  return cell.padEnd(col);
 }
 
 function buildInvoiceRow5String(
@@ -65,12 +82,12 @@ function buildInvoiceRow5String(
   sanitizer: (x: string) => string,
 ): string {
   const { s, d, q, r, a } = escposInvoiceColumnWidths(paper);
-  const S = sanitizer(sr).slice(0, s).padEnd(s);
+  const S = serialCell(sanitizer, sr, s);
   const D = sanitizer(desc).slice(0, d).padEnd(d);
   const Q = sanitizer(qty).slice(0, q).padStart(q);
   const R = sanitizer(rate).slice(0, r).padStart(r);
   const A = sanitizer(amt).slice(0, a).padStart(a);
-  return S + D + Q + R + A;
+  return `${S}${D}${Q} ${R} ${A}`;
 }
 
 export function escposPlainInvoiceRow5(
@@ -99,13 +116,13 @@ export function escposPlainInvoiceRow5Preview(
 export function escposPlainInvoiceRow5Cont(paper: PaperSize, desc: string): string {
   const { s, d, q, r, a } = escposInvoiceColumnWidths(paper);
   const D = sanitizeReceiptText(desc).slice(0, d).padEnd(d);
-  return ' '.repeat(s) + D + ' '.repeat(q + r + a);
+  return ' '.repeat(s) + D + ' '.repeat(q + r + a + ESCPOS_INVOICE_NUM_GAPS);
 }
 
 export function escposPlainInvoiceRow5ContPreview(paper: PaperSize, desc: string): string {
   const { s, d, q, r, a } = escposInvoiceColumnWidths(paper);
   const D = sanitizeReceiptTextForPreview(desc).slice(0, d).padEnd(d);
-  return ' '.repeat(s) + D + ' '.repeat(q + r + a);
+  return ' '.repeat(s) + D + ' '.repeat(q + r + a + ESCPOS_INVOICE_NUM_GAPS);
 }
 
 /** Plain-text line matching ESC/POS `divider()` for preview windows (BLE / native path). */
@@ -357,36 +374,45 @@ export class ESCPOSBuilder {
     return this;
   }
 
-  /** Invoice data row, description in bold (item name). */
+  /**
+   * Invoice item row: serial + qty/rate/amt normal size; item name double-height + bold
+   * for readability (GS ! 0x01 + ESC E).
+   */
   invoiceRow5BoldDesc(sr: string, desc: string, qty: string, rate: string, amt: string): this {
     const { s, d, q, r, a } = escposInvoiceColumnWidths(this.paper);
-    const S = sanitizeReceiptText(sr).slice(0, s).padEnd(s);
+    const S = serialCell(sanitizeReceiptText, sr, s);
     const D = sanitizeReceiptText(desc).slice(0, d).padEnd(d);
     const Q = sanitizeReceiptText(qty).slice(0, q).padStart(q);
     const R = sanitizeReceiptText(rate).slice(0, r).padStart(r);
     const A = sanitizeReceiptText(amt).slice(0, a).padStart(a);
+    const tail = `${Q} ${R} ${A}`;
     const enc = new TextEncoder();
     this.pushRaw(ALIGN_LEFT);
+    this.pushRaw(FONT_NORMAL);
     this.parts.push(enc.encode(S));
+    this.pushRaw(FONT_DH);
     this.pushRaw(BOLD_ON);
     this.parts.push(enc.encode(D));
     this.pushRaw(BOLD_OFF);
-    this.parts.push(enc.encode(Q + R + A));
+    this.pushRaw(FONT_NORMAL);
+    this.parts.push(enc.encode(tail));
     this.pushRaw(CMD_LF);
     return this;
   }
 
-  /** Wrapped item description (bold), empty numeric columns. */
+  /** Wrapped item description: double-height + bold; empty numeric columns. */
   invoiceRow5ContinuationBold(desc: string): this {
     const { s, d, q, r, a } = escposInvoiceColumnWidths(this.paper);
     const D = sanitizeReceiptText(desc).slice(0, d).padEnd(d);
-    const tail = ' '.repeat(q + r + a);
+    const tail = ' '.repeat(q + r + a + ESCPOS_INVOICE_NUM_GAPS);
     const enc = new TextEncoder();
     this.pushRaw(ALIGN_LEFT);
     this.parts.push(enc.encode(' '.repeat(s)));
+    this.pushRaw(FONT_DH);
     this.pushRaw(BOLD_ON);
     this.parts.push(enc.encode(D));
     this.pushRaw(BOLD_OFF);
+    this.pushRaw(FONT_NORMAL);
     this.parts.push(enc.encode(tail));
     this.pushRaw(CMD_LF);
     return this;

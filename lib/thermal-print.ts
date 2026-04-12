@@ -48,7 +48,7 @@ td{text-align:left;vertical-align:top}
 .total{font-weight:700;font-size:17px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
 .conv{font-size:13px}
 .foot{text-align:center;margin-top:2.5mm;font-size:15px}
-.escpos-plain-receipt{margin:0 auto;padding:0 0 2mm;box-sizing:border-box;font-family:ui-monospace,"Cascadia Mono","SF Mono",Consolas,"Courier New",monospace;font-size:12px;font-weight:500;line-height:1.22;white-space:pre;overflow-x:auto;word-break:normal;overflow-wrap:normal;letter-spacing:0}
+.escpos-plain-receipt{margin:0 auto;padding:0 0 2mm;box-sizing:border-box;font-family:ui-monospace,"Cascadia Mono","SF Mono",Consolas,"Courier New",monospace;font-size:13px;font-weight:600;line-height:1.24;white-space:pre;overflow-x:auto;word-break:normal;overflow-wrap:normal;letter-spacing:0}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
