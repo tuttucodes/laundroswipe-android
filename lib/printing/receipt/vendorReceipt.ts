@@ -6,10 +6,11 @@ import {
   type PaperSize,
   PAPER_FONT_A_CHARS,
   escposPlainDivider,
+  escposPlainInvoiceRow5ContPreview,
+  escposPlainInvoiceRow5Preview,
   escposPlainLineCenterPreview,
-  escposPlainTableRowPreview,
   escposPlainTwoColumnPreview,
-  escposTableColumnWidths,
+  escposInvoiceColumnWidths,
 } from '../escpos/ESCPOSBuilder';
 import { sanitizeReceiptText, sanitizeReceiptTextForPreview } from '../escpos/CharacterEncodings';
 
@@ -44,18 +45,9 @@ export type VendorReceiptInput = {
 };
 
 const RECEIPT_BRAND = 'LaundroSwipe';
-/** Centered document title (thermal invoice style). */
-const DOC_TITLE = 'ORDER BILL';
-
-/** Split `toLocaleString()`-style values into date / time for Bill No + Date/Time lines. */
-function splitLocaleDateTime(dateStr: string): { date: string; time: string } {
-  const s = dateStr.trim();
-  const idx = s.indexOf(', ');
-  if (idx >= 0) {
-    return { date: s.slice(0, idx).trim(), time: s.slice(idx + 2).trim() };
-  }
-  return { date: s, time: '' };
-}
+const DOC_TITLE = 'BILL';
+const THANK_YOU = 'Thank you!';
+const VISIT_LINE = 'Thanks for your visit';
 
 /** Rupee amounts on bills (ASCII-friendly for thermal). */
 export function rsMoney(n: number): string {
@@ -67,12 +59,19 @@ export function rsMoney(n: number): string {
 /** Blank lines before cut — keep small to save paper on 78mm rolls. */
 const RECEIPT_TRAILING_FEED_LINES = 4;
 
-function itemDescriptionWithRate(label: string, unitPrice: number, prep: (s: string) => string): string {
-  return `${prep(label)} @${rsMoney(unitPrice)}`;
+function splitDateTime(dateStr: string): { datePart: string; timePart: string } {
+  const s = dateStr.trim();
+  const i = s.indexOf(',');
+  if (i >= 0) {
+    return { datePart: s.slice(0, i).trim(), timePart: s.slice(i + 1).trim() };
+  }
+  const m = s.match(/^(.+?)[T\s](.+)$/);
+  if (m) return { datePart: m[1].trim(), timePart: m[2].trim() };
+  return { datePart: s, timePart: '' };
 }
 
-/** Word-wrap for the description column only (qty | desc | amt). */
-function wrapToMidWidth(text: string, mw: number, prep: (s: string) => string): string[] {
+/** Word-wrap for the invoice description column only. */
+function wrapToDescWidth(text: string, d: number, prep: (s: string) => string): string[] {
   const safe = prep(text);
   const words = safe.split(/\s+/).filter(Boolean);
   const chunks: string[] = [];
@@ -85,28 +84,28 @@ function wrapToMidWidth(text: string, mw: number, prep: (s: string) => string): 
   };
   for (const w of words) {
     const next = cur ? `${cur} ${w}` : w;
-    if (next.length <= mw) {
+    if (next.length <= d) {
       cur = next;
       continue;
     }
     flush();
-    if (w.length <= mw) {
+    if (w.length <= d) {
       cur = w;
     } else {
       let rest = w;
       while (rest.length > 0) {
-        if (rest.length <= mw) {
+        if (rest.length <= d) {
           chunks.push(rest);
           rest = '';
         } else {
-          chunks.push(rest.slice(0, mw));
-          rest = rest.slice(mw);
+          chunks.push(rest.slice(0, d));
+          rest = rest.slice(d);
         }
       }
     }
   }
   flush();
-  if (!chunks.length) chunks.push(safe.slice(0, mw));
+  if (!chunks.length) chunks.push(safe.slice(0, d));
   return chunks;
 }
 
@@ -129,10 +128,10 @@ function tokenDisplay(token: string): string {
   return t.startsWith('#') ? t : `#${t}`;
 }
 
-function printMetaLine(b: ESCPOSBuilder, label: string, value: string): void {
-  const v = value.trim();
-  if (!v || v === '—') return;
-  b.text(sanitizeReceiptText(`${label}: ${v}`));
+function clipLine(b: ESCPOSBuilder, line: string): void {
+  const w = PAPER_FONT_A_CHARS[b.getPaperSize()];
+  const t = sanitizeReceiptText(line);
+  b.text(t.length <= w ? t : `${t.slice(0, w - 1)}…`);
 }
 
 function pushServiceFeeTotalsEscPos(b: ESCPOSBuilder, charged: number, original?: number): void {
@@ -158,14 +157,19 @@ function pushServiceFeePlain(lines: string[], paper: PaperSize, charged: number,
   }
 }
 
+function plainItemDescForPreview(label: string, prep: (s: string) => string): string {
+  return prep(label).toUpperCase();
+}
+
 /**
- * Thermal invoice layout: dashed section rules, bill/date line, “To,” block, table header
- * + single rule under headers, double rule before net total — 78mm / Font A widths unchanged.
+ * Thermal invoice layout: section rules, five-column lines, compact spacing (78mm / 46 chars).
  */
 export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptInput): Uint8Array {
   const density = getBlePrinterPreferences().printDensity;
   const b = new ESCPOSBuilder(paper);
   const prep = sanitizeReceiptText;
+  const w = PAPER_FONT_A_CHARS[paper];
+  const { d } = escposInvoiceColumnWidths(paper);
   b.initialize().codePage(0).printDensity(density);
 
   if (input.showQr && input.paymentQrPayload?.trim()) {
@@ -175,97 +179,79 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
     } catch {
       b.text('[QR skipped]');
     }
+    b.align('left');
   }
+
+  b.divider('-');
+  b.align('center').text(sanitizeReceiptText(DOC_TITLE));
+  b.align('center').bold(true).fontSize('doubleHeight').text(sanitizeReceiptText(RECEIPT_BRAND)).fontSize('normal').bold(false);
+  b.align('center').bold(true).text(sanitizeReceiptText(input.vendorName.trim() || 'Vendor')).bold(false);
+  if (input.taxRegLabel?.trim()) {
+    b.align('center').text(sanitizeReceiptText(input.taxRegLabel.trim()));
+  }
+  if (input.addressLines?.length) {
+    for (const raw of input.addressLines) {
+      const al = raw.trim();
+      if (al) b.align('center').text(sanitizeReceiptText(al.slice(0, w)));
+    }
+  }
+  b.divider('-');
 
   const orderNo = (input.orderLabel ?? '').trim() || '—';
-  const { date, time } = splitLocaleDateTime(input.dateStr);
-
-  b.divider('-');
-  b.align('center').bold(true).text(prep(DOC_TITLE)).bold(false);
-  b.align('center').bold(true).fontSize('doubleHeight').text(prep(input.vendorName.trim() || 'Vendor')).fontSize('normal').bold(false);
-  b.align('center').text(prep(RECEIPT_BRAND));
-  for (const raw of input.addressLines ?? []) {
-    const line = raw.trim();
-    if (line) b.align('center').text(prep(line));
-  }
-  if (input.taxRegLabel?.trim()) {
-    b.align('center').text(prep(input.taxRegLabel.trim()));
-  }
-  b.divider('-');
-
+  const { datePart, timePart } = splitDateTime(input.dateStr);
   b.align('left');
-  b.twoColumn(prep(`Bill No.: ${orderNo}`), prep(`Date: ${date}`));
-  if (time) {
-    b.twoColumn(prep(`Token: ${tokenDisplay(input.tokenLabel)}`), prep(`Time: ${time}`));
-  } else {
-    printMetaLine(b, 'Token', tokenDisplay(input.tokenLabel));
-  }
+  b.twoColumn(sanitizeReceiptText(`Order: ${orderNo}`), sanitizeReceiptText(datePart));
+  b.twoColumn(sanitizeReceiptText(`Token: ${tokenDisplay(input.tokenLabel)}`), sanitizeReceiptText(timePart || ' '));
+
+  b.divider('-');
+  b.text(sanitizeReceiptText('To,'));
+  clipLine(b, input.customerLabel);
+  clipLine(b, `Phone: ${input.phoneLabel}`);
+  if (input.regNo?.trim()) clipLine(b, `Reg: ${input.regNo.trim()}`);
+  if (input.hostelBlock?.trim()) clipLine(b, `Block: ${input.hostelBlock.trim()}`);
+  if (input.roomNumber?.trim()) clipLine(b, `Room: ${input.roomNumber.trim()}`);
+
+  b.divider('-');
+  b.invoiceHeaderRow5('No', 'Item', 'Qty', 'Rate', 'Amt');
   b.divider('-');
 
-  b.text(prep('To,'));
-  b.bold(true).text(prep(input.customerLabel.trim() || '—')).bold(false);
-  printMetaLine(b, 'Phone', input.phoneLabel);
-  if (input.customerEmail?.trim()) {
-    printMetaLine(b, 'Email', input.customerEmail.trim());
-  }
-  if (input.regNo?.trim()) printMetaLine(b, 'Reg no', input.regNo.trim());
-  if (input.hostelBlock?.trim()) printMetaLine(b, 'Block', input.hostelBlock.trim());
-  if (input.roomNumber?.trim()) printMetaLine(b, 'Room', input.roomNumber.trim());
-  b.divider('-');
-
-  b.bold(true).tableRow('Qty', 'Item', 'Amount').bold(false);
-  b.divider('-');
-
-  const { mw } = escposTableColumnWidths(paper);
-  input.lineItems.forEach((l, idx) => {
-    const descFull = `${idx + 1}. ${itemDescriptionWithRate(l.label, l.price, prep)}`;
-    const descLines = wrapToMidWidth(descFull, mw, prep);
+  for (let i = 0; i < input.lineItems.length; i += 1) {
+    const l = input.lineItems[i];
+    const sr = String(i + 1);
+    const descLines = wrapToDescWidth(l.label, d, prep);
     const first = descLines[0] ?? '';
     const lineTotal = rsMoney(l.qty * l.price);
-    b.tableRowBoldMid(String(l.qty), first, lineTotal);
-    for (let i = 1; i < descLines.length; i += 1) {
-      b.tableRowMidContinuationBold(descLines[i]);
+    b.invoiceRow5BoldDesc(sr, first, String(l.qty), rsMoney(l.price), lineTotal);
+    for (let j = 1; j < descLines.length; j += 1) {
+      b.invoiceRow5ContinuationBold(descLines[j]);
     }
-  });
+  }
 
   b.divider('-');
-  b.twoColumn(prep('Total Qty'), prep(String(input.totalItems)));
-  b.twoColumn(prep('Subtotal'), prep(rsMoney(input.subtotal)));
+  b.twoColumn(sanitizeReceiptText('Total qty'), sanitizeReceiptText(String(input.totalItems)));
+  b.twoColumn(sanitizeReceiptText('Subtotal'), sanitizeReceiptText(rsMoney(input.subtotal)));
   pushServiceFeeTotalsEscPos(b, input.convenienceFee, input.convenienceFeeOriginal);
 
   b.divider('=');
-  const totalLine = totalLinePadded(paper, 'Net Amount', rsMoney(input.total), prep);
+  const totalLine = totalLinePadded(paper, 'TOTAL', rsMoney(input.total), prep);
   b.align('left').bold(true).fontSize('doubleHeight').text(totalLine).fontSize('normal').bold(false);
+  b.divider('=');
 
-  b.divider('-');
-  b.align('center').text(prep('Have a nice day'));
-  b.align('center').text(prep('Thanks for your visit!'));
+  b.align('center').text(sanitizeReceiptText(THANK_YOU));
+  b.align('center').text(sanitizeReceiptText(VISIT_LINE));
   if (input.footer?.trim()) {
-    b.align('center').text(prep(input.footer.trim()));
+    b.align('center').text(sanitizeReceiptText(input.footer.trim()));
   }
   b.feed(RECEIPT_TRAILING_FEED_LINES).cut(false);
 
   return b.build();
 }
 
-/** Plain preview: item text in ALL CAPS so descriptions stand out without ESC/POS bold. */
-function plainItemDescForPreview(label: string, unitPrice: number, prep: (s: string) => string): string {
-  const core = prep(label).toUpperCase();
-  return `${core} @${rsMoney(unitPrice)}`;
-}
-
 export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorReceiptInput): string {
   const lines: string[] = [];
-  const { lw, mw } = escposTableColumnWidths(paper);
+  const { d } = escposInvoiceColumnWidths(paper);
   const prep = sanitizeReceiptTextForPreview;
-  const orderNo = (input.orderLabel ?? '').trim() || '—';
-  const { date, time } = splitLocaleDateTime(input.dateStr);
-
-  const pushMetaPlain = (label: string, value: string) => {
-    const v = value.trim();
-    if (!v || v === '—') return;
-    lines.push(prep(`${label}: ${v}`));
-  };
+  const w = PAPER_FONT_A_CHARS[paper];
 
   if (input.showQr && input.paymentQrPayload?.trim()) {
     const q = input.paymentQrPayload.trim();
@@ -274,59 +260,60 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
 
   lines.push(escposPlainDivider(paper, '-'));
   lines.push(escposPlainLineCenterPreview(paper, prep(DOC_TITLE)));
-  lines.push(escposPlainLineCenterPreview(paper, prep(input.vendorName.trim() || 'Vendor')));
   lines.push(escposPlainLineCenterPreview(paper, prep(RECEIPT_BRAND)));
-  for (const raw of input.addressLines ?? []) {
-    const line = raw.trim();
-    if (line) lines.push(escposPlainLineCenterPreview(paper, prep(line)));
-  }
+  lines.push(escposPlainLineCenterPreview(paper, prep(input.vendorName.trim() || 'Vendor')));
   if (input.taxRegLabel?.trim()) {
     lines.push(escposPlainLineCenterPreview(paper, prep(input.taxRegLabel.trim())));
   }
-  lines.push(escposPlainDivider(paper, '-'));
-
-  lines.push(escposPlainTwoColumnPreview(paper, prep(`Bill No.: ${orderNo}`), prep(`Date: ${date}`)));
-  if (time) {
-    lines.push(escposPlainTwoColumnPreview(paper, prep(`Token: ${tokenDisplay(input.tokenLabel)}`), prep(`Time: ${time}`)));
-  } else {
-    pushMetaPlain('Token', tokenDisplay(input.tokenLabel));
-  }
-  lines.push(escposPlainDivider(paper, '-'));
-
-  lines.push(prep('To,'));
-  lines.push(prep(input.customerLabel.trim() || '—'));
-  pushMetaPlain('Phone', input.phoneLabel);
-  if (input.customerEmail?.trim()) {
-    pushMetaPlain('Email', input.customerEmail.trim());
-  }
-  if (input.regNo?.trim()) pushMetaPlain('Reg no', input.regNo.trim());
-  if (input.hostelBlock?.trim()) pushMetaPlain('Block', input.hostelBlock.trim());
-  if (input.roomNumber?.trim()) pushMetaPlain('Room', input.roomNumber.trim());
-  lines.push(escposPlainDivider(paper, '-'));
-
-  lines.push(escposPlainTableRowPreview(paper, 'Qty', 'Item', 'Amount'));
-  lines.push(escposPlainDivider(paper, '-'));
-
-  input.lineItems.forEach((l, idx) => {
-    const descFull = `${idx + 1}. ${plainItemDescForPreview(l.label, l.price, prep)}`;
-    const descLines = wrapToMidWidth(descFull, mw, prep);
-    const first = descLines[0] ?? '';
-    lines.push(escposPlainTableRowPreview(paper, String(l.qty), first, rsMoney(l.qty * l.price)));
-    for (let i = 1; i < descLines.length; i += 1) {
-      lines.push(' '.repeat(lw) + prep(descLines[i]).slice(0, mw));
+  if (input.addressLines?.length) {
+    for (const raw of input.addressLines) {
+      const al = raw.trim();
+      if (al) lines.push(escposPlainLineCenterPreview(paper, prep(al.slice(0, w))));
     }
-  });
+  }
+  lines.push(escposPlainDivider(paper, '-'));
+
+  const orderNo = (input.orderLabel ?? '').trim() || '—';
+  const { datePart, timePart } = splitDateTime(input.dateStr);
+  lines.push(escposPlainTwoColumnPreview(paper, prep(`Order: ${orderNo}`), prep(datePart)));
+  lines.push(escposPlainTwoColumnPreview(paper, prep(`Token: ${tokenDisplay(input.tokenLabel)}`), prep(timePart || ' ')));
 
   lines.push(escposPlainDivider(paper, '-'));
-  lines.push(escposPlainTwoColumnPreview(paper, 'Total Qty', String(input.totalItems)));
+  lines.push(prep('To,'));
+  lines.push(prep(input.customerLabel).slice(0, w));
+  lines.push(prep(`Phone: ${input.phoneLabel}`).slice(0, w));
+  if (input.regNo?.trim()) lines.push(prep(`Reg: ${input.regNo.trim()}`).slice(0, w));
+  if (input.hostelBlock?.trim()) lines.push(prep(`Block: ${input.hostelBlock.trim()}`).slice(0, w));
+  if (input.roomNumber?.trim()) lines.push(prep(`Room: ${input.roomNumber.trim()}`).slice(0, w));
+
+  lines.push(escposPlainDivider(paper, '-'));
+  lines.push(escposPlainInvoiceRow5Preview(paper, 'No', 'Item', 'Qty', 'Rate', 'Amt'));
+  lines.push(escposPlainDivider(paper, '-'));
+
+  for (let i = 0; i < input.lineItems.length; i += 1) {
+    const l = input.lineItems[i];
+    const sr = String(i + 1);
+    const descLines = wrapToDescWidth(plainItemDescForPreview(l.label, prep), d, (s) => s);
+    const first = descLines[0] ?? '';
+    lines.push(
+      escposPlainInvoiceRow5Preview(paper, sr, first, String(l.qty), rsMoney(l.price), rsMoney(l.qty * l.price)),
+    );
+    for (let j = 1; j < descLines.length; j += 1) {
+      lines.push(escposPlainInvoiceRow5ContPreview(paper, descLines[j]));
+    }
+  }
+
+  lines.push(escposPlainDivider(paper, '-'));
+  lines.push(escposPlainTwoColumnPreview(paper, 'Total qty', String(input.totalItems)));
   lines.push(escposPlainTwoColumnPreview(paper, 'Subtotal', rsMoney(input.subtotal)));
   pushServiceFeePlain(lines, paper, input.convenienceFee, input.convenienceFeeOriginal);
 
   lines.push(escposPlainDivider(paper, '='));
-  lines.push(totalLinePadded(paper, 'Net Amount', rsMoney(input.total), prep));
-  lines.push(escposPlainDivider(paper, '-'));
-  lines.push(escposPlainLineCenterPreview(paper, 'Have a nice day'));
-  lines.push(escposPlainLineCenterPreview(paper, 'Thanks for your visit!'));
+  lines.push(totalLinePadded(paper, 'TOTAL', rsMoney(input.total), prep));
+  lines.push(escposPlainDivider(paper, '='));
+
+  lines.push(escposPlainLineCenterPreview(paper, prep(THANK_YOU)));
+  lines.push(escposPlainLineCenterPreview(paper, prep(VISIT_LINE)));
   if (input.footer?.trim()) {
     lines.push(escposPlainLineCenterPreview(paper, prep(input.footer.trim())));
   }

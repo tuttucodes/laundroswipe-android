@@ -41,6 +41,73 @@ export function escposTableColumnWidths(paper: PaperSize): { lw: number; mw: num
   return { lw, mw, rw };
 }
 
+/**
+ * Five-column invoice row (serial | description | qty | rate | amount). Widths sum to chars/line.
+ * Matches narrow thermal invoice layout (~78mm / 46 chars).
+ */
+export function escposInvoiceColumnWidths(paper: PaperSize): { s: number; d: number; q: number; r: number; a: number } {
+  const w = PAPER_FONT_A_CHARS[paper];
+  const a = Math.min(11, Math.max(8, Math.floor(w * 0.22)));
+  const r = Math.min(10, Math.max(6, Math.floor(w * 0.18)));
+  const q = Math.min(4, Math.max(3, Math.floor(w * 0.09)));
+  const s = 2;
+  const d = Math.max(6, w - s - q - r - a);
+  return { s, d, q, r, a };
+}
+
+function buildInvoiceRow5String(
+  paper: PaperSize,
+  sr: string,
+  desc: string,
+  qty: string,
+  rate: string,
+  amt: string,
+  sanitizer: (x: string) => string,
+): string {
+  const { s, d, q, r, a } = escposInvoiceColumnWidths(paper);
+  const S = sanitizer(sr).slice(0, s).padEnd(s);
+  const D = sanitizer(desc).slice(0, d).padEnd(d);
+  const Q = sanitizer(qty).slice(0, q).padStart(q);
+  const R = sanitizer(rate).slice(0, r).padStart(r);
+  const A = sanitizer(amt).slice(0, a).padStart(a);
+  return S + D + Q + R + A;
+}
+
+export function escposPlainInvoiceRow5(
+  paper: PaperSize,
+  sr: string,
+  desc: string,
+  qty: string,
+  rate: string,
+  amt: string,
+): string {
+  return buildInvoiceRow5String(paper, sr, desc, qty, rate, amt, sanitizeReceiptText);
+}
+
+export function escposPlainInvoiceRow5Preview(
+  paper: PaperSize,
+  sr: string,
+  desc: string,
+  qty: string,
+  rate: string,
+  amt: string,
+): string {
+  return buildInvoiceRow5String(paper, sr, desc, qty, rate, amt, sanitizeReceiptTextForPreview);
+}
+
+/** Wrapped description continuation: empty sr/qty/rate/amt columns. */
+export function escposPlainInvoiceRow5Cont(paper: PaperSize, desc: string): string {
+  const { s, d, q, r, a } = escposInvoiceColumnWidths(paper);
+  const D = sanitizeReceiptText(desc).slice(0, d).padEnd(d);
+  return ' '.repeat(s) + D + ' '.repeat(q + r + a);
+}
+
+export function escposPlainInvoiceRow5ContPreview(paper: PaperSize, desc: string): string {
+  const { s, d, q, r, a } = escposInvoiceColumnWidths(paper);
+  const D = sanitizeReceiptTextForPreview(desc).slice(0, d).padEnd(d);
+  return ' '.repeat(s) + D + ' '.repeat(q + r + a);
+}
+
 /** Plain-text line matching ESC/POS `divider()` for preview windows (BLE / native path). */
 export function escposPlainDivider(paper: PaperSize, char = '-'): string {
   const w = PAPER_FONT_A_CHARS[paper];
@@ -274,6 +341,53 @@ export class ESCPOSBuilder {
     this.parts.push(enc.encode(M));
     this.pushRaw(BOLD_OFF);
     this.parts.push(enc.encode(' '.repeat(rw)));
+    this.pushRaw(CMD_LF);
+    return this;
+  }
+
+  /** Invoice table header row (all bold). */
+  invoiceHeaderRow5(sr: string, desc: string, qty: string, rate: string, amt: string): this {
+    const line = buildInvoiceRow5String(this.paper, sr, desc, qty, rate, amt, sanitizeReceiptText);
+    const enc = new TextEncoder();
+    this.pushRaw(ALIGN_LEFT);
+    this.pushRaw(BOLD_ON);
+    this.parts.push(enc.encode(line));
+    this.pushRaw(BOLD_OFF);
+    this.pushRaw(CMD_LF);
+    return this;
+  }
+
+  /** Invoice data row, description in bold (item name). */
+  invoiceRow5BoldDesc(sr: string, desc: string, qty: string, rate: string, amt: string): this {
+    const { s, d, q, r, a } = escposInvoiceColumnWidths(this.paper);
+    const S = sanitizeReceiptText(sr).slice(0, s).padEnd(s);
+    const D = sanitizeReceiptText(desc).slice(0, d).padEnd(d);
+    const Q = sanitizeReceiptText(qty).slice(0, q).padStart(q);
+    const R = sanitizeReceiptText(rate).slice(0, r).padStart(r);
+    const A = sanitizeReceiptText(amt).slice(0, a).padStart(a);
+    const enc = new TextEncoder();
+    this.pushRaw(ALIGN_LEFT);
+    this.parts.push(enc.encode(S));
+    this.pushRaw(BOLD_ON);
+    this.parts.push(enc.encode(D));
+    this.pushRaw(BOLD_OFF);
+    this.parts.push(enc.encode(Q + R + A));
+    this.pushRaw(CMD_LF);
+    return this;
+  }
+
+  /** Wrapped item description (bold), empty numeric columns. */
+  invoiceRow5ContinuationBold(desc: string): this {
+    const { s, d, q, r, a } = escposInvoiceColumnWidths(this.paper);
+    const D = sanitizeReceiptText(desc).slice(0, d).padEnd(d);
+    const tail = ' '.repeat(q + r + a);
+    const enc = new TextEncoder();
+    this.pushRaw(ALIGN_LEFT);
+    this.parts.push(enc.encode(' '.repeat(s)));
+    this.pushRaw(BOLD_ON);
+    this.parts.push(enc.encode(D));
+    this.pushRaw(BOLD_OFF);
+    this.parts.push(enc.encode(tail));
     this.pushRaw(CMD_LF);
     return this;
   }
