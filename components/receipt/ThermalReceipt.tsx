@@ -4,6 +4,9 @@ import type { ThermalReceiptData } from '@/lib/receipt/thermalReceiptTypes';
 
 const money = (n: number) => `Rs.${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
 
+/** Line-item rate/amount only (INR); keeps thermal columns narrow — Rs. appears in summary. */
+const moneyPlain = (n: number) => (Number.isFinite(n) ? n : 0).toFixed(2);
+
 const THERMAL_STYLES = `
 .trc-root{width:280px;max-width:48ch;margin:0 auto;padding:10px 8px 12px;box-sizing:border-box;
   font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
@@ -16,9 +19,9 @@ const THERMAL_STYLES = `
 .trc-meta{margin:3px 0;text-align:left;word-break:break-word}
 .trc-metaLabel{font-weight:600}
 .trc-section{margin:10px 0 6px;font-weight:700;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:#4b5563}
-/* Item ~56%, Qty ~10%, Rate ~15%, Amt ~19% (2.5+0.4+0.7+0.85) */
-.trc-grid{display:grid;grid-template-columns:2.5fr 0.4fr 0.7fr 0.85fr;gap:6px;align-items:start;width:100%;min-width:0}
-.trc-thead{margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #d1d5db}
+/* Strict columns: item | qty | rate | amt — column-gap prevents bleed */
+.trc-grid{display:grid;grid-template-columns:1.5fr 0.5fr 0.9fr 1fr;column-gap:8px;row-gap:4px;align-items:center;width:100%;min-width:0}
+.trc-thead{margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #d1d5db;align-items:end}
 .trc-th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#6b7280;min-width:0}
 .trc-thRight{text-align:right}
 .trc-row{margin:4px 0;padding:4px 0;border-bottom:1px solid #e5e7eb;min-width:0}
@@ -28,11 +31,16 @@ const THERMAL_STYLES = `
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
 .trc-qty{
   font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13.5px;line-height:1.2;text-align:right;white-space:nowrap;
-  font-variant-numeric:tabular-nums;min-width:0;align-self:start}
-.trc-mono{
+  font-variant-numeric:tabular-nums;min-width:0}
+.trc-rate,.trc-amt{
   font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
   font-variant-numeric:tabular-nums;font-weight:500;font-size:12px;line-height:1.2;text-align:right;white-space:nowrap;
-  min-width:0;align-self:start}
+  overflow:hidden;min-width:0}
+.trc-rate{min-width:55px}
+.trc-amt{min-width:65px}
+.trc-mono{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  font-variant-numeric:tabular-nums}
 .trc-summary{margin-top:10px}
 .trc-sumRow{display:flex;justify-content:space-between;gap:8px;margin:3px 0;flex-wrap:nowrap}
 .trc-total{margin-top:8px;padding-top:8px;border-top:2px solid #000;font-weight:700;font-size:13px}
@@ -129,8 +137,8 @@ export function ThermalReceipt({ data, showPrintButton = false }: ThermalReceipt
                 {item.name}
               </div>
               <div className="trc-qty">{item.qty}</div>
-              <div className="trc-mono">{money(item.rate)}</div>
-              <div className="trc-mono">{money(amt)}</div>
+              <div className="trc-rate">{moneyPlain(item.rate)}</div>
+              <div className="trc-amt">{moneyPlain(amt)}</div>
             </div>
           );
         })}
@@ -143,21 +151,21 @@ export function ThermalReceipt({ data, showPrintButton = false }: ThermalReceipt
         </div>
         <div className="trc-sumRow">
           <span>Subtotal</span>
-          <span>{money(subtotal)}</span>
+          <span className="trc-mono">{money(subtotal)}</span>
         </div>
         {discount > 0 ? (
           <div className="trc-sumRow">
             <span>Discount</span>
-            <span>−{money(discount)}</span>
+            <span className="trc-mono">−{money(discount)}</span>
           </div>
         ) : null}
         <div className="trc-sumRow">
           <span>Service fee</span>
-          <span>{money(serviceFee)}</span>
+          <span className="trc-mono">{money(serviceFee)}</span>
         </div>
         <div className="trc-sumRow trc-total">
           <span>TOTAL</span>
-          <span>{money(total)}</span>
+          <span className="trc-mono">{money(total)}</span>
         </div>
       </section>
       <p className="trc-foot">{data.footer ?? 'Thank you!'}</p>

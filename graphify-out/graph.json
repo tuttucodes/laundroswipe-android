@@ -2172,6 +2172,14 @@
       "community": 7
     },
     {
+      "label": "moneyPlain()",
+      "file_type": "code",
+      "source_file": "components/receipt/ThermalReceipt.tsx",
+      "source_location": "L8",
+      "id": "thermalreceipt_moneyplain",
+      "community": 7
+    },
+    {
       "label": "PrintBridgeApkCta.tsx",
       "file_type": "code",
       "source_file": "components/vendor/PrintBridgeApkCta.tsx",
@@ -8935,6 +8943,18 @@
       "_tgt": "thermalreceipt_money",
       "source": "thermalreceipt",
       "target": "thermalreceipt_money",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/receipt/ThermalReceipt.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_src": "thermalreceipt",
+      "_tgt": "thermalreceipt_moneyplain",
+      "source": "thermalreceipt",
+      "target": "thermalreceipt_moneyplain",
       "confidence_score": 1.0
     },
     {
