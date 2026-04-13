@@ -12,9 +12,8 @@ import {
 } from '@/lib/printing';
 import { getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import type { VendorBillRow } from '@/lib/api';
-import { calculateServiceFee, formatServiceFeeReceiptLine } from '@/lib/fees';
+import { applyServiceFeeDiscount, calculateServiceFee, formatServiceFeeReceiptLine, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { getVendorBillItems } from '@/lib/constants';
-import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 import { billCatalogThumbUrl } from '@/lib/bill-catalog-thumb';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
