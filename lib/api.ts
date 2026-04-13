@@ -1,4 +1,5 @@
 import { supabase, hasSupabase } from './supabase';
+import { stripLeadingHashesFromToken } from './vendor-bill-token';
 
 export type VendorCatalogRow = {
   slug: string;
@@ -749,11 +750,6 @@ export const LSApi = {
           });
           const payload = await res.json().catch(() => ({}));
           if (res.ok && payload?.ok && Array.isArray(payload.bills)) {
-            const pid = payload.profile_id as string | null | undefined;
-            if (pid && pid !== userId) {
-              console.warn('fetchVendorBillsForUser: session profile id does not match app user id');
-              return null;
-            }
             return payload.bills as VendorBillRow[];
           }
           if (!res.ok) {
@@ -793,6 +789,21 @@ export const LSApi = {
           .in('order_id', chunk)
           .is('cancelled_at', null);
         if (!error && data) collected.push(...(data as VendorBillRow[]));
+      }
+
+      const tokenKeys = new Set<string>();
+      for (const o of orders ?? []) {
+        const tk = stripLeadingHashesFromToken(String(o.token ?? '')).toLowerCase();
+        if (tk) tokenKeys.add(tk);
+      }
+      for (const k of tokenKeys) {
+        const { data: byTok, error: tokErr } = await supabase
+          .from('vendor_bills')
+          .select(billSelect)
+          .ilike('order_token', k)
+          .is('cancelled_at', null)
+          .limit(50);
+        if (!tokErr && byTok) collected.push(...(byTok as VendorBillRow[]));
       }
 
       if (byUserRes.error && collected.length === 0) {
