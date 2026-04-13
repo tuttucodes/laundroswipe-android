@@ -778,20 +778,6 @@ export const LSApi = {
       const collected: VendorBillRow[] = [];
       if (!byUserRes.error && byUserRes.data) collected.push(...(byUserRes.data as VendorBillRow[]));
 
-      const orderIds = (orders ?? []).map((o) => o.id).filter(Boolean);
-      const orderIdSet = new Set(orderIds);
-      const chunkSize = 80;
-      for (let i = 0; i < orderIds.length; i += chunkSize) {
-        const chunk = orderIds.slice(i, i + chunkSize);
-        if (chunk.length === 0) continue;
-        const { data, error } = await supabase
-          .from('vendor_bills')
-          .select(billSelect)
-          .in('order_id', chunk)
-          .is('cancelled_at', null);
-        if (!error && data) collected.push(...(data as VendorBillRow[]));
-      }
-
       const allowedTokens = new Set<string>();
       for (const o of orders ?? []) {
         const tk = stripLeadingHashesFromToken(String(o.token ?? '')).toLowerCase();
@@ -810,8 +796,6 @@ export const LSApi = {
           if (!allowedTokens.has(btok)) continue;
           const uid = row.user_id != null && String(row.user_id) !== '' ? String(row.user_id) : '';
           if (uid && uid !== userId) continue;
-          const oid = row.order_id != null && String(row.order_id) !== '' ? String(row.order_id) : '';
-          if (oid && !orderIdSet.has(oid)) continue;
           collected.push(row);
         }
       }

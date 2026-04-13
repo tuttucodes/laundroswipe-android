@@ -13,23 +13,15 @@ function normBillToken(v: unknown): string {
 }
 
 /**
- * Bills found by `order_token` must still belong to this profile:
- * - reject if `vendor_bills.user_id` is set and is not this user
- * - accept if `order_id` points at one of this user's orders
- * - else accept token-only rows only when token is one of this user's order tokens (from `orders.user_id` scope)
+ * Match bills by `order_token` + ownership only (no `order_id` on bills — avoids bad / null links).
+ * - `allowedTokens` comes from `orders.token` where `orders.user_id` = this profile.
+ * - Reject if `vendor_bills.user_id` is set and is not this user.
  */
-function billFromTokenVerifiedForProfile(
-  bill: BillRow,
-  profileId: string,
-  orderIdSet: Set<string>,
-  allowedTokens: Set<string>,
-): boolean {
+function billFromTokenVerifiedForProfile(bill: BillRow, profileId: string, allowedTokens: Set<string>): boolean {
   const btok = normBillToken(bill.order_token);
   if (!allowedTokens.has(btok)) return false;
   const uid = bill.user_id != null && bill.user_id !== '' ? String(bill.user_id) : '';
   if (uid && uid !== profileId) return false;
-  const oid = bill.order_id != null && bill.order_id !== '' ? String(bill.order_id) : '';
-  if (oid) return orderIdSet.has(oid);
   return true;
 }
 
@@ -84,29 +76,14 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const { data: orders, error: ordErr } = await service
     .from('orders')
-    .select('id, token')
+    .select('token')
     .eq('user_id', profileId)
     .order('created_at', { ascending: false })
     .limit(200);
 
   if (ordErr) return NextResponse.json({ error: ordErr.message }, { status: 500 });
 
-  const orderIds = (orders ?? []).map((o) => o.id).filter(Boolean) as string[];
-  const orderIdSet = new Set(orderIds);
-  const chunkSize = 80;
-  for (let i = 0; i < orderIds.length; i += chunkSize) {
-    const chunk = orderIds.slice(i, i + chunkSize);
-    if (chunk.length === 0) continue;
-    const { data: byOrder, error: boErr } = await service
-      .from('vendor_bills')
-      .select(BILL_SELECT)
-      .in('order_id', chunk)
-      .is('cancelled_at', null);
-    if (boErr) return NextResponse.json({ error: boErr.message }, { status: 500 });
-    if (byOrder?.length) collected.push(...byOrder);
-  }
-
-  // Bills tied by order token: only tokens from `orders` where `user_id` = this profile (verified above).
+  // Bills by token: tokens only from this user's orders (`orders.user_id`); bill rows checked with `vendor_bills.user_id`.
   const allowedTokens = new Set<string>();
   for (const o of orders ?? []) {
     const k = normBillToken((o as { token?: string }).token);
@@ -122,7 +99,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (btErr) return NextResponse.json({ error: btErr.message }, { status: 500 });
     if (!byTok?.length) continue;
     for (const row of byTok) {
-      if (billFromTokenVerifiedForProfile(row, profileId, orderIdSet, allowedTokens)) {
+      if (billFromTokenVerifiedForProfile(row, profileId, allowedTokens)) {
         collected.push(row);
       }
     }
