@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   if (!slug) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const supabase = getServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
-  const { data, error } = await supabase.from('vendor_profiles').select('*').eq('slug', slug).maybeSingle();
+  const { data, error } = await supabase.from('vendor_profiles').select('id, slug, name, brief, pricing_details, logo_url, updated_at').eq('slug', slug).maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }

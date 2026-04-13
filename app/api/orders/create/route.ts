@@ -170,7 +170,7 @@ export async function POST(request: Request) {
       vendor_name: vendorName,
       vendor_id: vendorId,
     })
-    .select('*')
+    .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at')
     .single();
 
   if (error) {

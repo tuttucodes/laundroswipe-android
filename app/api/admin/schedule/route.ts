@@ -105,8 +105,8 @@ export async function GET(request: Request) {
       ? session.vendorId?.toLowerCase().trim() ?? null
       : (requestedVendor || null);
     const [slotsRes, datesRes] = await Promise.all([
-      supabase.from('schedule_slots').select('*').order('sort_order', { ascending: true }),
-      supabase.from('schedule_dates').select('*').order('date', { ascending: true }),
+      supabase.from('schedule_slots').select('id, label, time_from, time_to, sort_order, active, created_at').order('sort_order', { ascending: true }),
+      supabase.from('schedule_dates').select('date, enabled, slot_ids, enabled_by_vendor, created_at, updated_at').order('date', { ascending: true }),
     ]);
     if (slotsRes.error) return NextResponse.json({ error: slotsRes.error.message }, { status: 500 });
     if (datesRes.error) return NextResponse.json({ error: datesRes.error.message }, { status: 500 });

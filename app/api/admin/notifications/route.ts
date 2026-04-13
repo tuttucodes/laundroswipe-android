@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     await flushScheduled(supabase);
     const { data, error } = await supabase
       .from('user_notifications')
-      .select('*')
+      .select('id, user_id, title, body, sent_at, scheduled_at, read_at, created_at')
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

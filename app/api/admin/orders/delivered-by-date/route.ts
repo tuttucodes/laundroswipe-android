@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     .select('token, delivery_confirmed_at, created_at')
     .eq('status', 'delivered')
     .order('delivery_confirmed_at', { ascending: false })
-    .limit(1000);
+    .limit(500);
 
   if (vendorSlug) {
     const vendor = VENDORS.find((v) => v.id === vendorSlug);

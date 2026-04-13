@@ -80,7 +80,7 @@ export async function GET(request: Request) {
     .eq('status', 'delivered')
     .eq('vendor_id', vendorDbId)
     .order('updated_at', { ascending: false })
-    .limit(4000);
+    .limit(500);
   if (ordErr) return NextResponse.json({ error: ordErr.message }, { status: 500 });
 
   const ordersOnDay = (ordersRaw ?? []).filter((o) => {

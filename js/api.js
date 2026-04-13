@@ -83,8 +83,9 @@
     try {
       const { data, error } = await sb
         .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at, delivery_confirmed_at, delivery_comments')
+        .order('created_at', { ascending: false })
+        .limit(200);
       if (error) {
         console.error('Supabase fetchOrders error', error);
         return null;
@@ -101,9 +102,10 @@
     try {
       const { data, error } = await sb
         .from('orders')
-        .select('*')
+        .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at, delivery_confirmed_at, delivery_comments')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       if (error) {
         console.error('Supabase fetchOrdersForUser error', error);
         return null;
@@ -122,7 +124,7 @@
     try {
       const { data: orders, error } = await sb
         .from('orders')
-        .select('*')
+        .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at, delivery_confirmed_at, delivery_comments')
         .eq('token', t)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -130,7 +132,7 @@
       const order = orders[0];
       let user = null;
       if (order.user_id) {
-        const { data: u } = await sb.from('users').select('*').eq('id', order.user_id).single();
+        const { data: u } = await sb.from('users').select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year').eq('id', order.user_id).single();
         user = u;
       }
       return { order, user };
@@ -145,8 +147,9 @@
     try {
       const { data, error } = await sb
         .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year')
+        .order('created_at', { ascending: false })
+        .limit(500);
       if (error) {
         console.error('Supabase fetchUsers error', error);
         return null;
@@ -234,7 +237,7 @@
       if (!insertErr && inserted) return inserted;
       const { data: existing } = await sb
         .from('users')
-        .select('*')
+        .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year')
         .eq('id', authUser.id)
         .single();
       return existing || null;
@@ -249,7 +252,7 @@
     try {
       const { data: existing, error: getErr } = await sb
         .from('orders')
-        .select('*')
+        .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at, delivery_confirmed_at, delivery_comments')
         .eq('id', orderId)
         .single();
       if (getErr || !existing) {

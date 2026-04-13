@@ -64,7 +64,7 @@ export async function GET(request: Request) {
     let q = supabase
       .from('vendor_bills')
       .select(
-        'id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at',
+        'id, order_id, order_token, order_number, customer_name, customer_phone, user_id, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at',
         { count: 'exact' },
       )
       .order('created_at', { ascending: false });
@@ -78,9 +78,9 @@ export async function GET(request: Request) {
     buildOrdersQuery(),
     supabase
       .from('users')
-      .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id')
+      .select('id, full_name, email, phone, user_type, reg_no, hostel_block, room_number, display_id')
       .order('created_at', { ascending: false })
-      .limit(500),
+      .limit(200),
     buildBillsQuery(),
   ]);
 

@@ -216,8 +216,9 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at, delivery_confirmed_at, delivery_comments')
+        .order('created_at', { ascending: false })
+        .limit(200);
       if (error) {
         console.error('Supabase fetchOrders error', error);
         return null;
@@ -234,9 +235,10 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at, delivery_confirmed_at, delivery_comments')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       if (error) {
         console.error('Supabase fetchOrdersForUser error', error);
         return null;
@@ -257,7 +259,7 @@ export const LSApi = {
     try {
       const { data: orders, error } = await supabase
         .from('orders')
-        .select('*')
+        .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at, delivery_confirmed_at, delivery_comments')
         .eq('token', t)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -267,7 +269,7 @@ export const LSApi = {
       if (order.user_id) {
         const { data: u } = await supabase
           .from('users')
-          .select('*')
+          .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
           .eq('id', order.user_id)
           .single();
         user = u as UserRow | null;
@@ -284,8 +286,9 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
+        .order('created_at', { ascending: false })
+        .limit(500);
       if (error) {
         console.error('Supabase fetchUsers error', error);
         return null;
@@ -302,7 +305,7 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('*')
+        .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
         .eq('id', userId)
         .maybeSingle();
       if (error) return null;
@@ -317,7 +320,7 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('*')
+        .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
         .ilike('email', email.trim().toLowerCase())
         .limit(1);
       const row = Array.isArray(data) ? data[0] : data;
@@ -405,7 +408,7 @@ export const LSApi = {
       if (!authUser?.id) return { user: null, error: 'Sign in failed' };
       const { data: profile, error: profileErr } = await supabase
         .from('users')
-        .select('*')
+        .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
         .eq('auth_id', authUser.id)
         .maybeSingle();
       if (profileErr || !profile) return { user: null, error: 'Profile not found' };
@@ -523,7 +526,7 @@ export const LSApi = {
     try {
       const { data: existing, error: selectError } = await supabase
         .from('users')
-        .select('*')
+        .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
         .eq('id', authUser.id)
         .maybeSingle();
       if (selectError) {
@@ -541,7 +544,7 @@ export const LSApi = {
           .eq('id', authUser.id);
         const { data: refreshed } = await supabase
           .from('users')
-          .select('*')
+          .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
           .eq('id', authUser.id)
           .maybeSingle();
         return (refreshed ?? existing) as UserRow;
@@ -630,7 +633,7 @@ export const LSApi = {
     try {
       const { data: existing, error: getErr } = await supabase
         .from('orders')
-        .select('*')
+        .select('id, order_number, token, service_id, service_name, pickup_date, time_slot, status, instructions, user_id, vendor_name, vendor_id, created_at, delivery_confirmed_at, delivery_comments')
         .eq('id', orderId)
         .single();
       if (getErr || !existing) return null;
@@ -704,8 +707,9 @@ export const LSApi = {
     try {
       let q = supabase
         .from('vendor_bills')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, subtotal, convenience_fee, total, vendor_name, vendor_id, vendor_slug, cancelled_at, cancelled_by_role, created_at')
+        .order('created_at', { ascending: false })
+        .limit(200);
       if (vendorName) q = q.eq('vendor_name', vendorName);
       const { data, error } = await q;
       if (error) {
@@ -724,10 +728,11 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('vendor_bills')
-        .select('*')
+        .select('id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, vendor_slug, cancelled_at, cancelled_by_role, created_at')
         .eq('user_id', userId)
         .is('cancelled_at', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
       if (error) return null;
       return (data ?? []) as VendorBillRow[];
     } catch (e) {
@@ -772,7 +777,7 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('schedule_slots')
-        .select('*')
+        .select('id, label, time_from, time_to, sort_order, active, created_at')
         .order('sort_order', { ascending: true });
       if (error) {
         console.error('Supabase fetchScheduleSlots error', error);
@@ -790,7 +795,7 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('schedule_dates')
-        .select('*')
+        .select('date, enabled, slot_ids, enabled_by_vendor, created_at, updated_at')
         .order('date', { ascending: true });
       if (error) {
         console.error('Supabase fetchScheduleDates error', error);
@@ -822,9 +827,10 @@ export const LSApi = {
     try {
       const { data, error } = await supabase
         .from('user_notifications')
-        .select('*')
+        .select('id, user_id, title, body, sent_at, scheduled_at, read_at, created_at')
         .not('sent_at', 'is', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
       if (error) {
         console.error('Supabase fetchNotifications error', error);
         return null;

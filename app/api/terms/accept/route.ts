@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       terms_version: CURRENT_TERMS_VERSION,
     })
     .eq('auth_id', authUserId)
-    .select('*')
+    .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
     .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
