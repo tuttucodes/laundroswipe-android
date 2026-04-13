@@ -779,6 +779,7 @@ export const LSApi = {
       if (!byUserRes.error && byUserRes.data) collected.push(...(byUserRes.data as VendorBillRow[]));
 
       const orderIds = (orders ?? []).map((o) => o.id).filter(Boolean);
+      const orderIdSet = new Set(orderIds);
       const chunkSize = 80;
       for (let i = 0; i < orderIds.length; i += chunkSize) {
         const chunk = orderIds.slice(i, i + chunkSize);
@@ -791,19 +792,28 @@ export const LSApi = {
         if (!error && data) collected.push(...(data as VendorBillRow[]));
       }
 
-      const tokenKeys = new Set<string>();
+      const allowedTokens = new Set<string>();
       for (const o of orders ?? []) {
         const tk = stripLeadingHashesFromToken(String(o.token ?? '')).toLowerCase();
-        if (tk) tokenKeys.add(tk);
+        if (tk) allowedTokens.add(tk);
       }
-      for (const k of tokenKeys) {
+      for (const k of allowedTokens) {
         const { data: byTok, error: tokErr } = await supabase
           .from('vendor_bills')
           .select(billSelect)
           .ilike('order_token', k)
           .is('cancelled_at', null)
           .limit(50);
-        if (!tokErr && byTok) collected.push(...(byTok as VendorBillRow[]));
+        if (tokErr || !byTok?.length) continue;
+        for (const row of byTok as VendorBillRow[]) {
+          const btok = stripLeadingHashesFromToken(String(row.order_token ?? '')).toLowerCase();
+          if (!allowedTokens.has(btok)) continue;
+          const uid = row.user_id != null && String(row.user_id) !== '' ? String(row.user_id) : '';
+          if (uid && uid !== userId) continue;
+          const oid = row.order_id != null && String(row.order_id) !== '' ? String(row.order_id) : '';
+          if (oid && !orderIdSet.has(oid)) continue;
+          collected.push(row);
+        }
       }
 
       if (byUserRes.error && collected.length === 0) {

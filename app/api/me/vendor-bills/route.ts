@@ -8,6 +8,31 @@ const BILL_SELECT =
 
 type BillRow = Record<string, unknown>;
 
+function normBillToken(v: unknown): string {
+  return stripLeadingHashesFromToken(String(v ?? '')).toLowerCase();
+}
+
+/**
+ * Bills found by `order_token` must still belong to this profile:
+ * - reject if `vendor_bills.user_id` is set and is not this user
+ * - accept if `order_id` points at one of this user's orders
+ * - else accept token-only rows only when token is one of this user's order tokens (from `orders.user_id` scope)
+ */
+function billFromTokenVerifiedForProfile(
+  bill: BillRow,
+  profileId: string,
+  orderIdSet: Set<string>,
+  allowedTokens: Set<string>,
+): boolean {
+  const btok = normBillToken(bill.order_token);
+  if (!allowedTokens.has(btok)) return false;
+  const uid = bill.user_id != null && bill.user_id !== '' ? String(bill.user_id) : '';
+  if (uid && uid !== profileId) return false;
+  const oid = bill.order_id != null && bill.order_id !== '' ? String(bill.order_id) : '';
+  if (oid) return orderIdSet.has(oid);
+  return true;
+}
+
 function mergeByIdSort(rows: BillRow[]): BillRow[] {
   const byId = new Map<string, BillRow>();
   for (const r of rows) {
@@ -67,6 +92,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   if (ordErr) return NextResponse.json({ error: ordErr.message }, { status: 500 });
 
   const orderIds = (orders ?? []).map((o) => o.id).filter(Boolean) as string[];
+  const orderIdSet = new Set(orderIds);
   const chunkSize = 80;
   for (let i = 0; i < orderIds.length; i += chunkSize) {
     const chunk = orderIds.slice(i, i + chunkSize);
@@ -80,14 +106,13 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (byOrder?.length) collected.push(...byOrder);
   }
 
-  // Bills tied by token only (order_id null, or legacy / dedup rows) — same tokens as this user's orders.
-  const tokenKeys = new Set<string>();
+  // Bills tied by order token: only tokens from `orders` where `user_id` = this profile (verified above).
+  const allowedTokens = new Set<string>();
   for (const o of orders ?? []) {
-    const t = typeof (o as { token?: string }).token === 'string' ? stripLeadingHashesFromToken((o as { token: string }).token) : '';
-    const k = t.toLowerCase();
-    if (k) tokenKeys.add(k);
+    const k = normBillToken((o as { token?: string }).token);
+    if (k) allowedTokens.add(k);
   }
-  for (const k of tokenKeys) {
+  for (const k of allowedTokens) {
     const { data: byTok, error: btErr } = await service
       .from('vendor_bills')
       .select(BILL_SELECT)
@@ -95,7 +120,12 @@ export async function GET(request: Request): Promise<NextResponse> {
       .is('cancelled_at', null)
       .limit(50);
     if (btErr) return NextResponse.json({ error: btErr.message }, { status: 500 });
-    if (byTok?.length) collected.push(...byTok);
+    if (!byTok?.length) continue;
+    for (const row of byTok) {
+      if (billFromTokenVerifiedForProfile(row, profileId, orderIdSet, allowedTokens)) {
+        collected.push(row);
+      }
+    }
   }
 
   const bills = mergeByIdSort(collected);
