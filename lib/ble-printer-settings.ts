@@ -26,7 +26,7 @@ const KEY = 'laundroswipe_ble_printer_prefs_v1';
 
 const defaults: BlePrinterPreferences = {
   preferBluetoothEscPos: true,
-  paperSize: '80mm',
+  paperSize: '78mm',
   printDensity: 'medium',
   autoConnect: true,
   printTimeoutMs: 15000,
@@ -42,7 +42,10 @@ function load(): BlePrinterPreferences {
     const p = JSON.parse(raw) as Partial<BlePrinterPreferences> & Record<string, unknown>;
     return {
       preferBluetoothEscPos: typeof p.preferBluetoothEscPos === 'boolean' ? p.preferBluetoothEscPos : defaults.preferBluetoothEscPos,
-      paperSize: p.paperSize === '58mm' || p.paperSize === '76mm' || p.paperSize === '80mm' ? p.paperSize : defaults.paperSize,
+      paperSize:
+        p.paperSize === '58mm' || p.paperSize === '76mm' || p.paperSize === '78mm' || p.paperSize === '80mm'
+          ? p.paperSize
+          : defaults.paperSize,
       printDensity:
         p.printDensity === 'light' || p.printDensity === 'medium' || p.printDensity === 'dark'
           ? p.printDensity

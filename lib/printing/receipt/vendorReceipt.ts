@@ -47,11 +47,56 @@ function truncateForPaper(label: string, paper: PaperSize): string {
   return `${s.slice(0, Math.max(1, cap - 1))}…`;
 }
 
+/** Word-wrap for receipt lines (thermal width). */
+function wrapReceiptText(line: string, maxLen: number): string[] {
+  const s = sanitizeReceiptText(line);
+  if (s.length <= maxLen) return [s];
+  const words = s.split(/\s+/).filter(Boolean);
+  const out: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (next.length <= maxLen) {
+      cur = next;
+      continue;
+    }
+    if (cur) out.push(cur);
+    if (w.length > maxLen) {
+      let rest = w;
+      while (rest.length > maxLen) {
+        out.push(rest.slice(0, maxLen));
+        rest = rest.slice(maxLen);
+      }
+      cur = rest;
+    } else {
+      cur = w;
+    }
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+type UnitTotalLayout =
+  | { mode: 'single'; line: string }
+  | { mode: 'two'; unitLine: string; totalLine: string };
+
+/** Left `@ unit` + right line total on one row, or two rows if it does not fit. */
+function layoutUnitAndTotal(paper: PaperSize, unitStr: string, lineTotal: string): UnitTotalLayout {
+  const w = PAPER_FONT_A_CHARS[paper];
+  if (unitStr.length + lineTotal.length + 1 <= w) {
+    const pad = Math.max(1, w - unitStr.length - lineTotal.length);
+    return { mode: 'single', line: unitStr + ' '.repeat(pad) + lineTotal };
+  }
+  return { mode: 'two', unitLine: unitStr, totalLine: escposPlainLineRight(paper, lineTotal) };
+}
+
 /**
  * Build raw ESC/POS bytes for a LaundroSwipe vendor bill.
+ * Printers use built-in bitmap fonts (not Arial); we use bold + double height for line items.
  */
 export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptInput): Uint8Array {
   const density = getBlePrinterPreferences().printDensity;
+  const w = PAPER_FONT_A_CHARS[paper];
   const b = new ESCPOSBuilder(paper);
   b.initialize().codePage(0).printDensity(density);
 
@@ -59,8 +104,9 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   b.text(input.vendorName);
   b.divider();
   b.align('left');
-  b.text(`Token: #${input.tokenLabel}  Order: ${input.orderLabel}`);
-  b.text(`Customer ID: ${input.customerDisplayId}`);
+  b.bold(true).fontSize('normal').text(`Token: #${input.tokenLabel}`);
+  b.bold(true).text(`Customer ID: ${input.customerDisplayId}`).bold(false);
+  b.text(`Order: ${input.orderLabel}`);
   b.text(`Customer: ${input.customerLabel}`);
   b.text(`Phone: ${input.phoneLabel}`);
   if (input.regNo?.trim()) b.text(`Reg no: ${input.regNo.trim()}`);
@@ -78,15 +124,25 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   for (const l of input.lineItems) {
     const amt = money(l.price * l.qty);
     const descLine = `${l.qty}× ${truncateForPaper(l.label, paper)}`;
-    b.align('left').fontSize('doubleHeight').text(descLine);
-    b.fontSize('normal').align('right').text(`${money(l.price)} each  ${amt}`);
-    b.align('left');
+    const unitLeft = `@ ${money(l.price)} each`;
+    b.align('left').bold(true).fontSize('doubleHeight').text(descLine);
+    b.fontSize('normal').bold(true);
+    const ut = layoutUnitAndTotal(paper, unitLeft, amt);
+    if (ut.mode === 'single') {
+      b.align('left').text(ut.line);
+    } else {
+      b.align('left').text(ut.unitLine);
+      b.align('right').text(amt);
+    }
+    b.align('left').bold(false);
   }
   b.divider();
 
   b.text(`Total items: ${input.totalItems}`);
   b.text(`Subtotal: ${money(input.subtotal)}`);
-  b.text(input.serviceFeeLine);
+  for (const sf of wrapReceiptText(input.serviceFeeLine, w)) {
+    b.text(sf);
+  }
   b.bold(true).text(`TOTAL: ${money(input.total)}`).bold(false);
 
   if (input.showQr && input.paymentQrPayload?.trim()) {
@@ -110,11 +166,13 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
  */
 export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorReceiptInput): string {
   const lines: string[] = [];
+  const w = PAPER_FONT_A_CHARS[paper];
   lines.push(sanitizeReceiptText('LaundroSwipe'));
   lines.push(sanitizeReceiptText(input.vendorName));
   lines.push(escposPlainDivider(paper));
-  lines.push(sanitizeReceiptText(`Token: #${input.tokenLabel}  Order: ${input.orderLabel}`));
+  lines.push(sanitizeReceiptText(`Token: #${input.tokenLabel}`));
   lines.push(sanitizeReceiptText(`Customer ID: ${input.customerDisplayId}`));
+  lines.push(sanitizeReceiptText(`Order: ${input.orderLabel}`));
   lines.push(sanitizeReceiptText(`Customer: ${input.customerLabel}`));
   lines.push(sanitizeReceiptText(`Phone: ${input.phoneLabel}`));
   if (input.regNo?.trim()) lines.push(sanitizeReceiptText(`Reg no: ${input.regNo.trim()}`));
@@ -131,13 +189,22 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   for (const l of input.lineItems) {
     const amt = money(l.price * l.qty);
     const descLine = `${l.qty}× ${truncateForPaper(l.label, paper)}`;
+    const unitLeft = `@ ${money(l.price)} each`;
     lines.push(sanitizeReceiptText(descLine));
-    lines.push(escposPlainLineRight(paper, sanitizeReceiptText(`${money(l.price)} each  ${amt}`)));
+    const ut = layoutUnitAndTotal(paper, unitLeft, amt);
+    if (ut.mode === 'single') {
+      lines.push(sanitizeReceiptText(ut.line));
+    } else {
+      lines.push(sanitizeReceiptText(ut.unitLine));
+      lines.push(sanitizeReceiptText(ut.totalLine));
+    }
   }
   lines.push(escposPlainDivider(paper));
   lines.push(sanitizeReceiptText(`Total items: ${input.totalItems}`));
   lines.push(sanitizeReceiptText(`Subtotal: ${money(input.subtotal)}`));
-  lines.push(sanitizeReceiptText(input.serviceFeeLine));
+  for (const sf of wrapReceiptText(input.serviceFeeLine, w)) {
+    lines.push(sanitizeReceiptText(sf));
+  }
   lines.push(sanitizeReceiptText(`TOTAL: ${money(input.total)}`));
   if (input.showQr && input.paymentQrPayload?.trim()) {
     lines.push('');

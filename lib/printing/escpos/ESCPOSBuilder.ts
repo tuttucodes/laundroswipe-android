@@ -19,12 +19,14 @@ import {
 } from './ESCPOSConstants';
 import { encodeAsciiLines, sanitizeReceiptText } from './CharacterEncodings';
 
-export type PaperSize = '58mm' | '76mm' | '80mm';
+export type PaperSize = '58mm' | '76mm' | '78mm' | '80mm';
 
 /** Font A characters per line (must stay in sync with `tableRow` / receipt layout). */
 export const PAPER_FONT_A_CHARS: Record<PaperSize, number> = {
   '58mm': 32,
   '76mm': 42,
+  /** Typical 3″ narrow roll (~78mm paper); conservative count avoids clipped edges. */
+  '78mm': 46,
   '80mm': 48,
 };
 
@@ -67,6 +69,7 @@ export function escposPlainLineCenter(paper: PaperSize, text: string): string {
 const PAPER_MAX_DOTS: Record<PaperSize, number> = {
   '58mm': 384,
   '76mm': 576,
+  '78mm': 608,
   '80mm': 640,
 };
 
@@ -248,6 +251,7 @@ export class ESCPOSBuilder {
 
 export function paperSizeFromCharsPerLine(chars: number): PaperSize {
   if (chars <= 34) return '58mm';
-  if (chars <= 46) return '76mm';
+  if (chars <= 42) return '76mm';
+  if (chars <= 46) return '78mm';
   return '80mm';
 }

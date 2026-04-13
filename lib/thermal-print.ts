@@ -48,7 +48,7 @@ td{text-align:left;vertical-align:top}
 .total{font-weight:700;font-size:17px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
 .conv{font-size:13px}
 .foot{text-align:center;margin-top:2.5mm;font-size:15px}
-.escpos-plain-receipt{margin:0 auto;padding:0;box-sizing:border-box;font-size:12px;line-height:1.35;white-space:pre;overflow-x:auto;word-break:break-all}
+.escpos-plain-receipt{margin:0 auto;padding:0;box-sizing:border-box;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:16px;font-weight:700;line-height:1.45;white-space:pre;overflow-x:auto;word-break:break-word}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
@@ -178,10 +178,11 @@ export function escPosPlainToThermalReceiptHtml(plainText: string, charsPerLine:
 }
 
 /** Match BLE / ESC/POS paper labels to @page width used by thermal preview HTML. */
-export function paperWidthMmFromLabel(size: '58mm' | '76mm' | '80mm'): number {
+export function paperWidthMmFromLabel(size: '58mm' | '76mm' | '78mm' | '80mm'): number {
   if (size === '58mm') return 58;
   if (size === '76mm') return 76;
-  return 78;
+  if (size === '78mm') return 78;
+  return 80;
 }
 
 export type ThermalReceiptWindowOptions = {
