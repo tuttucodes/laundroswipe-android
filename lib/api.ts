@@ -725,16 +725,52 @@ export const LSApi = {
 
   async fetchVendorBillsForUser(userId: string): Promise<VendorBillRow[] | null> {
     if (!supabase) return null;
+    const billSelect =
+      'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, vendor_slug, cancelled_at, cancelled_by_role, created_at';
+
+    const mergeByIdSort = (rows: VendorBillRow[]): VendorBillRow[] => {
+      const byId = new Map<string, VendorBillRow>();
+      for (const r of rows) {
+        if (r && typeof (r as VendorBillRow).id === 'string') byId.set((r as VendorBillRow).id, r as VendorBillRow);
+      }
+      return [...byId.values()]
+        .sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))
+        .slice(0, 200);
+    };
+
     try {
-      const { data, error } = await supabase
-        .from('vendor_bills')
-        .select('id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, vendor_slug, cancelled_at, cancelled_by_role, created_at')
-        .eq('user_id', userId)
-        .is('cancelled_at', null)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (error) return null;
-      return (data ?? []) as VendorBillRow[];
+      const [byUserRes, orders] = await Promise.all([
+        supabase
+          .from('vendor_bills')
+          .select(billSelect)
+          .eq('user_id', userId)
+          .is('cancelled_at', null)
+          .order('created_at', { ascending: false })
+          .limit(200),
+        this.fetchOrdersForUser(userId),
+      ]);
+
+      const collected: VendorBillRow[] = [];
+      if (!byUserRes.error && byUserRes.data) collected.push(...(byUserRes.data as VendorBillRow[]));
+
+      const orderIds = (orders ?? []).map((o) => o.id).filter(Boolean);
+      const chunkSize = 80;
+      for (let i = 0; i < orderIds.length; i += chunkSize) {
+        const chunk = orderIds.slice(i, i + chunkSize);
+        if (chunk.length === 0) continue;
+        const { data, error } = await supabase
+          .from('vendor_bills')
+          .select(billSelect)
+          .in('order_id', chunk)
+          .is('cancelled_at', null);
+        if (!error && data) collected.push(...(data as VendorBillRow[]));
+      }
+
+      if (byUserRes.error && collected.length === 0) {
+        console.error('fetchVendorBillsForUser by user_id error', byUserRes.error);
+        return null;
+      }
+      return mergeByIdSort(collected);
     } catch (e) {
       console.error('fetchVendorBillsForUser exception', e);
       return null;

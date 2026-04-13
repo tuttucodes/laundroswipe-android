@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
-import { VIT_VENDOR_BLOCK_ACCESS, VENDORS } from '@/lib/constants';
+import { VENDORS } from '@/lib/constants';
+import { orderLookupTokenVariants, stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 
 function normalizeToken(token: string): string {
-  return String(token).replace(/^#/, '').trim();
+  return stripLeadingHashesFromToken(String(token ?? '')).trim();
 }
 
 function resolveVendorSlugFromOrderVendorName(orderVendorName: string | null | undefined): string | null {
@@ -12,16 +13,6 @@ function resolveVendorSlugFromOrderVendorName(orderVendorName: string | null | u
   if (!v) return null;
   const match = VENDORS.find((x) => v.includes(x.name.toLowerCase()) || v === x.name.toLowerCase());
   return match?.id ?? null;
-}
-
-function isUserAuthorizedForVendor(vendorSlug: string, user: any | null): boolean {
-  if (!user) return false;
-  const collegeId = String(user.college_id ?? '').toLowerCase();
-  if (collegeId !== 'vit-chn') return false;
-  const allowedBlocks = (VIT_VENDOR_BLOCK_ACCESS as any)[vendorSlug] as string[] | undefined;
-  if (!allowedBlocks?.length) return false;
-  const block = String(user.hostel_block ?? '').trim().toUpperCase();
-  return allowedBlocks.some((b) => block.startsWith(b));
 }
 
 export async function POST(request: Request) {
@@ -41,34 +32,26 @@ export async function POST(request: Request) {
   const token = normalizeToken(body.token ?? '');
   if (!token) return NextResponse.json({ error: 'token is required' }, { status: 400 });
 
-  const { data: orders, error: orderErr } = await supabase
+  const tokenVariants = orderLookupTokenVariants(body.token ?? '');
+  if (!tokenVariants.length) return NextResponse.json({ error: 'token is required' }, { status: 400 });
+
+  const { data: orderRow, error: orderErr } = await supabase
     .from('orders')
     .select('id, token, status, delivery_confirmed_at, delivery_comments, vendor_name, user_id')
-    .eq('token', token)
+    .in('token', tokenVariants)
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (orderErr) return NextResponse.json({ error: orderErr.message }, { status: 500 });
-  const order = orders as any;
+  const order = orderRow as Record<string, unknown> | null;
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
   if (session.role === 'vendor') {
     const vendorSlug = session.vendorId?.toLowerCase().trim() ?? '';
-    const orderVendorSlug = resolveVendorSlugFromOrderVendorName(order.vendor_name);
+    const orderVendorSlug = resolveVendorSlugFromOrderVendorName(order.vendor_name as string | null | undefined);
     if (orderVendorSlug && orderVendorSlug !== vendorSlug) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    if (order.user_id) {
-      const { data: userRow, error: userErr } = await supabase
-        .from('users')
-        .select('college_id, hostel_block')
-        .eq('id', order.user_id)
-        .maybeSingle();
-      if (userErr) return NextResponse.json({ error: userErr.message }, { status: 500 });
-      if (!isUserAuthorizedForVendor(vendorSlug, userRow ?? null)) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
     }
   }
 
@@ -85,11 +68,10 @@ export async function POST(request: Request) {
       delivery_comments: comments,
       status: 'delivered',
     })
-    .eq('id', order.id)
+    .eq('id', order.id as string)
     .select()
     .maybeSingle();
 
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
   return NextResponse.json({ ok: true, order: updated });
 }
-

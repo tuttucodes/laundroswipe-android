@@ -784,13 +784,17 @@ export default function LaundroApp() {
   }, [orders, saveO]);
 
   useEffect(() => {
-    if (screen === 'my-bills' && user?.sid) {
-      setMyBillsLoading(true);
-      LSApi.fetchVendorBillsForUser(user.sid).then((data) => {
+    if (!user?.sid || !LSApi.hasSupabase) return;
+    if (screen !== 'my-bills' && screen !== 'profile') return;
+    const showMyBillsSpinner = screen === 'my-bills';
+    if (showMyBillsSpinner) setMyBillsLoading(true);
+    LSApi.fetchVendorBillsForUser(user.sid)
+      .then((data) => {
         setMyBills(data ?? []);
-        setMyBillsLoading(false);
+      })
+      .finally(() => {
+        if (showMyBillsSpinner) setMyBillsLoading(false);
       });
-    }
   }, [screen, user?.sid]);
 
   // Refetch orders when user views Orders or order-detail so vendor status updates (picked_up, delivered) show
@@ -807,10 +811,10 @@ export default function LaundroApp() {
     }
   }, [screen, user?.sid, saveO]);
 
-  // Bills on Home / Orders / Order detail so list badges and deduping stay in sync with vendor saves
+  // Bills on Home / Orders / Order detail / Profile so list badges and My bills prefetch stay in sync
   useEffect(() => {
     if (!user?.sid || !LSApi.hasSupabase) return;
-    if (!['home', 'orders', 'order-detail'].includes(screen)) return;
+    if (!['home', 'orders', 'order-detail', 'profile'].includes(screen)) return;
     LSApi.fetchVendorBillsForUser(user.sid).then((rows) => setUserOrderBills(rows ?? []));
   }, [user?.sid, screen]);
 
@@ -2720,8 +2724,8 @@ export default function LaundroApp() {
                 <tbody>
                   {(Array.isArray(viewingBill.line_items) ? viewingBill.line_items : []).map((l: { label: string; qty: number; price: number }, i: number) => (
                     <tr key={i} style={{ borderBottom: '1px solid var(--bd)' }}>
-                      <td style={{ padding: '6px 0' }}>{l.label} ×{l.qty}</td>
-                      <td style={{ textAlign: 'right', padding: '6px 0' }}>₹{l.price * l.qty}</td>
+                      <td style={{ padding: '6px 0', fontSize: 16, fontWeight: 600, lineHeight: 1.35 }}>{l.label} ×{l.qty}</td>
+                      <td style={{ textAlign: 'right', padding: '6px 0', fontSize: 15 }}>₹{l.price * l.qty}</td>
                     </tr>
                   ))}
                 </tbody>

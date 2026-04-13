@@ -9,7 +9,7 @@
       "source_file": "next.config.js",
       "source_location": "L1",
       "id": "next_config",
-      "community": 27
+      "community": 26
     },
     {
       "label": "next-env.d.ts",
@@ -17,7 +17,7 @@
       "source_file": "next-env.d.ts",
       "source_location": "L1",
       "id": "next_env_d",
-      "community": 28
+      "community": 27
     },
     {
       "label": "layout.tsx",
@@ -25,7 +25,7 @@
       "source_file": "app/admin/layout.tsx",
       "source_location": "L1",
       "id": "layout",
-      "community": 22
+      "community": 21
     },
     {
       "label": "RootLayout()",
@@ -33,7 +33,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L50",
       "id": "layout_rootlayout",
-      "community": 22
+      "community": 21
     },
     {
       "label": "manifest.ts",
@@ -41,7 +41,7 @@
       "source_file": "app/manifest.ts",
       "source_location": "L1",
       "id": "manifest",
-      "community": 23
+      "community": 22
     },
     {
       "label": "manifest()",
@@ -49,7 +49,7 @@
       "source_file": "app/manifest.ts",
       "source_location": "L3",
       "id": "manifest_manifest",
-      "community": 23
+      "community": 22
     },
     {
       "label": "page.tsx",
@@ -73,7 +73,7 @@
       "source_file": "app/not-found.tsx",
       "source_location": "L1",
       "id": "not_found",
-      "community": 17
+      "community": 16
     },
     {
       "label": "NotFound()",
@@ -81,7 +81,7 @@
       "source_file": "app/not-found.tsx",
       "source_location": "L7",
       "id": "not_found_notfound",
-      "community": 17
+      "community": 16
     },
     {
       "label": "GreenPage()",
@@ -97,7 +97,7 @@
       "source_file": "app/admin/layout.tsx",
       "source_location": "L20",
       "id": "layout_adminlayout",
-      "community": 22
+      "community": 21
     },
     {
       "label": "getGatePassLetterHtml()",
@@ -151,7 +151,7 @@
       "label": "showToast()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L80",
+      "source_location": "L83",
       "id": "page_showtoast",
       "community": 0
     },
@@ -215,7 +215,7 @@
       "label": "escapeCsv()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L332",
+      "source_location": "L425",
       "id": "page_escapecsv",
       "community": 0
     },
@@ -279,7 +279,7 @@
       "label": "handleLookup()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L176",
+      "source_location": "L179",
       "id": "page_handlelookup",
       "community": 0
     },
@@ -343,7 +343,7 @@
       "label": "billLineItemsToState()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L20",
+      "source_location": "L25",
       "id": "page_billlineitemstostate",
       "community": 0
     },
@@ -351,15 +351,23 @@
       "label": "billToHtml()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L32",
+      "source_location": "L36",
       "id": "page_billtohtml",
+      "community": 0
+    },
+    {
+      "label": "billToPlainText()",
+      "file_type": "code",
+      "source_file": "app/admin/bills/page.tsx",
+      "source_location": "L94",
+      "id": "page_billtoplaintext",
       "community": 0
     },
     {
       "label": "normalizeBillTokenForDup()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L37",
+      "source_location": "L130",
       "id": "page_normalizebilltokenfordup",
       "community": 0
     },
@@ -367,7 +375,7 @@
       "label": "billTotalKeyForDup()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L44",
+      "source_location": "L137",
       "id": "page_billtotalkeyfordup",
       "community": 0
     },
@@ -375,7 +383,7 @@
       "label": "buildVendorBillsQuery()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L60",
+      "source_location": "L153",
       "id": "page_buildvendorbillsquery",
       "community": 0
     },
@@ -383,7 +391,7 @@
       "label": "fetchBills()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L144",
+      "source_location": "L237",
       "id": "page_fetchbills",
       "community": 0
     },
@@ -391,7 +399,7 @@
       "label": "applyBillFilters()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L189",
+      "source_location": "L282",
       "id": "page_applybillfilters",
       "community": 0
     },
@@ -399,7 +407,7 @@
       "label": "clearBillFilters()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L232",
+      "source_location": "L325",
       "id": "page_clearbillfilters",
       "community": 0
     },
@@ -407,7 +415,7 @@
       "label": "exportBillsToCsv()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L338",
+      "source_location": "L431",
       "id": "page_exportbillstocsv",
       "community": 0
     },
@@ -415,7 +423,7 @@
       "label": "printBill()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L365",
+      "source_location": "L458",
       "id": "page_printbill",
       "community": 0
     },
@@ -423,7 +431,7 @@
       "label": "canDeleteBill()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L384",
+      "source_location": "L482",
       "id": "page_candeletebill",
       "community": 0
     },
@@ -431,7 +439,7 @@
       "label": "addEditItem()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L344",
+      "source_location": "L347",
       "id": "page_addedititem",
       "community": 0
     },
@@ -439,7 +447,7 @@
       "label": "removeOneEdit()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L383",
+      "source_location": "L386",
       "id": "page_removeoneedit",
       "community": 0
     },
@@ -447,7 +455,7 @@
       "label": "removeEditLine()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L394",
+      "source_location": "L397",
       "id": "page_removeeditline",
       "community": 0
     },
@@ -455,7 +463,7 @@
       "label": "setEditLineImageUrl()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L398",
+      "source_location": "L401",
       "id": "page_seteditlineimageurl",
       "community": 0
     },
@@ -463,7 +471,7 @@
       "label": "handleEditLineImageFile()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L402",
+      "source_location": "L405",
       "id": "page_handleeditlineimagefile",
       "community": 0
     },
@@ -471,7 +479,7 @@
       "label": "openEditBill()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L447",
+      "source_location": "L545",
       "id": "page_openeditbill",
       "community": 0
     },
@@ -487,7 +495,7 @@
       "label": "addCustomItemEdit()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L358",
+      "source_location": "L361",
       "id": "page_addcustomitemedit",
       "community": 0
     },
@@ -495,7 +503,7 @@
       "label": "saveEditedBill()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L500",
+      "source_location": "L598",
       "id": "page_saveeditedbill",
       "community": 0
     },
@@ -503,7 +511,7 @@
       "label": "cancelBill()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L558",
+      "source_location": "L656",
       "id": "page_cancelbill",
       "community": 0
     },
@@ -511,7 +519,7 @@
       "label": "copyBill()",
       "file_type": "code",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L591",
+      "source_location": "L689",
       "id": "page_copybill",
       "community": 0
     },
@@ -519,7 +527,7 @@
       "label": "addItem()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L231",
+      "source_location": "L234",
       "id": "page_additem",
       "community": 0
     },
@@ -527,7 +535,7 @@
       "label": "removeOne()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L245",
+      "source_location": "L248",
       "id": "page_removeone",
       "community": 0
     },
@@ -535,7 +543,7 @@
       "label": "removeLine()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L256",
+      "source_location": "L259",
       "id": "page_removeline",
       "community": 0
     },
@@ -543,7 +551,7 @@
       "label": "addCustomItemMain()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L278",
+      "source_location": "L281",
       "id": "page_addcustomitemmain",
       "community": 0
     },
@@ -551,7 +559,7 @@
       "label": "addQuickItemPreset()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L302",
+      "source_location": "L305",
       "id": "page_addquickitempreset",
       "community": 0
     },
@@ -559,7 +567,7 @@
       "label": "removeQuickItemPreset()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L321",
+      "source_location": "L324",
       "id": "page_removequickitempreset",
       "community": 0
     },
@@ -567,7 +575,7 @@
       "label": "startEditLatestBill()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L325",
+      "source_location": "L328",
       "id": "page_starteditlatestbill",
       "community": 0
     },
@@ -575,7 +583,7 @@
       "label": "saveEditedLatestBill()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L424",
+      "source_location": "L427",
       "id": "page_saveeditedlatestbill",
       "community": 0
     },
@@ -583,31 +591,31 @@
       "label": "billFingerprint()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L464",
+      "source_location": "L467",
       "id": "page_billfingerprint",
-      "community": 0
-    },
-    {
-      "label": "buildVendorReceiptInput()",
-      "file_type": "code",
-      "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L473",
-      "id": "page_buildvendorreceiptinput",
       "community": 0
     },
     {
       "label": "buildReceiptPlainText()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L517",
+      "source_location": "L476",
       "id": "page_buildreceiptplaintext",
+      "community": 0
+    },
+    {
+      "label": "buildVendorReceiptInput()",
+      "file_type": "code",
+      "source_file": "app/admin/vendor/page.tsx",
+      "source_location": "L510",
+      "id": "page_buildvendorreceiptinput",
       "community": 0
     },
     {
       "label": "handleCopyReceipt()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L519",
+      "source_location": "L547",
       "id": "page_handlecopyreceipt",
       "community": 0
     },
@@ -615,7 +623,7 @@
       "label": "handleSaveBill()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L532",
+      "source_location": "L560",
       "id": "page_handlesavebill",
       "community": 0
     },
@@ -623,7 +631,7 @@
       "label": "doPrint()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L590",
+      "source_location": "L618",
       "id": "page_doprint",
       "community": 0
     },
@@ -631,7 +639,7 @@
       "label": "handleCancelLatestBill()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L630",
+      "source_location": "L662",
       "id": "page_handlecancellatestbill",
       "community": 0
     },
@@ -639,7 +647,7 @@
       "label": "handlePrint()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L655",
+      "source_location": "L687",
       "id": "page_handleprint",
       "community": 0
     },
@@ -647,7 +655,7 @@
       "label": "handleNewBill()",
       "file_type": "code",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L727",
+      "source_location": "L759",
       "id": "page_handlenewbill",
       "community": 0
     },
@@ -711,7 +719,7 @@
       "label": "POST()",
       "file_type": "code",
       "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L27",
+      "source_location": "L18",
       "id": "route_post",
       "community": 1
     },
@@ -943,7 +951,7 @@
       "label": "resolveBillVendorSlug()",
       "file_type": "code",
       "source_file": "app/api/vendor/bills/update/route.ts",
-      "source_location": "L20",
+      "source_location": "L19",
       "id": "route_resolvebillvendorslug",
       "community": 1
     },
@@ -967,7 +975,7 @@
       "label": "normalizeToken()",
       "file_type": "code",
       "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L6",
+      "source_location": "L7",
       "id": "route_normalizetoken",
       "community": 1
     },
@@ -983,16 +991,8 @@
       "label": "resolveVendorSlugFromOrderVendorName()",
       "file_type": "code",
       "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L10",
+      "source_location": "L11",
       "id": "route_resolvevendorslugfromordervendorname",
-      "community": 1
-    },
-    {
-      "label": "isUserAuthorizedForVendor()",
-      "file_type": "code",
-      "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L17",
-      "id": "route_isuserauthorizedforvendor",
       "community": 1
     },
     {
@@ -1009,7 +1009,7 @@
       "source_file": "config/env.production.js",
       "source_location": "L1",
       "id": "env_production",
-      "community": 29
+      "community": 28
     },
     {
       "label": "env.js",
@@ -1017,7 +1017,7 @@
       "source_file": "config/env.js",
       "source_location": "L1",
       "id": "env",
-      "community": 30
+      "community": 29
     },
     {
       "label": "env.development.js",
@@ -1025,7 +1025,7 @@
       "source_file": "config/env.development.js",
       "source_location": "L1",
       "id": "env_development",
-      "community": 31
+      "community": 30
     },
     {
       "label": "api.ts",
@@ -1033,7 +1033,7 @@
       "source_file": "lib/api.ts",
       "source_location": "L1",
       "id": "api",
-      "community": 12
+      "community": 6
     },
     {
       "label": "createUser()",
@@ -1041,7 +1041,7 @@
       "source_file": "js/api.js",
       "source_location": "L23",
       "id": "api_createuser",
-      "community": 12
+      "community": 6
     },
     {
       "label": "createOrder()",
@@ -1049,7 +1049,7 @@
       "source_file": "js/api.js",
       "source_location": "L52",
       "id": "api_createorder",
-      "community": 12
+      "community": 6
     },
     {
       "label": "fetchOrders()",
@@ -1057,71 +1057,71 @@
       "source_file": "js/api.js",
       "source_location": "L81",
       "id": "api_fetchorders",
-      "community": 12
+      "community": 6
     },
     {
       "label": "fetchOrdersForUser()",
       "file_type": "code",
       "source_file": "js/api.js",
-      "source_location": "L99",
+      "source_location": "L100",
       "id": "api_fetchordersforuser",
-      "community": 12
+      "community": 6
     },
     {
       "label": "fetchOrderByToken()",
       "file_type": "code",
       "source_file": "js/api.js",
-      "source_location": "L118",
+      "source_location": "L120",
       "id": "api_fetchorderbytoken",
-      "community": 12
+      "community": 6
     },
     {
       "label": "fetchUsers()",
       "file_type": "code",
       "source_file": "js/api.js",
-      "source_location": "L143",
+      "source_location": "L145",
       "id": "api_fetchusers",
-      "community": 12
+      "community": 6
     },
     {
       "label": "signInWithGoogle()",
       "file_type": "code",
       "source_file": "js/api.js",
-      "source_location": "L161",
+      "source_location": "L164",
       "id": "api_signinwithgoogle",
-      "community": 12
+      "community": 6
     },
     {
       "label": "getAuthSession()",
       "file_type": "code",
       "source_file": "js/api.js",
-      "source_location": "L183",
+      "source_location": "L186",
       "id": "api_getauthsession",
-      "community": 12
+      "community": 6
     },
     {
       "label": "signOutAuth()",
       "file_type": "code",
       "source_file": "js/api.js",
-      "source_location": "L195",
+      "source_location": "L198",
       "id": "api_signoutauth",
-      "community": 12
+      "community": 6
     },
     {
       "label": "upsertUserFromAuth()",
       "file_type": "code",
       "source_file": "js/api.js",
-      "source_location": "L204",
+      "source_location": "L207",
       "id": "api_upsertuserfromauth",
-      "community": 12
+      "community": 6
     },
     {
       "label": "advanceOrderStatus()",
       "file_type": "code",
       "source_file": "js/api.js",
-      "source_location": "L247",
+      "source_location": "L250",
       "id": "api_advanceorderstatus",
-      "community": 12
+      "community": 6
     },
     {
       "label": "build.gradle.kts",
@@ -1129,7 +1129,7 @@
       "source_file": "android-print-bridge/app/build.gradle.kts",
       "source_location": "L1",
       "id": "build_gradle",
-      "community": 32
+      "community": 31
     },
     {
       "label": "settings.gradle.kts",
@@ -1137,7 +1137,7 @@
       "source_file": "android-print-bridge/settings.gradle.kts",
       "source_location": "L1",
       "id": "settings_gradle",
-      "community": 33
+      "community": 32
     },
     {
       "label": "MainActivity.kt",
@@ -1281,7 +1281,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L1",
       "id": "bluetoothdevicepickeradapter",
-      "community": 14
+      "community": 13
     },
     {
       "label": "PairedDeviceRow",
@@ -1289,7 +1289,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L9",
       "id": "bluetoothdevicepickeradapter_paireddevicerow",
-      "community": 14
+      "community": 13
     },
     {
       "label": "BluetoothDevicePickerAdapter",
@@ -1297,7 +1297,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L15",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter",
-      "community": 14
+      "community": 13
     },
     {
       "label": ".submitList()",
@@ -1305,7 +1305,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L22",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_submitlist",
-      "community": 14
+      "community": 13
     },
     {
       "label": ".selectByAddress()",
@@ -1313,7 +1313,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L29",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_selectbyaddress",
-      "community": 14
+      "community": 13
     },
     {
       "label": ".selectedRow()",
@@ -1321,7 +1321,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L39",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_selectedrow",
-      "community": 14
+      "community": 13
     },
     {
       "label": ".getItemCount()",
@@ -1329,7 +1329,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L42",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_getitemcount",
-      "community": 14
+      "community": 13
     },
     {
       "label": ".onCreateViewHolder()",
@@ -1337,7 +1337,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L44",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_oncreateviewholder",
-      "community": 14
+      "community": 13
     },
     {
       "label": ".onBindViewHolder()",
@@ -1345,7 +1345,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L50",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_onbindviewholder",
-      "community": 14
+      "community": 13
     },
     {
       "label": "VH",
@@ -1353,7 +1353,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L54",
       "id": "bluetoothdevicepickeradapter_vh",
-      "community": 14
+      "community": 13
     },
     {
       "label": ".bind()",
@@ -1361,7 +1361,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L70",
       "id": "bluetoothdevicepickeradapter_vh_bind",
-      "community": 14
+      "community": 13
     },
     {
       "label": "BluetoothPrinterDevices.kt",
@@ -1369,7 +1369,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L1",
       "id": "bluetoothprinterdevices",
-      "community": 19
+      "community": 17
     },
     {
       "label": "BluetoothPrinterDevices",
@@ -1377,7 +1377,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L8",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices",
-      "community": 19
+      "community": 17
     },
     {
       "label": ".isLikelyThermalPrinter()",
@@ -1385,7 +1385,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L10",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_islikelythermalprinter",
-      "community": 19
+      "community": 17
     },
     {
       "label": ".pairedRows()",
@@ -1393,7 +1393,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L25",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_pairedrows",
-      "community": 19
+      "community": 17
     },
     {
       "label": ".normalizeDisplayAddress()",
@@ -1401,7 +1401,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L41",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_normalizedisplayaddress",
-      "community": 19
+      "community": 17
     },
     {
       "label": "PrintBridge.kt",
@@ -1409,7 +1409,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L1",
       "id": "printbridge",
-      "community": 20
+      "community": 18
     },
     {
       "label": "PrintBridge",
@@ -1417,7 +1417,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L18",
       "id": "printbridge_printbridge",
-      "community": 20
+      "community": 18
     },
     {
       "label": ".bluetoothAdapter()",
@@ -1425,7 +1425,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L28",
       "id": "printbridge_printbridge_bluetoothadapter",
-      "community": 20
+      "community": 18
     },
     {
       "label": ".setPairedPrinterAddress()",
@@ -1433,7 +1433,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L36",
       "id": "printbridge_printbridge_setpairedprinteraddress",
-      "community": 20
+      "community": 18
     },
     {
       "label": ".printEscPosBase64()",
@@ -1441,7 +1441,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L60",
       "id": "printbridge_printbridge_printescposbase64",
-      "community": 20
+      "community": 18
     },
     {
       "label": "index.ts",
@@ -1449,7 +1449,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L1",
       "id": "index",
-      "community": 11
+      "community": 5
     },
     {
       "label": "sendExpoPush()",
@@ -1457,7 +1457,7 @@
       "source_file": "supabase/functions/push/index.ts",
       "source_location": "L28",
       "id": "index_sendexpopush",
-      "community": 11
+      "community": 5
     },
     {
       "label": "PwaRegister.tsx",
@@ -1599,7 +1599,7 @@
       "label": "refreshSchedule()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L834",
+      "source_location": "L838",
       "id": "laundroapp_refreshschedule",
       "community": 2
     },
@@ -1607,7 +1607,7 @@
       "label": "onFocus()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L841",
+      "source_location": "L845",
       "id": "laundroapp_onfocus",
       "community": 2
     },
@@ -1615,7 +1615,7 @@
       "label": "handleObNext()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1023",
+      "source_location": "L1027",
       "id": "laundroapp_handleobnext",
       "community": 2
     },
@@ -1623,7 +1623,7 @@
       "label": "handleObSkip()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1030",
+      "source_location": "L1034",
       "id": "laundroapp_handleobskip",
       "community": 2
     },
@@ -1631,7 +1631,7 @@
       "label": "handleLoginEmail()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1035",
+      "source_location": "L1039",
       "id": "laundroapp_handleloginemail",
       "community": 2
     },
@@ -1639,7 +1639,7 @@
       "label": "handleGoogleLogin()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1073",
+      "source_location": "L1077",
       "id": "laundroapp_handlegooglelogin",
       "community": 2
     },
@@ -1647,7 +1647,7 @@
       "label": "handleForgotPassword()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1082",
+      "source_location": "L1086",
       "id": "laundroapp_handleforgotpassword",
       "community": 2
     },
@@ -1655,7 +1655,7 @@
       "label": "handleSetPassword()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1104",
+      "source_location": "L1108",
       "id": "laundroapp_handlesetpassword",
       "community": 2
     },
@@ -1663,7 +1663,7 @@
       "label": "handleSaveStudentDetailsModal()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1158",
+      "source_location": "L1162",
       "id": "laundroapp_handlesavestudentdetailsmodal",
       "community": 2
     },
@@ -1671,7 +1671,7 @@
       "label": "handleSignup()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1205",
+      "source_location": "L1209",
       "id": "laundroapp_handlesignup",
       "community": 2
     },
@@ -1679,7 +1679,7 @@
       "label": "handleCompleteProfile()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1274",
+      "source_location": "L1278",
       "id": "laundroapp_handlecompleteprofile",
       "community": 2
     },
@@ -1687,7 +1687,7 @@
       "label": "handleSaveEditProfile()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1326",
+      "source_location": "L1330",
       "id": "laundroapp_handlesaveeditprofile",
       "community": 2
     },
@@ -1695,7 +1695,7 @@
       "label": "handleSelectVendor()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1379",
+      "source_location": "L1383",
       "id": "laundroapp_handleselectvendor",
       "community": 2
     },
@@ -1703,7 +1703,7 @@
       "label": "handleScheduleService()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1383",
+      "source_location": "L1387",
       "id": "laundroapp_handlescheduleservice",
       "community": 2
     },
@@ -1711,7 +1711,7 @@
       "label": "handleScheduleDateSlot()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1387",
+      "source_location": "L1391",
       "id": "laundroapp_handlescheduledateslot",
       "community": 2
     },
@@ -1719,7 +1719,7 @@
       "label": "handleConfirmOrder()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1391",
+      "source_location": "L1395",
       "id": "laundroapp_handleconfirmorder",
       "community": 2
     },
@@ -1727,7 +1727,7 @@
       "label": "handleConfirmDelivery()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1474",
+      "source_location": "L1478",
       "id": "laundroapp_handleconfirmdelivery",
       "community": 2
     },
@@ -1735,7 +1735,7 @@
       "label": "handleLogout()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1494",
+      "source_location": "L1498",
       "id": "laundroapp_handlelogout",
       "community": 2
     },
@@ -1743,7 +1743,7 @@
       "label": "handleSetPasswordForEmail()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1504",
+      "source_location": "L1508",
       "id": "laundroapp_handlesetpasswordforemail",
       "community": 2
     },
@@ -1751,7 +1751,7 @@
       "label": "myBillsLoading()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L2543",
+      "source_location": "L2547",
       "id": "laundroapp_mybillsloading",
       "community": 2
     },
@@ -1825,7 +1825,7 @@
       "source_file": "components/HomeContactForm.tsx",
       "source_location": "L1",
       "id": "homecontactform",
-      "community": 17
+      "community": 16
     },
     {
       "label": "handleSubmit()",
@@ -1833,7 +1833,7 @@
       "source_file": "components/HomeContactForm.tsx",
       "source_location": "L15",
       "id": "homecontactform_handlesubmit",
-      "community": 17
+      "community": 16
     },
     {
       "label": "button.tsx",
@@ -1841,7 +1841,7 @@
       "source_file": "components/ui/button.tsx",
       "source_location": "L1",
       "id": "button",
-      "community": 17
+      "community": 16
     },
     {
       "label": "Hero.tsx",
@@ -1881,7 +1881,7 @@
       "source_file": "components/home/ScrollingMarquee.tsx",
       "source_location": "L1",
       "id": "scrollingmarquee",
-      "community": 24
+      "community": 23
     },
     {
       "label": "ScrollingMarquee()",
@@ -1889,7 +1889,7 @@
       "source_file": "components/home/ScrollingMarquee.tsx",
       "source_location": "L5",
       "id": "scrollingmarquee_scrollingmarquee",
-      "community": 24
+      "community": 23
     },
     {
       "label": "BentoEcosystem.tsx",
@@ -1913,7 +1913,7 @@
       "source_file": "components/home/HeroAnimations.tsx",
       "source_location": "L1",
       "id": "heroanimations",
-      "community": 34
+      "community": 33
     },
     {
       "label": "SegmentTabs.tsx",
@@ -1921,7 +1921,7 @@
       "source_file": "components/home/SegmentTabs.tsx",
       "source_location": "L1",
       "id": "segmenttabs",
-      "community": 25
+      "community": 24
     },
     {
       "label": "SegmentTabs()",
@@ -1929,7 +1929,7 @@
       "source_file": "components/home/SegmentTabs.tsx",
       "source_location": "L35",
       "id": "segmenttabs_segmenttabs",
-      "community": 25
+      "community": 24
     },
     {
       "label": "Footer.tsx",
@@ -2001,7 +2001,7 @@
       "source_file": "components/home/TestimonialCarousel.tsx",
       "source_location": "L1",
       "id": "testimonialcarousel",
-      "community": 26
+      "community": 25
     },
     {
       "label": "TestimonialCarousel()",
@@ -2009,7 +2009,7 @@
       "source_file": "components/home/TestimonialCarousel.tsx",
       "source_location": "L16",
       "id": "testimonialcarousel_testimonialcarousel",
-      "community": 26
+      "community": 25
     },
     {
       "label": "OAuthRedirectToDashboard.tsx",
@@ -2153,7 +2153,7 @@
       "source_file": "components/vendor/PrintBridgeApkCta.tsx",
       "source_location": "L1",
       "id": "printbridgeapkcta",
-      "community": 0
+      "community": 20
     },
     {
       "label": "BluetoothPrinterPanel.tsx",
@@ -2161,7 +2161,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L1",
       "id": "bluetoothprinterpanel",
-      "community": 18
+      "community": 5
     },
     {
       "label": "statusLabel()",
@@ -2169,7 +2169,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L21",
       "id": "bluetoothprinterpanel_statuslabel",
-      "community": 18
+      "community": 5
     },
     {
       "label": "refreshPrefs()",
@@ -2177,7 +2177,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L42",
       "id": "bluetoothprinterpanel_refreshprefs",
-      "community": 18
+      "community": 5
     },
     {
       "label": "patchPrefs()",
@@ -2185,7 +2185,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L47",
       "id": "bluetoothprinterpanel_patchprefs",
-      "community": 18
+      "community": 5
     },
     {
       "label": "handleScan()",
@@ -2193,7 +2193,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L64",
       "id": "bluetoothprinterpanel_handlescan",
-      "community": 18
+      "community": 5
     },
     {
       "label": "handleDisconnect()",
@@ -2201,7 +2201,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L78",
       "id": "bluetoothprinterpanel_handledisconnect",
-      "community": 18
+      "community": 5
     },
     {
       "label": "handleTestPrint()",
@@ -2209,7 +2209,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L84",
       "id": "bluetoothprinterpanel_handletestprint",
-      "community": 18
+      "community": 5
     },
     {
       "label": "sw.js",
@@ -2217,7 +2217,7 @@
       "source_file": "public/sw.js",
       "source_location": "L1",
       "id": "sw",
-      "community": 35
+      "community": 34
     },
     {
       "label": "generate-env.js",
@@ -2225,7 +2225,23 @@
       "source_file": "scripts/generate-env.js",
       "source_location": "L1",
       "id": "generate_env",
-      "community": 36
+      "community": 35
+    },
+    {
+      "label": "bill-catalog-thumb.ts",
+      "file_type": "code",
+      "source_file": "lib/bill-catalog-thumb.ts",
+      "source_location": "L1",
+      "id": "bill_catalog_thumb",
+      "community": 0
+    },
+    {
+      "label": "billCatalogThumbUrl()",
+      "file_type": "code",
+      "source_file": "lib/bill-catalog-thumb.ts",
+      "source_location": "L5",
+      "id": "bill_catalog_thumb_billcatalogthumburl",
+      "community": 0
     },
     {
       "label": "customer-display-segregate.ts",
@@ -2233,7 +2249,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L1",
       "id": "customer_display_segregate",
-      "community": 15
+      "community": 14
     },
     {
       "label": "clean()",
@@ -2241,7 +2257,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L11",
       "id": "customer_display_segregate_clean",
-      "community": 15
+      "community": 14
     },
     {
       "label": "isEmptyDisplay()",
@@ -2249,7 +2265,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L19",
       "id": "customer_display_segregate_isemptydisplay",
-      "community": 15
+      "community": 14
     },
     {
       "label": "escapeReg()",
@@ -2257,7 +2273,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L23",
       "id": "customer_display_segregate_escapereg",
-      "community": 15
+      "community": 14
     },
     {
       "label": "tryExtractRoomFromBlock()",
@@ -2265,7 +2281,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L30",
       "id": "customer_display_segregate_tryextractroomfromblock",
-      "community": 15
+      "community": 14
     },
     {
       "label": "stripTrailingRoomFromBlock()",
@@ -2273,7 +2289,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L66",
       "id": "customer_display_segregate_striptrailingroomfromblock",
-      "community": 15
+      "community": 14
     },
     {
       "label": "segregateHostelBlockRoom()",
@@ -2281,7 +2297,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L75",
       "id": "customer_display_segregate_segregatehostelblockroom",
-      "community": 15
+      "community": 14
     },
     {
       "label": "segregateNameAndReg()",
@@ -2289,7 +2305,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L124",
       "id": "customer_display_segregate_segregatenameandreg",
-      "community": 15
+      "community": 14
     },
     {
       "label": "segregateCustomerDisplay()",
@@ -2297,7 +2313,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L162",
       "id": "customer_display_segregate_segregatecustomerdisplay",
-      "community": 15
+      "community": 14
     },
     {
       "label": "vendor-bill-network.ts",
@@ -2329,7 +2345,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L1",
       "id": "admin_session",
-      "community": 13
+      "community": 11
     },
     {
       "label": "getSecret()",
@@ -2337,7 +2353,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L12",
       "id": "admin_session_getsecret",
-      "community": 13
+      "community": 11
     },
     {
       "label": "b64urlEncode()",
@@ -2345,7 +2361,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L17",
       "id": "admin_session_b64urlencode",
-      "community": 13
+      "community": 11
     },
     {
       "label": "b64urlDecode()",
@@ -2353,7 +2369,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L22",
       "id": "admin_session_b64urldecode",
-      "community": 13
+      "community": 11
     },
     {
       "label": "createAdminToken()",
@@ -2361,7 +2377,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L29",
       "id": "admin_session_createadmintoken",
-      "community": 13
+      "community": 11
     },
     {
       "label": "verifyAdminToken()",
@@ -2369,7 +2385,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L41",
       "id": "admin_session_verifyadmintoken",
-      "community": 13
+      "community": 11
     },
     {
       "label": "verifyAdminSession()",
@@ -2377,7 +2393,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L46",
       "id": "admin_session_verifyadminsession",
-      "community": 13
+      "community": 11
     },
     {
       "label": "getAdminSessionCookie()",
@@ -2385,7 +2401,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L66",
       "id": "admin_session_getadminsessioncookie",
-      "community": 13
+      "community": 11
     },
     {
       "label": "getAdminTokenFromRequest()",
@@ -2393,7 +2409,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L74",
       "id": "admin_session_getadmintokenfromrequest",
-      "community": 13
+      "community": 11
     },
     {
       "label": "isAdminRequest()",
@@ -2401,7 +2417,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L84",
       "id": "admin_session_isadminrequest",
-      "community": 13
+      "community": 11
     },
     {
       "label": "getAdminSessionFromRequest()",
@@ -2409,7 +2425,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L89",
       "id": "admin_session_getadminsessionfromrequest",
-      "community": 13
+      "community": 11
     },
     {
       "label": "adminSessionCookieHeader()",
@@ -2417,7 +2433,7 @@
       "source_file": "lib/admin-session.ts",
       "source_location": "L94",
       "id": "admin_session_adminsessioncookieheader",
-      "community": 13
+      "community": 11
     },
     {
       "label": "authenticated-user.ts",
@@ -2441,7 +2457,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L1",
       "id": "native_print_bridge",
-      "community": 11
+      "community": 5
     },
     {
       "label": "uint8ToBase64()",
@@ -2449,7 +2465,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L25",
       "id": "native_print_bridge_uint8tobase64",
-      "community": 11
+      "community": 5
     },
     {
       "label": "isNativeEscPosBridgeAvailable()",
@@ -2457,7 +2473,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L31",
       "id": "native_print_bridge_isnativeescposbridgeavailable",
-      "community": 11
+      "community": 5
     },
     {
       "label": "tryNativeEscPosPrint()",
@@ -2465,7 +2481,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L41",
       "id": "native_print_bridge_trynativeescposprint",
-      "community": 11
+      "community": 5
     },
     {
       "label": "supabase-service.ts",
@@ -2497,7 +2513,7 @@
       "source_file": "lib/cn.ts",
       "source_location": "L1",
       "id": "cn",
-      "community": 17
+      "community": 16
     },
     {
       "label": "cn()",
@@ -2505,7 +2521,7 @@
       "source_file": "lib/cn.ts",
       "source_location": "L4",
       "id": "cn_cn",
-      "community": 17
+      "community": 16
     },
     {
       "label": "supabase-metadata-cache.ts",
@@ -2617,7 +2633,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L1",
       "id": "ble_printer_settings",
-      "community": 7
+      "community": 5
     },
     {
       "label": "load()",
@@ -2625,7 +2641,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L37",
       "id": "ble_printer_settings_load",
-      "community": 7
+      "community": 5
     },
     {
       "label": "save()",
@@ -2633,7 +2649,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L60",
       "id": "ble_printer_settings_save",
-      "community": 7
+      "community": 5
     },
     {
       "label": "getBlePrinterPreferences()",
@@ -2641,7 +2657,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L69",
       "id": "ble_printer_settings_getbleprinterpreferences",
-      "community": 7
+      "community": 5
     },
     {
       "label": "setBlePrinterPreferences()",
@@ -2649,7 +2665,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L73",
       "id": "ble_printer_settings_setbleprinterpreferences",
-      "community": 7
+      "community": 5
     },
     {
       "label": "getEffectiveEscPosPaperSize()",
@@ -2657,7 +2673,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L80",
       "id": "ble_printer_settings_geteffectiveescpospapersize",
-      "community": 7
+      "community": 5
     },
     {
       "label": "syncEscPosPaperFromAdminPrinter()",
@@ -2665,7 +2681,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L85",
       "id": "ble_printer_settings_syncescpospaperfromadminprinter",
-      "community": 7
+      "community": 5
     },
     {
       "label": "hostel-block.ts",
@@ -2705,7 +2721,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L1",
       "id": "print_bridge_apk",
-      "community": 0
+      "community": 20
     },
     {
       "label": "getPrintBridgeApkUrl()",
@@ -2713,7 +2729,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L10",
       "id": "print_bridge_apk_getprintbridgeapkurl",
-      "community": 0
+      "community": 20
     },
     {
       "label": "isPrintBridgeApkDirectPublicUrl()",
@@ -2721,7 +2737,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L18",
       "id": "print_bridge_apk_isprintbridgeapkdirectpublicurl",
-      "community": 0
+      "community": 20
     },
     {
       "label": "public-rate-limit.ts",
@@ -3001,7 +3017,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L1",
       "id": "ist_dates",
-      "community": 16
+      "community": 15
     },
     {
       "label": "formatIstYmd()",
@@ -3009,7 +3025,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L5",
       "id": "ist_dates_formatistymd",
-      "community": 16
+      "community": 15
     },
     {
       "label": "istYmdStartIso()",
@@ -3017,7 +3033,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L13",
       "id": "ist_dates_istymdstartiso",
-      "community": 16
+      "community": 15
     },
     {
       "label": "istYmdEndIso()",
@@ -3025,7 +3041,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L18",
       "id": "ist_dates_istymdendiso",
-      "community": 16
+      "community": 15
     },
     {
       "label": "addDaysYmd()",
@@ -3033,7 +3049,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L23",
       "id": "ist_dates_adddaysymd",
-      "community": 16
+      "community": 15
     },
     {
       "label": "eachYmdInRange()",
@@ -3041,7 +3057,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L29",
       "id": "ist_dates_eachymdinrange",
-      "community": 16
+      "community": 15
     },
     {
       "label": "fillCollectedByDate()",
@@ -3049,7 +3065,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L46",
       "id": "ist_dates_fillcollectedbydate",
-      "community": 16
+      "community": 15
     },
     {
       "label": "sumFilledDayRows()",
@@ -3057,7 +3073,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L84",
       "id": "ist_dates_sumfilleddayrows",
-      "community": 16
+      "community": 15
     },
     {
       "label": "printer-settings.ts",
@@ -3065,7 +3081,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L1",
       "id": "printer_settings",
-      "community": 7
+      "community": 12
     },
     {
       "label": "load()",
@@ -3073,7 +3089,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L47",
       "id": "printer_settings_load",
-      "community": 7
+      "community": 12
     },
     {
       "label": "save()",
@@ -3081,7 +3097,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L61",
       "id": "printer_settings_save",
-      "community": 7
+      "community": 12
     },
     {
       "label": "getPrinterSettings()",
@@ -3089,7 +3105,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L68",
       "id": "printer_settings_getprintersettings",
-      "community": 7
+      "community": 12
     },
     {
       "label": "getDefaultPrinter()",
@@ -3097,7 +3113,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L72",
       "id": "printer_settings_getdefaultprinter",
-      "community": 7
+      "community": 12
     },
     {
       "label": "getPrinterConfigForPrint()",
@@ -3105,7 +3121,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L78",
       "id": "printer_settings_getprinterconfigforprint",
-      "community": 7
+      "community": 12
     },
     {
       "label": "getPreferPrintDialog()",
@@ -3113,7 +3129,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L87",
       "id": "printer_settings_getpreferprintdialog",
-      "community": 7
+      "community": 12
     },
     {
       "label": "setPreferPrintDialog()",
@@ -3121,7 +3137,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L91",
       "id": "printer_settings_setpreferprintdialog",
-      "community": 7
+      "community": 12
     },
     {
       "label": "addPrinter()",
@@ -3129,7 +3145,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L97",
       "id": "printer_settings_addprinter",
-      "community": 7
+      "community": 12
     },
     {
       "label": "removePrinter()",
@@ -3137,7 +3153,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L121",
       "id": "printer_settings_removeprinter",
-      "community": 7
+      "community": 12
     },
     {
       "label": "setDefaultPrinter()",
@@ -3145,7 +3161,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L132",
       "id": "printer_settings_setdefaultprinter",
-      "community": 7
+      "community": 12
     },
     {
       "label": "updatePrinterName()",
@@ -3153,7 +3169,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L140",
       "id": "printer_settings_updateprintername",
-      "community": 7
+      "community": 12
     },
     {
       "label": "vendor-bill-policy.ts",
@@ -3177,7 +3193,7 @@
       "source_file": "lib/supabase.ts",
       "source_location": "L1",
       "id": "supabase",
-      "community": 12
+      "community": 6
     },
     {
       "label": "rate-limit.ts",
@@ -3185,7 +3201,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L1",
       "id": "rate_limit",
-      "community": 21
+      "community": 19
     },
     {
       "label": "getClientId()",
@@ -3193,7 +3209,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L12",
       "id": "rate_limit_getclientid",
-      "community": 21
+      "community": 19
     },
     {
       "label": "checkAdminRateLimit()",
@@ -3201,7 +3217,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L18",
       "id": "rate_limit_checkadminratelimit",
-      "community": 21
+      "community": 19
     },
     {
       "label": "checkBodySize()",
@@ -3209,7 +3225,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L44",
       "id": "rate_limit_checkbodysize",
-      "community": 21
+      "community": 19
     },
     {
       "label": "fees.ts",
@@ -3276,52 +3292,28 @@
       "community": 2
     },
     {
-      "label": "vendorBillPrintPayload.ts",
-      "file_type": "code",
-      "source_file": "lib/printing/vendorBillPrintPayload.ts",
-      "source_location": "L1",
-      "id": "vendorbillprintpayload",
-      "community": 7
-    },
-    {
-      "label": "buildVendorBillPrintPayload()",
-      "file_type": "code",
-      "source_file": "lib/printing/vendorBillPrintPayload.ts",
-      "source_location": "L19",
-      "id": "vendorbillprintpayload_buildvendorbillprintpayload",
-      "community": 7
-    },
-    {
       "label": "printEscPosViaBluetooth()",
       "file_type": "code",
       "source_file": "lib/printing/index.ts",
-      "source_location": "L46",
+      "source_location": "L45",
       "id": "index_printescposviabluetooth",
-      "community": 11
-    },
-    {
-      "label": "testVendorReceiptInput()",
-      "file_type": "code",
-      "source_file": "lib/printing/index.ts",
-      "source_location": "L74",
-      "id": "index_testvendorreceiptinput",
-      "community": 11
+      "community": 5
     },
     {
       "label": "buildTestEscPosReceipt()",
       "file_type": "code",
       "source_file": "lib/printing/index.ts",
-      "source_location": "L97",
+      "source_location": "L74",
       "id": "index_buildtestescposreceipt",
-      "community": 11
+      "community": 5
     },
     {
       "label": "formatTestEscPosPlain()",
       "file_type": "code",
       "source_file": "lib/printing/index.ts",
-      "source_location": "L102",
+      "source_location": "L94",
       "id": "index_formattestescposplain",
-      "community": 11
+      "community": 5
     },
     {
       "label": "vendorReceipt.ts",
@@ -3332,90 +3324,34 @@
       "community": 6
     },
     {
-      "label": "rsMoney()",
+      "label": "money()",
       "file_type": "code",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L49",
-      "id": "vendorreceipt_rsmoney",
+      "source_location": "L39",
+      "id": "vendorreceipt_money",
       "community": 6
     },
     {
-      "label": "itemDescriptionWithRate()",
+      "label": "truncateForPaper()",
       "file_type": "code",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L57",
-      "id": "vendorreceipt_itemdescriptionwithrate",
-      "community": 6
-    },
-    {
-      "label": "wrapToMidWidth()",
-      "file_type": "code",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L62",
-      "id": "vendorreceipt_wraptomidwidth",
-      "community": 6
-    },
-    {
-      "label": "totalLinePadded()",
-      "file_type": "code",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L100",
-      "id": "vendorreceipt_totallinepadded",
-      "community": 6
-    },
-    {
-      "label": "tokenDisplay()",
-      "file_type": "code",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L113",
-      "id": "vendorreceipt_tokendisplay",
-      "community": 6
-    },
-    {
-      "label": "printMetaLine()",
-      "file_type": "code",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L119",
-      "id": "vendorreceipt_printmetaline",
-      "community": 6
-    },
-    {
-      "label": "pushServiceFeeTotalsEscPos()",
-      "file_type": "code",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L125",
-      "id": "vendorreceipt_pushservicefeetotalsescpos",
-      "community": 6
-    },
-    {
-      "label": "pushServiceFeePlain()",
-      "file_type": "code",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L136",
-      "id": "vendorreceipt_pushservicefeeplain",
+      "source_location": "L43",
+      "id": "vendorreceipt_truncateforpaper",
       "community": 6
     },
     {
       "label": "buildVendorReceiptEscPos()",
       "file_type": "code",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L151",
+      "source_location": "L54",
       "id": "vendorreceipt_buildvendorreceiptescpos",
-      "community": 6
-    },
-    {
-      "label": "plainItemDescForPreview()",
-      "file_type": "code",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L231",
-      "id": "vendorreceipt_plainitemdescforpreview",
       "community": 6
     },
     {
       "label": "formatVendorReceiptEscPosPlain()",
       "file_type": "code",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L236",
+      "source_location": "L112",
       "id": "vendorreceipt_formatvendorreceiptescposplain",
       "community": 6
     },
@@ -3423,7 +3359,7 @@
       "label": "savedVendorBillToReceiptInput()",
       "file_type": "code",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L311",
+      "source_location": "L154",
       "id": "vendorreceipt_savedvendorbilltoreceiptinput",
       "community": 6
     },
@@ -3433,7 +3369,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L1",
       "id": "bluetoothprinterservice",
-      "community": 5
+      "community": 7
     },
     {
       "label": "getBluetooth()",
@@ -3441,7 +3377,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L51",
       "id": "bluetoothprinterservice_getbluetooth",
-      "community": 5
+      "community": 7
     },
     {
       "label": "isWebBluetoothAvailable()",
@@ -3449,7 +3385,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L57",
       "id": "bluetoothprinterservice_iswebbluetoothavailable",
-      "community": 5
+      "community": 7
     },
     {
       "label": "pickWritableCharacteristic()",
@@ -3457,7 +3393,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L61",
       "id": "bluetoothprinterservice_pickwritablecharacteristic",
-      "community": 5
+      "community": 7
     },
     {
       "label": "writeChunks()",
@@ -3465,7 +3401,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L92",
       "id": "bluetoothprinterservice_writechunks",
-      "community": 5
+      "community": 7
     },
     {
       "label": "BluetoothPrinterService",
@@ -3473,7 +3409,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L119",
       "id": "bluetoothprinterservice_bluetoothprinterservice",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".getInstance()",
@@ -3481,7 +3417,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L122",
       "id": "bluetoothprinterservice_bluetoothprinterservice_getinstance",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".subscribe()",
@@ -3489,7 +3425,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L140",
       "id": "bluetoothprinterservice_bluetoothprinterservice_subscribe",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".setState()",
@@ -3497,7 +3433,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L148",
       "id": "bluetoothprinterservice_bluetoothprinterservice_setstate",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".getConnectionState()",
@@ -3505,7 +3441,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L153",
       "id": "bluetoothprinterservice_bluetoothprinterservice_getconnectionstate",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".isConnected()",
@@ -3513,7 +3449,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L157",
       "id": "bluetoothprinterservice_bluetoothprinterservice_isconnected",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".getLastDeviceId()",
@@ -3521,7 +3457,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L161",
       "id": "bluetoothprinterservice_bluetoothprinterservice_getlastdeviceid",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".setAutoReconnect()",
@@ -3529,7 +3465,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L166",
       "id": "bluetoothprinterservice_bluetoothprinterservice_setautoreconnect",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".persistDeviceId()",
@@ -3537,7 +3473,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L174",
       "id": "bluetoothprinterservice_bluetoothprinterservice_persistdeviceid",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".clearStoredDevice()",
@@ -3545,7 +3481,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L182",
       "id": "bluetoothprinterservice_bluetoothprinterservice_clearstoreddevice",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".detachDeviceListener()",
@@ -3553,7 +3489,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L190",
       "id": "bluetoothprinterservice_bluetoothprinterservice_detachdevicelistener",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".attachDeviceListener()",
@@ -3561,7 +3497,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L197",
       "id": "bluetoothprinterservice_bluetoothprinterservice_attachdevicelistener",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".scheduleReconnect()",
@@ -3569,7 +3505,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L208",
       "id": "bluetoothprinterservice_bluetoothprinterservice_schedulereconnect",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".pickAndConnect()",
@@ -3577,7 +3513,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L224",
       "id": "bluetoothprinterservice_bluetoothprinterservice_pickandconnect",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".reconnectFromStorage()",
@@ -3585,7 +3521,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L244",
       "id": "bluetoothprinterservice_bluetoothprinterservice_reconnectfromstorage",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".connectDevice()",
@@ -3593,7 +3529,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L267",
       "id": "bluetoothprinterservice_bluetoothprinterservice_connectdevice",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".disconnectUser()",
@@ -3601,7 +3537,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L291",
       "id": "bluetoothprinterservice_bluetoothprinterservice_disconnectuser",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".writeRaw()",
@@ -3609,7 +3545,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L308",
       "id": "bluetoothprinterservice_bluetoothprinterservice_writeraw",
-      "community": 5
+      "community": 7
     },
     {
       "label": "PrintQueue.ts",
@@ -3617,7 +3553,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L1",
       "id": "printqueue",
-      "community": 11
+      "community": 5
     },
     {
       "label": "PrintQueue",
@@ -3625,7 +3561,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L5",
       "id": "printqueue_printqueue",
-      "community": 11
+      "community": 5
     },
     {
       "label": ".constructor()",
@@ -3633,7 +3569,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L14",
       "id": "printqueue_printqueue_constructor",
-      "community": 11
+      "community": 5
     },
     {
       "label": ".enqueue()",
@@ -3641,7 +3577,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L19",
       "id": "printqueue_printqueue_enqueue",
-      "community": 11
+      "community": 5
     },
     {
       "label": ".drain()",
@@ -3649,7 +3585,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L26",
       "id": "printqueue_printqueue_drain",
-      "community": 11
+      "community": 5
     },
     {
       "label": "CharacterEncodings.ts",
@@ -3660,18 +3596,10 @@
       "community": 6
     },
     {
-      "label": "sanitizeReceiptTextForPreview()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/CharacterEncodings.ts",
-      "source_location": "L8",
-      "id": "characterencodings_sanitizereceipttextforpreview",
-      "community": 6
-    },
-    {
       "label": "sanitizeReceiptText()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
-      "source_location": "L17",
+      "source_location": "L7",
       "id": "characterencodings_sanitizereceipttext",
       "community": 6
     },
@@ -3679,7 +3607,7 @@
       "label": "encodeAsciiLines()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
-      "source_location": "L29",
+      "source_location": "L19",
       "id": "characterencodings_encodeasciilines",
       "community": 6
     },
@@ -3692,18 +3620,10 @@
       "community": 3
     },
     {
-      "label": "escposTableColumnWidths()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L32",
-      "id": "escposbuilder_escpostablecolumnwidths",
-      "community": 3
-    },
-    {
       "label": "escposPlainDivider()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L41",
+      "source_location": "L32",
       "id": "escposbuilder_escposplaindivider",
       "community": 3
     },
@@ -3711,23 +3631,15 @@
       "label": "escposPlainTableRow()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L48",
+      "source_location": "L39",
       "id": "escposbuilder_escposplaintablerow",
-      "community": 3
-    },
-    {
-      "label": "escposPlainTableRowPreview()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L57",
-      "id": "escposbuilder_escposplaintablerowpreview",
       "community": 3
     },
     {
       "label": "escposPlainLineRight()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L66",
+      "source_location": "L51",
       "id": "escposbuilder_escposplainlineright",
       "community": 3
     },
@@ -3735,39 +3647,15 @@
       "label": "escposPlainLineCenter()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L74",
+      "source_location": "L59",
       "id": "escposbuilder_escposplainlinecenter",
-      "community": 3
-    },
-    {
-      "label": "escposPlainLineCenterPreview()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L82",
-      "id": "escposbuilder_escposplainlinecenterpreview",
-      "community": 3
-    },
-    {
-      "label": "escposPlainTwoColumn()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L91",
-      "id": "escposbuilder_escposplaintwocolumn",
-      "community": 3
-    },
-    {
-      "label": "escposPlainTwoColumnPreview()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L102",
-      "id": "escposbuilder_escposplaintwocolumnpreview",
       "community": 3
     },
     {
       "label": "concatParts()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L119",
+      "source_location": "L73",
       "id": "escposbuilder_concatparts",
       "community": 3
     },
@@ -3775,7 +3663,7 @@
       "label": "ESCPOSBuilder",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L130",
+      "source_location": "L84",
       "id": "escposbuilder_escposbuilder",
       "community": 3
     },
@@ -3783,7 +3671,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L136",
+      "source_location": "L90",
       "id": "escposbuilder_escposbuilder_constructor",
       "community": 3
     },
@@ -3791,7 +3679,7 @@
       "label": ".getPaperSize()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L142",
+      "source_location": "L96",
       "id": "escposbuilder_escposbuilder_getpapersize",
       "community": 3
     },
@@ -3799,7 +3687,7 @@
       "label": ".getCharsPerLine()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L146",
+      "source_location": "L100",
       "id": "escposbuilder_escposbuilder_getcharsperline",
       "community": 3
     },
@@ -3807,7 +3695,7 @@
       "label": ".getMaxDots()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L150",
+      "source_location": "L104",
       "id": "escposbuilder_escposbuilder_getmaxdots",
       "community": 3
     },
@@ -3815,7 +3703,7 @@
       "label": ".pushBytes()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L154",
+      "source_location": "L108",
       "id": "escposbuilder_escposbuilder_pushbytes",
       "community": 3
     },
@@ -3823,7 +3711,7 @@
       "label": ".pushRaw()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L159",
+      "source_location": "L113",
       "id": "escposbuilder_escposbuilder_pushraw",
       "community": 3
     },
@@ -3831,7 +3719,7 @@
       "label": ".initialize()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L164",
+      "source_location": "L118",
       "id": "escposbuilder_escposbuilder_initialize",
       "community": 3
     },
@@ -3839,7 +3727,7 @@
       "label": ".codePage()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L169",
+      "source_location": "L123",
       "id": "escposbuilder_escposbuilder_codepage",
       "community": 3
     },
@@ -3847,7 +3735,7 @@
       "label": ".printDensity()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L177",
+      "source_location": "L131",
       "id": "escposbuilder_escposbuilder_printdensity",
       "community": 3
     },
@@ -3855,7 +3743,7 @@
       "label": ".lineFeed()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L182",
+      "source_location": "L136",
       "id": "escposbuilder_escposbuilder_linefeed",
       "community": 3
     },
@@ -3863,7 +3751,7 @@
       "label": ".feed()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L186",
+      "source_location": "L140",
       "id": "escposbuilder_escposbuilder_feed",
       "community": 3
     },
@@ -3871,7 +3759,7 @@
       "label": ".align()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L192",
+      "source_location": "L146",
       "id": "escposbuilder_escposbuilder_align",
       "community": 3
     },
@@ -3879,7 +3767,7 @@
       "label": ".bold()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L198",
+      "source_location": "L152",
       "id": "escposbuilder_escposbuilder_bold",
       "community": 3
     },
@@ -3887,7 +3775,7 @@
       "label": ".underline()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L202",
+      "source_location": "L156",
       "id": "escposbuilder_escposbuilder_underline",
       "community": 3
     },
@@ -3895,7 +3783,7 @@
       "label": ".fontSize()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L206",
+      "source_location": "L160",
       "id": "escposbuilder_escposbuilder_fontsize",
       "community": 3
     },
@@ -3903,7 +3791,7 @@
       "label": ".text()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L213",
+      "source_location": "L167",
       "id": "escposbuilder_escposbuilder_text",
       "community": 3
     },
@@ -3911,7 +3799,7 @@
       "label": ".textDoubleSize()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L221",
+      "source_location": "L175",
       "id": "escposbuilder_escposbuilder_textdoublesize",
       "community": 3
     },
@@ -3919,7 +3807,7 @@
       "label": ".rawText()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L228",
+      "source_location": "L182",
       "id": "escposbuilder_escposbuilder_rawtext",
       "community": 3
     },
@@ -3927,7 +3815,7 @@
       "label": ".divider()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L233",
+      "source_location": "L187",
       "id": "escposbuilder_escposbuilder_divider",
       "community": 3
     },
@@ -3935,39 +3823,15 @@
       "label": ".tableRow()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L240",
+      "source_location": "L194",
       "id": "escposbuilder_escposbuilder_tablerow",
-      "community": 3
-    },
-    {
-      "label": ".tableRowBoldMid()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L245",
-      "id": "escposbuilder_escposbuilder_tablerowboldmid",
-      "community": 3
-    },
-    {
-      "label": ".tableRowMidContinuationBold()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L262",
-      "id": "escposbuilder_escposbuilder_tablerowmidcontinuationbold",
-      "community": 3
-    },
-    {
-      "label": ".twoColumn()",
-      "file_type": "code",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L276",
-      "id": "escposbuilder_escposbuilder_twocolumn",
       "community": 3
     },
     {
       "label": ".barcodeCode128()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L281",
+      "source_location": "L199",
       "id": "escposbuilder_escposbuilder_barcodecode128",
       "community": 3
     },
@@ -3975,7 +3839,7 @@
       "label": ".qrCode()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L299",
+      "source_location": "L217",
       "id": "escposbuilder_escposbuilder_qrcode",
       "community": 3
     },
@@ -3983,7 +3847,7 @@
       "label": ".cut()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L322",
+      "source_location": "L240",
       "id": "escposbuilder_escposbuilder_cut",
       "community": 3
     },
@@ -3991,7 +3855,7 @@
       "label": ".build()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L326",
+      "source_location": "L244",
       "id": "escposbuilder_escposbuilder_build",
       "community": 3
     },
@@ -3999,7 +3863,7 @@
       "label": "paperSizeFromCharsPerLine()",
       "file_type": "code",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L331",
+      "source_location": "L249",
       "id": "escposbuilder_papersizefromcharsperline",
       "community": 3
     },
@@ -4197,7 +4061,7 @@
       "relation": "imports_from",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L23",
+      "source_location": "L25",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "fees",
@@ -4233,7 +4097,7 @@
       "relation": "imports_from",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L25",
+      "source_location": "L28",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "api",
@@ -4329,7 +4193,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L80",
+      "source_location": "L83",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_showtoast",
@@ -4425,7 +4289,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L332",
+      "source_location": "L425",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_escapecsv",
@@ -4521,7 +4385,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L176",
+      "source_location": "L179",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handlelookup",
@@ -4544,8 +4408,8 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
-      "source_file": "app/admin/printers/page.tsx",
-      "source_location": "L18",
+      "source_file": "app/admin/vendor/page.tsx",
+      "source_location": "L23",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "printer_settings",
@@ -4664,8 +4528,20 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
+      "source_file": "app/admin/vendor/page.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_src": "page",
+      "_tgt": "ble_printer_settings",
+      "source": "page",
+      "target": "ble_printer_settings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L14",
+      "source_location": "L18",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "vendor_bill_policy",
@@ -4677,7 +4553,19 @@
       "relation": "imports_from",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L24",
+      "source_location": "L26",
+      "weight": 1.0,
+      "_src": "page",
+      "_tgt": "bill_catalog_thumb",
+      "source": "page",
+      "target": "bill_catalog_thumb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "app/admin/vendor/page.tsx",
+      "source_location": "L27",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "vendor_bill_network",
@@ -4689,7 +4577,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L20",
+      "source_location": "L25",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_billlineitemstostate",
@@ -4701,7 +4589,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L32",
+      "source_location": "L36",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_billtohtml",
@@ -4713,7 +4601,19 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L37",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_src": "page",
+      "_tgt": "page_billtoplaintext",
+      "source": "page",
+      "target": "page_billtoplaintext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/admin/bills/page.tsx",
+      "source_location": "L130",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_normalizebilltokenfordup",
@@ -4725,7 +4625,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L44",
+      "source_location": "L137",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_billtotalkeyfordup",
@@ -4737,7 +4637,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L60",
+      "source_location": "L153",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_buildvendorbillsquery",
@@ -4749,7 +4649,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L144",
+      "source_location": "L237",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_fetchbills",
@@ -4761,7 +4661,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L189",
+      "source_location": "L282",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_applybillfilters",
@@ -4773,7 +4673,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L232",
+      "source_location": "L325",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_clearbillfilters",
@@ -4785,7 +4685,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L338",
+      "source_location": "L431",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_exportbillstocsv",
@@ -4797,7 +4697,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L365",
+      "source_location": "L458",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_printbill",
@@ -4809,7 +4709,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L384",
+      "source_location": "L482",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_candeletebill",
@@ -4821,7 +4721,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L344",
+      "source_location": "L347",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_addedititem",
@@ -4833,7 +4733,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L383",
+      "source_location": "L386",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_removeoneedit",
@@ -4845,7 +4745,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L394",
+      "source_location": "L397",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_removeeditline",
@@ -4857,7 +4757,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L398",
+      "source_location": "L401",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_seteditlineimageurl",
@@ -4869,7 +4769,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L402",
+      "source_location": "L405",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handleeditlineimagefile",
@@ -4881,7 +4781,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L447",
+      "source_location": "L545",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_openeditbill",
@@ -4905,7 +4805,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L358",
+      "source_location": "L361",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_addcustomitemedit",
@@ -4917,7 +4817,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L500",
+      "source_location": "L598",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_saveeditedbill",
@@ -4929,7 +4829,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L558",
+      "source_location": "L656",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_cancelbill",
@@ -4941,7 +4841,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L591",
+      "source_location": "L689",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_copybill",
@@ -4950,22 +4850,10 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_src": "page",
-      "_tgt": "ble_printer_settings",
-      "source": "page",
-      "target": "ble_printer_settings",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L231",
+      "source_location": "L234",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_additem",
@@ -4977,7 +4865,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L245",
+      "source_location": "L248",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_removeone",
@@ -4989,7 +4877,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L256",
+      "source_location": "L259",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_removeline",
@@ -5001,7 +4889,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L278",
+      "source_location": "L281",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_addcustomitemmain",
@@ -5013,7 +4901,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L302",
+      "source_location": "L305",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_addquickitempreset",
@@ -5025,7 +4913,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L321",
+      "source_location": "L324",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_removequickitempreset",
@@ -5037,7 +4925,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L325",
+      "source_location": "L328",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_starteditlatestbill",
@@ -5049,7 +4937,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L424",
+      "source_location": "L427",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_saveeditedlatestbill",
@@ -5061,7 +4949,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L464",
+      "source_location": "L467",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_billfingerprint",
@@ -5073,19 +4961,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L473",
-      "weight": 1.0,
-      "_src": "page",
-      "_tgt": "page_buildvendorreceiptinput",
-      "source": "page",
-      "target": "page_buildvendorreceiptinput",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L517",
+      "source_location": "L476",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_buildreceiptplaintext",
@@ -5097,7 +4973,19 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L519",
+      "source_location": "L510",
+      "weight": 1.0,
+      "_src": "page",
+      "_tgt": "page_buildvendorreceiptinput",
+      "source": "page",
+      "target": "page_buildvendorreceiptinput",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/admin/vendor/page.tsx",
+      "source_location": "L547",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handlecopyreceipt",
@@ -5109,7 +4997,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L532",
+      "source_location": "L560",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handlesavebill",
@@ -5121,7 +5009,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L590",
+      "source_location": "L618",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_doprint",
@@ -5133,7 +5021,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L630",
+      "source_location": "L662",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handlecancellatestbill",
@@ -5145,7 +5033,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L655",
+      "source_location": "L687",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handleprint",
@@ -5157,7 +5045,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L727",
+      "source_location": "L759",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handlenewbill",
@@ -5409,7 +5297,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L225",
+      "source_location": "L228",
       "weight": 1.0,
       "_src": "page_handlelookup",
       "_tgt": "page_showtoast",
@@ -5493,7 +5381,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L283",
+      "source_location": "L286",
       "weight": 1.0,
       "_src": "page_addcustomitemmain",
       "_tgt": "page_showtoast",
@@ -5505,7 +5393,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L306",
+      "source_location": "L309",
       "weight": 1.0,
       "_src": "page_addquickitempreset",
       "_tgt": "page_showtoast",
@@ -5517,7 +5405,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L451",
+      "source_location": "L454",
       "weight": 1.0,
       "_src": "page_saveeditedlatestbill",
       "_tgt": "page_showtoast",
@@ -5529,7 +5417,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L521",
+      "source_location": "L549",
       "weight": 1.0,
       "_src": "page_handlecopyreceipt",
       "_tgt": "page_showtoast",
@@ -5541,7 +5429,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L534",
+      "source_location": "L562",
       "weight": 1.0,
       "_src": "page_handlesavebill",
       "_tgt": "page_showtoast",
@@ -5553,7 +5441,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L600",
+      "source_location": "L632",
       "weight": 1.0,
       "_src": "page_doprint",
       "_tgt": "page_showtoast",
@@ -5565,7 +5453,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L642",
+      "source_location": "L674",
       "weight": 1.0,
       "_src": "page_handlecancellatestbill",
       "_tgt": "page_showtoast",
@@ -5577,7 +5465,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L658",
+      "source_location": "L690",
       "weight": 1.0,
       "_src": "page_handleprint",
       "_tgt": "page_showtoast",
@@ -5589,7 +5477,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L209",
+      "source_location": "L212",
       "weight": 1.0,
       "_src": "page_handlelookup",
       "_tgt": "page_adminauthheaders",
@@ -5613,7 +5501,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L432",
+      "source_location": "L435",
       "weight": 1.0,
       "_src": "page_saveeditedlatestbill",
       "_tgt": "page_adminauthheaders",
@@ -5625,7 +5513,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L553",
+      "source_location": "L581",
       "weight": 1.0,
       "_src": "page_handlesavebill",
       "_tgt": "page_adminauthheaders",
@@ -5637,7 +5525,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L637",
+      "source_location": "L669",
       "weight": 1.0,
       "_src": "page_handlecancellatestbill",
       "_tgt": "page_adminauthheaders",
@@ -5649,7 +5537,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L689",
+      "source_location": "L721",
       "weight": 1.0,
       "_src": "page_handleprint",
       "_tgt": "page_adminauthheaders",
@@ -5709,7 +5597,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L450",
+      "source_location": "L548",
       "weight": 1.0,
       "_src": "page_openeditbill",
       "_tgt": "page_billlineitemstostate",
@@ -5721,7 +5609,19 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L150",
+      "source_location": "L691",
+      "weight": 1.0,
+      "_src": "page_copybill",
+      "_tgt": "page_billtoplaintext",
+      "source": "page_billtoplaintext",
+      "target": "page_copybill",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "app/admin/bills/page.tsx",
+      "source_location": "L243",
       "weight": 1.0,
       "_src": "page_fetchbills",
       "_tgt": "page_buildvendorbillsquery",
@@ -5733,7 +5633,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/bills/page.tsx",
-      "source_location": "L210",
+      "source_location": "L303",
       "weight": 1.0,
       "_src": "page_applybillfilters",
       "_tgt": "page_buildvendorbillsquery",
@@ -5745,7 +5645,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L404",
+      "source_location": "L407",
       "weight": 1.0,
       "_src": "page_handleeditlineimagefile",
       "_tgt": "page_seteditlineimageurl",
@@ -5757,7 +5657,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L573",
+      "source_location": "L601",
       "weight": 1.0,
       "_src": "page_handlesavebill",
       "_tgt": "page_billfingerprint",
@@ -5769,7 +5669,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L674",
+      "source_location": "L706",
       "weight": 1.0,
       "_src": "page_handleprint",
       "_tgt": "page_billfingerprint",
@@ -5781,31 +5681,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L517",
-      "weight": 1.0,
-      "_src": "page_buildreceiptplaintext",
-      "_tgt": "page_buildvendorreceiptinput",
-      "source": "page_buildvendorreceiptinput",
-      "target": "page_buildreceiptplaintext",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L592",
-      "weight": 1.0,
-      "_src": "page_doprint",
-      "_tgt": "page_buildvendorreceiptinput",
-      "source": "page_buildvendorreceiptinput",
-      "target": "page_doprint",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L525",
+      "source_location": "L553",
       "weight": 1.0,
       "_src": "page_handlecopyreceipt",
       "_tgt": "page_buildreceiptplaintext",
@@ -5817,7 +5693,19 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/vendor/page.tsx",
-      "source_location": "L667",
+      "source_location": "L621",
+      "weight": 1.0,
+      "_src": "page_doprint",
+      "_tgt": "page_buildvendorreceiptinput",
+      "source": "page_buildvendorreceiptinput",
+      "target": "page_doprint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "app/admin/vendor/page.tsx",
+      "source_location": "L699",
       "weight": 1.0,
       "_src": "page_handleprint",
       "_tgt": "page_doprint",
@@ -5901,7 +5789,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L27",
+      "source_location": "L18",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_post",
@@ -6105,7 +5993,7 @@
       "relation": "imports_from",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/bills/save/route.ts",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "supabase_metadata_cache",
@@ -6380,18 +6268,6 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
-      "source_file": "app/api/vendor/bills/save/route.ts",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_src": "route",
-      "_tgt": "fees",
-      "source": "route",
-      "target": "fees",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/bill-catalog/route.ts",
       "source_location": "L4",
       "weight": 1.0,
@@ -6405,7 +6281,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/bills/update/route.ts",
-      "source_location": "L20",
+      "source_location": "L19",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_resolvebillvendorslug",
@@ -6441,7 +6317,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_normalizetoken",
@@ -6465,24 +6341,12 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_resolvevendorslugfromordervendorname",
       "source": "route",
       "target": "route_resolvevendorslugfromordervendorname",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L17",
-      "weight": 1.0,
-      "_src": "route",
-      "_tgt": "route_isuserauthorizedforvendor",
-      "source": "route",
-      "target": "route_isuserauthorizedforvendor",
       "confidence_score": 1.0
     },
     {
@@ -6597,7 +6461,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/bills/save/route.ts",
-      "source_location": "L68",
+      "source_location": "L67",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_resolvevendorslugfromname",
@@ -6621,7 +6485,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/bills/update/route.ts",
-      "source_location": "L73",
+      "source_location": "L72",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_resolvebillvendorslug",
@@ -6633,7 +6497,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L41",
+      "source_location": "L32",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_normalizetoken",
@@ -6657,24 +6521,12 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L57",
+      "source_location": "L52",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_resolvevendorslugfromordervendorname",
       "source": "route_post",
       "target": "route_resolvevendorslugfromordervendorname",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/vendor/orders/confirm-delivery/route.ts",
-      "source_location": "L69",
-      "weight": 1.0,
-      "_src": "route_post",
-      "_tgt": "route_isuserauthorizedforvendor",
-      "source": "route_post",
-      "target": "route_isuserauthorizedforvendor",
       "confidence_score": 1.0
     },
     {
@@ -6909,7 +6761,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/vendor/bills/update/route.ts",
-      "source_location": "L26",
+      "source_location": "L25",
       "weight": 1.0,
       "_src": "route_resolvebillvendorslug",
       "_tgt": "route_resolvevendorslugfromname",
@@ -7017,7 +6869,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "js/api.js",
-      "source_location": "L99",
+      "source_location": "L100",
       "weight": 1.0,
       "_src": "api",
       "_tgt": "api_fetchordersforuser",
@@ -7029,7 +6881,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "js/api.js",
-      "source_location": "L118",
+      "source_location": "L120",
       "weight": 1.0,
       "_src": "api",
       "_tgt": "api_fetchorderbytoken",
@@ -7041,7 +6893,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "js/api.js",
-      "source_location": "L143",
+      "source_location": "L145",
       "weight": 1.0,
       "_src": "api",
       "_tgt": "api_fetchusers",
@@ -7053,7 +6905,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "js/api.js",
-      "source_location": "L161",
+      "source_location": "L164",
       "weight": 1.0,
       "_src": "api",
       "_tgt": "api_signinwithgoogle",
@@ -7065,7 +6917,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "js/api.js",
-      "source_location": "L183",
+      "source_location": "L186",
       "weight": 1.0,
       "_src": "api",
       "_tgt": "api_getauthsession",
@@ -7077,7 +6929,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "js/api.js",
-      "source_location": "L195",
+      "source_location": "L198",
       "weight": 1.0,
       "_src": "api",
       "_tgt": "api_signoutauth",
@@ -7089,7 +6941,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "js/api.js",
-      "source_location": "L204",
+      "source_location": "L207",
       "weight": 1.0,
       "_src": "api",
       "_tgt": "api_upsertuserfromauth",
@@ -7101,7 +6953,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "js/api.js",
-      "source_location": "L247",
+      "source_location": "L250",
       "weight": 1.0,
       "_src": "api",
       "_tgt": "api_advanceorderstatus",
@@ -7617,7 +7469,7 @@
       "relation": "imports_from",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/index.ts",
-      "source_location": "L5",
+      "source_location": "L12",
       "weight": 1.0,
       "_src": "index",
       "_tgt": "ble_printer_settings",
@@ -7626,22 +7478,10 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/index.ts",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_src": "index",
-      "_tgt": "vendorreceipt",
-      "source": "index",
-      "target": "vendorreceipt",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/index.ts",
-      "source_location": "L46",
+      "source_location": "L45",
       "weight": 1.0,
       "_src": "index",
       "_tgt": "index_printescposviabluetooth",
@@ -7656,18 +7496,6 @@
       "source_location": "L74",
       "weight": 1.0,
       "_src": "index",
-      "_tgt": "index_testvendorreceiptinput",
-      "source": "index",
-      "target": "index_testvendorreceiptinput",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/index.ts",
-      "source_location": "L97",
-      "weight": 1.0,
-      "_src": "index",
       "_tgt": "index_buildtestescposreceipt",
       "source": "index",
       "target": "index_buildtestescposreceipt",
@@ -7677,7 +7505,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/index.ts",
-      "source_location": "L102",
+      "source_location": "L94",
       "weight": 1.0,
       "_src": "index",
       "_tgt": "index_formattestescposplain",
@@ -7929,7 +7757,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L834",
+      "source_location": "L838",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_refreshschedule",
@@ -7941,7 +7769,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L841",
+      "source_location": "L845",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_onfocus",
@@ -7953,7 +7781,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1023",
+      "source_location": "L1027",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleobnext",
@@ -7965,7 +7793,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1030",
+      "source_location": "L1034",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleobskip",
@@ -7977,7 +7805,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1035",
+      "source_location": "L1039",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleloginemail",
@@ -7989,7 +7817,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1073",
+      "source_location": "L1077",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlegooglelogin",
@@ -8001,7 +7829,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1082",
+      "source_location": "L1086",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleforgotpassword",
@@ -8013,7 +7841,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1104",
+      "source_location": "L1108",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlesetpassword",
@@ -8025,7 +7853,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1158",
+      "source_location": "L1162",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlesavestudentdetailsmodal",
@@ -8037,7 +7865,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1205",
+      "source_location": "L1209",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlesignup",
@@ -8049,7 +7877,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1274",
+      "source_location": "L1278",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlecompleteprofile",
@@ -8061,7 +7889,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1326",
+      "source_location": "L1330",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlesaveeditprofile",
@@ -8073,7 +7901,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1379",
+      "source_location": "L1383",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleselectvendor",
@@ -8085,7 +7913,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1383",
+      "source_location": "L1387",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlescheduleservice",
@@ -8097,7 +7925,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1387",
+      "source_location": "L1391",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlescheduledateslot",
@@ -8109,7 +7937,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1391",
+      "source_location": "L1395",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleconfirmorder",
@@ -8121,7 +7949,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1474",
+      "source_location": "L1478",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleconfirmdelivery",
@@ -8133,7 +7961,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1494",
+      "source_location": "L1498",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlelogout",
@@ -8145,7 +7973,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1504",
+      "source_location": "L1508",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlesetpasswordforemail",
@@ -8157,7 +7985,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L2543",
+      "source_location": "L2547",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_mybillsloading",
@@ -8181,7 +8009,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1053",
+      "source_location": "L1057",
       "weight": 1.0,
       "_src": "laundroapp_handleloginemail",
       "_tgt": "laundroapp_rowtouser",
@@ -8193,7 +8021,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1134",
+      "source_location": "L1138",
       "weight": 1.0,
       "_src": "laundroapp_handlesetpassword",
       "_tgt": "laundroapp_rowtouser",
@@ -8205,7 +8033,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1191",
+      "source_location": "L1195",
       "weight": 1.0,
       "_src": "laundroapp_handlesavestudentdetailsmodal",
       "_tgt": "laundroapp_rowtouser",
@@ -8217,7 +8045,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1254",
+      "source_location": "L1258",
       "weight": 1.0,
       "_src": "laundroapp_handlesignup",
       "_tgt": "laundroapp_rowtouser",
@@ -8229,7 +8057,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1312",
+      "source_location": "L1316",
       "weight": 1.0,
       "_src": "laundroapp_handlecompleteprofile",
       "_tgt": "laundroapp_rowtouser",
@@ -8241,7 +8069,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1365",
+      "source_location": "L1369",
       "weight": 1.0,
       "_src": "laundroapp_handlesaveeditprofile",
       "_tgt": "laundroapp_rowtouser",
@@ -8277,7 +8105,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1167",
+      "source_location": "L1171",
       "weight": 1.0,
       "_src": "laundroapp_handlesavestudentdetailsmodal",
       "_tgt": "laundroapp_needsstudentcollegechoice",
@@ -8289,7 +8117,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1398",
+      "source_location": "L1402",
       "weight": 1.0,
       "_src": "laundroapp_handleconfirmorder",
       "_tgt": "laundroapp_needsstudenthosteldetails",
@@ -8301,7 +8129,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1460",
+      "source_location": "L1464",
       "weight": 1.0,
       "_src": "laundroapp_handleconfirmorder",
       "_tgt": "laundroapp_rowtoorder",
@@ -8313,7 +8141,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1479",
+      "source_location": "L1483",
       "weight": 1.0,
       "_src": "laundroapp_handleconfirmdelivery",
       "_tgt": "laundroapp_rowtoorder",
@@ -8337,7 +8165,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1209",
+      "source_location": "L1213",
       "weight": 1.0,
       "_src": "laundroapp_handlesignup",
       "_tgt": "laundroapp_validateindianphone",
@@ -8349,7 +8177,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1278",
+      "source_location": "L1282",
       "weight": 1.0,
       "_src": "laundroapp_handlecompleteprofile",
       "_tgt": "laundroapp_validateindianphone",
@@ -8361,7 +8189,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1330",
+      "source_location": "L1334",
       "weight": 1.0,
       "_src": "laundroapp_handlesaveeditprofile",
       "_tgt": "laundroapp_validateindianphone",
@@ -8385,7 +8213,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L841",
+      "source_location": "L845",
       "weight": 1.0,
       "_src": "laundroapp_onfocus",
       "_tgt": "laundroapp_refreshschedule",
@@ -8931,6 +8759,18 @@
       "_tgt": "bluetoothprinterpanel_refreshprefs",
       "source": "bluetoothprinterpanel_refreshprefs",
       "target": "bluetoothprinterpanel_patchprefs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/bill-catalog-thumb.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_src": "bill_catalog_thumb",
+      "_tgt": "bill_catalog_thumb_billcatalogthumburl",
+      "source": "bill_catalog_thumb",
+      "target": "bill_catalog_thumb_billcatalogthumburl",
       "confidence_score": 1.0
     },
     {
@@ -9932,18 +9772,6 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
-      "source_file": "lib/printing/vendorBillPrintPayload.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_src": "vendorbillprintpayload",
-      "_tgt": "ble_printer_settings",
-      "source": "ble_printer_settings",
-      "target": "vendorbillprintpayload",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L3",
       "weight": 1.0,
@@ -10926,18 +10754,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/vendorBillPrintPayload.ts",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_src": "vendorbillprintpayload",
-      "_tgt": "printer_settings",
-      "source": "printer_settings",
-      "target": "vendorbillprintpayload",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printer-settings.ts",
@@ -11250,6 +11066,18 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/fees.ts",
+      "source_location": "L59",
+      "weight": 1.0,
+      "_src": "fees_formatservicefeereceiptline",
+      "_tgt": "fees_calculateservicefee",
+      "source": "fees_calculateservicefee",
+      "target": "fees_formatservicefeereceiptline",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/turnstile.ts",
@@ -11264,66 +11092,6 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
-      "source_file": "lib/printing/vendorBillPrintPayload.ts",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_src": "vendorbillprintpayload",
-      "_tgt": "escposbuilder",
-      "source": "vendorbillprintpayload",
-      "target": "escposbuilder",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/vendorBillPrintPayload.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_src": "vendorbillprintpayload",
-      "_tgt": "vendorreceipt",
-      "source": "vendorbillprintpayload",
-      "target": "vendorreceipt",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/vendorBillPrintPayload.ts",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_src": "vendorbillprintpayload",
-      "_tgt": "vendorbillprintpayload_buildvendorbillprintpayload",
-      "source": "vendorbillprintpayload",
-      "target": "vendorbillprintpayload_buildvendorbillprintpayload",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/index.ts",
-      "source_location": "L98",
-      "weight": 1.0,
-      "_src": "index_buildtestescposreceipt",
-      "_tgt": "index_testvendorreceiptinput",
-      "source": "index_testvendorreceiptinput",
-      "target": "index_buildtestescposreceipt",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/index.ts",
-      "source_location": "L103",
-      "weight": 1.0,
-      "_src": "index_formattestescposplain",
-      "_tgt": "index_testvendorreceiptinput",
-      "source": "index_testvendorreceiptinput",
-      "target": "index_formattestescposplain",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L4",
       "weight": 1.0,
@@ -11337,7 +11105,7 @@
       "relation": "imports_from",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L14",
+      "source_location": "L13",
       "weight": 1.0,
       "_src": "vendorreceipt",
       "_tgt": "characterencodings",
@@ -11349,103 +11117,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L49",
+      "source_location": "L39",
       "weight": 1.0,
       "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_rsmoney",
+      "_tgt": "vendorreceipt_money",
       "source": "vendorreceipt",
-      "target": "vendorreceipt_rsmoney",
+      "target": "vendorreceipt_money",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L57",
+      "source_location": "L43",
       "weight": 1.0,
       "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_itemdescriptionwithrate",
+      "_tgt": "vendorreceipt_truncateforpaper",
       "source": "vendorreceipt",
-      "target": "vendorreceipt_itemdescriptionwithrate",
+      "target": "vendorreceipt_truncateforpaper",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L62",
-      "weight": 1.0,
-      "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_wraptomidwidth",
-      "source": "vendorreceipt",
-      "target": "vendorreceipt_wraptomidwidth",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L100",
-      "weight": 1.0,
-      "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_totallinepadded",
-      "source": "vendorreceipt",
-      "target": "vendorreceipt_totallinepadded",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L113",
-      "weight": 1.0,
-      "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_tokendisplay",
-      "source": "vendorreceipt",
-      "target": "vendorreceipt_tokendisplay",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L119",
-      "weight": 1.0,
-      "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_printmetaline",
-      "source": "vendorreceipt",
-      "target": "vendorreceipt_printmetaline",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L125",
-      "weight": 1.0,
-      "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_pushservicefeetotalsescpos",
-      "source": "vendorreceipt",
-      "target": "vendorreceipt_pushservicefeetotalsescpos",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L136",
-      "weight": 1.0,
-      "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_pushservicefeeplain",
-      "source": "vendorreceipt",
-      "target": "vendorreceipt_pushservicefeeplain",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L151",
+      "source_location": "L54",
       "weight": 1.0,
       "_src": "vendorreceipt",
       "_tgt": "vendorreceipt_buildvendorreceiptescpos",
@@ -11457,19 +11153,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L231",
-      "weight": 1.0,
-      "_src": "vendorreceipt",
-      "_tgt": "vendorreceipt_plainitemdescforpreview",
-      "source": "vendorreceipt",
-      "target": "vendorreceipt_plainitemdescforpreview",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L236",
+      "source_location": "L112",
       "weight": 1.0,
       "_src": "vendorreceipt",
       "_tgt": "vendorreceipt_formatvendorreceiptescposplain",
@@ -11481,7 +11165,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L311",
+      "source_location": "L154",
       "weight": 1.0,
       "_src": "vendorreceipt",
       "_tgt": "vendorreceipt_savedvendorbilltoreceiptinput",
@@ -11493,47 +11177,11 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L58",
-      "weight": 1.0,
-      "_src": "vendorreceipt_itemdescriptionwithrate",
-      "_tgt": "vendorreceipt_rsmoney",
-      "source": "vendorreceipt_rsmoney",
-      "target": "vendorreceipt_itemdescriptionwithrate",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L127",
-      "weight": 1.0,
-      "_src": "vendorreceipt_pushservicefeetotalsescpos",
-      "_tgt": "vendorreceipt_rsmoney",
-      "source": "vendorreceipt_rsmoney",
-      "target": "vendorreceipt_pushservicefeetotalsescpos",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L139",
-      "weight": 1.0,
-      "_src": "vendorreceipt_pushservicefeeplain",
-      "_tgt": "vendorreceipt_rsmoney",
-      "source": "vendorreceipt_rsmoney",
-      "target": "vendorreceipt_pushservicefeeplain",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L197",
+      "source_location": "L80",
       "weight": 1.0,
       "_src": "vendorreceipt_buildvendorreceiptescpos",
-      "_tgt": "vendorreceipt_rsmoney",
-      "source": "vendorreceipt_rsmoney",
+      "_tgt": "vendorreceipt_money",
+      "source": "vendorreceipt_money",
       "target": "vendorreceipt_buildvendorreceiptescpos",
       "confidence_score": 1.0
     },
@@ -11541,23 +11189,11 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L233",
-      "weight": 1.0,
-      "_src": "vendorreceipt_plainitemdescforpreview",
-      "_tgt": "vendorreceipt_rsmoney",
-      "source": "vendorreceipt_rsmoney",
-      "target": "vendorreceipt_plainitemdescforpreview",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L279",
+      "source_location": "L133",
       "weight": 1.0,
       "_src": "vendorreceipt_formatvendorreceiptescposplain",
-      "_tgt": "vendorreceipt_rsmoney",
-      "source": "vendorreceipt_rsmoney",
+      "_tgt": "vendorreceipt_money",
+      "source": "vendorreceipt_money",
       "target": "vendorreceipt_formatvendorreceiptescposplain",
       "confidence_score": 1.0
     },
@@ -11565,11 +11201,11 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L194",
+      "source_location": "L81",
       "weight": 1.0,
       "_src": "vendorreceipt_buildvendorreceiptescpos",
-      "_tgt": "vendorreceipt_itemdescriptionwithrate",
-      "source": "vendorreceipt_itemdescriptionwithrate",
+      "_tgt": "vendorreceipt_truncateforpaper",
+      "source": "vendorreceipt_truncateforpaper",
       "target": "vendorreceipt_buildvendorreceiptescpos",
       "confidence_score": 1.0
     },
@@ -11577,107 +11213,11 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L195",
-      "weight": 1.0,
-      "_src": "vendorreceipt_buildvendorreceiptescpos",
-      "_tgt": "vendorreceipt_wraptomidwidth",
-      "source": "vendorreceipt_wraptomidwidth",
-      "target": "vendorreceipt_buildvendorreceiptescpos",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L277",
+      "source_location": "L134",
       "weight": 1.0,
       "_src": "vendorreceipt_formatvendorreceiptescposplain",
-      "_tgt": "vendorreceipt_wraptomidwidth",
-      "source": "vendorreceipt_wraptomidwidth",
-      "target": "vendorreceipt_formatvendorreceiptescposplain",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L216",
-      "weight": 1.0,
-      "_src": "vendorreceipt_buildvendorreceiptescpos",
-      "_tgt": "vendorreceipt_totallinepadded",
-      "source": "vendorreceipt_totallinepadded",
-      "target": "vendorreceipt_buildvendorreceiptescpos",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L177",
-      "weight": 1.0,
-      "_src": "vendorreceipt_buildvendorreceiptescpos",
-      "_tgt": "vendorreceipt_tokendisplay",
-      "source": "vendorreceipt_tokendisplay",
-      "target": "vendorreceipt_buildvendorreceiptescpos",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L261",
-      "weight": 1.0,
-      "_src": "vendorreceipt_formatvendorreceiptescposplain",
-      "_tgt": "vendorreceipt_tokendisplay",
-      "source": "vendorreceipt_tokendisplay",
-      "target": "vendorreceipt_formatvendorreceiptescposplain",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L177",
-      "weight": 1.0,
-      "_src": "vendorreceipt_buildvendorreceiptescpos",
-      "_tgt": "vendorreceipt_printmetaline",
-      "source": "vendorreceipt_printmetaline",
-      "target": "vendorreceipt_buildvendorreceiptescpos",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L211",
-      "weight": 1.0,
-      "_src": "vendorreceipt_buildvendorreceiptescpos",
-      "_tgt": "vendorreceipt_pushservicefeetotalsescpos",
-      "source": "vendorreceipt_pushservicefeetotalsescpos",
-      "target": "vendorreceipt_buildvendorreceiptescpos",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L292",
-      "weight": 1.0,
-      "_src": "vendorreceipt_formatvendorreceiptescposplain",
-      "_tgt": "vendorreceipt_pushservicefeeplain",
-      "source": "vendorreceipt_pushservicefeeplain",
-      "target": "vendorreceipt_formatvendorreceiptescposplain",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/receipt/vendorReceipt.ts",
-      "source_location": "L276",
-      "weight": 1.0,
-      "_src": "vendorreceipt_formatvendorreceiptescposplain",
-      "_tgt": "vendorreceipt_plainitemdescforpreview",
-      "source": "vendorreceipt_plainitemdescforpreview",
+      "_tgt": "vendorreceipt_truncateforpaper",
+      "source": "vendorreceipt_truncateforpaper",
       "target": "vendorreceipt_formatvendorreceiptescposplain",
       "confidence_score": 1.0
     },
@@ -12237,19 +11777,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_src": "characterencodings",
-      "_tgt": "characterencodings_sanitizereceipttextforpreview",
-      "source": "characterencodings",
-      "target": "characterencodings_sanitizereceipttextforpreview",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/CharacterEncodings.ts",
-      "source_location": "L17",
+      "source_location": "L7",
       "weight": 1.0,
       "_src": "characterencodings",
       "_tgt": "characterencodings_sanitizereceipttext",
@@ -12261,7 +11789,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
-      "source_location": "L29",
+      "source_location": "L19",
       "weight": 1.0,
       "_src": "characterencodings",
       "_tgt": "characterencodings_encodeasciilines",
@@ -12285,7 +11813,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
-      "source_location": "L30",
+      "source_location": "L20",
       "weight": 1.0,
       "_src": "characterencodings_encodeasciilines",
       "_tgt": "characterencodings_sanitizereceipttext",
@@ -12312,18 +11840,6 @@
       "source_location": "L32",
       "weight": 1.0,
       "_src": "escposbuilder",
-      "_tgt": "escposbuilder_escpostablecolumnwidths",
-      "source": "escposbuilder",
-      "target": "escposbuilder_escpostablecolumnwidths",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L41",
-      "weight": 1.0,
-      "_src": "escposbuilder",
       "_tgt": "escposbuilder_escposplaindivider",
       "source": "escposbuilder",
       "target": "escposbuilder_escposplaindivider",
@@ -12333,7 +11849,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L48",
+      "source_location": "L39",
       "weight": 1.0,
       "_src": "escposbuilder",
       "_tgt": "escposbuilder_escposplaintablerow",
@@ -12345,19 +11861,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L57",
-      "weight": 1.0,
-      "_src": "escposbuilder",
-      "_tgt": "escposbuilder_escposplaintablerowpreview",
-      "source": "escposbuilder",
-      "target": "escposbuilder_escposplaintablerowpreview",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L66",
+      "source_location": "L51",
       "weight": 1.0,
       "_src": "escposbuilder",
       "_tgt": "escposbuilder_escposplainlineright",
@@ -12369,7 +11873,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L74",
+      "source_location": "L59",
       "weight": 1.0,
       "_src": "escposbuilder",
       "_tgt": "escposbuilder_escposplainlinecenter",
@@ -12381,43 +11885,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L82",
-      "weight": 1.0,
-      "_src": "escposbuilder",
-      "_tgt": "escposbuilder_escposplainlinecenterpreview",
-      "source": "escposbuilder",
-      "target": "escposbuilder_escposplainlinecenterpreview",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L91",
-      "weight": 1.0,
-      "_src": "escposbuilder",
-      "_tgt": "escposbuilder_escposplaintwocolumn",
-      "source": "escposbuilder",
-      "target": "escposbuilder_escposplaintwocolumn",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L102",
-      "weight": 1.0,
-      "_src": "escposbuilder",
-      "_tgt": "escposbuilder_escposplaintwocolumnpreview",
-      "source": "escposbuilder",
-      "target": "escposbuilder_escposplaintwocolumnpreview",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L119",
+      "source_location": "L73",
       "weight": 1.0,
       "_src": "escposbuilder",
       "_tgt": "escposbuilder_concatparts",
@@ -12429,7 +11897,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L130",
+      "source_location": "L84",
       "weight": 1.0,
       "_src": "escposbuilder",
       "_tgt": "escposbuilder_escposbuilder",
@@ -12441,7 +11909,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L331",
+      "source_location": "L249",
       "weight": 1.0,
       "_src": "escposbuilder",
       "_tgt": "escposbuilder_papersizefromcharsperline",
@@ -12453,55 +11921,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L49",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposplaintablerow",
-      "_tgt": "escposbuilder_escpostablecolumnwidths",
-      "source": "escposbuilder_escpostablecolumnwidths",
-      "target": "escposbuilder_escposplaintablerow",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L58",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposplaintablerowpreview",
-      "_tgt": "escposbuilder_escpostablecolumnwidths",
-      "source": "escposbuilder_escpostablecolumnwidths",
-      "target": "escposbuilder_escposplaintablerowpreview",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L246",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder_tablerowboldmid",
-      "_tgt": "escposbuilder_escpostablecolumnwidths",
-      "source": "escposbuilder_escpostablecolumnwidths",
-      "target": "escposbuilder_escposbuilder_tablerowboldmid",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L263",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder_tablerowmidcontinuationbold",
-      "_tgt": "escposbuilder_escpostablecolumnwidths",
-      "source": "escposbuilder_escpostablecolumnwidths",
-      "target": "escposbuilder_escposbuilder_tablerowmidcontinuationbold",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L234",
+      "source_location": "L188",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_divider",
       "_tgt": "escposbuilder_escposplaindivider",
@@ -12513,7 +11933,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L241",
+      "source_location": "L195",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_tablerow",
       "_tgt": "escposbuilder_escposplaintablerow",
@@ -12525,19 +11945,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L277",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder_twocolumn",
-      "_tgt": "escposbuilder_escposplaintwocolumn",
-      "source": "escposbuilder_escposplaintwocolumn",
-      "target": "escposbuilder_escposbuilder_twocolumn",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L327",
+      "source_location": "L245",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_build",
       "_tgt": "escposbuilder_concatparts",
@@ -12549,7 +11957,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L136",
+      "source_location": "L90",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_constructor",
@@ -12561,7 +11969,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L142",
+      "source_location": "L96",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_getpapersize",
@@ -12573,7 +11981,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L146",
+      "source_location": "L100",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_getcharsperline",
@@ -12585,7 +11993,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L150",
+      "source_location": "L104",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_getmaxdots",
@@ -12597,7 +12005,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L154",
+      "source_location": "L108",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_pushbytes",
@@ -12609,7 +12017,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L159",
+      "source_location": "L113",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -12621,7 +12029,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L164",
+      "source_location": "L118",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_initialize",
@@ -12633,7 +12041,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L169",
+      "source_location": "L123",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_codepage",
@@ -12645,7 +12053,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L177",
+      "source_location": "L131",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_printdensity",
@@ -12657,7 +12065,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L182",
+      "source_location": "L136",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_linefeed",
@@ -12669,7 +12077,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L186",
+      "source_location": "L140",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_feed",
@@ -12681,7 +12089,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L192",
+      "source_location": "L146",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_align",
@@ -12693,7 +12101,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L198",
+      "source_location": "L152",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_bold",
@@ -12705,7 +12113,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L202",
+      "source_location": "L156",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_underline",
@@ -12717,7 +12125,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L206",
+      "source_location": "L160",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_fontsize",
@@ -12729,7 +12137,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L213",
+      "source_location": "L167",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_text",
@@ -12741,7 +12149,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L221",
+      "source_location": "L175",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_textdoublesize",
@@ -12753,7 +12161,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L228",
+      "source_location": "L182",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_rawtext",
@@ -12765,7 +12173,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L233",
+      "source_location": "L187",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_divider",
@@ -12777,7 +12185,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L240",
+      "source_location": "L194",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_tablerow",
@@ -12789,43 +12197,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L245",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder",
-      "_tgt": "escposbuilder_escposbuilder_tablerowboldmid",
-      "source": "escposbuilder_escposbuilder",
-      "target": "escposbuilder_escposbuilder_tablerowboldmid",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L262",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder",
-      "_tgt": "escposbuilder_escposbuilder_tablerowmidcontinuationbold",
-      "source": "escposbuilder_escposbuilder",
-      "target": "escposbuilder_escposbuilder_tablerowmidcontinuationbold",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L276",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder",
-      "_tgt": "escposbuilder_escposbuilder_twocolumn",
-      "source": "escposbuilder_escposbuilder",
-      "target": "escposbuilder_escposbuilder_twocolumn",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L281",
+      "source_location": "L199",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_barcodecode128",
@@ -12837,7 +12209,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L299",
+      "source_location": "L217",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_qrcode",
@@ -12849,7 +12221,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L322",
+      "source_location": "L240",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_cut",
@@ -12861,7 +12233,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L326",
+      "source_location": "L244",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder",
       "_tgt": "escposbuilder_escposbuilder_build",
@@ -12873,7 +12245,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L170",
+      "source_location": "L124",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_codepage",
       "_tgt": "escposbuilder_escposbuilder_pushbytes",
@@ -12885,7 +12257,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L179",
+      "source_location": "L133",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_printdensity",
       "_tgt": "escposbuilder_escposbuilder_pushbytes",
@@ -12897,7 +12269,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L189",
+      "source_location": "L143",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_feed",
       "_tgt": "escposbuilder_escposbuilder_pushbytes",
@@ -12909,7 +12281,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L287",
+      "source_location": "L205",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_barcodecode128",
       "_tgt": "escposbuilder_escposbuilder_pushbytes",
@@ -12921,7 +12293,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L306",
+      "source_location": "L224",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_qrcode",
       "_tgt": "escposbuilder_escposbuilder_pushbytes",
@@ -12933,7 +12305,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L323",
+      "source_location": "L241",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_cut",
       "_tgt": "escposbuilder_escposbuilder_pushbytes",
@@ -12945,7 +12317,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L165",
+      "source_location": "L119",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_initialize",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -12957,7 +12329,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L183",
+      "source_location": "L137",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_linefeed",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -12969,7 +12341,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L193",
+      "source_location": "L147",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_align",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -12981,7 +12353,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L199",
+      "source_location": "L153",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_bold",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -12993,7 +12365,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L203",
+      "source_location": "L157",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_underline",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -13005,7 +12377,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L207",
+      "source_location": "L161",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_fontsize",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -13017,7 +12389,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L222",
+      "source_location": "L176",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_textdoublesize",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -13029,31 +12401,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L251",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder_tablerowboldmid",
-      "_tgt": "escposbuilder_escposbuilder_pushraw",
-      "source": "escposbuilder_escposbuilder_pushraw",
-      "target": "escposbuilder_escposbuilder_tablerowboldmid",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L266",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder_tablerowmidcontinuationbold",
-      "_tgt": "escposbuilder_escposbuilder_pushraw",
-      "source": "escposbuilder_escposbuilder_pushraw",
-      "target": "escposbuilder_escposbuilder_tablerowmidcontinuationbold",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L291",
+      "source_location": "L209",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_barcodecode128",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -13065,7 +12413,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L318",
+      "source_location": "L236",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_qrcode",
       "_tgt": "escposbuilder_escposbuilder_pushraw",
@@ -13077,7 +12425,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L223",
+      "source_location": "L177",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_textdoublesize",
       "_tgt": "escposbuilder_escposbuilder_text",
@@ -13089,7 +12437,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L234",
+      "source_location": "L188",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_divider",
       "_tgt": "escposbuilder_escposbuilder_text",
@@ -13101,7 +12449,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L241",
+      "source_location": "L195",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_tablerow",
       "_tgt": "escposbuilder_escposbuilder_text",
@@ -13113,19 +12461,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L277",
-      "weight": 1.0,
-      "_src": "escposbuilder_escposbuilder_twocolumn",
-      "_tgt": "escposbuilder_escposbuilder_text",
-      "source": "escposbuilder_escposbuilder_text",
-      "target": "escposbuilder_escposbuilder_twocolumn",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
-      "source_location": "L303",
+      "source_location": "L221",
       "weight": 1.0,
       "_src": "escposbuilder_escposbuilder_qrcode",
       "_tgt": "escposbuilder_escposbuilder_text",

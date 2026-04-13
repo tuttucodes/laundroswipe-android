@@ -5,7 +5,8 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { escPosPlainToThermalReceiptHtml, printThermalReceiptDirect } from '@/lib/thermal-print';
 import {
-  buildVendorBillPrintPayload,
+  buildVendorReceiptEscPos,
+  formatVendorReceiptEscPosPlain,
   printEscPosViaBluetooth,
   type VendorReceiptInput,
 } from '@/lib/printing';
@@ -18,9 +19,11 @@ const PrintBridgeApkCta = dynamic(
   () => import('@/components/vendor/PrintBridgeApkCta').then((m) => ({ default: m.PrintBridgeApkCta })),
   { ssr: false },
 );
-import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
+import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
+import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
-import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { calculateServiceFee, formatServiceFeeReceiptLine, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { billCatalogThumbUrl } from '@/lib/bill-catalog-thumb';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
@@ -457,8 +460,8 @@ export default function VendorPage() {
   };
 
   const subtotal = lineItems.reduce((s, l) => s + l.price * l.qty, 0);
-  const feeBreakdown = applyServiceFeeDiscount(subtotal);
-  const serviceFee = feeBreakdown.finalFee;
+  const serviceFee = 0;
+  const originalServiceFee = calculateServiceFee(subtotal);
   const total = subtotal + serviceFee;
 
   const billFingerprint = (): string => {
@@ -470,6 +473,40 @@ export default function VendorPage() {
     return `${orderToken}|${itemsKey}|${subtotal}|${total}`;
   };
 
+  const buildReceiptPlainText = () => {
+    const o = order as OrderRow | null;
+    const u = (user ?? {}) as Partial<UserRow>;
+    const tokenLabel = sampleMode ? 'SAMPLE' : o?.token ?? '';
+    const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
+    const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
+    const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
+    const regPlain = sampleMode ? '' : String(u.reg_no ?? '').trim();
+    const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
+    const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
+    const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
+    const lines = [
+      'LaundroSwipe',
+      `Vendor: ${vendorName}`,
+      `Token: #${tokenLabel}  Order: ${orderLabel}`,
+      `Customer ID: ${sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24)}`,
+      `Customer: ${customerLabel}`,
+      `Phone: ${phoneLabel}`,
+      ...(regPlain ? [`Reg no: ${regPlain}`] : []),
+      ...(blockPlain || roomPlain
+        ? [`Hostel: ${[blockPlain && `Block ${blockPlain}`, roomPlain && `Room ${roomPlain}`].filter(Boolean).join(' · ')}`]
+        : []),
+      '---',
+      ...lineItems.map((l) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`),
+      '---',
+      `Total items: ${totalItems}`,
+      `Subtotal: ₹${subtotal}`,
+      formatServiceFeeReceiptLine(subtotal, serviceFee, 'inr'),
+      `TOTAL: ₹${total}`,
+      'Thank you!',
+    ];
+    return lines.join('\n');
+  };
+
   const buildVendorReceiptInput = (): VendorReceiptInput => {
     const o = order as OrderRow | null;
     const u = (user ?? {}) as Partial<UserRow & { display_id?: string | null }>;
@@ -477,12 +514,13 @@ export default function VendorPage() {
     const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
     const customerLabel = sampleMode
       ? sampleCustomerName.trim() || 'Walk-in Customer'
-      : (u.full_name ?? u.email ?? '—').toString().slice(0, 48);
+      : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
     const phoneLabel = sampleMode ? sampleCustomerPhone.trim() || '—' : (u.phone ?? '—').toString().slice(0, 14);
     const regPlain = sampleMode ? '' : String(u.reg_no ?? '').trim();
     const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
     const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
     const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
+    const serviceFeeLine = formatServiceFeeReceiptLine(subtotal, serviceFee, 'rs');
     const p = getBlePrinterPreferences();
     return {
       vendorName,
@@ -491,30 +529,20 @@ export default function VendorPage() {
       customerLabel,
       phoneLabel,
       customerDisplayId: sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24),
-      customerEmail: sampleMode ? undefined : (u.email?.trim() || undefined),
       regNo: regPlain || undefined,
       hostelBlock: blockPlain || undefined,
       roomNumber: roomPlain || undefined,
       dateStr: new Date().toLocaleString(),
-      lineItems: lineItems.map((l) => ({
-        label: l.label,
-        qty: l.qty,
-        price: l.price,
-        id: l.id?.trim() ? l.id.trim() : undefined,
-      })),
+      lineItems: lineItems.map((l) => ({ label: l.label, qty: l.qty, price: l.price })),
       totalItems,
       subtotal,
-      convenienceFee: serviceFee,
-      convenienceFeeOriginal:
-        feeBreakdown.originalFee > serviceFee ? feeBreakdown.originalFee : undefined,
+      serviceFeeLine,
       total,
-      footer: '',
+      footer: 'Thank you!',
       showQr: p.showPaymentQr && !!p.paymentQrPayload.trim(),
       paymentQrPayload: p.paymentQrPayload.trim() || undefined,
     };
   };
-
-  const buildReceiptPlainText = () => buildVendorBillPrintPayload(buildVendorReceiptInput()).plain;
 
   const handleCopyReceipt = async () => {
     if (lineItems.length === 0) {
@@ -589,13 +617,17 @@ export default function VendorPage() {
 
   const doPrint = async () => {
     const title = sampleMode ? 'Sample Bill' : `Bill #${order?.token ?? ''}`;
+    const paper = getEffectiveEscPosPaperSize();
     const input = buildVendorReceiptInput();
-    const payload = buildVendorBillPrintPayload(input);
-    const bodyHtml = escPosPlainToThermalReceiptHtml(payload.plain, payload.charsPerLine);
+    const escPosPayload = buildVendorReceiptEscPos(paper, input);
+    const plain = formatVendorReceiptEscPosPlain(paper, input);
+    const config = getPrinterConfigForPrint();
+    const chars = config?.charsPerLine ?? 46;
+    const bodyHtml = escPosPlainToThermalReceiptHtml(plain, chars);
     const prefs = getBlePrinterPreferences();
 
     try {
-      const direct = await printEscPosViaBluetooth(payload.escPosPayload);
+      const direct = await printEscPosViaBluetooth(escPosPayload);
       if (direct === 'printed') {
         showToast('Sent to printer', 'ok');
         return;
@@ -613,10 +645,10 @@ export default function VendorPage() {
       showToast('Direct print error — opening print dialog…', 'er');
     }
 
-    const result = await printThermalReceiptDirect(title, bodyHtml, payload.plain, {
-      printer: payload.printer ?? undefined,
-      forceDialog: payload.printer?.forceDialog ?? true,
-      escPosPayload: payload.escPosPayload,
+    const result = await printThermalReceiptDirect(title, bodyHtml, plain, {
+      printer: config ?? undefined,
+      forceDialog: config?.forceDialog ?? true,
+      escPosPayload,
     });
     if (result === 'blocked') {
       showToast('Allow pop-ups to print, or try again', 'er');
@@ -904,7 +936,15 @@ export default function VendorPage() {
                     <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, borderTop: '1px dashed var(--bd)', paddingTop: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         {q.image_url ? (
-                          <img src={q.image_url} alt="" style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--bd)' }} />
+                          <img
+                            src={billCatalogThumbUrl(q.image_url, 72) ?? q.image_url}
+                            alt=""
+                            width={34}
+                            height={34}
+                            decoding="async"
+                            loading="lazy"
+                            style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--bd)' }}
+                          />
                         ) : (
                           <span aria-hidden style={{ width: 34, height: 34, display: 'inline-block', borderRadius: 6, border: '1px dashed var(--bd)' }} />
                         )}
@@ -929,7 +969,15 @@ export default function VendorPage() {
                       className={`vendor-item-btn ${i.image_url ? 'with-thumb' : ''} ${qty > 0 ? 'has-qty' : ''}`}
                     >
                       {i.image_url ? (
-                        <img src={i.image_url} alt="" className="vendor-item-thumb" />
+                        <img
+                          src={billCatalogThumbUrl(i.image_url, 128) ?? i.image_url}
+                          alt=""
+                          width={112}
+                          height={56}
+                          decoding="async"
+                          loading="lazy"
+                          className="vendor-item-thumb"
+                        />
                       ) : null}
                       {i.label}
                       {qty > 0 && <span style={{ display: 'block', fontSize: 12, marginTop: 2 }}>×{qty} ₹{i.price * qty}</span>}
@@ -992,10 +1040,10 @@ export default function VendorPage() {
 
             <p style={{ fontSize: 13, color: 'var(--ts)' }}>Total items: {lineItems.reduce((s, l) => s + l.qty, 0)}</p>
             <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{subtotal}</p>
-            {feeBreakdown.active && feeBreakdown.originalFee > 0 ? (
+            {originalServiceFee > 0 ? (
               <p style={{ fontWeight: 600, fontSize: 14 }}>
                 Service fee (7-day discount):{' '}
-                <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee}</span> ₹0
+                <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{originalServiceFee}</span> ₹0
               </p>
             ) : (
               <p style={{ fontWeight: 600, fontSize: 14 }}>
@@ -1073,7 +1121,17 @@ export default function VendorPage() {
                         onClick={() => addEditItem(i.id)}
                         className={`vendor-item-btn ${i.image_url ? 'with-thumb' : ''} ${qty > 0 ? 'has-qty' : ''}`}
                       >
-                        {i.image_url ? <img src={i.image_url} alt="" className="vendor-item-thumb" /> : null}
+                        {i.image_url ? (
+                          <img
+                            src={billCatalogThumbUrl(i.image_url, 128) ?? i.image_url}
+                            alt=""
+                            width={112}
+                            height={56}
+                            decoding="async"
+                            loading="lazy"
+                            className="vendor-item-thumb"
+                          />
+                        ) : null}
                         {i.label}
                         {qty > 0 && <span style={{ display: 'block', fontSize: 12, marginTop: 2 }}>×{qty} ₹{i.price * qty}</span>}
                       </button>
@@ -1131,7 +1189,15 @@ export default function VendorPage() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                         {l.image_url ? (
-                          <img src={l.image_url} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--bd)', background: '#fff' }} />
+                          <img
+                            src={billCatalogThumbUrl(l.image_url, 104) ?? l.image_url}
+                            alt=""
+                            width={52}
+                            height={52}
+                            decoding="async"
+                            loading="lazy"
+                            style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--bd)', background: '#fff' }}
+                          />
                         ) : (
                           <span aria-hidden style={{ width: 52, height: 52, display: 'inline-block', borderRadius: 8, border: '1px dashed var(--bd)', background: '#fff' }} />
                         )}
@@ -1156,24 +1222,25 @@ export default function VendorPage() {
 
               {(() => {
                 const sub = editLineItems.reduce((s, l) => s + l.price * l.qty, 0);
-                const feeBreakdown = applyServiceFeeDiscount(sub);
-                const total = sub + feeBreakdown.finalFee;
+                const editSvc = 0;
+                const editOrig = calculateServiceFee(sub);
+                const editTotal = sub + editSvc;
                 return (
                   <>
                     <p style={{ fontSize: 13, color: 'var(--ts)' }}>Total items: {editLineItems.reduce((s, l) => s + l.qty, 0)}</p>
                     <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{sub.toFixed(2)}</p>
-                    {feeBreakdown.active && feeBreakdown.originalFee > 0 ? (
+                    {editOrig > 0 ? (
                       <p style={{ fontWeight: 600, fontSize: 14 }}>
                         Service fee (7-day discount):{' '}
-                        <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{feeBreakdown.originalFee.toFixed(2)}</span> ₹0
+                        <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{editOrig.toFixed(2)}</span> ₹0
                       </p>
                     ) : (
                       <p style={{ fontWeight: 600, fontSize: 14 }}>
-                        Service fee (7-day discount): ₹{feeBreakdown.finalFee.toFixed(2)}
+                        Service fee (7-day discount): ₹{editSvc.toFixed(2)}
                       </p>
                     )}
                     <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
-                    <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total.toFixed(2)}</p>
+                    <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{editTotal.toFixed(2)}</p>
                   </>
                 );
               })()}

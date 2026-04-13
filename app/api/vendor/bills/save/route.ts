@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
-import { applyServiceFeeDiscount } from '@/lib/fees';
 import { mergeVendorBillItemsFromDbRow } from '@/lib/vendor-bill-catalog';
 import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { getVendorBillOverridesCached, getVendorsListCached } from '@/lib/supabase-metadata-cache';
@@ -149,8 +148,8 @@ export async function POST(request: Request) {
   }
 
   const subtotal = safeLineItems.reduce((s, l) => s + l.price * l.qty, 0);
-  const convenience_fee = applyServiceFeeDiscount(subtotal).finalFee;
-  const total = subtotal + convenience_fee;
+  const convenience_fee = 0;
+  const total = subtotal;
 
   const vendorFromSlug = effectiveVendorSlug ? vendorsBySlug.get(effectiveVendorSlug) : null;
   const vendorNameFromConstants = effectiveVendorSlug
