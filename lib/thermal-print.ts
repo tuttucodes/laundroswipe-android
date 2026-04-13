@@ -22,7 +22,7 @@ const contentWidth = `${CONTENT_WIDTH_MM}mm`;
 
 function getThermalStyles(paperWidthMm: number): string {
   const w = `${paperWidthMm}mm`;
-  const fontCss = `font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:13px;font-weight:400;line-height:1.65`;
+  const fontCss = `font-family:"Courier New","Liberation Mono","Nimbus Mono PS",monospace;font-size:15px;font-weight:700;line-height:1.4`;
   return `
 *{margin:0;padding:0}
 html,body{width:${w};max-width:${w};min-width:${w};${fontCss};padding:1.2mm;margin:0;background:#fff;color:#000;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
@@ -48,12 +48,12 @@ td{text-align:left;vertical-align:top}
 .total{font-weight:700;font-size:17px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
 .conv{font-size:13px}
 .foot{text-align:center;margin-top:2.5mm;font-size:15px}
-.escpos-plain-receipt{margin:0 auto;padding:0 0 2mm;box-sizing:border-box;font-family:ui-monospace,"Cascadia Mono","SF Mono",Consolas,"Courier New",monospace;font-size:13px;font-weight:600;line-height:1.24;white-space:pre;overflow-x:auto;word-break:normal;overflow-wrap:normal;letter-spacing:0}
+.escpos-plain-receipt{margin:0 auto;padding:0;box-sizing:border-box;font-size:12px;line-height:1.35;white-space:pre;overflow-x:auto;word-break:break-all}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
   .escpos-hint,.no-print{display:none!important}
-  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:1.2mm 1.2mm 4mm!important;margin:0!important;background:#fff!important}
+  html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:1.2mm!important;margin:0!important;background:#fff!important}
   .receipt{width:${contentWidth}!important;max-width:${contentWidth}!important;margin:0 auto!important}
   @page{size:${paperWidthMm}mm auto;margin:0}
 }
@@ -166,22 +166,21 @@ export function getThermalTestReceiptPlainText(charsPerLine: number = DEFAULT_CO
   return formatTestEscPosPlain(paper);
 }
 
-/** `<pre>` receipt body — Arial, UTF-8; width hint in `ch` for alignment. */
+/** Monospace `<pre>` matching POS column widths (chars per line). */
 export function escPosPlainToThermalReceiptHtml(plainText: string, charsPerLine: number): string {
   return (
     '<pre class="escpos-plain-receipt" style="width:' +
     charsPerLine +
-    'ch;max-width:100%;font-family:Arial,Helvetica,sans-serif">' +
+    'ch;max-width:100%">' +
     escapeHtml(plainText) +
     '</pre>'
   );
 }
 
 /** Match BLE / ESC/POS paper labels to @page width used by thermal preview HTML. */
-export function paperWidthMmFromLabel(size: '58mm' | '76mm' | '78mm' | '80mm'): number {
+export function paperWidthMmFromLabel(size: '58mm' | '76mm' | '80mm'): number {
   if (size === '58mm') return 58;
   if (size === '76mm') return 76;
-  if (size === '78mm') return 78;
   return 78;
 }
 

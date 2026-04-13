@@ -26,7 +26,7 @@ const KEY = 'laundroswipe_ble_printer_prefs_v1';
 
 const defaults: BlePrinterPreferences = {
   preferBluetoothEscPos: true,
-  paperSize: '78mm',
+  paperSize: '80mm',
   printDensity: 'medium',
   autoConnect: true,
   printTimeoutMs: 15000,
@@ -42,10 +42,7 @@ function load(): BlePrinterPreferences {
     const p = JSON.parse(raw) as Partial<BlePrinterPreferences> & Record<string, unknown>;
     return {
       preferBluetoothEscPos: typeof p.preferBluetoothEscPos === 'boolean' ? p.preferBluetoothEscPos : defaults.preferBluetoothEscPos,
-      paperSize:
-        p.paperSize === '58mm' || p.paperSize === '76mm' || p.paperSize === '78mm' || p.paperSize === '80mm'
-          ? p.paperSize
-          : defaults.paperSize,
+      paperSize: p.paperSize === '58mm' || p.paperSize === '76mm' || p.paperSize === '80mm' ? p.paperSize : defaults.paperSize,
       printDensity:
         p.printDensity === 'light' || p.printDensity === 'medium' || p.printDensity === 'dark'
           ? p.printDensity
@@ -79,17 +76,8 @@ export function setBlePrinterPreferences(patch: Partial<BlePrinterPreferences>):
   return next;
 }
 
-/**
- * Paper width for ESC/POS receipts. Prefer Admin → Printers default model `charsPerLine`
- * so layout matches the 78mm / 3" dialog width; fall back to saved BLE preference.
- */
+/** Paper width for ESC/POS receipts (Bluetooth path). */
 export function getEffectiveEscPosPaperSize(): PaperSize {
-  if (typeof window !== 'undefined') {
-    const cfg = getPrinterConfigForPrint();
-    if (cfg?.charsPerLine && cfg.charsPerLine > 0) {
-      return paperSizeFromCharsPerLine(cfg.charsPerLine);
-    }
-  }
   return load().paperSize;
 }
 

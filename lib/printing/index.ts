@@ -1,13 +1,15 @@
 import { tryNativeEscPosPrint } from '@/lib/native-print-bridge';
 import { BluetoothPrinterService, isWebBluetoothAvailable } from './bluetooth/BluetoothPrinterService';
 import { PrintQueue } from './queue/PrintQueue';
-import { type PaperSize } from './escpos/ESCPOSBuilder';
-import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
 import {
-  buildVendorReceiptEscPos,
-  formatVendorReceiptEscPosPlain,
-  type VendorReceiptInput,
-} from './receipt/vendorReceipt';
+  ESCPOSBuilder,
+  type PaperSize,
+  escposPlainDivider,
+  escposPlainTableRow,
+  escposPlainLineRight,
+  escposPlainLineCenter,
+} from './escpos/ESCPOSBuilder';
+import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
 
 export type { PaperSize } from './escpos/ESCPOSBuilder';
 export {
@@ -17,18 +19,15 @@ export {
   escposPlainTableRow,
   escposPlainLineRight,
   escposPlainLineCenter,
-  escposTableColumnWidths,
   PAPER_FONT_A_CHARS,
 } from './escpos/ESCPOSBuilder';
 export {
   buildVendorReceiptEscPos,
   formatVendorReceiptEscPosPlain,
   savedVendorBillToReceiptInput,
-  rsMoney,
   type VendorReceiptInput,
   type VendorReceiptLine,
 } from './receipt/vendorReceipt';
-export { buildVendorBillPrintPayload, type VendorBillPrintPayload } from './vendorBillPrintPayload';
 export {
   BluetoothPrinterService,
   isWebBluetoothAvailable,
@@ -71,34 +70,39 @@ export async function printEscPosViaBluetooth(bytes: Uint8Array): Promise<Blueto
   }
 }
 
-function testVendorReceiptInput(paper: PaperSize): VendorReceiptInput {
-  return {
-    vendorName: 'Profab',
-    tokenLabel: 'SAMPLE',
-    orderLabel: 'TEST-001',
-    customerLabel: 'Test customer',
-    phoneLabel: '9999999999',
-    customerDisplayId: 'LS-0000',
-    dateStr: new Date().toLocaleString(),
-    lineItems: [
-      { label: 'Wash & fold', qty: 2, price: 60 },
-      { label: 'Iron', qty: 1, price: 45 },
-    ],
-    totalItems: 3,
-    subtotal: 165,
-    convenienceFee: 0,
-    convenienceFeeOriginal: 10,
-    total: 165,
-    footer: `OK — ${paper}`,
-  };
-}
-
-/** Small test ticket — same layout as live vendor bills. */
+/** Small test ticket for alignment checks. */
 export function buildTestEscPosReceipt(paper: PaperSize): Uint8Array {
-  return buildVendorReceiptEscPos(paper, testVendorReceiptInput(paper));
+  const prefs = getBlePrinterPreferences();
+  const b = new ESCPOSBuilder(paper);
+  b.initialize().codePage(0).printDensity(prefs.printDensity);
+  b.align('center').bold(true).textDoubleSize('LaundroSwipe').bold(false);
+  b.text('Bluetooth test print');
+  b.text(new Date().toLocaleString());
+  b.divider();
+  b.align('left');
+  b.tableRow('Qty', 'Item', 'Amt');
+  b.tableRow('2', 'Wash & fold', 'Rs.120.00');
+  b.tableRow('1', 'Iron', 'Rs.45.00');
+  b.divider();
+  b.align('right').bold(true).text('TOTAL: Rs.165.00').bold(false);
+  b.feed(2).align('center').text('OK — ' + paper);
+  b.feed(4).cut(false);
+  return b.build();
 }
 
 /** Plain-text mirror of `buildTestEscPosReceipt` (browser print + byte fallback). */
 export function formatTestEscPosPlain(paper: PaperSize): string {
-  return formatVendorReceiptEscPosPlain(paper, testVendorReceiptInput(paper));
+  const lines: string[] = [];
+  lines.push('LaundroSwipe');
+  lines.push('Bluetooth test print');
+  lines.push(new Date().toLocaleString());
+  lines.push(escposPlainDivider(paper));
+  lines.push(escposPlainTableRow(paper, 'Qty', 'Item', 'Amt'));
+  lines.push(escposPlainTableRow(paper, '2', 'Wash & fold', 'Rs.120.00'));
+  lines.push(escposPlainTableRow(paper, '1', 'Iron', 'Rs.45.00'));
+  lines.push(escposPlainDivider(paper));
+  lines.push(escposPlainLineRight(paper, 'TOTAL: Rs.165.00'));
+  lines.push('');
+  lines.push(escposPlainLineCenter(paper, 'OK — ' + paper));
+  return lines.join('\n');
 }
