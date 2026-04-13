@@ -4,8 +4,8 @@ import { PrintQueue } from './queue/PrintQueue';
 import {
   ESCPOSBuilder,
   type PaperSize,
+  PAPER_FONT_A_CHARS,
   escposPlainDivider,
-  escposPlainTableRow,
   escposPlainLineRight,
   escposPlainLineCenter,
 } from './escpos/ESCPOSBuilder';
@@ -36,6 +36,15 @@ export {
 } from './bluetooth/BluetoothPrinterService';
 export { PrintQueue } from './queue/PrintQueue';
 export { isNativeEscPosBridgeAvailable, tryNativeEscPosPrint } from '@/lib/native-print-bridge';
+
+/** Pad unit + line total on one row, or split (matches vendor receipt line layout). */
+function unitTotalLines(paper: PaperSize, unitLeft: string, lineTotal: string): string[] {
+  const w = PAPER_FONT_A_CHARS[paper];
+  if (unitLeft.length + lineTotal.length + 1 <= w) {
+    return [unitLeft + ' '.repeat(Math.max(1, w - unitLeft.length - lineTotal.length)) + lineTotal];
+  }
+  return [unitLeft, escposPlainLineRight(paper, lineTotal)];
+}
 
 export type BluetoothPrintResult = 'printed' | 'not-connected' | 'unavailable' | 'disabled' | 'error';
 
@@ -70,23 +79,38 @@ export async function printEscPosViaBluetooth(bytes: Uint8Array): Promise<Blueto
   }
 }
 
-/** Small test ticket for alignment checks. */
+/** Small test ticket — same density rules as vendor bills (compact meta, large line items). */
 export function buildTestEscPosReceipt(paper: PaperSize): Uint8Array {
   const prefs = getBlePrinterPreferences();
   const b = new ESCPOSBuilder(paper);
   b.initialize().codePage(0).printDensity(prefs.printDensity);
-  b.align('center').bold(true).textDoubleSize('LaundroSwipe').bold(false);
-  b.text('Bluetooth test print');
+  b.align('center').bold(true).fontSize('normal').text('LaundroSwipe');
+  b.bold(false).text('Bluetooth test print');
   b.text(new Date().toLocaleString());
   b.divider();
-  b.align('left');
-  b.tableRow('Qty', 'Item', 'Amt');
-  b.tableRow('2', 'Wash & fold', 'Rs.120.00');
-  b.tableRow('1', 'Iron', 'Rs.45.00');
+  b.align('left').bold(true).fontSize('normal').text('LINE ITEMS').bold(false);
+  const rows: { qtyLine: string; unit: string; total: string }[] = [
+    { qtyLine: '2× Wash & fold', unit: '@ Rs.60.00 each', total: 'Rs.120.00' },
+    { qtyLine: '1× Iron', unit: '@ Rs.45.00 each', total: 'Rs.45.00' },
+  ];
+  for (const r of rows) {
+    b.bold(true).fontSize('doubleHeight').text(r.qtyLine);
+    b.fontSize('doubleHeight').bold(true);
+    const parts = unitTotalLines(paper, r.unit, r.total);
+    if (parts.length === 1) {
+      b.align('left').text(parts[0]);
+    } else {
+      b.align('left').text(parts[0]);
+      b.align('right').text(r.total);
+    }
+    b.fontSize('normal').bold(false).align('left');
+  }
   b.divider();
-  b.align('right').bold(true).text('TOTAL: Rs.165.00').bold(false);
-  b.feed(2).align('center').text('OK — ' + paper);
-  b.feed(4).cut(false);
+  b.text('Total items: 3');
+  b.text('Subtotal: Rs.165.00');
+  b.bold(true).fontSize('normal').text('TOTAL: Rs.165.00').bold(false);
+  b.feed(1).align('center').text('OK — ' + paper);
+  b.feed(3).cut(false);
   return b.build();
 }
 
@@ -97,11 +121,15 @@ export function formatTestEscPosPlain(paper: PaperSize): string {
   lines.push('Bluetooth test print');
   lines.push(new Date().toLocaleString());
   lines.push(escposPlainDivider(paper));
-  lines.push(escposPlainTableRow(paper, 'Qty', 'Item', 'Amt'));
-  lines.push(escposPlainTableRow(paper, '2', 'Wash & fold', 'Rs.120.00'));
-  lines.push(escposPlainTableRow(paper, '1', 'Iron', 'Rs.45.00'));
+  lines.push('LINE ITEMS');
+  lines.push('2× Wash & fold');
+  for (const u of unitTotalLines(paper, '@ Rs.60.00 each', 'Rs.120.00')) lines.push(u);
+  lines.push('1× Iron');
+  for (const u of unitTotalLines(paper, '@ Rs.45.00 each', 'Rs.45.00')) lines.push(u);
   lines.push(escposPlainDivider(paper));
-  lines.push(escposPlainLineRight(paper, 'TOTAL: Rs.165.00'));
+  lines.push('Total items: 3');
+  lines.push('Subtotal: Rs.165.00');
+  lines.push(`TOTAL: Rs.165.00`);
   lines.push('');
   lines.push(escposPlainLineCenter(paper, 'OK — ' + paper));
   return lines.join('\n');

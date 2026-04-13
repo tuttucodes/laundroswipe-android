@@ -57,17 +57,18 @@ h1{font-family:var(--fd);font-size:22px;margin-bottom:8px;color:var(--b)}
   .receipt *{color:#000!important}
 }
 .receipt{width:296px;margin:0 auto;padding:16px;font-size:12px;border:1px dashed var(--bd);font-family:Arial,Helvetica,sans-serif}
-.receipt h2{text-align:center;font-size:15px;font-weight:700;margin-bottom:4px}
-.receipt .meta{font-size:11px;color:var(--ts);margin-bottom:10px;text-align:center}
-.receipt .pri{font-weight:700;font-size:14px;margin:4px 0}
-.receipt table{width:100%;border-collapse:collapse;font-size:12px}
-.receipt th,.receipt td{padding:5px 0;text-align:left}
-.receipt th{border-bottom:1px solid var(--bd)}
-.receipt .item-name{font-weight:700;font-size:15px;line-height:1.35}
-.receipt .item-amt{font-weight:700;font-size:14px}
+.receipt h2{text-align:center;font-size:14px;font-weight:700;margin-bottom:2px}
+.receipt .meta{font-size:10px;color:var(--ts);margin-bottom:6px;text-align:center;line-height:1.25}
+.receipt .pri{font-weight:600;font-size:11px;margin:2px 0}
+.receipt .bill-meta{font-size:10px;line-height:1.3;color:var(--tx);margin:2px 0}
+.receipt table{width:100%;border-collapse:collapse;font-size:12px;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);margin:6px 0}
+.receipt th,.receipt td{padding:4px 0;text-align:left}
+.receipt th{font-size:9px;text-transform:uppercase;letter-spacing:.03em;color:var(--ts);border-bottom:1px solid var(--bd)}
+.receipt .item-name{font-weight:700;font-size:16px;line-height:1.35}
+.receipt .item-amt{font-weight:700;font-size:15px}
 .receipt .right{text-align:right}
-.receipt .total{font-weight:700;font-size:14px;margin-top:8px;border-top:2px solid #000;padding-top:6px}
-.receipt .conv{font-size:11px;color:var(--ts)}
+.receipt .total{font-weight:700;font-size:12px;margin-top:6px;border-top:1px solid #000;padding-top:4px}
+.receipt .conv{font-size:10px;color:var(--ts)}
 @media(max-width:480px){.add-row{grid-template-columns:1fr 70px 50px}}
 </style>
 </head>
@@ -252,9 +253,10 @@ function buildReceiptHtml() {
     <p class="meta">Vendor name: Pro Fab Power Laundry</p>
     <p class="pri"><strong>Token:</strong> #${order.token || ''}</p>
     ${dispId ? `<p class="pri"><strong>Customer ID:</strong> ${dispId}</p>` : ''}
-    <p><strong>Order:</strong> ${order.order_number || order.on}</p>
-    <p><strong>Customer:</strong> ${user.full_name || user.fn || '—'}</p>
-    <p><strong>Phone:</strong> ${user.phone || user.ph || '—'}</p>
+    <p class="bill-meta"><strong>Order:</strong> ${order.order_number || order.on}</p>
+    <p class="bill-meta"><strong>Customer:</strong> ${user.full_name || user.fn || '—'}</p>
+    <p class="bill-meta"><strong>Phone:</strong> ${user.phone || user.ph || '—'}</p>
+    <p class="bill-meta" style="font-weight:700;font-size:10px;letter-spacing:.04em;color:var(--ts);margin-top:6px">LINE ITEMS</p>
     <table>
       <thead><tr><th>Item</th><th class="right">₹</th></tr></thead>
       <tbody>${rows}</tbody>

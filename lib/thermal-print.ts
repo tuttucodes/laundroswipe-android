@@ -161,12 +161,12 @@ async function writeToBleCharacteristic(characteristic: BLECharacteristicLike, d
 export type DirectPrintResult = 'native' | 'serial' | 'ble' | 'dialog' | 'blocked';
 
 /**
- * HTML body (inside `.receipt`) for printer test — same monospace layout as `buildTestEscPosReceipt`.
+ * HTML body (inside `.receipt`) for printer test — same tiered layout as vendor bills when plain matches.
  */
 export function getThermalTestReceiptBodyHtml(charsPerLine: number = DEFAULT_CONFIG.charsPerLine): string {
   const paper = paperSizeFromCharsPerLine(charsPerLine);
   const plain = formatTestEscPosPlain(paper);
-  return escPosPlainToThermalReceiptHtml(plain, charsPerLine);
+  return escPosPlainReceiptHtmlForPaper(plain, paper);
 }
 
 export function getThermalTestReceiptPlainText(charsPerLine: number = DEFAULT_CONFIG.charsPerLine): string {

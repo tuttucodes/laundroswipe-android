@@ -41,29 +41,30 @@ function billToHtml(b: VendorBillRow) {
     ? b.line_items.reduce((sum, l: { qty: number }) => sum + Number(l.qty || 0), 0)
     : 0;
   const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const meta = 'font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:500;line-height:1.35;color:#334155';
   const rows = Array.isArray(b.line_items) && b.line_items.length
     ? b.line_items
         .map(
           (l: { label: string; qty: number; price: number }) =>
-            `<tr><td class="qty-col">${l.qty}</td><td class="desc-col" style="font-weight:700;font-size:16px;line-height:1.35">${esc(l.label)}<br/><span class="meta">@₹${Number(l.price).toFixed(2)}</span></td><td class="amt-col" style="font-weight:700;font-size:15px">₹${(Number(l.price) * Number(l.qty)).toFixed(2)}</td></tr>`,
+            `<tr><td class="qty-col" style="font-size:17px;font-weight:700;vertical-align:top">${l.qty}</td><td class="desc-col" style="font-weight:700;font-size:17px;line-height:1.35">${esc(l.label)}<br/><span style="font-size:12px;font-weight:600;color:#64748b">@₹${Number(l.price).toFixed(2)}</span></td><td class="amt-col" style="font-weight:700;font-size:16px;vertical-align:top">₹${(Number(l.price) * Number(l.qty)).toFixed(2)}</td></tr>`,
         )
         .join('')
     : '<tr><td class="qty-col">0</td><td class="desc-col">No items</td><td class="amt-col">₹0.00</td></tr>';
   const emailLine =
     b.user_email != null && String(b.user_email).trim() !== ''
-      ? `<p><strong>Email:</strong> ${esc(String(b.user_email))}</p>`
+      ? `<p style="${meta}"><strong>Email:</strong> ${esc(String(b.user_email))}</p>`
       : '';
   const idLine =
     b.user_display_id != null && String(b.user_display_id).trim() !== ''
-      ? `<p class="center" style="font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:15px"><strong>Customer ID:</strong> ${esc(String(b.user_display_id))}</p>`
+      ? `<p class="center" style="${meta};font-weight:600"><strong>Customer ID:</strong> ${esc(String(b.user_display_id))}</p>`
       : '';
   const reg = String(b.customer_reg_no ?? '').trim();
   const blk = String(b.customer_hostel_block ?? '').trim();
   const rm = String(b.customer_room_number ?? '').trim();
-  const regLine = reg ? `<p class="center"><strong>Reg no:</strong> ${esc(reg)}</p>` : '';
+  const regLine = reg ? `<p class="center" style="${meta}"><strong>Reg no:</strong> ${esc(reg)}</p>` : '';
   const hostelLine =
     blk || rm
-      ? `<p class="center"><strong>Hostel:</strong> ${esc([blk && `Block ${blk}`, rm && `Room ${rm}`].filter(Boolean).join(' · '))}</p>`
+      ? `<p class="center" style="${meta}"><strong>Hostel:</strong> ${esc([blk && `Block ${blk}`, rm && `Room ${rm}`].filter(Boolean).join(' · '))}</p>`
       : '';
   const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
   const conv = Number(b.convenience_fee ?? 0);
@@ -72,30 +73,33 @@ function billToHtml(b: VendorBillRow) {
       ? `<span>Service fee (7-day discount)</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
       : `<span>Service fee (7-day discount)</span><span>₹${conv.toFixed(2)}</span>`;
   return `
-    <h2>LaundroSwipe</h2>
-    <p class="meta center">${esc(b.vendor_name ?? 'Vendor')}</p>
-    <p class="center" style="font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:15px"><strong>Token:</strong> #${esc(String(b.order_token))}</p>
+    <div style="${meta};text-align:center">
+    <h2 style="font-size:15px;font-weight:700;margin:0 0 4px;color:#0f172a">LaundroSwipe</h2>
+    <p class="meta center" style="margin:0 0 8px">${esc(b.vendor_name ?? 'Vendor')}</p>
+    <p class="center" style="font-weight:600;margin:2px 0"><strong>Token:</strong> #${esc(String(b.order_token))}</p>
     ${idLine}
-    <p class="center">Order: ${esc(String(b.order_number ?? '—'))}</p>
-    <p class="center">Customer: ${esc(b.customer_name ?? '—')}</p>
-    <p class="center">Phone: ${esc(b.customer_phone ?? '—')}</p>
+    <p class="center" style="margin:2px 0">Order: ${esc(String(b.order_number ?? '—'))}</p>
+    <p class="center" style="margin:2px 0">Customer: ${esc(b.customer_name ?? '—')}</p>
+    <p class="center" style="margin:2px 0">Phone: ${esc(b.customer_phone ?? '—')}</p>
     ${emailLine}
     ${regLine}
     ${hostelLine}
-    <p class="center">Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p>
+    <p class="center" style="margin:2px 0">Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p>
+    </div>
     <div class="row-divider"></div>
-    <table style="width:100%;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif">
-      <thead><tr><th class="qty-col">Qty</th><th class="desc-col">Description</th><th class="amt-col">Amount</th></tr></thead>
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.04em;color:#475569;margin:6px 0 4px">LINE ITEMS</p>
+    <table style="width:100%;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:4px 0">
+      <thead><tr><th class="qty-col" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#64748b">Qty</th><th class="desc-col" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#64748b">Description</th><th class="amt-col" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#64748b">Amount</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="row-divider"></div>
-    <div class="totals">
-      <p><span>Total items</span><span>${totalItems}</span></p>
-      <p><span>Subtotal</span><span>₹${Number(b.subtotal ?? 0).toFixed(2)}</span></p>
-      <p class="conv">${discountedFeeHtml}</p>
-      <p class="total"><span>Total</span><span>₹${Number(b.total ?? 0).toFixed(2)}</span></p>
+    <div class="totals" style="${meta}">
+      <p style="margin:3px 0"><span>Total items</span><span>${totalItems}</span></p>
+      <p style="margin:3px 0"><span>Subtotal</span><span>₹${Number(b.subtotal ?? 0).toFixed(2)}</span></p>
+      <p class="conv" style="font-size:10px;line-height:1.35">${discountedFeeHtml}</p>
+      <p class="total" style="font-size:13px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #cbd5e1"><span>Total</span><span>₹${Number(b.total ?? 0).toFixed(2)}</span></p>
     </div>
-    <p class="foot">Thank you!</p>
+    <p class="foot" style="font-size:11px;color:#64748b;margin-top:10px">Thank you!</p>
   `;
 }
 

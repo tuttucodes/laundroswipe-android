@@ -2694,25 +2694,28 @@ export default function LaundroApp() {
         {viewingBill && (
           <div className="bill-popup-overlay" onClick={() => setViewingBill(null)} role="dialog" aria-modal="true" aria-label="View bill">
             <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ borderRadius: 24, padding: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>Bill #{viewingBill.order_token}</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ fontFamily: 'var(--fd)', fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--b)' }}>Bill #{viewingBill.order_token}</h3>
                 <button type="button" className="btn bout bsm" onClick={() => setViewingBill(null)} aria-label="Close">Close</button>
               </div>
+              <div style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.4, color: 'var(--ts)', marginBottom: 8 }}>
               {String(viewingBill.user_display_id ?? '').trim() ? (
-                <p style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 15, fontWeight: 700, color: 'var(--tx)', marginBottom: 4 }}>
+                <p style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontWeight: 600, color: 'var(--tx)', marginBottom: 3 }}>
                   <strong>Customer ID:</strong> {String(viewingBill.user_display_id).trim()}
                 </p>
               ) : null}
-              <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Order:</strong> {viewingBill.order_number ?? '—'}</p>
+              <p style={{ marginBottom: 3 }}><strong>Order:</strong> {viewingBill.order_number ?? '—'}</p>
               {viewingBill.vendor_name ? (
-                <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Vendor:</strong> {viewingBill.vendor_name}</p>
+                <p style={{ marginBottom: 3 }}><strong>Vendor:</strong> {viewingBill.vendor_name}</p>
               ) : null}
-              <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Date:</strong> {viewingBill.created_at ? new Date(viewingBill.created_at).toLocaleString() : '—'}</p>
+              <p style={{ marginBottom: 3 }}><strong>Customer:</strong> {viewingBill.customer_name ?? '—'}</p>
+              <p style={{ marginBottom: 3 }}><strong>Phone:</strong> {viewingBill.customer_phone ?? '—'}</p>
+              <p style={{ marginBottom: 3 }}><strong>Date:</strong> {viewingBill.created_at ? new Date(viewingBill.created_at).toLocaleString() : '—'}</p>
               {String(viewingBill.customer_reg_no ?? '').trim() ? (
-                <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Reg no:</strong> {viewingBill.customer_reg_no}</p>
+                <p style={{ marginBottom: 3 }}><strong>Reg no:</strong> {viewingBill.customer_reg_no}</p>
               ) : null}
               {String(viewingBill.customer_hostel_block ?? '').trim() || String(viewingBill.customer_room_number ?? '').trim() ? (
-                <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}>
+                <p style={{ marginBottom: 3 }}>
                   <strong>Hostel:</strong>{' '}
                   {[
                     String(viewingBill.customer_hostel_block ?? '').trim() && `Block ${String(viewingBill.customer_hostel_block).trim()}`,
@@ -2722,34 +2725,41 @@ export default function LaundroApp() {
                     .join(' · ')}
                 </p>
               ) : null}
+              </div>
+              <p style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--ts)', margin: '8px 0 4px' }}>LINE ITEMS</p>
               <table
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
                   fontFamily: 'Arial, Helvetica, sans-serif',
-                  fontSize: 13,
-                  marginTop: 12,
-                  marginBottom: 12,
+                  marginTop: 4,
+                  marginBottom: 10,
+                  borderTop: '1px solid var(--bd)',
+                  borderBottom: '1px solid var(--bd)',
                 }}
               >
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--bd)' }}>
-                    <th style={{ textAlign: 'left', padding: '8px 0' }}>Item</th>
-                    <th style={{ textAlign: 'right', padding: '8px 0' }}>₹</th>
+                    <th style={{ textAlign: 'left', padding: '6px 0', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: 'var(--ts)' }}>Item</th>
+                    <th style={{ textAlign: 'right', padding: '6px 0', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: 'var(--ts)' }}>₹</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(Array.isArray(viewingBill.line_items) ? viewingBill.line_items : []).map((l: { label: string; qty: number; price: number }, i: number) => (
                     <tr key={i} style={{ borderBottom: '1px solid var(--bd)' }}>
-                      <td style={{ padding: '6px 0', fontSize: 17, fontWeight: 700, lineHeight: 1.35 }}>{l.label} ×{l.qty}</td>
-                      <td style={{ textAlign: 'right', padding: '6px 0', fontSize: 16, fontWeight: 700 }}>₹{l.price * l.qty}</td>
+                      <td style={{ padding: '8px 0', fontSize: 17, fontWeight: 700, lineHeight: 1.35 }}>
+                        {l.label} ×{l.qty}
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ts)', marginTop: 2 }}>@₹{Number(l.price).toFixed(2)}</div>
+                      </td>
+                      <td style={{ textAlign: 'right', padding: '8px 0', fontSize: 16, fontWeight: 700, verticalAlign: 'top' }}>₹{l.price * l.qty}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <p style={{ textAlign: 'right', fontSize: 13, marginBottom: 2 }}>Subtotal: ₹{viewingBill.subtotal}</p>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                <p style={{ textAlign: 'right', fontSize: 13, margin: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--ts)', lineHeight: 1.4 }}>
+              <p style={{ textAlign: 'right', marginBottom: 3 }}>Subtotal: ₹{viewingBill.subtotal}</p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                <p style={{ textAlign: 'right', margin: 0 }}>
                   {formatServiceFeeReceiptLine(
                     Number(viewingBill.subtotal ?? 0),
                     Number(viewingBill.convenience_fee ?? 0),
@@ -2760,8 +2770,9 @@ export default function LaundroApp() {
                   <CircleHelp size={14} />
                 </button>
               </div>
-              <p style={{ textAlign: 'right', fontSize: 12, color: 'var(--ts)', marginBottom: 2 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
-              <p style={{ textAlign: 'right', fontWeight: 700, fontSize: 15, marginTop: 8, paddingTop: 8, borderTop: '2px solid var(--b)' }}>Total: ₹{viewingBill.total}</p>
+              <p style={{ textAlign: 'right', fontSize: 10, color: 'var(--ts)', marginBottom: 4 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
+              <p style={{ textAlign: 'right', fontWeight: 700, fontSize: 14, marginTop: 6, paddingTop: 8, borderTop: '2px solid var(--b)' }}>Total: ₹{viewingBill.total}</p>
+              </div>
             </div>
           </div>
         )}
