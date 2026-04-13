@@ -724,7 +724,6 @@ export const LSApi = {
   },
 
   async fetchVendorBillsForUser(userId: string): Promise<VendorBillRow[] | null> {
-    if (!supabase) return null;
     const billSelect =
       'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, vendor_slug, cancelled_at, cancelled_by_role, created_at';
 
@@ -737,6 +736,36 @@ export const LSApi = {
         .sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))
         .slice(0, 200);
     };
+
+    /** Server route uses service role — works when Supabase RLS on vendor_bills blocks the anon client. */
+    if (typeof window !== 'undefined' && userId) {
+      const token = await this.getAccessToken();
+      if (token) {
+        try {
+          const res = await fetch('/api/me/vendor-bills', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const payload = await res.json().catch(() => ({}));
+          if (res.ok && payload?.ok && Array.isArray(payload.bills)) {
+            const pid = payload.profile_id as string | null | undefined;
+            if (pid && pid !== userId) {
+              console.warn('fetchVendorBillsForUser: session profile id does not match app user id');
+              return null;
+            }
+            return payload.bills as VendorBillRow[];
+          }
+          if (!res.ok) {
+            console.error('fetchVendorBillsForUser /api/me/vendor-bills', res.status, payload?.error ?? payload);
+          }
+        } catch (e) {
+          console.error('fetchVendorBillsForUser API exception', e);
+        }
+      }
+    }
+
+    if (!supabase) return null;
 
     try {
       const [byUserRes, orders] = await Promise.all([
