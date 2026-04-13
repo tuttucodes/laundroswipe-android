@@ -1,4 +1,6 @@
 import { formatTestEscPosPlain, paperSizeFromCharsPerLine } from '@/lib/printing';
+import type { PaperSize } from '@/lib/printing/escpos/ESCPOSBuilder';
+import { PAPER_FONT_A_CHARS } from '@/lib/printing/escpos/ESCPOSBuilder';
 
 /**
  * Thermal receipt printing for 58mm, 68mm, and 79mm Bluetooth/USB printers.
@@ -12,6 +14,7 @@ import { tryNativeEscPosPrint } from '@/lib/native-print-bridge';
 export interface PrinterPrintConfig {
   paperWidthMm: number;
   charsPerLine: number;
+  forceDialog?: boolean;
 }
 
 const DEFAULT_CONFIG: PrinterPrintConfig = { paperWidthMm: 78, charsPerLine: 46 };
@@ -177,12 +180,32 @@ export function escPosPlainToThermalReceiptHtml(plainText: string, charsPerLine:
   );
 }
 
+/** Use with `formatVendorReceiptEscPosPlain(paper, …)` so `<pre>` width matches wrapped lines. */
+export function escPosPlainReceiptHtmlForPaper(plainText: string, paper: PaperSize): string {
+  return escPosPlainToThermalReceiptHtml(plainText, PAPER_FONT_A_CHARS[paper]);
+}
+
 /** Match BLE / ESC/POS paper labels to @page width used by thermal preview HTML. */
 export function paperWidthMmFromLabel(size: '58mm' | '76mm' | '78mm' | '80mm'): number {
   if (size === '58mm') return 58;
   if (size === '76mm') return 76;
   if (size === '78mm') return 78;
   return 80;
+}
+
+/**
+ * Print-dialog / plain-byte char width aligned to BLE ESC/POS paper (not admin printer model),
+ * so wrapped receipt lines match `formatVendorReceiptEscPosPlain`.
+ */
+export function thermalPrinterConfigForEscPosPlain(
+  paper: PaperSize,
+  admin?: { forceDialog?: boolean } | null,
+): PrinterPrintConfig {
+  return {
+    paperWidthMm: paperWidthMmFromLabel(paper),
+    charsPerLine: PAPER_FONT_A_CHARS[paper],
+    forceDialog: admin?.forceDialog !== false,
+  };
 }
 
 export type ThermalReceiptWindowOptions = {

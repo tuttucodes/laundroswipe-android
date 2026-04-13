@@ -3,7 +3,11 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { escPosPlainToThermalReceiptHtml, printThermalReceiptDirect } from '@/lib/thermal-print';
+import {
+  escPosPlainReceiptHtmlForPaper,
+  printThermalReceiptDirect,
+  thermalPrinterConfigForEscPosPlain,
+} from '@/lib/thermal-print';
 import {
   buildVendorReceiptEscPos,
   formatVendorReceiptEscPosPlain,
@@ -474,37 +478,8 @@ export default function VendorPage() {
   };
 
   const buildReceiptPlainText = () => {
-    const o = order as OrderRow | null;
-    const u = (user ?? {}) as Partial<UserRow>;
-    const tokenLabel = sampleMode ? 'SAMPLE' : o?.token ?? '';
-    const orderLabel = sampleMode ? 'Sample Bill' : o?.order_number ?? '';
-    const customerLabel = sampleMode ? (sampleCustomerName.trim() || 'Walk-in Customer') : (u.full_name ?? u.email ?? '—').toString().slice(0, 24);
-    const phoneLabel = sampleMode ? (sampleCustomerPhone.trim() || '—') : (u.phone ?? '—').toString().slice(0, 14);
-    const regPlain = sampleMode ? '' : String(u.reg_no ?? '').trim();
-    const blockPlain = sampleMode ? '' : String(u.hostel_block ?? '').trim();
-    const roomPlain = sampleMode ? '' : String(u.room_number ?? '').trim();
-    const totalItems = lineItems.reduce((sum, item) => sum + item.qty, 0);
-    const lines = [
-      'LaundroSwipe',
-      `Vendor: ${vendorName}`,
-      `Token: #${tokenLabel}  Order: ${orderLabel}`,
-      `Customer ID: ${sampleMode ? '—' : (u.display_id ?? '—').toString().slice(0, 24)}`,
-      `Customer: ${customerLabel}`,
-      `Phone: ${phoneLabel}`,
-      ...(regPlain ? [`Reg no: ${regPlain}`] : []),
-      ...(blockPlain || roomPlain
-        ? [`Hostel: ${[blockPlain && `Block ${blockPlain}`, roomPlain && `Room ${roomPlain}`].filter(Boolean).join(' · ')}`]
-        : []),
-      '---',
-      ...lineItems.map((l) => `${l.label} x${l.qty}    ₹${l.price * l.qty}`),
-      '---',
-      `Total items: ${totalItems}`,
-      `Subtotal: ₹${subtotal}`,
-      formatServiceFeeReceiptLine(subtotal, serviceFee, 'inr'),
-      `TOTAL: ₹${total}`,
-      'Thank you!',
-    ];
-    return lines.join('\n');
+    const paper = getEffectiveEscPosPaperSize();
+    return formatVendorReceiptEscPosPlain(paper, buildVendorReceiptInput());
   };
 
   const buildVendorReceiptInput = (): VendorReceiptInput => {
@@ -621,9 +596,8 @@ export default function VendorPage() {
     const input = buildVendorReceiptInput();
     const escPosPayload = buildVendorReceiptEscPos(paper, input);
     const plain = formatVendorReceiptEscPosPlain(paper, input);
-    const config = getPrinterConfigForPrint();
-    const chars = config?.charsPerLine ?? 46;
-    const bodyHtml = escPosPlainToThermalReceiptHtml(plain, chars);
+    const adminCfg = getPrinterConfigForPrint();
+    const bodyHtml = escPosPlainReceiptHtmlForPaper(plain, paper);
     const prefs = getBlePrinterPreferences();
 
     try {
@@ -646,8 +620,7 @@ export default function VendorPage() {
     }
 
     const result = await printThermalReceiptDirect(title, bodyHtml, plain, {
-      printer: config ?? undefined,
-      forceDialog: config?.forceDialog ?? true,
+      printer: thermalPrinterConfigForEscPosPlain(paper, adminCfg),
       escPosPayload,
     });
     if (result === 'blocked') {

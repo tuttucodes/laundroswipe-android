@@ -2698,7 +2698,15 @@ export default function LaundroApp() {
                 <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0, color: 'var(--b)' }}>Bill #{viewingBill.order_token}</h3>
                 <button type="button" className="btn bout bsm" onClick={() => setViewingBill(null)} aria-label="Close">Close</button>
               </div>
+              {String(viewingBill.user_display_id ?? '').trim() ? (
+                <p style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 15, fontWeight: 700, color: 'var(--tx)', marginBottom: 4 }}>
+                  <strong>Customer ID:</strong> {String(viewingBill.user_display_id).trim()}
+                </p>
+              ) : null}
               <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Order:</strong> {viewingBill.order_number ?? '—'}</p>
+              {viewingBill.vendor_name ? (
+                <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Vendor:</strong> {viewingBill.vendor_name}</p>
+              ) : null}
               <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Date:</strong> {viewingBill.created_at ? new Date(viewingBill.created_at).toLocaleString() : '—'}</p>
               {String(viewingBill.customer_reg_no ?? '').trim() ? (
                 <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 4 }}><strong>Reg no:</strong> {viewingBill.customer_reg_no}</p>
@@ -2714,7 +2722,16 @@ export default function LaundroApp() {
                     .join(' · ')}
                 </p>
               ) : null}
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 12, marginBottom: 12 }}>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontFamily: 'Arial, Helvetica, sans-serif',
+                  fontSize: 13,
+                  marginTop: 12,
+                  marginBottom: 12,
+                }}
+              >
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--bd)' }}>
                     <th style={{ textAlign: 'left', padding: '8px 0' }}>Item</th>
@@ -2724,8 +2741,8 @@ export default function LaundroApp() {
                 <tbody>
                   {(Array.isArray(viewingBill.line_items) ? viewingBill.line_items : []).map((l: { label: string; qty: number; price: number }, i: number) => (
                     <tr key={i} style={{ borderBottom: '1px solid var(--bd)' }}>
-                      <td style={{ padding: '6px 0', fontSize: 16, fontWeight: 600, lineHeight: 1.35 }}>{l.label} ×{l.qty}</td>
-                      <td style={{ textAlign: 'right', padding: '6px 0', fontSize: 15 }}>₹{l.price * l.qty}</td>
+                      <td style={{ padding: '6px 0', fontSize: 17, fontWeight: 700, lineHeight: 1.35 }}>{l.label} ×{l.qty}</td>
+                      <td style={{ textAlign: 'right', padding: '6px 0', fontSize: 16, fontWeight: 700 }}>₹{l.price * l.qty}</td>
                     </tr>
                   ))}
                 </tbody>

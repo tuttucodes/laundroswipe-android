@@ -49,21 +49,24 @@ h1{font-family:var(--fd);font-size:22px;margin-bottom:8px;color:var(--b)}
 .toast.ok{background:var(--ok)}.toast.er{background:var(--er)}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-/* Thermal print (2" / 58mm) - shown in print window */
+/* Thermal print (~78mm) — align with app vendor receipt */
 @media print{
-  body{background:#fff;padding:0;font-size:12px}
+  body{background:#fff;padding:0;font-size:13px}
   .no-print{display:none!important}
-  .receipt{width:58mm!important;max-width:58mm;margin:0 auto;padding:8px;font-size:11px}
+  .receipt{width:78mm!important;max-width:78mm;margin:0 auto;padding:8px;font-family:Arial,Helvetica,sans-serif;font-size:12px}
   .receipt *{color:#000!important}
 }
-.receipt{width:280px;margin:0 auto;padding:16px;font-size:12px;border:1px dashed var(--bd)}
-.receipt h2{text-align:center;font-size:14px;margin-bottom:4px}
-.receipt .meta{font-size:10px;color:var(--ts);margin-bottom:12px}
-.receipt table{width:100%;border-collapse:collapse;font-size:11px}
-.receipt th,.receipt td{padding:4px 0;text-align:left}
+.receipt{width:296px;margin:0 auto;padding:16px;font-size:12px;border:1px dashed var(--bd);font-family:Arial,Helvetica,sans-serif}
+.receipt h2{text-align:center;font-size:15px;font-weight:700;margin-bottom:4px}
+.receipt .meta{font-size:11px;color:var(--ts);margin-bottom:10px;text-align:center}
+.receipt .pri{font-weight:700;font-size:14px;margin:4px 0}
+.receipt table{width:100%;border-collapse:collapse;font-size:12px}
+.receipt th,.receipt td{padding:5px 0;text-align:left}
 .receipt th{border-bottom:1px solid var(--bd)}
+.receipt .item-name{font-weight:700;font-size:15px;line-height:1.35}
+.receipt .item-amt{font-weight:700;font-size:14px}
 .receipt .right{text-align:right}
-.receipt .total{font-weight:700;font-size:13px;margin-top:8px;border-top:2px solid #000;padding-top:6px}
+.receipt .total{font-weight:700;font-size:14px;margin-top:8px;border-top:2px solid #000;padding-top:6px}
 .receipt .conv{font-size:11px;color:var(--ts)}
 @media(max-width:480px){.add-row{grid-template-columns:1fr 70px 50px}}
 </style>
@@ -72,7 +75,7 @@ h1{font-family:var(--fd);font-size:22px;margin-bottom:8px;color:var(--b)}
 <div class="no-print">
   <p style="margin-bottom:12px"><a href="/admin/" style="color:var(--b);font-weight:600;text-decoration:none">← Back to Dashboard</a></p>
   <h1>Vendor Bill</h1>
-  <p class="sub">Enter token to load order, add items, then print bill (2" thermal).</p>
+  <p class="sub">Enter token to load order, add items, then print bill (thermal ~78mm).</p>
 
   <div class="card">
     <div class="fg">
@@ -103,7 +106,7 @@ h1{font-family:var(--fd);font-size:22px;margin-bottom:8px;color:var(--b)}
       <div class="total-row" id="grand-row">Total: ₹20</div>
     </div>
     <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn bp" id="print-btn">Print bill (2" thermal)</button>
+      <button class="btn bp" id="print-btn">Print bill (thermal)</button>
       <button class="btn bout" id="new-bill-btn">New bill</button>
     </div>
   </div>
@@ -190,8 +193,11 @@ function showOrder(order, user) {
   currentUser = user || {};
   lineItems = [];
   $('order-card').style.display = 'block';
+  const dispId = (user.display_id || user.displayId || '').toString().trim();
   $('cust-info').innerHTML = `
-    <strong>Order:</strong> ${order.order_number || order.on} &nbsp;|&nbsp; <strong>Token:</strong> #${order.token}<br>
+    <div class="pri"><strong>Token:</strong> #${order.token}</div>
+    ${dispId ? `<div class="pri"><strong>Customer ID:</strong> ${dispId}</div>` : ''}
+    <strong>Order:</strong> ${order.order_number || order.on}<br>
     <strong>Customer:</strong> ${user.full_name || user.fn || '—'}<br>
     <strong>Phone:</strong> ${user.phone || user.ph || '—'} &nbsp;|&nbsp; <strong>Email:</strong> ${user.email || user.em || '—'}<br>
     <strong>Service:</strong> ${order.service_name || order.sl} &nbsp;|&nbsp; <strong>Date:</strong> ${order.pickup_date || order.pd}
@@ -238,12 +244,15 @@ function buildReceiptHtml() {
   const total = subtotal + CONVENIENCE_FEE;
   const user = currentUser || {};
   const order = currentOrder || {};
-  let rows = lineItems.map(l => `<tr><td>${l.label} x${l.qty}</td><td class="right">${l.price * l.qty}</td></tr>`).join('');
+  const dispId = (user.display_id || user.displayId || '').toString().trim();
+  let rows = lineItems.map(l => `<tr><td class="item-name">${l.label} ×${l.qty}</td><td class="right item-amt">₹${l.price * l.qty}</td></tr>`).join('');
   if (!rows) rows = '<tr><td colspan="2">No items</td></tr>';
   return `
     <h2>LaundroSwipe</h2>
     <p class="meta">Vendor name: Pro Fab Power Laundry</p>
-    <p><strong>Order:</strong> ${order.order_number || order.on} &nbsp; <strong>Token:</strong> #${order.token}</p>
+    <p class="pri"><strong>Token:</strong> #${order.token || ''}</p>
+    ${dispId ? `<p class="pri"><strong>Customer ID:</strong> ${dispId}</p>` : ''}
+    <p><strong>Order:</strong> ${order.order_number || order.on}</p>
     <p><strong>Customer:</strong> ${user.full_name || user.fn || '—'}</p>
     <p><strong>Phone:</strong> ${user.phone || user.ph || '—'}</p>
     <table>
@@ -266,15 +275,18 @@ function printBill() {
   w.document.write(`
     <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${(currentOrder && currentOrder.token) || ''}</title>
     <style>
-    body{font-family:system-ui,sans-serif;font-size:11px;padding:8px;margin:0;width:58mm;max-width:58mm}
-    table{width:100%;border-collapse:collapse;font-size:10px}
-    th,td{padding:2px 0}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:12px;padding:8px;margin:0;width:78mm;max-width:78mm}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{padding:4px 0}
+    .pri{font-weight:700;font-size:14px;margin:3px 0}
+    .item-name{font-weight:700;font-size:15px;line-height:1.35}
+    .item-amt{font-weight:700;font-size:14px}
     .right{text-align:right}
-    .total{font-weight:700;font-size:12px;border-top:2px solid #000;padding-top:4px;margin-top:4px}
-    .conv{font-size:10px;color:#666}
-    h2{text-align:center;font-size:13px;margin:0 0 2px}
-    p{margin:2px 0;font-size:10px}
-    @media print{body{width:58mm!important;max-width:58mm!important}}
+    .total{font-weight:700;font-size:14px;border-top:2px solid #000;padding-top:4px;margin-top:4px}
+    .conv{font-size:11px;color:#333}
+    h2{text-align:center;font-size:15px;font-weight:700;margin:0 0 4px}
+    p{margin:3px 0;font-size:11px}
+    @media print{body{width:78mm!important;max-width:78mm!important}}
     </style></head><body>
     ${receiptBody}
     </body></html>
