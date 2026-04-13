@@ -16,17 +16,23 @@ const THERMAL_STYLES = `
 .trc-meta{margin:3px 0;text-align:left;word-break:break-word}
 .trc-metaLabel{font-weight:600}
 .trc-section{margin:10px 0 6px;font-weight:700;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:#4b5563}
-.trc-grid{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px 6px;align-items:start;width:100%}
+/* Item ~56%, Qty ~10%, Rate ~15%, Amt ~19% (2.5+0.4+0.7+0.85) */
+.trc-grid{display:grid;grid-template-columns:2.5fr 0.4fr 0.7fr 0.85fr;gap:6px;align-items:start;width:100%;min-width:0}
 .trc-thead{margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #d1d5db}
-.trc-th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#6b7280}
+.trc-th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#6b7280;min-width:0}
 .trc-thRight{text-align:right}
-.trc-row{padding:5px 0;border-bottom:1px solid #e5e7eb}
+.trc-row{margin:4px 0;padding:4px 0;border-bottom:1px solid #e5e7eb;min-width:0}
 .trc-itemName{
-  font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:14px;line-height:1.25;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;padding-right:4px}
+  font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13.5px;line-height:1.2;min-width:0;
+  word-break:break-word;overflow-wrap:break-word;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
 .trc-qty{
-  font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:14px;text-align:right;white-space:nowrap}
-.trc-mono{font-family:inherit;font-weight:500;font-size:12px;text-align:right;white-space:nowrap}
+  font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13.5px;line-height:1.2;text-align:right;white-space:nowrap;
+  font-variant-numeric:tabular-nums;min-width:0;align-self:start}
+.trc-mono{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  font-variant-numeric:tabular-nums;font-weight:500;font-size:12px;line-height:1.2;text-align:right;white-space:nowrap;
+  min-width:0;align-self:start}
 .trc-summary{margin-top:10px}
 .trc-sumRow{display:flex;justify-content:space-between;gap:8px;margin:3px 0;flex-wrap:nowrap}
 .trc-total{margin-top:8px;padding-top:8px;border-top:2px solid #000;font-weight:700;font-size:13px}
