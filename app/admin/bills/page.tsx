@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import {
-  escPosPlainReceiptHtmlForPaper,
-  printThermalReceiptDirect,
-  thermalPrinterConfigForEscPosPlain,
-} from '@/lib/thermal-print';
+import { escPosPlainReceiptHtmlForPaper, printThermalReceiptDirect, thermalPrinterConfigForEscPosPlain } from '@/lib/thermal-print';
+import { openThermalReceiptReactPrintWindow } from '@/lib/receipt/openThermalReceiptReactPrint';
+import { ThermalReceipt } from '@/components/receipt/ThermalReceipt';
+import { vendorBillRowToThermalReceiptData } from '@/lib/receipt/thermalReceiptTypes';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import {
   buildVendorReceiptEscPos,
@@ -16,7 +15,7 @@ import {
 } from '@/lib/printing';
 import { getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import type { VendorBillRow } from '@/lib/api';
-import { applyServiceFeeDiscount, calculateServiceFee, formatServiceFeeReceiptLine, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { getVendorBillItems } from '@/lib/constants';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 import { billCatalogThumbUrl } from '@/lib/bill-catalog-thumb';
@@ -34,73 +33,6 @@ function billLineItemsToState(b: VendorBillRow): LineItem[] {
     qty: Math.max(1, Math.floor(Number(x.qty))),
     image_url: x.image_url ?? null,
   }));
-}
-
-function billToHtml(b: VendorBillRow) {
-  const totalItems = Array.isArray(b.line_items)
-    ? b.line_items.reduce((sum, l: { qty: number }) => sum + Number(l.qty || 0), 0)
-    : 0;
-  const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const meta = 'font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:500;line-height:1.35;color:#334155';
-  const rows = Array.isArray(b.line_items) && b.line_items.length
-    ? b.line_items
-        .map(
-          (l: { label: string; qty: number; price: number }) =>
-            `<tr><td class="qty-col" style="font-size:17px;font-weight:700;vertical-align:top">${l.qty}</td><td class="desc-col" style="font-weight:700;font-size:17px;line-height:1.35">${esc(l.label)}<br/><span style="font-size:12px;font-weight:600;color:#64748b">@₹${Number(l.price).toFixed(2)}</span></td><td class="amt-col" style="font-weight:700;font-size:16px;vertical-align:top">₹${(Number(l.price) * Number(l.qty)).toFixed(2)}</td></tr>`,
-        )
-        .join('')
-    : '<tr><td class="qty-col">0</td><td class="desc-col">No items</td><td class="amt-col">₹0.00</td></tr>';
-  const emailLine =
-    b.user_email != null && String(b.user_email).trim() !== ''
-      ? `<p style="${meta}"><strong>Email:</strong> ${esc(String(b.user_email))}</p>`
-      : '';
-  const idLine =
-    b.user_display_id != null && String(b.user_display_id).trim() !== ''
-      ? `<p class="center" style="${meta};font-weight:600"><strong>Customer ID:</strong> ${esc(String(b.user_display_id))}</p>`
-      : '';
-  const reg = String(b.customer_reg_no ?? '').trim();
-  const blk = String(b.customer_hostel_block ?? '').trim();
-  const rm = String(b.customer_room_number ?? '').trim();
-  const regLine = reg ? `<p class="center" style="${meta}"><strong>Reg no:</strong> ${esc(reg)}</p>` : '';
-  const hostelLine =
-    blk || rm
-      ? `<p class="center" style="${meta}"><strong>Hostel:</strong> ${esc([blk && `Block ${blk}`, rm && `Room ${rm}`].filter(Boolean).join(' · '))}</p>`
-      : '';
-  const originalFee = calculateServiceFee(Number(b.subtotal ?? 0));
-  const conv = Number(b.convenience_fee ?? 0);
-  const discountedFeeHtml =
-    conv === 0 && originalFee > 0
-      ? `<span>Service fee (7-day discount)</span><span><s>₹${originalFee.toFixed(2)}</s> ₹0.00</span>`
-      : `<span>Service fee (7-day discount)</span><span>₹${conv.toFixed(2)}</span>`;
-  return `
-    <div style="${meta};text-align:center">
-    <h2 style="font-size:15px;font-weight:700;margin:0 0 4px;color:#0f172a">LaundroSwipe</h2>
-    <p class="meta center" style="margin:0 0 8px">${esc(b.vendor_name ?? 'Vendor')}</p>
-    <p class="center" style="font-weight:600;margin:2px 0"><strong>Token:</strong> #${esc(String(b.order_token))}</p>
-    ${idLine}
-    <p class="center" style="margin:2px 0">Order: ${esc(String(b.order_number ?? '—'))}</p>
-    <p class="center" style="margin:2px 0">Customer: ${esc(b.customer_name ?? '—')}</p>
-    <p class="center" style="margin:2px 0">Phone: ${esc(b.customer_phone ?? '—')}</p>
-    ${emailLine}
-    ${regLine}
-    ${hostelLine}
-    <p class="center" style="margin:2px 0">Date: ${b.created_at ? new Date(b.created_at).toLocaleString() : ''}</p>
-    </div>
-    <div class="row-divider"></div>
-    <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.04em;color:#475569;margin:6px 0 4px">LINE ITEMS</p>
-    <table style="width:100%;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:4px 0">
-      <thead><tr><th class="qty-col" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#64748b">Qty</th><th class="desc-col" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#64748b">Description</th><th class="amt-col" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;color:#64748b">Amount</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="row-divider"></div>
-    <div class="totals" style="${meta}">
-      <p style="margin:3px 0"><span>Total items</span><span>${totalItems}</span></p>
-      <p style="margin:3px 0"><span>Subtotal</span><span>₹${Number(b.subtotal ?? 0).toFixed(2)}</span></p>
-      <p class="conv" style="font-size:10px;line-height:1.35">${discountedFeeHtml}</p>
-      <p class="total" style="font-size:13px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #cbd5e1"><span>Total</span><span>₹${Number(b.total ?? 0).toFixed(2)}</span></p>
-    </div>
-    <p class="foot" style="font-size:11px;color:#64748b;margin-top:10px">Thank you!</p>
-  `;
 }
 
 function normalizeBillTokenForDup(t: string) {
@@ -447,9 +379,11 @@ export default function BillsPage() {
       /* fall through to system dialog */
     }
 
+    const thermalData = vendorBillRowToThermalReceiptData(b);
     await printThermalReceiptDirect(title, bodyHtml, plain, {
       printer: thermalPrinterConfigForEscPosPlain(paper, adminCfg),
       escPosPayload,
+      dialogFallbackRenderer: () => openThermalReceiptReactPrintWindow(title, thermalData),
     });
   };
 
@@ -950,8 +884,9 @@ export default function BillsPage() {
               <h3 style={{ fontFamily: 'var(--fd)', fontSize: 18, margin: 0 }}>Bill #{viewingBill.order_token}</h3>
               <button type="button" onClick={() => setViewingBill(null)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--ts)', lineHeight: 1, padding: 4 }} aria-label="Close">×</button>
             </div>
-            <style>{`.bill-view-content table{width:100%;border-collapse:collapse}.bill-view-content .right{text-align:right}.bill-view-content .total{font-weight:700;border-top:2px solid #000;padding-top:4px;margin-top:4px}.bill-view-content .conv{color:#666}.bill-view-content h2{text-align:center;margin:0 0 8px}.bill-view-content p{margin:4px 0}`}</style>
-            <div className="bill-view-content" style={{ fontFamily: 'system-ui', fontSize: 13, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: billToHtml(viewingBill) }} />
+            <div className="bill-view-content" style={{ maxHeight: 'min(70vh, 620px)', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
+              <ThermalReceipt data={vendorBillRowToThermalReceiptData(viewingBill)} showPrintButton />
+            </div>
             {isSuperAdmin && viewingBill.user_id && (
               <p style={{ marginTop: 14, fontSize: 13 }}>
                 <Link

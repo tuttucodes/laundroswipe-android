@@ -3,11 +3,9 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import {
-  escPosPlainReceiptHtmlForPaper,
-  printThermalReceiptDirect,
-  thermalPrinterConfigForEscPosPlain,
-} from '@/lib/thermal-print';
+import { escPosPlainReceiptHtmlForPaper, printThermalReceiptDirect, thermalPrinterConfigForEscPosPlain } from '@/lib/thermal-print';
+import { openThermalReceiptReactPrintWindow } from '@/lib/receipt/openThermalReceiptReactPrint';
+import { vendorReceiptInputToThermalReceiptData } from '@/lib/receipt/thermalReceiptTypes';
 import {
   buildVendorReceiptEscPos,
   formatVendorReceiptEscPosPlain,
@@ -619,9 +617,11 @@ export default function VendorPage() {
       showToast('Direct print error — opening print dialog…', 'er');
     }
 
+    const thermalData = vendorReceiptInputToThermalReceiptData(input);
     const result = await printThermalReceiptDirect(title, bodyHtml, plain, {
       printer: thermalPrinterConfigForEscPosPlain(paper, adminCfg),
       escPosPayload,
+      dialogFallbackRenderer: () => openThermalReceiptReactPrintWindow(title, thermalData),
     });
     if (result === 'blocked') {
       showToast('Allow pop-ups to print, or try again', 'er');

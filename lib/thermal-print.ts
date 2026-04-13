@@ -301,11 +301,22 @@ export function openThermalReceiptWindow(
  * then fall back to system print dialog. Returns which method was used.
  * Call from a user gesture (e.g. button click).
  */
+export type PrintThermalReceiptDirectOptions = {
+  forceDialog?: boolean;
+  printer?: PrinterPrintConfig;
+  escPosPayload?: Uint8Array;
+  /**
+   * When direct paths (native / serial / BLE) are skipped or fail, this runs before the monospace HTML receipt.
+   * Return true to skip the HTML dialog (e.g. you opened a React thermal receipt window).
+   */
+  dialogFallbackRenderer?: (title: string, paperWidthMm: number) => boolean;
+};
+
 export async function printThermalReceiptDirect(
   title: string,
   bodyHtml: string,
   plainText: string,
-  options?: { forceDialog?: boolean; printer?: PrinterPrintConfig; escPosPayload?: Uint8Array }
+  options?: PrintThermalReceiptDirectOptions,
 ): Promise<DirectPrintResult> {
   const forceDialog = options?.forceDialog === true;
   const config = options?.printer ?? DEFAULT_CONFIG;
@@ -362,7 +373,9 @@ export async function printThermalReceiptDirect(
     }
   }
 
-  // Fallback: open print window and show system print dialog
+  // Fallback: optional React (or other) receipt window, then monospace HTML receipt
+  const custom = options?.dialogFallbackRenderer?.(title, config.paperWidthMm);
+  if (custom) return 'dialog';
   const ok = printThermalReceipt(title, bodyHtml, config.paperWidthMm);
   return ok ? 'dialog' : 'blocked';
 }
