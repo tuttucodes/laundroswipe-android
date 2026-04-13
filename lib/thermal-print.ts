@@ -51,13 +51,18 @@ td{text-align:left;vertical-align:top}
 .total{font-weight:700;font-size:17px;border-top:1px solid #000;padding-top:1.2mm;margin-top:1mm}
 .conv{font-size:13px}
 .foot{text-align:center;margin-top:2.5mm;font-size:15px}
-.escpos-plain-receipt{margin:0 auto;padding:0;box-sizing:border-box;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:16px;font-weight:700;line-height:1.45;white-space:pre;overflow-x:auto;word-break:break-word}
+.escpos-plain-receipt{margin:0 auto;padding:0;box-sizing:border-box;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:12px;font-weight:600;line-height:1.35;white-space:pre;overflow-x:auto;word-break:break-word}
+.escpos-vendor-wrap{margin:0 auto;padding:0;box-sizing:border-box}
+.escpos-vendor-head,.escpos-vendor-tail{margin:0;padding:0 0 1px;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:11px;font-weight:500;line-height:1.22;white-space:pre-wrap;word-break:break-word;color:#000;width:100%;border:0;background:transparent}
+.escpos-vendor-items{margin:0;padding:3px 0 5px;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:17px;font-weight:700;line-height:1.36;white-space:pre-wrap;word-break:break-word;color:#000;width:100%;border:0;background:transparent;border-top:1px solid #ddd;border-bottom:1px solid #ddd}
 .escpos-hint{background:#f0f0f0;color:#333;font-size:11px;padding:8px 12px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
 .no-print{}
 @media print{
   .escpos-hint,.no-print{display:none!important}
   html,body{width:${w}!important;max-width:${w}!important;min-width:${w}!important;padding:1.2mm!important;margin:0!important;background:#fff!important}
   .receipt{width:${contentWidth}!important;max-width:${contentWidth}!important;margin:0 auto!important}
+  .escpos-vendor-head,.escpos-vendor-tail{font-size:10px!important}
+  .escpos-vendor-items{font-size:16px!important}
   @page{size:${paperWidthMm}mm auto;margin:0}
 }
 `;
@@ -169,6 +174,10 @@ export function getThermalTestReceiptPlainText(charsPerLine: number = DEFAULT_CO
   return formatTestEscPosPlain(paper);
 }
 
+function escapeHtmlStatic(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /** Monospace `<pre>` matching POS column widths (chars per line). */
 export function escPosPlainToThermalReceiptHtml(plainText: string, charsPerLine: number): string {
   return (
@@ -180,9 +189,35 @@ export function escPosPlainToThermalReceiptHtml(plainText: string, charsPerLine:
   );
 }
 
-/** Use with `formatVendorReceiptEscPosPlain(paper, …)` so `<pre>` width matches wrapped lines. */
+const VENDOR_PLAIN_LINE_ITEMS = 'LINE ITEMS';
+const VENDOR_PLAIN_TOTAL_ITEMS = 'Total items:';
+
+/**
+ * Vendor receipt preview: smaller type for header/meta/totals; large bold block for line items only.
+ */
 export function escPosPlainReceiptHtmlForPaper(plainText: string, paper: PaperSize): string {
-  return escPosPlainToThermalReceiptHtml(plainText, PAPER_FONT_A_CHARS[paper]);
+  const w = PAPER_FONT_A_CHARS[paper];
+  const lines = plainText.split(/\n/);
+  const li = lines.findIndex((l) => l === VENDOR_PLAIN_LINE_ITEMS);
+  const ti = lines.findIndex((l) => l.startsWith(VENDOR_PLAIN_TOTAL_ITEMS));
+  if (li < 0 || ti < 0 || ti <= li) {
+    return escPosPlainToThermalReceiptHtml(plainText, w);
+  }
+  const head = lines.slice(0, li + 1).join('\n');
+  const items = lines.slice(li + 1, ti).join('\n');
+  const tail = lines.slice(ti).join('\n');
+  return (
+    '<div class="escpos-vendor-wrap" style="width:' +
+    w +
+    'ch;max-width:100%">' +
+    '<pre class="escpos-vendor-head">' +
+    escapeHtmlStatic(head) +
+    '</pre><pre class="escpos-vendor-items">' +
+    escapeHtmlStatic(items) +
+    '</pre><pre class="escpos-vendor-tail">' +
+    escapeHtmlStatic(tail) +
+    '</pre></div>'
+  );
 }
 
 /** Match BLE / ESC/POS paper labels to @page width used by thermal preview HTML. */

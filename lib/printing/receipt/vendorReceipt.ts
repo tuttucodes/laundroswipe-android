@@ -92,7 +92,7 @@ function layoutUnitAndTotal(paper: PaperSize, unitStr: string, lineTotal: string
 
 /**
  * Build raw ESC/POS bytes for a LaundroSwipe vendor bill.
- * Printers use built-in bitmap fonts (not Arial); we use bold + double height for line items.
+ * Header / meta / totals use normal height (saves paper); qty × item and rate lines stay double-height bold.
  */
 export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptInput): Uint8Array {
   const density = getBlePrinterPreferences().printDensity;
@@ -100,12 +100,12 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   const b = new ESCPOSBuilder(paper);
   b.initialize().codePage(0).printDensity(density);
 
-  b.align('center').bold(true).fontSize('doubleHeight').text('LaundroSwipe').fontSize('normal').bold(false);
-  b.text(input.vendorName);
+  b.align('center').bold(true).fontSize('normal').text('LaundroSwipe');
+  b.bold(false).text(input.vendorName);
   b.divider();
-  b.align('left');
-  b.bold(true).fontSize('normal').text(`Token: #${input.tokenLabel}`);
-  b.bold(true).text(`Customer ID: ${input.customerDisplayId}`).bold(false);
+  b.align('left').bold(false);
+  b.text(`Token: #${input.tokenLabel}`);
+  b.text(`Customer ID: ${input.customerDisplayId}`);
   b.text(`Order: ${input.orderLabel}`);
   b.text(`Customer: ${input.customerLabel}`);
   b.text(`Phone: ${input.phoneLabel}`);
@@ -120,13 +120,13 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   b.text(`Date: ${input.dateStr}`);
   b.divider();
 
-  b.bold(true).text('LINE ITEMS').bold(false);
+  b.bold(true).fontSize('normal').text('LINE ITEMS').bold(false);
   for (const l of input.lineItems) {
     const amt = money(l.price * l.qty);
     const descLine = `${l.qty}× ${truncateForPaper(l.label, paper)}`;
     const unitLeft = `@ ${money(l.price)} each`;
     b.align('left').bold(true).fontSize('doubleHeight').text(descLine);
-    b.fontSize('normal').bold(true);
+    b.fontSize('doubleHeight').bold(true);
     const ut = layoutUnitAndTotal(paper, unitLeft, amt);
     if (ut.mode === 'single') {
       b.align('left').text(ut.line);
@@ -134,7 +134,7 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
       b.align('left').text(ut.unitLine);
       b.align('right').text(amt);
     }
-    b.align('left').bold(false);
+    b.fontSize('normal').bold(false).align('left');
   }
   b.divider();
 
@@ -143,7 +143,7 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   for (const sf of wrapReceiptText(input.serviceFeeLine, w)) {
     b.text(sf);
   }
-  b.bold(true).text(`TOTAL: ${money(input.total)}`).bold(false);
+  b.bold(true).fontSize('normal').text(`TOTAL: ${money(input.total)}`).bold(false);
 
   if (input.showQr && input.paymentQrPayload?.trim()) {
     b.feed(1).align('center');
@@ -154,8 +154,8 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
     }
   }
 
-  b.feed(1).align('center').text(input.footer ?? 'Thank you!');
-  b.feed(4).cut(false);
+  b.feed(1).align('center').bold(false).text(input.footer ?? 'Thank you!');
+  b.feed(3).cut(false);
 
   return b.build();
 }
