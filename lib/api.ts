@@ -347,77 +347,16 @@ export const LSApi = {
       year?: number | null;
     }
   ): Promise<{ user: UserRow | null; error?: string }> {
-    if (!supabase) return { user: null, error: 'Not connected' };
-    try {
-      const existingByEmail = await this.fetchUserByEmail(email);
-      if (existingByEmail) {
-        return {
-          user: null,
-          error: 'This email is already registered. Sign in with Google, or use Forgot password to set a password and sign in with email.',
-        };
-      }
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password,
-        options: { data: { full_name: profile.full_name } },
-      });
-      if (authErr) {
-        const msg = authErr.message?.includes('already registered') ? 'Email already registered' : authErr.message || 'Sign up failed';
-        return { user: null, error: msg };
-      }
-      const authUser = authData?.user;
-      if (!authUser?.id) return { user: null, error: 'Sign up failed' };
-      const row = {
-        id: authUser.id,
-        auth_id: authUser.id,
-        full_name: profile.full_name,
-        email: authUser.email ?? email,
-        phone: profile.phone,
-        whatsapp: profile.whatsapp,
-        user_type: profile.user_type,
-        college_id: profile.college_id ?? null,
-        reg_no: profile.reg_no ?? null,
-        hostel_block: profile.hostel_block ?? null,
-        room_number: profile.room_number ?? null,
-        year: profile.year ?? null,
-      };
-      const { data: inserted, error: insertErr } = await supabase
-        .from('users')
-        .insert(row)
-        .select()
-        .single();
-      if (insertErr) {
-        console.error('Supabase signUpWithEmail insert error', insertErr);
-        return { user: null, error: insertErr.message || 'Profile creation failed' };
-      }
-      return { user: inserted as UserRow };
-    } catch (e) {
-      console.error('signUpWithEmail exception', e);
-      return { user: null, error: (e as Error)?.message || 'Sign up failed' };
-    }
+    void email;
+    void password;
+    void profile;
+    return { user: null, error: 'Email/password signup is disabled. Please continue with Google.' };
   },
 
   async signInWithPassword(email: string, password: string): Promise<{ user: UserRow | null; error?: string }> {
-    if (!supabase) return { user: null, error: 'Not connected' };
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-      if (error) return { user: null, error: error.message || 'Invalid email or password' };
-      const authUser = data?.user;
-      if (!authUser?.id) return { user: null, error: 'Sign in failed' };
-      const { data: profile, error: profileErr } = await supabase
-        .from('users')
-        .select('id, full_name, email, phone, whatsapp, user_type, college_id, reg_no, hostel_block, room_number, year, display_id, terms_accepted_at, terms_version')
-        .eq('auth_id', authUser.id)
-        .maybeSingle();
-      if (profileErr || !profile) return { user: null, error: 'Profile not found' };
-      return { user: profile as UserRow };
-    } catch (e) {
-      console.error('signInWithPassword exception', e);
-      return { user: null, error: (e as Error)?.message || 'Sign in failed' };
-    }
+    void email;
+    void password;
+    return { user: null, error: 'Email/password login is disabled. Please continue with Google.' };
   },
 
   async signInWithGoogle(redirectTo?: string): Promise<{ error?: { message: string }; data?: { url: string } }> {
@@ -484,33 +423,13 @@ export const LSApi = {
   },
 
   async resetPasswordForEmail(email: string): Promise<{ error?: string }> {
-    if (!supabase) return { error: 'Service not available' };
-    try {
-      const redirectTo =
-        typeof window !== 'undefined' && window.location?.origin
-          ? `${window.location.origin}${window.location.pathname || '/'}`
-          : undefined;
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: redirectTo || undefined,
-      });
-      if (error) return { error: error.message };
-      return {};
-    } catch (e) {
-      console.error('resetPasswordForEmail exception', e);
-      return { error: (e as Error)?.message || 'Failed to send reset email' };
-    }
+    void email;
+    return { error: 'Password reset is disabled. Please continue with Google.' };
   },
 
   async updatePassword(newPassword: string): Promise<{ error?: string }> {
-    if (!supabase) return { error: 'Service not available' };
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) return { error: error.message };
-      return {};
-    } catch (e) {
-      console.error('updatePassword exception', e);
-      return { error: (e as Error)?.message || 'Failed to update password' };
-    }
+    void newPassword;
+    return { error: 'Password updates are disabled for customer accounts.' };
   },
 
   async upsertUserFromAuth(authUser: {

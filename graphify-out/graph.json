@@ -25,7 +25,7 @@
       "source_file": "app/admin/layout.tsx",
       "source_location": "L1",
       "id": "layout",
-      "community": 23
+      "community": 22
     },
     {
       "label": "RootLayout()",
@@ -33,7 +33,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L51",
       "id": "layout_rootlayout",
-      "community": 23
+      "community": 22
     },
     {
       "label": "manifest.ts",
@@ -73,7 +73,7 @@
       "source_file": "app/not-found.tsx",
       "source_location": "L1",
       "id": "not_found",
-      "community": 18
+      "community": 17
     },
     {
       "label": "NotFound()",
@@ -81,7 +81,7 @@
       "source_file": "app/not-found.tsx",
       "source_location": "L7",
       "id": "not_found_notfound",
-      "community": 18
+      "community": 17
     },
     {
       "label": "GreenPage()",
@@ -97,7 +97,7 @@
       "source_file": "app/admin/layout.tsx",
       "source_location": "L20",
       "id": "layout_adminlayout",
-      "community": 23
+      "community": 22
     },
     {
       "label": "getGatePassLetterHtml()",
@@ -1217,7 +1217,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L1",
       "id": "mainactivity",
-      "community": 8
+      "community": 9
     },
     {
       "label": "MainActivity",
@@ -1225,7 +1225,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L26",
       "id": "mainactivity_mainactivity",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".onCreate()",
@@ -1233,7 +1233,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L45",
       "id": "mainactivity_mainactivity_oncreate",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".hasBluetoothPermission()",
@@ -1241,7 +1241,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L62",
       "id": "mainactivity_mainactivity_hasbluetoothpermission",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".setContentViewFallbackNoBtPermission()",
@@ -1249,7 +1249,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L72",
       "id": "mainactivity_mainactivity_setcontentviewfallbacknobtpermission",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".inflateAndWireChrome()",
@@ -1257,7 +1257,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L79",
       "id": "mainactivity_mainactivity_inflateandwirechrome",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".onReadyUi()",
@@ -1265,7 +1265,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L107",
       "id": "mainactivity_mainactivity_onreadyui",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".resolvedSavedMac()",
@@ -1273,7 +1273,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L119",
       "id": "mainactivity_mainactivity_resolvedsavedmac",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".showSetupUi()",
@@ -1281,7 +1281,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L130",
       "id": "mainactivity_mainactivity_showsetupui",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".showWebUi()",
@@ -1289,7 +1289,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L136",
       "id": "mainactivity_mainactivity_showwebui",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".loadBondedDevices()",
@@ -1297,7 +1297,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L142",
       "id": "mainactivity_mainactivity_loadbondeddevices",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".onContinueClicked()",
@@ -1305,7 +1305,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L161",
       "id": "mainactivity_mainactivity_oncontinueclicked",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".persistMac()",
@@ -1313,7 +1313,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L178",
       "id": "mainactivity_mainactivity_persistmac",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".showManualMacDialog()",
@@ -1321,7 +1321,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L185",
       "id": "mainactivity_mainactivity_showmanualmacdialog",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".initWebViewIfNeeded()",
@@ -1329,7 +1329,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L213",
       "id": "mainactivity_mainactivity_initwebviewifneeded",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".normalizeMac()",
@@ -1337,7 +1337,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L225",
       "id": "mainactivity_mainactivity_normalizemac",
-      "community": 8
+      "community": 9
     },
     {
       "label": ".isPlausibleMac()",
@@ -1345,7 +1345,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/MainActivity.kt",
       "source_location": "L233",
       "id": "mainactivity_mainactivity_isplausiblemac",
-      "community": 8
+      "community": 9
     },
     {
       "label": "BluetoothDevicePickerAdapter.kt",
@@ -1353,7 +1353,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L1",
       "id": "bluetoothdevicepickeradapter",
-      "community": 15
+      "community": 14
     },
     {
       "label": "PairedDeviceRow",
@@ -1361,7 +1361,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L9",
       "id": "bluetoothdevicepickeradapter_paireddevicerow",
-      "community": 15
+      "community": 14
     },
     {
       "label": "BluetoothDevicePickerAdapter",
@@ -1369,7 +1369,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L15",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter",
-      "community": 15
+      "community": 14
     },
     {
       "label": ".submitList()",
@@ -1377,7 +1377,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L22",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_submitlist",
-      "community": 15
+      "community": 14
     },
     {
       "label": ".selectByAddress()",
@@ -1385,7 +1385,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L29",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_selectbyaddress",
-      "community": 15
+      "community": 14
     },
     {
       "label": ".selectedRow()",
@@ -1393,7 +1393,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L39",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_selectedrow",
-      "community": 15
+      "community": 14
     },
     {
       "label": ".getItemCount()",
@@ -1401,7 +1401,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L42",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_getitemcount",
-      "community": 15
+      "community": 14
     },
     {
       "label": ".onCreateViewHolder()",
@@ -1409,7 +1409,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L44",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_oncreateviewholder",
-      "community": 15
+      "community": 14
     },
     {
       "label": ".onBindViewHolder()",
@@ -1417,7 +1417,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L50",
       "id": "bluetoothdevicepickeradapter_bluetoothdevicepickeradapter_onbindviewholder",
-      "community": 15
+      "community": 14
     },
     {
       "label": "VH",
@@ -1425,7 +1425,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L54",
       "id": "bluetoothdevicepickeradapter_vh",
-      "community": 15
+      "community": 14
     },
     {
       "label": ".bind()",
@@ -1433,7 +1433,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothDevicePickerAdapter.kt",
       "source_location": "L70",
       "id": "bluetoothdevicepickeradapter_vh_bind",
-      "community": 15
+      "community": 14
     },
     {
       "label": "BluetoothPrinterDevices.kt",
@@ -1441,7 +1441,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L1",
       "id": "bluetoothprinterdevices",
-      "community": 19
+      "community": 18
     },
     {
       "label": "BluetoothPrinterDevices",
@@ -1449,7 +1449,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L8",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices",
-      "community": 19
+      "community": 18
     },
     {
       "label": ".isLikelyThermalPrinter()",
@@ -1457,7 +1457,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L10",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_islikelythermalprinter",
-      "community": 19
+      "community": 18
     },
     {
       "label": ".pairedRows()",
@@ -1465,7 +1465,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L25",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_pairedrows",
-      "community": 19
+      "community": 18
     },
     {
       "label": ".normalizeDisplayAddress()",
@@ -1473,7 +1473,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/BluetoothPrinterDevices.kt",
       "source_location": "L41",
       "id": "bluetoothprinterdevices_bluetoothprinterdevices_normalizedisplayaddress",
-      "community": 19
+      "community": 18
     },
     {
       "label": "PrintBridge.kt",
@@ -1481,7 +1481,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L1",
       "id": "printbridge",
-      "community": 20
+      "community": 19
     },
     {
       "label": "PrintBridge",
@@ -1489,7 +1489,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L18",
       "id": "printbridge_printbridge",
-      "community": 20
+      "community": 19
     },
     {
       "label": ".bluetoothAdapter()",
@@ -1497,7 +1497,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L28",
       "id": "printbridge_printbridge_bluetoothadapter",
-      "community": 20
+      "community": 19
     },
     {
       "label": ".setPairedPrinterAddress()",
@@ -1505,7 +1505,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L36",
       "id": "printbridge_printbridge_setpairedprinteraddress",
-      "community": 20
+      "community": 19
     },
     {
       "label": ".printEscPosBase64()",
@@ -1513,7 +1513,7 @@
       "source_file": "android-print-bridge/app/src/main/java/com/laundroswipe/printbridge/PrintBridge.kt",
       "source_location": "L60",
       "id": "printbridge_printbridge_printescposbase64",
-      "community": 20
+      "community": 19
     },
     {
       "label": "index.ts",
@@ -1521,7 +1521,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L1",
       "id": "index",
-      "community": 11
+      "community": 12
     },
     {
       "label": "sendExpoPush()",
@@ -1529,7 +1529,7 @@
       "source_file": "supabase/functions/push/index.ts",
       "source_location": "L28",
       "id": "index_sendexpopush",
-      "community": 11
+      "community": 12
     },
     {
       "label": "PwaRegister.tsx",
@@ -1655,7 +1655,7 @@
       "label": "tryApplySession()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L690",
+      "source_location": "L671",
       "id": "laundroapp_tryapplysession",
       "community": 2
     },
@@ -1663,7 +1663,7 @@
       "label": "init()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L728",
+      "source_location": "L709",
       "id": "laundroapp_init",
       "community": 2
     },
@@ -1671,7 +1671,7 @@
       "label": "refreshSchedule()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L848",
+      "source_location": "L831",
       "id": "laundroapp_refreshschedule",
       "community": 2
     },
@@ -1679,7 +1679,7 @@
       "label": "onFocus()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L855",
+      "source_location": "L838",
       "id": "laundroapp_onfocus",
       "community": 2
     },
@@ -1687,7 +1687,7 @@
       "label": "handleObNext()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1037",
+      "source_location": "L1020",
       "id": "laundroapp_handleobnext",
       "community": 2
     },
@@ -1695,63 +1695,31 @@
       "label": "handleObSkip()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1044",
+      "source_location": "L1027",
       "id": "laundroapp_handleobskip",
-      "community": 2
-    },
-    {
-      "label": "handleLoginEmail()",
-      "file_type": "code",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1049",
-      "id": "laundroapp_handleloginemail",
       "community": 2
     },
     {
       "label": "handleGoogleLogin()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1087",
+      "source_location": "L1032",
       "id": "laundroapp_handlegooglelogin",
-      "community": 2
-    },
-    {
-      "label": "handleForgotPassword()",
-      "file_type": "code",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1096",
-      "id": "laundroapp_handleforgotpassword",
-      "community": 2
-    },
-    {
-      "label": "handleSetPassword()",
-      "file_type": "code",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1118",
-      "id": "laundroapp_handlesetpassword",
       "community": 2
     },
     {
       "label": "handleSaveStudentDetailsModal()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1172",
+      "source_location": "L1041",
       "id": "laundroapp_handlesavestudentdetailsmodal",
-      "community": 2
-    },
-    {
-      "label": "handleSignup()",
-      "file_type": "code",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1219",
-      "id": "laundroapp_handlesignup",
       "community": 2
     },
     {
       "label": "handleCompleteProfile()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1288",
+      "source_location": "L1088",
       "id": "laundroapp_handlecompleteprofile",
       "community": 2
     },
@@ -1759,7 +1727,7 @@
       "label": "handleSaveEditProfile()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1340",
+      "source_location": "L1140",
       "id": "laundroapp_handlesaveeditprofile",
       "community": 2
     },
@@ -1767,7 +1735,7 @@
       "label": "handleSelectVendor()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1393",
+      "source_location": "L1193",
       "id": "laundroapp_handleselectvendor",
       "community": 2
     },
@@ -1775,7 +1743,7 @@
       "label": "handleScheduleService()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1397",
+      "source_location": "L1197",
       "id": "laundroapp_handlescheduleservice",
       "community": 2
     },
@@ -1783,7 +1751,7 @@
       "label": "handleScheduleDateSlot()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1401",
+      "source_location": "L1201",
       "id": "laundroapp_handlescheduledateslot",
       "community": 2
     },
@@ -1791,7 +1759,7 @@
       "label": "handleConfirmOrder()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1405",
+      "source_location": "L1205",
       "id": "laundroapp_handleconfirmorder",
       "community": 2
     },
@@ -1799,7 +1767,7 @@
       "label": "handleConfirmDelivery()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1488",
+      "source_location": "L1288",
       "id": "laundroapp_handleconfirmdelivery",
       "community": 2
     },
@@ -1807,16 +1775,8 @@
       "label": "handleLogout()",
       "file_type": "code",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1508",
+      "source_location": "L1308",
       "id": "laundroapp_handlelogout",
-      "community": 2
-    },
-    {
-      "label": "handleSetPasswordForEmail()",
-      "file_type": "code",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1518",
-      "id": "laundroapp_handlesetpasswordforemail",
       "community": 2
     },
     {
@@ -1889,7 +1849,7 @@
       "source_file": "components/HomeContactForm.tsx",
       "source_location": "L1",
       "id": "homecontactform",
-      "community": 18
+      "community": 17
     },
     {
       "label": "handleSubmit()",
@@ -1897,7 +1857,7 @@
       "source_file": "components/HomeContactForm.tsx",
       "source_location": "L15",
       "id": "homecontactform_handlesubmit",
-      "community": 18
+      "community": 17
     },
     {
       "label": "button.tsx",
@@ -1905,7 +1865,7 @@
       "source_file": "components/ui/button.tsx",
       "source_location": "L1",
       "id": "button",
-      "community": 18
+      "community": 17
     },
     {
       "label": "Hero.tsx",
@@ -2249,7 +2209,7 @@
       "source_file": "components/vendor/PrintBridgeApkCta.tsx",
       "source_location": "L1",
       "id": "printbridgeapkcta",
-      "community": 22
+      "community": 21
     },
     {
       "label": "BluetoothPrinterPanel.tsx",
@@ -2257,7 +2217,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L1",
       "id": "bluetoothprinterpanel",
-      "community": 12
+      "community": 5
     },
     {
       "label": "statusLabel()",
@@ -2265,7 +2225,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L21",
       "id": "bluetoothprinterpanel_statuslabel",
-      "community": 12
+      "community": 5
     },
     {
       "label": "refreshPrefs()",
@@ -2273,7 +2233,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L42",
       "id": "bluetoothprinterpanel_refreshprefs",
-      "community": 12
+      "community": 5
     },
     {
       "label": "patchPrefs()",
@@ -2281,7 +2241,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L47",
       "id": "bluetoothprinterpanel_patchprefs",
-      "community": 12
+      "community": 5
     },
     {
       "label": "handleScan()",
@@ -2289,7 +2249,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L64",
       "id": "bluetoothprinterpanel_handlescan",
-      "community": 12
+      "community": 5
     },
     {
       "label": "handleDisconnect()",
@@ -2297,7 +2257,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L78",
       "id": "bluetoothprinterpanel_handledisconnect",
-      "community": 12
+      "community": 5
     },
     {
       "label": "handleTestPrint()",
@@ -2305,7 +2265,7 @@
       "source_file": "components/vendor/BluetoothPrinterPanel.tsx",
       "source_location": "L84",
       "id": "bluetoothprinterpanel_handletestprint",
-      "community": 12
+      "community": 5
     },
     {
       "label": "sw.js",
@@ -2345,7 +2305,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L1",
       "id": "customer_display_segregate",
-      "community": 16
+      "community": 15
     },
     {
       "label": "clean()",
@@ -2353,7 +2313,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L11",
       "id": "customer_display_segregate_clean",
-      "community": 16
+      "community": 15
     },
     {
       "label": "isEmptyDisplay()",
@@ -2361,7 +2321,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L19",
       "id": "customer_display_segregate_isemptydisplay",
-      "community": 16
+      "community": 15
     },
     {
       "label": "escapeReg()",
@@ -2369,7 +2329,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L23",
       "id": "customer_display_segregate_escapereg",
-      "community": 16
+      "community": 15
     },
     {
       "label": "tryExtractRoomFromBlock()",
@@ -2377,7 +2337,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L30",
       "id": "customer_display_segregate_tryextractroomfromblock",
-      "community": 16
+      "community": 15
     },
     {
       "label": "stripTrailingRoomFromBlock()",
@@ -2385,7 +2345,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L66",
       "id": "customer_display_segregate_striptrailingroomfromblock",
-      "community": 16
+      "community": 15
     },
     {
       "label": "segregateHostelBlockRoom()",
@@ -2393,7 +2353,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L75",
       "id": "customer_display_segregate_segregatehostelblockroom",
-      "community": 16
+      "community": 15
     },
     {
       "label": "segregateNameAndReg()",
@@ -2401,7 +2361,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L124",
       "id": "customer_display_segregate_segregatenameandreg",
-      "community": 16
+      "community": 15
     },
     {
       "label": "segregateCustomerDisplay()",
@@ -2409,7 +2369,7 @@
       "source_file": "lib/customer-display-segregate.ts",
       "source_location": "L162",
       "id": "customer_display_segregate_segregatecustomerdisplay",
-      "community": 16
+      "community": 15
     },
     {
       "label": "vendor-bill-network.ts",
@@ -2417,7 +2377,7 @@
       "source_file": "lib/vendor-bill-network.ts",
       "source_location": "L1",
       "id": "vendor_bill_network",
-      "community": 0
+      "community": 23
     },
     {
       "label": "isCustomOrPresetLineId()",
@@ -2425,7 +2385,7 @@
       "source_file": "lib/vendor-bill-network.ts",
       "source_location": "L13",
       "id": "vendor_bill_network_iscustomorpresetlineid",
-      "community": 0
+      "community": 23
     },
     {
       "label": "compactLineItemsForSavePayload()",
@@ -2433,7 +2393,7 @@
       "source_file": "lib/vendor-bill-network.ts",
       "source_location": "L18",
       "id": "vendor_bill_network_compactlineitemsforsavepayload",
-      "community": 0
+      "community": 23
     },
     {
       "label": "admin-session.ts",
@@ -2553,7 +2513,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L1",
       "id": "native_print_bridge",
-      "community": 11
+      "community": 12
     },
     {
       "label": "uint8ToBase64()",
@@ -2561,7 +2521,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L25",
       "id": "native_print_bridge_uint8tobase64",
-      "community": 11
+      "community": 12
     },
     {
       "label": "isNativeEscPosBridgeAvailable()",
@@ -2569,7 +2529,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L31",
       "id": "native_print_bridge_isnativeescposbridgeavailable",
-      "community": 11
+      "community": 12
     },
     {
       "label": "tryNativeEscPosPrint()",
@@ -2577,7 +2537,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L41",
       "id": "native_print_bridge_trynativeescposprint",
-      "community": 11
+      "community": 12
     },
     {
       "label": "supabase-service.ts",
@@ -2609,7 +2569,7 @@
       "source_file": "lib/cn.ts",
       "source_location": "L1",
       "id": "cn",
-      "community": 18
+      "community": 17
     },
     {
       "label": "cn()",
@@ -2617,7 +2577,7 @@
       "source_file": "lib/cn.ts",
       "source_location": "L4",
       "id": "cn_cn",
-      "community": 18
+      "community": 17
     },
     {
       "label": "supabase-metadata-cache.ts",
@@ -2729,7 +2689,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L1",
       "id": "ble_printer_settings",
-      "community": 12
+      "community": 5
     },
     {
       "label": "load()",
@@ -2737,7 +2697,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L37",
       "id": "ble_printer_settings_load",
-      "community": 12
+      "community": 5
     },
     {
       "label": "save()",
@@ -2745,7 +2705,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L63",
       "id": "ble_printer_settings_save",
-      "community": 12
+      "community": 5
     },
     {
       "label": "getBlePrinterPreferences()",
@@ -2753,7 +2713,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L72",
       "id": "ble_printer_settings_getbleprinterpreferences",
-      "community": 12
+      "community": 5
     },
     {
       "label": "setBlePrinterPreferences()",
@@ -2761,7 +2721,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L76",
       "id": "ble_printer_settings_setbleprinterpreferences",
-      "community": 12
+      "community": 5
     },
     {
       "label": "getEffectiveEscPosPaperSize()",
@@ -2769,7 +2729,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L83",
       "id": "ble_printer_settings_geteffectiveescpospapersize",
-      "community": 12
+      "community": 5
     },
     {
       "label": "syncEscPosPaperFromAdminPrinter()",
@@ -2777,7 +2737,7 @@
       "source_file": "lib/ble-printer-settings.ts",
       "source_location": "L88",
       "id": "ble_printer_settings_syncescpospaperfromadminprinter",
-      "community": 12
+      "community": 5
     },
     {
       "label": "hostel-block.ts",
@@ -2817,7 +2777,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L1",
       "id": "print_bridge_apk",
-      "community": 22
+      "community": 21
     },
     {
       "label": "getPrintBridgeApkUrl()",
@@ -2825,7 +2785,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L10",
       "id": "print_bridge_apk_getprintbridgeapkurl",
-      "community": 22
+      "community": 21
     },
     {
       "label": "isPrintBridgeApkDirectPublicUrl()",
@@ -2833,7 +2793,7 @@
       "source_file": "lib/print-bridge-apk.ts",
       "source_location": "L18",
       "id": "print_bridge_apk_isprintbridgeapkdirectpublicurl",
-      "community": 22
+      "community": 21
     },
     {
       "label": "public-rate-limit.ts",
@@ -2865,7 +2825,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L1",
       "id": "constants",
-      "community": 10
+      "community": 11
     },
     {
       "label": "getVendorBillItems()",
@@ -2873,7 +2833,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L129",
       "id": "constants_getvendorbillitems",
-      "community": 10
+      "community": 11
     },
     {
       "label": "statusLabel()",
@@ -2881,7 +2841,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L156",
       "id": "constants_statuslabel",
-      "community": 10
+      "community": 11
     },
     {
       "label": "statusClass()",
@@ -2889,7 +2849,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L161",
       "id": "constants_statusclass",
-      "community": 10
+      "community": 11
     },
     {
       "label": "customerFacingStatusLabel()",
@@ -2897,7 +2857,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L168",
       "id": "constants_customerfacingstatuslabel",
-      "community": 10
+      "community": 11
     },
     {
       "label": "customerFacingStatusClass()",
@@ -2905,7 +2865,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L175",
       "id": "constants_customerfacingstatusclass",
-      "community": 10
+      "community": 11
     },
     {
       "label": "next10Days()",
@@ -2913,7 +2873,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L182",
       "id": "constants_next10days",
-      "community": 10
+      "community": 11
     },
     {
       "label": "getScheduleDates()",
@@ -2921,7 +2881,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L203",
       "id": "constants_getscheduledates",
-      "community": 10
+      "community": 11
     },
     {
       "label": "isEveningOnlyDate()",
@@ -2929,7 +2889,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L227",
       "id": "constants_iseveningonlydate",
-      "community": 10
+      "community": 11
     },
     {
       "label": "thermal-print.ts",
@@ -2937,7 +2897,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L1",
       "id": "thermal_print",
-      "community": 7
+      "community": 8
     },
     {
       "label": "getThermalStyles()",
@@ -2945,7 +2905,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L26",
       "id": "thermal_print_getthermalstyles",
-      "community": 7
+      "community": 8
     },
     {
       "label": "buildEscPosBytes()",
@@ -2953,7 +2913,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L76",
       "id": "thermal_print_buildescposbytes",
-      "community": 7
+      "community": 8
     },
     {
       "label": "isSerialSupported()",
@@ -2961,7 +2921,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L125",
       "id": "thermal_print_isserialsupported",
-      "community": 7
+      "community": 8
     },
     {
       "label": "isBluetoothSupported()",
@@ -2969,7 +2929,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L129",
       "id": "thermal_print_isbluetoothsupported",
-      "community": 7
+      "community": 8
     },
     {
       "label": "writeToSerialPort()",
@@ -2977,7 +2937,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L138",
       "id": "thermal_print_writetoserialport",
-      "community": 7
+      "community": 8
     },
     {
       "label": "writeToBleCharacteristic()",
@@ -2985,7 +2945,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L154",
       "id": "thermal_print_writetoblecharacteristic",
-      "community": 7
+      "community": 8
     },
     {
       "label": "getThermalTestReceiptBodyHtml()",
@@ -2993,7 +2953,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L166",
       "id": "thermal_print_getthermaltestreceiptbodyhtml",
-      "community": 7
+      "community": 8
     },
     {
       "label": "getThermalTestReceiptPlainText()",
@@ -3001,7 +2961,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L172",
       "id": "thermal_print_getthermaltestreceiptplaintext",
-      "community": 7
+      "community": 8
     },
     {
       "label": "escapeHtmlStatic()",
@@ -3009,7 +2969,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L177",
       "id": "thermal_print_escapehtmlstatic",
-      "community": 7
+      "community": 8
     },
     {
       "label": "escPosPlainToThermalReceiptHtml()",
@@ -3017,7 +2977,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L182",
       "id": "thermal_print_escposplaintothermalreceipthtml",
-      "community": 7
+      "community": 8
     },
     {
       "label": "escPosPlainReceiptHtmlForPaper()",
@@ -3025,7 +2985,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L198",
       "id": "thermal_print_escposplainreceipthtmlforpaper",
-      "community": 7
+      "community": 8
     },
     {
       "label": "paperWidthMmFromLabel()",
@@ -3033,7 +2993,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L224",
       "id": "thermal_print_paperwidthmmfromlabel",
-      "community": 7
+      "community": 8
     },
     {
       "label": "thermalPrinterConfigForEscPosPlain()",
@@ -3041,7 +3001,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L235",
       "id": "thermal_print_thermalprinterconfigforescposplain",
-      "community": 7
+      "community": 8
     },
     {
       "label": "openThermalReceiptWindow()",
@@ -3049,7 +3009,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L254",
       "id": "thermal_print_openthermalreceiptwindow",
-      "community": 7
+      "community": 8
     },
     {
       "label": "printThermalReceiptDirect()",
@@ -3057,7 +3017,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L315",
       "id": "thermal_print_printthermalreceiptdirect",
-      "community": 7
+      "community": 8
     },
     {
       "label": "printThermalReceipt()",
@@ -3065,7 +3025,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L387",
       "id": "thermal_print_printthermalreceipt",
-      "community": 7
+      "community": 8
     },
     {
       "label": "printFullPageBill()",
@@ -3073,7 +3033,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L395",
       "id": "thermal_print_printfullpagebill",
-      "community": 7
+      "community": 8
     },
     {
       "label": "escapeHtml()",
@@ -3081,7 +3041,7 @@
       "source_file": "lib/thermal-print.ts",
       "source_location": "L447",
       "id": "thermal_print_escapehtml",
-      "community": 7
+      "community": 8
     },
     {
       "label": "vendor-bill-catalog.ts",
@@ -3089,7 +3049,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L1",
       "id": "vendor_bill_catalog",
-      "community": 10
+      "community": 11
     },
     {
       "label": "parseBillItemOverrides()",
@@ -3097,7 +3057,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L21",
       "id": "vendor_bill_catalog_parsebillitemoverrides",
-      "community": 10
+      "community": 11
     },
     {
       "label": "mergeVendorBillItems()",
@@ -3105,7 +3065,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L52",
       "id": "vendor_bill_catalog_mergevendorbillitems",
-      "community": 10
+      "community": 11
     },
     {
       "label": "mergeVendorBillItemsFromDbRow()",
@@ -3113,7 +3073,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L69",
       "id": "vendor_bill_catalog_mergevendorbillitemsfromdbrow",
-      "community": 10
+      "community": 11
     },
     {
       "label": "catalogIdSet()",
@@ -3121,7 +3081,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L76",
       "id": "vendor_bill_catalog_catalogidset",
-      "community": 10
+      "community": 11
     },
     {
       "label": "sanitizeBillItemOverridesForPut()",
@@ -3129,7 +3089,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L82",
       "id": "vendor_bill_catalog_sanitizebillitemoverridesforput",
-      "community": 10
+      "community": 11
     },
     {
       "label": "ist-dates.ts",
@@ -3137,7 +3097,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L1",
       "id": "ist_dates",
-      "community": 17
+      "community": 16
     },
     {
       "label": "formatIstYmd()",
@@ -3145,7 +3105,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L5",
       "id": "ist_dates_formatistymd",
-      "community": 17
+      "community": 16
     },
     {
       "label": "istYmdStartIso()",
@@ -3153,7 +3113,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L13",
       "id": "ist_dates_istymdstartiso",
-      "community": 17
+      "community": 16
     },
     {
       "label": "istYmdEndIso()",
@@ -3161,7 +3121,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L18",
       "id": "ist_dates_istymdendiso",
-      "community": 17
+      "community": 16
     },
     {
       "label": "addDaysYmd()",
@@ -3169,7 +3129,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L23",
       "id": "ist_dates_adddaysymd",
-      "community": 17
+      "community": 16
     },
     {
       "label": "eachYmdInRange()",
@@ -3177,7 +3137,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L29",
       "id": "ist_dates_eachymdinrange",
-      "community": 17
+      "community": 16
     },
     {
       "label": "fillCollectedByDate()",
@@ -3185,7 +3145,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L46",
       "id": "ist_dates_fillcollectedbydate",
-      "community": 17
+      "community": 16
     },
     {
       "label": "sumFilledDayRows()",
@@ -3193,7 +3153,7 @@
       "source_file": "lib/ist-dates.ts",
       "source_location": "L84",
       "id": "ist_dates_sumfilleddayrows",
-      "community": 17
+      "community": 16
     },
     {
       "label": "printer-settings.ts",
@@ -3201,7 +3161,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L1",
       "id": "printer_settings",
-      "community": 14
+      "community": 5
     },
     {
       "label": "load()",
@@ -3209,7 +3169,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L47",
       "id": "printer_settings_load",
-      "community": 14
+      "community": 5
     },
     {
       "label": "save()",
@@ -3217,7 +3177,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L61",
       "id": "printer_settings_save",
-      "community": 14
+      "community": 5
     },
     {
       "label": "getPrinterSettings()",
@@ -3225,7 +3185,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L68",
       "id": "printer_settings_getprintersettings",
-      "community": 14
+      "community": 5
     },
     {
       "label": "getDefaultPrinter()",
@@ -3233,7 +3193,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L72",
       "id": "printer_settings_getdefaultprinter",
-      "community": 14
+      "community": 5
     },
     {
       "label": "getPrinterConfigForPrint()",
@@ -3241,7 +3201,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L78",
       "id": "printer_settings_getprinterconfigforprint",
-      "community": 14
+      "community": 5
     },
     {
       "label": "getPreferPrintDialog()",
@@ -3249,7 +3209,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L87",
       "id": "printer_settings_getpreferprintdialog",
-      "community": 14
+      "community": 5
     },
     {
       "label": "setPreferPrintDialog()",
@@ -3257,7 +3217,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L91",
       "id": "printer_settings_setpreferprintdialog",
-      "community": 14
+      "community": 5
     },
     {
       "label": "addPrinter()",
@@ -3265,7 +3225,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L97",
       "id": "printer_settings_addprinter",
-      "community": 14
+      "community": 5
     },
     {
       "label": "removePrinter()",
@@ -3273,7 +3233,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L121",
       "id": "printer_settings_removeprinter",
-      "community": 14
+      "community": 5
     },
     {
       "label": "setDefaultPrinter()",
@@ -3281,7 +3241,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L132",
       "id": "printer_settings_setdefaultprinter",
-      "community": 14
+      "community": 5
     },
     {
       "label": "updatePrinterName()",
@@ -3289,7 +3249,7 @@
       "source_file": "lib/printer-settings.ts",
       "source_location": "L140",
       "id": "printer_settings_updateprintername",
-      "community": 14
+      "community": 5
     },
     {
       "label": "vendor-bill-policy.ts",
@@ -3321,7 +3281,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L1",
       "id": "rate_limit",
-      "community": 21
+      "community": 20
     },
     {
       "label": "getClientId()",
@@ -3329,7 +3289,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L12",
       "id": "rate_limit_getclientid",
-      "community": 21
+      "community": 20
     },
     {
       "label": "checkAdminRateLimit()",
@@ -3337,7 +3297,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L18",
       "id": "rate_limit_checkadminratelimit",
-      "community": 21
+      "community": 20
     },
     {
       "label": "checkBodySize()",
@@ -3345,7 +3305,7 @@
       "source_file": "lib/rate-limit.ts",
       "source_location": "L44",
       "id": "rate_limit_checkbodysize",
-      "community": 21
+      "community": 20
     },
     {
       "label": "fees.ts",
@@ -3353,7 +3313,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L1",
       "id": "fees",
-      "community": 9
+      "community": 10
     },
     {
       "label": "calculateServiceFee()",
@@ -3361,7 +3321,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L14",
       "id": "fees_calculateservicefee",
-      "community": 9
+      "community": 10
     },
     {
       "label": "formatServiceFeeTiers()",
@@ -3369,7 +3329,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L22",
       "id": "fees_formatservicefeetiers",
-      "community": 9
+      "community": 10
     },
     {
       "label": "applyServiceFeeDiscount()",
@@ -3377,7 +3337,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L37",
       "id": "fees_applyservicefeediscount",
-      "community": 9
+      "community": 10
     },
     {
       "label": "formatServiceFeeReceiptLine()",
@@ -3385,7 +3345,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L53",
       "id": "fees_formatservicefeereceiptline",
-      "community": 9
+      "community": 10
     },
     {
       "label": "turnstile.ts",
@@ -3417,7 +3377,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L41",
       "id": "index_unittotallines",
-      "community": 11
+      "community": 12
     },
     {
       "label": "printEscPosViaBluetooth()",
@@ -3425,7 +3385,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L54",
       "id": "index_printescposviabluetooth",
-      "community": 11
+      "community": 12
     },
     {
       "label": "buildTestEscPosReceipt()",
@@ -3433,7 +3393,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L83",
       "id": "index_buildtestescposreceipt",
-      "community": 11
+      "community": 12
     },
     {
       "label": "formatTestEscPosPlain()",
@@ -3441,7 +3401,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L118",
       "id": "index_formattestescposplain",
-      "community": 11
+      "community": 12
     },
     {
       "label": "vendorReceipt.ts",
@@ -3449,7 +3409,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L1",
       "id": "vendorreceipt",
-      "community": 9
+      "community": 10
     },
     {
       "label": "money()",
@@ -3457,7 +3417,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L38",
       "id": "vendorreceipt_money",
-      "community": 9
+      "community": 10
     },
     {
       "label": "truncateForPaper()",
@@ -3465,7 +3425,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L42",
       "id": "vendorreceipt_truncateforpaper",
-      "community": 9
+      "community": 10
     },
     {
       "label": "wrapReceiptText()",
@@ -3473,7 +3433,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L51",
       "id": "vendorreceipt_wrapreceipttext",
-      "community": 9
+      "community": 10
     },
     {
       "label": "layoutUnitAndTotal()",
@@ -3481,7 +3441,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L84",
       "id": "vendorreceipt_layoutunitandtotal",
-      "community": 9
+      "community": 10
     },
     {
       "label": "buildVendorReceiptEscPos()",
@@ -3489,7 +3449,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L97",
       "id": "vendorreceipt_buildvendorreceiptescpos",
-      "community": 9
+      "community": 10
     },
     {
       "label": "formatVendorReceiptEscPosPlain()",
@@ -3497,7 +3457,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L167",
       "id": "vendorreceipt_formatvendorreceiptescposplain",
-      "community": 9
+      "community": 10
     },
     {
       "label": "savedVendorBillToReceiptInput()",
@@ -3505,7 +3465,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L220",
       "id": "vendorreceipt_savedvendorbilltoreceiptinput",
-      "community": 9
+      "community": 10
     },
     {
       "label": "BluetoothPrinterService.ts",
@@ -3513,7 +3473,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L1",
       "id": "bluetoothprinterservice",
-      "community": 5
+      "community": 7
     },
     {
       "label": "getBluetooth()",
@@ -3521,7 +3481,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L51",
       "id": "bluetoothprinterservice_getbluetooth",
-      "community": 5
+      "community": 7
     },
     {
       "label": "isWebBluetoothAvailable()",
@@ -3529,7 +3489,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L57",
       "id": "bluetoothprinterservice_iswebbluetoothavailable",
-      "community": 5
+      "community": 7
     },
     {
       "label": "pickWritableCharacteristic()",
@@ -3537,7 +3497,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L61",
       "id": "bluetoothprinterservice_pickwritablecharacteristic",
-      "community": 5
+      "community": 7
     },
     {
       "label": "writeChunks()",
@@ -3545,7 +3505,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L92",
       "id": "bluetoothprinterservice_writechunks",
-      "community": 5
+      "community": 7
     },
     {
       "label": "BluetoothPrinterService",
@@ -3553,7 +3513,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L119",
       "id": "bluetoothprinterservice_bluetoothprinterservice",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".getInstance()",
@@ -3561,7 +3521,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L122",
       "id": "bluetoothprinterservice_bluetoothprinterservice_getinstance",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".subscribe()",
@@ -3569,7 +3529,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L140",
       "id": "bluetoothprinterservice_bluetoothprinterservice_subscribe",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".setState()",
@@ -3577,7 +3537,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L148",
       "id": "bluetoothprinterservice_bluetoothprinterservice_setstate",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".getConnectionState()",
@@ -3585,7 +3545,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L153",
       "id": "bluetoothprinterservice_bluetoothprinterservice_getconnectionstate",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".isConnected()",
@@ -3593,7 +3553,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L157",
       "id": "bluetoothprinterservice_bluetoothprinterservice_isconnected",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".getLastDeviceId()",
@@ -3601,7 +3561,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L161",
       "id": "bluetoothprinterservice_bluetoothprinterservice_getlastdeviceid",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".setAutoReconnect()",
@@ -3609,7 +3569,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L166",
       "id": "bluetoothprinterservice_bluetoothprinterservice_setautoreconnect",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".persistDeviceId()",
@@ -3617,7 +3577,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L174",
       "id": "bluetoothprinterservice_bluetoothprinterservice_persistdeviceid",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".clearStoredDevice()",
@@ -3625,7 +3585,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L182",
       "id": "bluetoothprinterservice_bluetoothprinterservice_clearstoreddevice",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".detachDeviceListener()",
@@ -3633,7 +3593,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L190",
       "id": "bluetoothprinterservice_bluetoothprinterservice_detachdevicelistener",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".attachDeviceListener()",
@@ -3641,7 +3601,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L197",
       "id": "bluetoothprinterservice_bluetoothprinterservice_attachdevicelistener",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".scheduleReconnect()",
@@ -3649,7 +3609,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L208",
       "id": "bluetoothprinterservice_bluetoothprinterservice_schedulereconnect",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".pickAndConnect()",
@@ -3657,7 +3617,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L224",
       "id": "bluetoothprinterservice_bluetoothprinterservice_pickandconnect",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".reconnectFromStorage()",
@@ -3665,7 +3625,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L244",
       "id": "bluetoothprinterservice_bluetoothprinterservice_reconnectfromstorage",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".connectDevice()",
@@ -3673,7 +3633,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L267",
       "id": "bluetoothprinterservice_bluetoothprinterservice_connectdevice",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".disconnectUser()",
@@ -3681,7 +3641,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L291",
       "id": "bluetoothprinterservice_bluetoothprinterservice_disconnectuser",
-      "community": 5
+      "community": 7
     },
     {
       "label": ".writeRaw()",
@@ -3689,7 +3649,7 @@
       "source_file": "lib/printing/bluetooth/BluetoothPrinterService.ts",
       "source_location": "L308",
       "id": "bluetoothprinterservice_bluetoothprinterservice_writeraw",
-      "community": 5
+      "community": 7
     },
     {
       "label": "PrintQueue.ts",
@@ -3697,7 +3657,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L1",
       "id": "printqueue",
-      "community": 11
+      "community": 12
     },
     {
       "label": "PrintQueue",
@@ -3705,7 +3665,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L5",
       "id": "printqueue_printqueue",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".constructor()",
@@ -3713,7 +3673,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L14",
       "id": "printqueue_printqueue_constructor",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".enqueue()",
@@ -3721,7 +3681,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L19",
       "id": "printqueue_printqueue_enqueue",
-      "community": 11
+      "community": 12
     },
     {
       "label": ".drain()",
@@ -3729,7 +3689,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L26",
       "id": "printqueue_printqueue_drain",
-      "community": 11
+      "community": 12
     },
     {
       "label": "CharacterEncodings.ts",
@@ -3737,7 +3697,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L1",
       "id": "characterencodings",
-      "community": 9
+      "community": 10
     },
     {
       "label": "sanitizeReceiptText()",
@@ -3745,7 +3705,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L7",
       "id": "characterencodings_sanitizereceipttext",
-      "community": 9
+      "community": 10
     },
     {
       "label": "encodeAsciiLines()",
@@ -3753,7 +3713,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L19",
       "id": "characterencodings_encodeasciilines",
-      "community": 9
+      "community": 10
     },
     {
       "label": "ESCPOSBuilder.ts",
@@ -8221,7 +8181,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L690",
+      "source_location": "L671",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_tryapplysession",
@@ -8233,7 +8193,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L728",
+      "source_location": "L709",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_init",
@@ -8245,7 +8205,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L848",
+      "source_location": "L831",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_refreshschedule",
@@ -8257,7 +8217,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L855",
+      "source_location": "L838",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_onfocus",
@@ -8269,7 +8229,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1037",
+      "source_location": "L1020",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleobnext",
@@ -8281,7 +8241,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1044",
+      "source_location": "L1027",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleobskip",
@@ -8293,19 +8253,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1049",
-      "weight": 1.0,
-      "_src": "laundroapp",
-      "_tgt": "laundroapp_handleloginemail",
-      "source": "laundroapp",
-      "target": "laundroapp_handleloginemail",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1087",
+      "source_location": "L1032",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlegooglelogin",
@@ -8317,31 +8265,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1096",
-      "weight": 1.0,
-      "_src": "laundroapp",
-      "_tgt": "laundroapp_handleforgotpassword",
-      "source": "laundroapp",
-      "target": "laundroapp_handleforgotpassword",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1118",
-      "weight": 1.0,
-      "_src": "laundroapp",
-      "_tgt": "laundroapp_handlesetpassword",
-      "source": "laundroapp",
-      "target": "laundroapp_handlesetpassword",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1172",
+      "source_location": "L1041",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlesavestudentdetailsmodal",
@@ -8353,19 +8277,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1219",
-      "weight": 1.0,
-      "_src": "laundroapp",
-      "_tgt": "laundroapp_handlesignup",
-      "source": "laundroapp",
-      "target": "laundroapp_handlesignup",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1288",
+      "source_location": "L1088",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlecompleteprofile",
@@ -8377,7 +8289,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1340",
+      "source_location": "L1140",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlesaveeditprofile",
@@ -8389,7 +8301,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1393",
+      "source_location": "L1193",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleselectvendor",
@@ -8401,7 +8313,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1397",
+      "source_location": "L1197",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlescheduleservice",
@@ -8413,7 +8325,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1401",
+      "source_location": "L1201",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlescheduledateslot",
@@ -8425,7 +8337,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1405",
+      "source_location": "L1205",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleconfirmorder",
@@ -8437,7 +8349,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1488",
+      "source_location": "L1288",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handleconfirmdelivery",
@@ -8449,7 +8361,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1508",
+      "source_location": "L1308",
       "weight": 1.0,
       "_src": "laundroapp",
       "_tgt": "laundroapp_handlelogout",
@@ -8458,22 +8370,10 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1518",
-      "weight": 1.0,
-      "_src": "laundroapp",
-      "_tgt": "laundroapp_handlesetpasswordforemail",
-      "source": "laundroapp",
-      "target": "laundroapp_handlesetpasswordforemail",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L698",
+      "source_location": "L679",
       "weight": 1.0,
       "_src": "laundroapp_tryapplysession",
       "_tgt": "laundroapp_rowtouser",
@@ -8485,31 +8385,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1067",
-      "weight": 1.0,
-      "_src": "laundroapp_handleloginemail",
-      "_tgt": "laundroapp_rowtouser",
-      "source": "laundroapp_rowtouser",
-      "target": "laundroapp_handleloginemail",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1148",
-      "weight": 1.0,
-      "_src": "laundroapp_handlesetpassword",
-      "_tgt": "laundroapp_rowtouser",
-      "source": "laundroapp_rowtouser",
-      "target": "laundroapp_handlesetpassword",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1205",
+      "source_location": "L1074",
       "weight": 1.0,
       "_src": "laundroapp_handlesavestudentdetailsmodal",
       "_tgt": "laundroapp_rowtouser",
@@ -8521,19 +8397,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1268",
-      "weight": 1.0,
-      "_src": "laundroapp_handlesignup",
-      "_tgt": "laundroapp_rowtouser",
-      "source": "laundroapp_rowtouser",
-      "target": "laundroapp_handlesignup",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1326",
+      "source_location": "L1126",
       "weight": 1.0,
       "_src": "laundroapp_handlecompleteprofile",
       "_tgt": "laundroapp_rowtouser",
@@ -8545,7 +8409,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1379",
+      "source_location": "L1179",
       "weight": 1.0,
       "_src": "laundroapp_handlesaveeditprofile",
       "_tgt": "laundroapp_rowtouser",
@@ -8581,7 +8445,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1181",
+      "source_location": "L1050",
       "weight": 1.0,
       "_src": "laundroapp_handlesavestudentdetailsmodal",
       "_tgt": "laundroapp_needsstudentcollegechoice",
@@ -8593,7 +8457,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1412",
+      "source_location": "L1212",
       "weight": 1.0,
       "_src": "laundroapp_handleconfirmorder",
       "_tgt": "laundroapp_needsstudenthosteldetails",
@@ -8605,7 +8469,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1474",
+      "source_location": "L1274",
       "weight": 1.0,
       "_src": "laundroapp_handleconfirmorder",
       "_tgt": "laundroapp_rowtoorder",
@@ -8617,7 +8481,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1493",
+      "source_location": "L1293",
       "weight": 1.0,
       "_src": "laundroapp_handleconfirmdelivery",
       "_tgt": "laundroapp_rowtoorder",
@@ -8641,19 +8505,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1223",
-      "weight": 1.0,
-      "_src": "laundroapp_handlesignup",
-      "_tgt": "laundroapp_validateindianphone",
-      "source": "laundroapp_validateindianphone",
-      "target": "laundroapp_handlesignup",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1292",
+      "source_location": "L1092",
       "weight": 1.0,
       "_src": "laundroapp_handlecompleteprofile",
       "_tgt": "laundroapp_validateindianphone",
@@ -8665,7 +8517,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L1344",
+      "source_location": "L1144",
       "weight": 1.0,
       "_src": "laundroapp_handlesaveeditprofile",
       "_tgt": "laundroapp_validateindianphone",
@@ -8677,7 +8529,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L740",
+      "source_location": "L722",
       "weight": 1.0,
       "_src": "laundroapp_init",
       "_tgt": "laundroapp_tryapplysession",
@@ -8689,7 +8541,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "components/LaundroApp.tsx",
-      "source_location": "L855",
+      "source_location": "L838",
       "weight": 1.0,
       "_src": "laundroapp_onfocus",
       "_tgt": "laundroapp_refreshschedule",

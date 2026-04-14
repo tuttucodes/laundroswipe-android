@@ -360,13 +360,8 @@ export default function LaundroApp() {
   const [toast, setToast] = useState<Toast>(null);
 
   // Form state for auth
-  const [loginEm, setLoginEm] = useState('');
-  const [loginPw, setLoginPw] = useState('');
-  const [signupFn, setSignupFn] = useState('');
-  const [signupEm, setSignupEm] = useState('');
   const [signupPh, setSignupPh] = useState('');
   const [signupWa, setSignupWa] = useState('');
-  const [signupPw, setSignupPw] = useState('');
   const [studentRn, setStudentRn] = useState('');
   const [studentCid, setStudentCid] = useState('');
   const [studentHos, setStudentHos] = useState('');
@@ -376,19 +371,12 @@ export default function LaundroApp() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [signupPhErr, setSignupPhErr] = useState('');
   const [signupWaErr, setSignupWaErr] = useState('');
-  const [forgotEm, setForgotEm] = useState('');
-  const [resetSent, setResetSent] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [deliveryComments, setDeliveryComments] = useState('');
   const [confirmingDelivery, setConfirmingDelivery] = useState(false);
   const [myBills, setMyBills] = useState<VendorBillRow[]>([]);
   const [myBillsLoading, setMyBillsLoading] = useState(false);
   const [myBillsError, setMyBillsError] = useState('');
   const [viewingBill, setViewingBill] = useState<VendorBillRow | null>(null);
-  const [profilePw, setProfilePw] = useState('');
-  const [profilePwConfirm, setProfilePwConfirm] = useState('');
-  const [profilePwSaving, setProfilePwSaving] = useState(false);
   const [editFn, setEditFn] = useState('');
   const [editPh, setEditPh] = useState('');
   const [editWa, setEditWa] = useState('');
@@ -405,7 +393,6 @@ export default function LaundroApp() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlotRow[]>([]);
   const [scheduleDates, setScheduleDates] = useState<ScheduleDateRow[]>([]);
-  const [passwordAlreadySet, setPasswordAlreadySet] = useState(false);
   const [vendorProfilesBySlug, setVendorProfilesBySlug] = useState<Record<string, VendorProfileRow>>({});
   const [viewingVendor, setViewingVendor] = useState<VendorProfileRow | null>(null);
   const [ordersListLoading, setOrdersListLoading] = useState(false);
@@ -428,12 +415,6 @@ export default function LaundroApp() {
   const [termsChecked, setTermsChecked] = useState(false);
   const [termsSaving, setTermsSaving] = useState(false);
   const [showServiceFeeInfo, setShowServiceFeeInfo] = useState(false);
-
-  useEffect(() => {
-    if (user?.sid && typeof window !== 'undefined' && localStorage.getItem('ls_password_set_' + user.sid) === '1') {
-      setPasswordAlreadySet(true);
-    }
-  }, [user?.sid]);
 
   const go = useCallback((s: Screen, detail?: DetailData) => {
     setScreen(s);
@@ -731,7 +712,8 @@ export default function LaundroApp() {
       if (session?.user) {
         const isRecovery = typeof window !== 'undefined' && /type=recovery/.test(window.location.hash || '');
         if (isRecovery) {
-          setScreen('set-password');
+          setScreen('login');
+          showToast('Email/password recovery is disabled. Please continue with Google.', 'er');
           if (typeof window !== 'undefined' && window.history?.replaceState) {
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
           }
@@ -750,7 +732,8 @@ export default function LaundroApp() {
           if (session?.user) {
             const isRecovery = typeof window !== 'undefined' && /type=recovery/.test(window.location.hash || '');
             if (isRecovery) {
-              setScreen('set-password');
+              setScreen('login');
+              showToast('Email/password recovery is disabled. Please continue with Google.', 'er');
               if (typeof window !== 'undefined' && window.history?.replaceState) {
                 window.history.replaceState(null, '', window.location.pathname + window.location.search);
               }
@@ -1046,126 +1029,12 @@ export default function LaundroApp() {
     setScreen('login');
   };
 
-  const handleLoginEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!loginEm.trim()) {
-      showToast('Enter your email', 'er');
-      return;
-    }
-    if (!loginPw) {
-      showToast('Enter your password', 'er');
-      return;
-    }
-    if (!LSApi.hasSupabase) {
-      showToast('Service unavailable. Please try again later.', 'er');
-      return;
-    }
-    setAuthLoading(true);
-    try {
-      const { user: profile, error } = await LSApi.signInWithPassword(loginEm.trim(), loginPw);
-      if (profile) {
-        const u = rowToUser(profile);
-        setUser(u);
-        saveUser(u);
-        const ords = await LSApi.fetchOrdersForUser(profile.id);
-        if (ords) {
-          const mapped = ords.map(rowToOrder);
-          setOrders(mapped);
-          saveO(mapped);
-        }
-        go('home');
-        showToast('Welcome back!', 'ok');
-      } else {
-        showToast(error || 'Invalid email or password', 'er');
-      }
-    } catch (_) {
-      showToast('Login failed', 'er');
-    }
-    setAuthLoading(false);
-  };
-
   const handleGoogleLogin = async () => {
     setAuthLoading(true);
     const { error } = await LSApi.signInWithGoogle();
     if (error) {
       showToast(error.message || 'Google sign-in failed', 'er');
       setAuthLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const email = forgotEm.trim();
-    if (!email) {
-      showToast('Enter your email', 'er');
-      return;
-    }
-    if (!LSApi.hasSupabase) {
-      showToast('Service unavailable.', 'er');
-      return;
-    }
-    setAuthLoading(true);
-    const { error } = await LSApi.resetPasswordForEmail(email);
-    setAuthLoading(false);
-    if (error) {
-      showToast(error, 'er');
-      return;
-    }
-    setResetSent(true);
-    showToast('Check your email for a reset link', 'ok');
-  };
-
-  const handleSetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword.length < 6) {
-      showToast('Password must be at least 6 characters', 'er');
-      return;
-    }
-    if (newPassword !== newPasswordConfirm) {
-      showToast('Passwords do not match', 'er');
-      return;
-    }
-    if (!LSApi.hasSupabase) {
-      showToast('Service unavailable.', 'er');
-      return;
-    }
-    setAuthLoading(true);
-    const { error } = await LSApi.updatePassword(newPassword);
-    setAuthLoading(false);
-    if (error) {
-      showToast(error, 'er');
-      return;
-    }
-    showToast('Password updated. Signing you in…', 'ok');
-    const session = await LSApi.getAuthSession();
-    if (session?.user) {
-      let profile = await LSApi.upsertUserFromAuth(session.user as { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } });
-      if (profile && !profile.phone?.trim()) {
-        const refetched = await LSApi.fetchUserById(profile.id);
-        if (refetched?.phone?.trim()) profile = refetched;
-      }
-      if (profile) {
-        const u = rowToUser(profile);
-        setUser(u);
-        saveUser(u);
-        const needsProfile = !profile.phone?.trim();
-        if (needsProfile) {
-          setSignupPh(profile.phone ?? '');
-          setSignupWa(profile.whatsapp ?? '');
-          setStudentCid(profile.college_id ?? 'general');
-          setStudentRn(profile.reg_no ?? '');
-          setStudentHos(profile.hostel_block ?? '');
-          setStudentRm(profile.room_number ?? '');
-          setStudentYr(profile.year != null ? String(profile.year) : '');
-          setScreen('complete-profile');
-        } else {
-          setScreen('home');
-        }
-      } else {
-        setScreen('login');
-      }
-    } else {
-      setScreen('login');
     }
   };
 
@@ -1214,75 +1083,6 @@ export default function LaundroApp() {
       showToast('Update failed', 'er');
     }
     setStudentModalSaving(false);
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSignupPhErr('');
-    setSignupWaErr('');
-    const phCheck = validateIndianPhone(signupPh.trim());
-    const waCheck = validateIndianPhone(signupWa.trim());
-    if (!phCheck.valid) {
-      setSignupPhErr(phCheck.message || 'Invalid phone');
-      return;
-    }
-    if (!waCheck.valid) {
-      setSignupWaErr(waCheck.message || 'Invalid WhatsApp');
-      return;
-    }
-    if (!signupFn.trim() || !signupEm.trim()) {
-      showToast('Fill all required fields', 'er');
-      return;
-    }
-    if (!signupPw || signupPw.length < 6) {
-      showToast('Please enter a password (at least 6 characters) to sign in with email later', 'er');
-      return;
-    }
-    const isGeneral = !studentCid || studentCid === 'general';
-    if (!isGeneral && !studentRn.trim()) {
-      showToast('Registration number required for students', 'er');
-      return;
-    }
-    if (!isGeneral && (!studentHos.trim() || !studentRm.trim())) {
-      showToast('Hostel block and room number are required for students', 'er');
-      return;
-    }
-    setAuthLoading(true);
-    try {
-      const { user: row, error } = await LSApi.signUpWithEmail(
-        signupEm.trim(),
-        signupPw,
-        {
-          full_name: signupFn.trim(),
-          phone: signupPh.trim(),
-          whatsapp: signupWa.trim(),
-          user_type: isGeneral ? 'general' : 'student',
-          college_id: isGeneral ? null : studentCid,
-          reg_no: isGeneral ? null : studentRn.trim() || null,
-          hostel_block: isGeneral ? null : studentHos.trim() || null,
-          room_number: isGeneral ? null : studentRm.trim() || null,
-          year: studentYr?.trim() ? parseInt(studentYr, 10) || null : null,
-        }
-      );
-      if (row) {
-        const u = rowToUser(row);
-        setUser(u);
-        saveUser(u);
-        const ords = await LSApi.fetchOrdersForUser(row.id);
-        if (ords) {
-          const mapped = ords.map(rowToOrder);
-          setOrders(mapped);
-          saveO(mapped);
-        }
-        go('home');
-        showToast('Account created. You can sign in with email + password anytime.', 'ok');
-      } else {
-        showToast(error || 'Sign up failed', 'er');
-      }
-    } catch (_) {
-      showToast('Sign up failed', 'er');
-    }
-    setAuthLoading(false);
   };
 
   const handleCompleteProfile = async (e: React.FormEvent) => {
@@ -1515,32 +1315,6 @@ export default function LaundroApp() {
     showToast('Signed out', 'ok');
   };
 
-  const handleSetPasswordForEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (profilePw.length < 6) {
-      showToast('Password must be at least 6 characters', 'er');
-      return;
-    }
-    if (profilePw !== profilePwConfirm) {
-      showToast('Passwords do not match', 'er');
-      return;
-    }
-    setProfilePwSaving(true);
-    const { error } = await LSApi.updatePassword(profilePw);
-    setProfilePwSaving(false);
-    if (error) {
-      showToast(error, 'er');
-      return;
-    }
-    setProfilePw('');
-    setProfilePwConfirm('');
-    if (user?.sid && typeof window !== 'undefined') {
-      localStorage.setItem('ls_password_set_' + user.sid, '1');
-      setPasswordAlreadySet(true);
-    }
-    showToast('Password set. You can now sign in with email + password.', 'ok');
-  };
-
   const todayStr = new Date().toISOString().split('T')[0];
   const selectedSvc = SERVICES.find((s) => s.id === sd.svc);
   const selectedVendor = homeVendors.find((vendor) => vendor.id === sd.vendorId);
@@ -1640,54 +1414,16 @@ export default function LaundroApp() {
             <span className="lgt">LaundroSwipe</span>
           </div>
           <h1 className="atl">Sign in</h1>
-          <p className="asu">Use your account to schedule pickups</p>
+          <p className="asu">Continue with Google to sign in or create your account</p>
         </div>
         {LSApi.hasSupabase && (
           <button type="button" className="btn bp bbl" onClick={handleGoogleLogin} disabled={authLoading}>
             Continue with Google
           </button>
         )}
-        <form onSubmit={handleLoginEmail} style={{ marginTop: LSApi.hasSupabase ? 16 : 0 }}>
-          <div className="fg">
-            <label className="fl">Email</label>
-            <input
-              type="email"
-              className="fi"
-              placeholder="you@example.com"
-              value={loginEm}
-              onChange={(e) => setLoginEm(e.target.value)}
-              autoComplete="email"
-            />
-          </div>
-          <div className="fg">
-            <label className="fl">Password</label>
-            <input
-              type="password"
-              className="fi"
-              placeholder="••••••••"
-              value={loginPw}
-              onChange={(e) => setLoginPw(e.target.value)}
-              autoComplete="current-password"
-            />
-            <p className="aft" style={{ marginTop: 6 }}>
-              <span className="al" onClick={() => go('forgot-password')} role="button">
-                Forgot password?
-              </span>
-            </p>
-            <p className="vd" style={{ marginTop: 4, fontSize: 12 }}>Signed up with Google? Set a password in Profile to sign in with email (same account).</p>
-          </div>
-          <button type="submit" className="btn bout bbl" disabled={authLoading}>
-            {authLoading ? 'Signing in…' : 'Sign in with email'}
-          </button>
-        </form>
-        <p className="aft" style={{ marginTop: 24, fontWeight: 600, color: 'var(--tx)' }}>
-          New here? Create an account
+        <p className="vd" style={{ marginTop: 12, fontSize: 13 }}>
+          If you used email/password before, continue with the same Google email to access the same account.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button type="button" className="btn bout bbl" onClick={() => go('signup')}>
-            Sign up
-          </button>
-        </div>
         <p className="aft legal" style={{ marginTop: 20 }}>
           <Link href="/privacy">Privacy</Link>
           {' · '}
@@ -1696,89 +1432,6 @@ export default function LaundroApp() {
         <p className="aft" style={{ marginTop: 12, fontSize: 13 }}>
           <Link href="/admin" style={{ color: 'var(--ts)' }}>Admin login</Link>
         </p>
-      </div>
-    );
-  }
-
-  if (screen === 'forgot-password') {
-    return (
-      <div className="as">
-        <div className="ah">
-          <h1 className="atl">Forgot password?</h1>
-          <p className="asu">Enter your email and we’ll send you a link to reset your password.</p>
-        </div>
-        {resetSent ? (
-          <>
-            <p className="vd" style={{ marginBottom: 16 }}>We’ve sent a link to <strong>{forgotEm}</strong>. Check your inbox and click the link to set a new password.</p>
-            <button type="button" className="btn bout bbl" onClick={() => { setResetSent(false); setForgotEm(''); go('login'); }}>
-              Back to sign in
-            </button>
-          </>
-        ) : (
-          <form onSubmit={handleForgotPassword}>
-            <div className="fg">
-              <label className="fl">Email</label>
-              <input
-                type="email"
-                className="fi"
-                placeholder="you@example.com"
-                value={forgotEm}
-                onChange={(e) => setForgotEm(e.target.value)}
-                autoComplete="email"
-              />
-            </div>
-            <button type="submit" className="btn bout bbl" disabled={authLoading}>
-              {authLoading ? 'Sending…' : 'Send reset link'}
-            </button>
-          </form>
-        )}
-        <p className="aft" style={{ marginTop: 20 }}>
-          <span className="al" onClick={() => go('login')} role="button">
-            Back to sign in
-          </span>
-        </p>
-      </div>
-    );
-  }
-
-  if (screen === 'set-password') {
-    return (
-      <div className="as">
-        <div className="ah">
-          <h1 className="atl">Set new password</h1>
-          <p className="asu">Choose a new password for your account.</p>
-        </div>
-        <form onSubmit={handleSetPassword}>
-          <div className="fg">
-            <label className="fl">New password</label>
-            <input
-              type="password"
-              className="fi"
-              placeholder="At least 6 characters"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              autoComplete="new-password"
-              minLength={6}
-              required
-            />
-          </div>
-          <div className="fg">
-            <label className="fl">Confirm password</label>
-            <input
-              type="password"
-              className="fi"
-              placeholder="Same as above"
-              value={newPasswordConfirm}
-              onChange={(e) => setNewPasswordConfirm(e.target.value)}
-              autoComplete="new-password"
-              minLength={6}
-              required
-            />
-          </div>
-          <button type="submit" className="btn bout bbl" disabled={authLoading}>
-            {authLoading ? 'Updating…' : 'Update password'}
-          </button>
-        </form>
       </div>
     );
   }
@@ -1854,68 +1507,13 @@ export default function LaundroApp() {
       <div className="as">
         <div className="ah">
           <h1 className="atl">Create account</h1>
-          <p className="asu">Students: pick your college. Not a student? Choose &quot;Not a student&quot; below.</p>
+          <p className="asu">Account creation uses Google only.</p>
         </div>
-        <form onSubmit={handleSignup}>
-          <div className="fg">
-            <label className="fl">Full name</label>
-            <input type="text" className="fi" placeholder="Your name" value={signupFn} onChange={(e) => setSignupFn(e.target.value)} required />
-          </div>
-          <div className="fg">
-            <label className="fl">Email</label>
-            <input type="email" className="fi" placeholder="you@example.com" value={signupEm} onChange={(e) => setSignupEm(e.target.value)} required />
-          </div>
-          <div className="fg">
-            <label className="fl">Phone</label>
-            <input type="tel" className="fi" placeholder="10-digit mobile number" value={signupPh} onChange={(e) => { setSignupPh(e.target.value); setSignupPhErr(''); }} required />
-            {signupPhErr && <p className="field-error">{signupPhErr}</p>}
-          </div>
-          <div className="fg">
-            <label className="fl">WhatsApp</label>
-            <input type="tel" className="fi" placeholder="10-digit WhatsApp number" value={signupWa} onChange={(e) => { setSignupWa(e.target.value); setSignupWaErr(''); }} required />
-            {signupWaErr && <p className="field-error">{signupWaErr}</p>}
-          </div>
-          <div className="fg">
-            <label className="fl">Password (required)</label>
-            <input type="password" className="fi" placeholder="Min 6 characters — you’ll use this with email to sign in" value={signupPw} onChange={(e) => setSignupPw(e.target.value)} required minLength={6} autoComplete="new-password" />
-            <p className="vd" style={{ marginTop: 4, fontSize: 12 }}>Required to sign in with email after sign out.</p>
-          </div>
-          <div className="fg">
-            <label className="fl">College</label>
-            <select className="fi fs" value={studentCid} onChange={(e) => setStudentCid(e.target.value)} required>
-              <option value="">Select one</option>
-              <option value="general">Not a student</option>
-              {COLLEGES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}{!c.active ? ' (coming soon)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          {isStudentSignup && (
-            <>
-              <div className="fg">
-                <label className="fl">Registration number</label>
-                <input type="text" className="fi" placeholder="Reg no" value={studentRn} onChange={(e) => setStudentRn(e.target.value)} required />
-              </div>
-              <div className="fg">
-                <label className="fl">Hostel block</label>
-                <input type="text" className="fi" placeholder="e.g. D2, A" value={studentHos} onChange={(e) => setStudentHos(e.target.value)} required />
-              </div>
-              <div className="fg">
-                <label className="fl">Room number</label>
-                <input type="text" className="fi" placeholder="e.g. 405" value={studentRm} onChange={(e) => setStudentRm(e.target.value)} required />
-              </div>
-              <div className="fg">
-                <label className="fl">Year (optional)</label>
-                <input type="number" className="fi" placeholder="e.g. 2" min={1} max={5} value={studentYr} onChange={(e) => setStudentYr(e.target.value)} />
-              </div>
-            </>
-          )}
-          <button type="submit" className="btn bp bbl" disabled={authLoading}>
-            {authLoading ? 'Creating…' : 'Sign up'}
+        {LSApi.hasSupabase && (
+          <button type="button" className="btn bp bbl" onClick={handleGoogleLogin} disabled={authLoading}>
+            Continue with Google
           </button>
-        </form>
+        )}
         <p className="aft">
           Already have an account?{' '}
           <span className="al" onClick={() => go('login')} role="button">
@@ -2605,25 +2203,6 @@ export default function LaundroApp() {
                   <p className="vd">{user.em || ''}</p>
                   {user.ph && <p className="vd">{user.ph}</p>}
                 </div>
-                {LSApi.hasSupabase && !passwordAlreadySet && (
-                  <div className="oc" style={{ marginBottom: 16 }}>
-                    <p className="st" style={{ marginBottom: 8 }}>Sign in with email</p>
-                    <p className="vd" style={{ fontSize: 13, marginBottom: 12 }}>Set a password so you can also sign in with {user.em || 'your email'} and password (same account).</p>
-                    <form onSubmit={handleSetPasswordForEmail}>
-                      <div className="fg">
-                        <label className="fl">Password</label>
-                        <input type="password" className="fi" placeholder="Min 6 characters" value={profilePw} onChange={(e) => setProfilePw(e.target.value)} minLength={6} autoComplete="new-password" />
-                      </div>
-                      <div className="fg">
-                        <label className="fl">Confirm password</label>
-                        <input type="password" className="fi" placeholder="Same as above" value={profilePwConfirm} onChange={(e) => setProfilePwConfirm(e.target.value)} minLength={6} autoComplete="new-password" />
-                      </div>
-                      <button type="submit" className="btn bout bbl" disabled={profilePwSaving || !profilePw || !profilePwConfirm}>
-                        {profilePwSaving ? 'Setting…' : 'Set password for email sign-in'}
-                      </button>
-                    </form>
-                  </div>
-                )}
                 <div className="oc" style={{ marginBottom: 16 }}>
                     <p className="st" style={{ marginBottom: 8 }}>Push notifications</p>
                     <p className="vd" style={{ fontSize: 13 }}>Pickup reminders and updates are sent to the LaundroSwipe mobile app. Enable notifications in the app to receive them.</p>
