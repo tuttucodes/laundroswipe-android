@@ -12,8 +12,6 @@ import {
   STATUSES,
   customerFacingStatusLabel,
   customerFacingStatusClass,
-  getScheduleDates,
-  isEveningOnlyDate,
 } from '@/lib/constants';
 import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { LSApi } from '@/lib/api';
@@ -322,11 +320,6 @@ function billMapAndVisibleOrderIds(orders: Order[], bills: VendorBillRow[]) {
   }
   return { billByOrderToken: billByToken, visibleOrderIds: visible };
 }
-
-const TIME_SLOTS = [
-  { id: 'afternoon', label: 'Afternoon (12–4 PM)', emoji: '☀️' },
-  { id: 'evening', label: 'Evening (4:45–5:45 PM)', emoji: '🌆' },
-];
 
 function formatScheduleDay(full: string): { date: Date; day: string; num: number; month: string; ok: boolean; full: string } {
   const d = new Date(full + 'T12:00:00');
@@ -1335,7 +1328,7 @@ export default function LaundroApp() {
   const daysFromApi = scheduleDates
     .filter((d) => d.date >= todayStr && isDateEnabledForVendor(d.date, selectedVendor?.id))
     .map((d) => formatScheduleDay(d.date));
-  const days = daysFromApi.length > 0 ? daysFromApi : getScheduleDates();
+  const days = daysFromApi;
   const selectedVendorProfile = selectedVendor ? profileForVendor(selectedVendor) : null;
   const selectedVendorSlotList = useMemo(() => {
     if (!selectedVendor) {
@@ -1372,12 +1365,11 @@ export default function LaundroApp() {
       ? dedupeScheduleSlotsByTimeAndLabel(selectedVendorSlotList.filter(
           (s) => s.active && slotIdsForDateByVendor(sd.date!, selectedVendor?.id).includes(s.id)
         ))
-      : TIME_SLOTS;
+      : [];
   const selectedTsFromApi = selectedVendorSlotList.find((t) => t.id === sd.ts);
   const selectedTs = selectedTsFromApi
     ? { id: selectedTsFromApi.id, label: selectedTsFromApi.label, emoji: '🕐' }
-    : TIME_SLOTS.find((t) => t.id === sd.ts);
-  const afternoonDisabled = !selectedTsFromApi && sd.date ? isEveningOnlyDate(sd.date) : false;
+    : undefined;
 
   if (screen === 'splash') {
     return (
@@ -1991,11 +1983,7 @@ export default function LaundroApp() {
                             className={`ds ${sd.date === d.full ? 'sel' : ''}`}
                             onClick={() => {
                               const allowedIds =
-                                scheduleDates.length > 0
-                                  ? slotIdsForDateByVendor(d.full, selectedVendor?.id)
-                                  : isEveningOnlyDate(d.full)
-                                    ? ['evening']
-                                    : ['afternoon', 'evening'];
+                                scheduleDates.length > 0 ? slotIdsForDateByVendor(d.full, selectedVendor?.id) : [];
                               setSd((s) => ({
                                 ...s,
                                 date: d.full,
@@ -2013,21 +2001,19 @@ export default function LaundroApp() {
                     <p className="st" style={{ marginTop: 20 }}>Time slot</p>
                     {timeSlotsForStep2.length === 0 && sd.date && <p className="vd" style={{ marginBottom: 8 }}>No slots enabled for this date. Enable slots in admin Schedule.</p>}
                     {timeSlotsForStep2.map((t) => {
-                      const slotId = 'id' in t ? t.id : (t as { id: string }).id;
-                      const slotLabel = 'label' in t ? t.label : (t as { label: string }).label;
-                      const slotEmoji = 'emoji' in t ? (t as { emoji?: string }).emoji : '🕐';
-                      const isDisabled = scheduleSlots.length === 0 && slotId === 'afternoon' && isEveningOnlyDate(sd.date);
+                      const slotId = t.id;
+                      const slotLabel = t.label;
                       return (
                         <div
                           key={slotId}
-                          className={`ts2 ${sd.ts === slotId ? 'sel' : ''} ${isDisabled ? 'ts2-dis' : ''}`}
-                          onClick={() => !isDisabled && setSd((s) => ({ ...s, ts: slotId }))}
-                          onKeyDown={(e) => !isDisabled && e.key === 'Enter' && setSd((s) => ({ ...s, ts: slotId }))}
+                          className={`ts2 ${sd.ts === slotId ? 'sel' : ''}`}
+                          onClick={() => setSd((s) => ({ ...s, ts: slotId }))}
+                          onKeyDown={(e) => e.key === 'Enter' && setSd((s) => ({ ...s, ts: slotId }))}
                           role="button"
-                          tabIndex={isDisabled ? -1 : 0}
+                          tabIndex={0}
                         >
-                          <span>{slotEmoji}</span>
-                          <span>{slotLabel}{isDisabled ? ' (not available this day)' : ''}</span>
+                          <span>🕐</span>
+                          <span>{slotLabel}</span>
                         </div>
                       );
                     })}
@@ -2054,7 +2040,7 @@ export default function LaundroApp() {
                     <p className="st">Confirm</p>
                     <div className="vc" style={{ borderRadius: 22, padding: 18 }}>
                       <div className="vn">{selectedSvc?.name} {selectedSvc?.emoji}</div>
-                      <div className="vd">{selectedTs?.label} · {sd.date}</div>
+                      <div className="vd">{selectedTs?.label ?? sd.ts ?? '—'} · {sd.date}</div>
                       {selectedVendorProfile && <div className="vd" style={{ marginTop: 4 }}>Partner: {selectedVendorProfile.name}</div>}
                       {sd.ins && <div className="vd">Instructions: {sd.ins}</div>}
                     </div>
