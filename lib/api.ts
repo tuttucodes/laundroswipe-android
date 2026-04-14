@@ -814,6 +814,18 @@ export const LSApi = {
       const collected: VendorBillRow[] = [];
       if (!byUserRes.error && byUserRes.data) collected.push(...(byUserRes.data as VendorBillRow[]));
 
+      const orderIds = (orders ?? []).map((o) => String(o.id ?? '').trim()).filter(Boolean);
+      if (orderIds.length) {
+        const { data: byOrder, error: byOrderErr } = await supabase
+          .from('vendor_bills')
+          .select(billSelect)
+          .in('order_id', orderIds)
+          .is('cancelled_at', null)
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (!byOrderErr && byOrder?.length) collected.push(...(byOrder as VendorBillRow[]));
+      }
+
       const allowedTokens = new Set<string>();
       for (const o of orders ?? []) {
         const tk = stripLeadingHashesFromToken(String(o.token ?? '')).toLowerCase();

@@ -132,7 +132,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const { data: orders, error: ordErr } = await service
     .from('orders')
-    .select('token')
+    .select('id, token')
     .in('user_id', candidateIds)
     .order('created_at', { ascending: false })
     .limit(200);
@@ -149,6 +149,29 @@ export async function GET(request: Request): Promise<NextResponse> {
       ordersCount: orders?.length ?? 0,
       sampleOrderTokens: (orders ?? []).slice(0, 5).map((o) => String((o as { token?: string }).token ?? '')),
     },
+  });
+
+  const orderIds = (orders ?? [])
+    .map((o) => String((o as { id?: string }).id ?? '').trim())
+    .filter(Boolean);
+
+  const { data: byOrder, error: boErr } = orderIds.length
+    ? await service
+        .from('vendor_bills')
+        .select(BILL_SELECT)
+        .in('order_id', orderIds)
+        .is('cancelled_at', null)
+        .order('created_at', { ascending: false })
+        .limit(200)
+    : { data: [] as BillRow[], error: null as null | { message: string } };
+  if (boErr) return NextResponse.json({ error: boErr.message }, { status: 500 });
+  if (byOrder?.length) collected.push(...byOrder);
+  debugLog({
+    runId: 'initial',
+    hypothesisId: 'H3B_BILLS_BY_ORDER_ID_EMPTY',
+    location: 'app/api/me/vendor-bills/route.ts:query-by-order-id',
+    message: 'Bills fetched by vendor_bills.order_id from user orders',
+    data: { orderIdsCount: orderIds.length, byOrderCount: byOrder?.length ?? 0 },
   });
 
   // Bills by token: tokens only from this user's orders (`orders.user_id`); bill rows checked with `vendor_bills.user_id`.
