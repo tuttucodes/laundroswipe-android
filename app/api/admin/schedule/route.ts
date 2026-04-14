@@ -210,6 +210,22 @@ export async function POST(request: Request) {
           );
         if (error) return NextResponse.json({ error: error.message }, { status: 400 });
       }
+      if (vendorSlug) {
+        const kept = new Set<string>();
+        for (const row of body.slots) {
+          const clientId = String(row?.id ?? '').trim();
+          const id = toStoredSlotId(clientId, vendorSlug);
+          if (id) kept.add(id);
+        }
+        const p = vendorPrefix(vendorSlug);
+        const { data: scopedSlots, error: listSlotErr } = await supabase.from('schedule_slots').select('id').like('id', `${p}%`);
+        if (listSlotErr) return NextResponse.json({ error: listSlotErr.message }, { status: 400 });
+        for (const row of scopedSlots ?? []) {
+          if (kept.has(row.id)) continue;
+          const { error: delSlotErr } = await supabase.from('schedule_slots').delete().eq('id', row.id);
+          if (delSlotErr) return NextResponse.json({ error: delSlotErr.message }, { status: 400 });
+        }
+      }
     }
 
     if (body.dates != null && Array.isArray(body.dates)) {
@@ -240,6 +256,41 @@ export async function POST(request: Request) {
             { onConflict: 'date' }
           );
         if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+      if (vendorSlug) {
+        const sentDates = new Set(
+          body.dates
+            .map((row) => String(row?.date ?? '').trim())
+            .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)),
+        );
+        const { data: allDateRows, error: listDatesErr } = await supabase
+          .from('schedule_dates')
+          .select('date, slot_ids, enabled_by_vendor');
+        if (listDatesErr) return NextResponse.json({ error: listDatesErr.message }, { status: 400 });
+        for (const row of allDateRows ?? []) {
+          const dateStr = String(row.date);
+          if (sentDates.has(dateStr)) continue;
+          const raw = row.slot_ids as unknown;
+          const enRaw = row.enabled_by_vendor as unknown;
+          if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+          const slotMap = { ...(raw as Record<string, unknown>) };
+          const enMap: Record<string, boolean> =
+            enRaw && typeof enRaw === 'object' && !Array.isArray(enRaw)
+              ? { ...(enRaw as Record<string, boolean>) }
+              : {};
+          const hadSlots = Object.prototype.hasOwnProperty.call(slotMap, vendorSlug);
+          const hadEnabled = Object.prototype.hasOwnProperty.call(enMap, vendorSlug);
+          if (!hadSlots && !hadEnabled) continue;
+          const nextSlot = { ...slotMap };
+          delete nextSlot[vendorSlug];
+          const nextEn = { ...enMap };
+          delete nextEn[vendorSlug];
+          const { error: pruneErr } = await supabase
+            .from('schedule_dates')
+            .update({ slot_ids: nextSlot, enabled_by_vendor: nextEn })
+            .eq('date', dateStr);
+          if (pruneErr) return NextResponse.json({ error: pruneErr.message }, { status: 400 });
+        }
       }
     }
 

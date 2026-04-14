@@ -812,6 +812,18 @@ export default function AdminPage() {
     return t ? { Authorization: `Bearer ${t}` } : {};
   };
 
+  const removeScheduleSlot = (index: number) => {
+    const id = scheduleSlots[index]?.id?.trim() ?? '';
+    setScheduleSlots((prev) => prev.filter((_, i) => i !== index));
+    if (id) {
+      setScheduleDates((prev) => prev.map((d) => ({ ...d, slot_ids: d.slot_ids.filter((x) => x !== id) })));
+    }
+  };
+
+  const removeScheduleDate = (dateStr: string) => {
+    setScheduleDates((prev) => prev.filter((d) => d.date !== dateStr));
+  };
+
   const applySuggestedSlot = (timeSlotRaw: string) => {
     const id = sanitizeSuggestedSlotId(timeSlotRaw);
     const preset = presetForSuggestedSlot(id);
@@ -1882,8 +1894,8 @@ export default function AdminPage() {
                   <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, marginBottom: 12 }}>Time slots</h2>
                   <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 12 }}>Add or edit slot labels and timings. Toggle active to hide from users.</p>
                   <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-                    {scheduleSlots.map((s) => (
-                      <div key={s.id} style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--bd)' }}>
+                    {scheduleSlots.map((s, slotIdx) => (
+                      <div key={`slot-${slotIdx}-${s.id || 'new'}`} style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--bd)' }}>
                         <input placeholder="ID" value={s.id} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, id: e.target.value } : x)))} style={{ width: 100, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
                         <input placeholder="Label" value={s.label} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, label: e.target.value } : x)))} style={{ flex: '1 1 200px', minWidth: 160, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
                         <input type="time" value={(s.time_from || '').slice(0, 5)} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, time_from: e.target.value + ':00' } : x)))} style={{ width: 90, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
@@ -1893,6 +1905,9 @@ export default function AdminPage() {
                           <input type="checkbox" checked={s.active} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, active: e.target.checked } : x)))} />
                           Active
                         </label>
+                        <button type="button" className="admin-nav-btn" style={{ color: '#b42318', borderColor: 'rgba(180,35,24,0.35)' }} onClick={() => removeScheduleSlot(slotIdx)}>
+                          Delete
+                        </button>
                       </div>
                     ))}
                     <button type="button" className="admin-nav-btn" style={{ marginTop: 12 }} onClick={() => setScheduleSlots((prev) => [...prev, { id: '', label: '', time_from: '09:00', time_to: '17:00', sort_order: prev.length, active: true }])}>
@@ -1918,6 +1933,9 @@ export default function AdminPage() {
                             {sl.label || sl.id}
                           </label>
                         ))}
+                        <button type="button" className="admin-nav-btn" style={{ color: '#b42318', borderColor: 'rgba(180,35,24,0.35)', marginLeft: 'auto' }} onClick={() => removeScheduleDate(d.date)}>
+                          Delete date
+                        </button>
                       </div>
                     ))}
                     <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
