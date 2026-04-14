@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LaundroSwipe Admin - POS &amp; Inventory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#b2c5ff",
+                    "secondary-fixed": "#6bfe9c",
+                    "on-secondary-fixed": "#00210c",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#004771",
+                    "tertiary-container": "#005f96",
+                    "surface-variant": "#dce3ec",
+                    "surface-tint": "#0c56d0",
+                    "primary-container": "#0052cc",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "surface-container-highest": "#dce3ec",
+                    "surface": "#f6f9ff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e2e9f1",
+                    "inverse-on-surface": "#ebf1fa",
+                    "secondary": "#006d37",
+                    "on-primary-fixed": "#001848",
+                    "surface-container-low": "#eef4fd",
+                    "surface-container": "#e8eef7",
+                    "outline-variant": "#c3c6d6",
+                    "on-tertiary-fixed-variant": "#004a77",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#00743a",
+                    "on-tertiary-fixed": "#001d33",
+                    "surface-dim": "#d4dbe3",
+                    "secondary-fixed-dim": "#4ae183",
+                    "outline": "#737685",
+                    "secondary-container": "#6bfe9c",
+                    "on-background": "#151c22",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "tertiary-fixed-dim": "#97cbff",
+                    "on-surface": "#151c22",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#f6f9ff",
+                    "primary-fixed": "#dae2ff",
+                    "inverse-surface": "#2a3138",
+                    "on-tertiary-container": "#b1d7ff",
+                    "on-error": "#ffffff",
+                    "primary": "#003d9b",
+                    "tertiary-fixed": "#cee5ff",
+                    "on-surface-variant": "#434654",
+                    "on-secondary-fixed-variant": "#005228",
+                    "background": "#f6f9ff",
+                    "on-primary-container": "#c4d2ff",
+                    "on-error-container": "#93000a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Work Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-shift-bg { background-color: #f6f9ff; }
+        .no-border { border: none !important; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #dce3ec; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased pb-20 md:pb-0">
+<!-- SideNavBar: From COMPONENTS_22 -->
+<aside class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-50 bg-slate-50 border-r border-slate-100 py-6 font-body text-sm font-medium">
+<div class="px-6 mb-8">
+<div class="text-2xl font-black text-blue-800 tracking-tight">LaundroSwipe</div>
+<div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Admin Portal</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 mx-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 mx-2 bg-emerald-50 text-emerald-700 rounded-xl transition-all duration-200 translate-x-1" href="#">
+<span class="material-symbols-outlined">point_of_sale</span>
+<span class="font-bold">POS</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 mx-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span>Item Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 mx-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">shelves</span>
+<span>Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 mx-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Reports</span>
+</a>
+</nav>
+<div class="px-4 mt-auto space-y-1">
+<button class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+<span class="material-symbols-outlined">help</span>
+<span>Support</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+<span class="material-symbols-outlined">logout</span>
+<span>Sign Out</span>
+</button>
+</div>
+</aside>
+<!-- TopNavBar: From COMPONENTS_22 -->
+<header class="sticky top-0 w-full z-40 bg-white/80 backdrop-blur-xl shadow-sm shadow-blue-900/5 flex justify-between items-center px-6 py-3 lg:pl-72">
+<div class="flex items-center gap-4 flex-1">
+<button class="lg:hidden text-slate-600">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex bg-surface-container-low rounded-full px-4 py-2 items-center gap-2 border border-outline-variant max-w-md w-full">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm font-label w-full" placeholder="Search orders..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-500 hover:bg-blue-50/50 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 hover:bg-blue-50/50 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="hidden sm:block text-right">
+<p class="text-xs font-bold text-blue-900 leading-tight">Admin Station 01</p>
+<p class="text-[10px] text-slate-500 font-medium uppercase">Active Now</p>
+</div>
+<img alt="Admin profile" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-h0CtIcuJLvwxrUa4eKK-4t9RIDWb5urM4LYUra2co4bHS3wqPZ8ziEyDaos5pPCo5dc8I9Eu2OTsrwqVMAlbBJdpItivLjPT1LH5kPhNGZIqvD472iOCgaGDPLaaGPXxoD0DyuPGn9ILMOLrptIlv9z7l3xb8-Q0pD3XnLyssC1quAW69Vb3nQzl7KPW1H5_qKSbVjp8X9fl76t5W9ooiRT8jr0VMPTY0wXPNTzP3ejyyG-WYRY9tGDxMm1ui2PnmTdVJTdPLwzi"/>
+</div>
+</div>
+</header>
+<main class="lg:pl-64 pt-6 px-6 max-w-full mx-auto space-y-6">
+<!-- Smart Flow Strategy Section -->
+<div class="flex flex-col md:flex-row gap-4">
+<button class="flex-1 bg-primary text-white p-4 rounded-xl flex items-center justify-center gap-3 shadow-lg hover:bg-primary-container transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="font-headline font-bold">Scan Digital Handshake (QR)</span>
+</button>
+<button class="flex-1 bg-surface-container-lowest border-2 border-primary/20 text-primary p-4 rounded-xl flex items-center justify-center gap-3 hover:bg-primary/5 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="person_search">person_search</span>
+<span class="font-headline font-bold">Lookup Order Token</span>
+</button>
+</div>
+<!-- POS Main Interface -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Main Area -->
+<div class="lg:col-span-8 space-y-6">
+<!-- Fully Responsive Item Management Form -->
+<details class="group bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden shadow-sm" open="">
+<summary class="flex items-center justify-between p-4 cursor-pointer hover:bg-surface-container transition-colors list-none">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="settings_suggest">settings_suggest</span>
+<h2 class="font-headline font-bold text-lg text-on-surface">Item Management</h2>
+</div>
+<span class="material-symbols-outlined text-outline group-open:rotate-180 transition-transform" data-icon="expand_more">expand_more</span>
+</summary>
+<div class="p-6 border-t border-outline-variant space-y-6 bg-surface-container-lowest">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="space-y-1">
+<label class="block text-[10px] font-bold text-outline-variant uppercase tracking-wider px-1">Item Description</label>
+<input class="w-full bg-surface-container-low border-outline-variant focus:border-primary focus:ring-primary rounded-lg text-sm px-3 py-2.5 font-body" placeholder="e.g. Silk Saree, Winter Jacket" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="block text-[10px] font-bold text-outline-variant uppercase tracking-wider px-1">Rate (₹)</label>
+<input class="w-full bg-surface-container-low border-outline-variant focus:border-primary focus:ring-primary rounded-lg text-sm px-3 py-2.5 font-body" placeholder="0.00" type="number"/>
+</div>
+<div class="space-y-1 sm:col-span-2 lg:col-span-1">
+<label class="block text-[10px] font-bold text-outline-variant uppercase tracking-wider px-1">Item Image</label>
+<div class="relative group/file">
+<input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" type="file"/>
+<div class="w-full bg-surface-container-low border-2 border-dashed border-outline-variant rounded-lg p-2.5 flex items-center gap-3 group-hover/file:border-primary transition-colors">
+<span class="material-symbols-outlined text-outline text-xl" data-icon="add_photo_alternate">add_photo_alternate</span>
+<span class="text-xs text-outline font-medium truncate">Choose image file...</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-end pt-2">
+<button class="w-full sm:w-auto px-8 py-3 bg-primary text-white rounded-lg font-headline font-bold text-sm shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+<span class="material-symbols-outlined text-lg" data-icon="add_box">add_box</span>
+                            Add to Presets
+                        </button>
+</div>
+</div>
+</details>
+<!-- Quick Tap Item Grid -->
+<div class="space-y-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<h2 class="font-headline font-bold text-xl text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="touch_app">touch_app</span>
+                        Quick Tap Selection
+                    </h2>
+<div class="flex gap-2">
+<span class="bg-secondary-container text-on-secondary-fixed-variant px-3 py-1 rounded-full text-[10px] font-label font-bold uppercase tracking-widest">Laundry</span>
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full text-[10px] font-label font-bold uppercase tracking-widest">Dry Cleaning</span>
+</div>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-3">
+<!-- T-Shirt -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border border-outline-variant hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95">
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="T-Shirt" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOBejm3E1WjANSJAK1_PhXIKsu8zCZUGiVzRdnONP8ivrnAireU53wDBHEgULjHrqpIHmJvkkgNHDpTY9wzA1P20SSahg82VpuxC3F6l_VPx2oRlzMwXY7MWmT4eAbJ6P_9SwMsvAh0xS0nqm4mOOVdMMFrnKNhqs50NkN3qAE6KG0wL6qDIT0Q_4C7vPyirtMP-HCmmXSIoF7o_Bx8oDRglO8C9S_OVoxsH4hFBbKHvqWCVvHtw_DqRpNTmyJTLrCBeUgTw2wBHKE"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">T-Shirt</p></div>
+</button>
+<!-- T-Shirt DC -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border-2 border-primary/30 hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95 relative">
+<div class="absolute top-1 right-1 bg-primary text-white text-[8px] px-1 rounded font-bold z-10">DC</div>
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="T-Shirt DC" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOBejm3E1WjANSJAK1_PhXIKsu8zCZUGiVzRdnONP8ivrnAireU53wDBHEgULjHrqpIHmJvkkgNHDpTY9wzA1P20SSahg82VpuxC3F6l_VPx2oRlzMwXY7MWmT4eAbJ6P_9SwMsvAh0xS0nqm4mOOVdMMFrnKNhqs50NkN3qAE6KG0wL6qDIT0Q_4C7vPyirtMP-HCmmXSIoF7o_Bx8oDRglO8C9S_OVoxsH4hFBbKHvqWCVvHtw_DqRpNTmyJTLrCBeUgTw2wBHKE"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">T-Shirt DC</p></div>
+</button>
+<!-- White Shirt -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border border-outline-variant hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95">
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="White Shirt" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk69owsSHEHLYNyeMoFonOIG6hyK7JOD_kNyuKxC5oO_BY_s9Ys2QoqpO79W7bc7vlz4Xs9g8ZJfw6nyO9r2w7wL1UIOqG79iCVUzuIn4fO-2fk5dzDLwwGdY7B6YeWnEYYloejRWVJUYRHDFlSs6SKVqoeKlExCkie4cJTysIAEf4jg4_2VaK2pJ5q-sc-okg0pSs-MCYHnQD7AQtpQ5DcHR0alVAxaic2U_0g8cUaOCtzsZjk-uxOlOcbAEGganfazVBK-Y7Xdz3"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">White Shirt</p></div>
+</button>
+<!-- White Shirt DC -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border-2 border-primary/30 hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95 relative">
+<div class="absolute top-1 right-1 bg-primary text-white text-[8px] px-1 rounded font-bold z-10">DC</div>
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="White Shirt DC" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCB4-G1HtxVKm7u2JXJ6FhMdcR8B5x7-6IVt3OJdB5fXiF373kDiER4D1uyxDGIf87Z3pWaJK4ojcq0u0tQbFW8KEO8VvTJVbYT-CGaleEkB8-4gDQO0kBcG6iYLnHQHGccc6BLdZmxSFaHflqoj1UjYsogiIu4jzuq1huw1rsMCUO2I_fYPzBBAqCUtNKzvWt19v31tQWgxM-yA-86xZNBZFkHDvLJh5wLgPunkZJXqcOnvG84xFhWpG5sPeQlHm4ydBG_H37TPUQY"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">White Shirt DC</p></div>
+</button>
+<!-- Shorts -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border border-outline-variant hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95">
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="Shorts" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs277H7BAA9QkeCFoOrWY9CjiQ3FXnagcWf5QVswTVNoVQdP-LXDwDzl1daAl7baibNeMqayJxD3kFqLWD2A8bnFSJ2H6J9rrPhBcnBdvHMf2qlE3m2WldArTV0eaj9zP2pPy4nktj9wNyfFSktlUtkXZ5eIdLuUGhn3eJ7DEf2_eDYNf69OMFLYnKmnHZr5jJ7Z9Z1oalpqfgQRtTbwJ45Cwz4-p2Et7QETc52GVu49zGVNgNwPjMB3_hLITplzln0YKiVDEmkoR1"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">Shorts</p></div>
+</button>
+<!-- Shorts DC -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border-2 border-primary/30 hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95 relative">
+<div class="absolute top-1 right-1 bg-primary text-white text-[8px] px-1 rounded font-bold z-10">DC</div>
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="Shorts DC" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs277H7BAA9QkeCFoOrWY9CjiQ3FXnagcWf5QVswTVNoVQdP-LXDwDzl1daAl7baibNeMqayJxD3kFqLWD2A8bnFSJ2H6J9rrPhBcnBdvHMf2qlE3m2WldArTV0eaj9zP2pPy4nktj9wNyfFSktlUtkXZ5eIdLuUGhn3eJ7DEf2_eDYNf69OMFLYnKmnHZr5jJ7Z9Z1oalpqfgQRtTbwJ45Cwz4-p2Et7QETc52GVu49zGVNgNwPjMB3_hLITplzln0YKiVDEmkoR1"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">Shorts DC</p></div>
+</button>
+<!-- Towel -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border border-outline-variant hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95">
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="Towel" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiGbUuvDFgo1zrrAWXQbJn0iKzbhqH9IwsvdIv4-LpGDXYhHWGdt748ig-Q3hx9ojqEa1bvbBAM4FlPXVHbHxPZGhS0aaAGykuerVuSTVvsCbWPUWI8gnmddiXPZkwtOKk1MkYZKfCBmq7WdBhRQiy-lTneLvl9DwdVzfflfWcxkAKoyO1-v-hksLRtH7JGEMykS3SxpgRB6C-PxV4-k_KQlKgv9_1LJ0mIlq0sxmCju5TWZhhMPVsh74ZptCTOkC5WtcF3R_f3kTY"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">Towel</p></div>
+</button>
+<!-- Towel DC -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border-2 border-primary/30 hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95 relative">
+<div class="absolute top-1 right-1 bg-primary text-white text-[8px] px-1 rounded font-bold z-10">DC</div>
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="Towel DC" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUV_c6O7c8me44LAQPd80CLV-c-FmQjYpoA7hn_w-icsoNpsiEqjYRr6vnAXJf0zzFXJ4J8LhOVTrytOBf78rNmW9qv-KZhWxvFmjMjCMzl_IkJRKPVHPA2t3mRyjQIatSzM8-5uQR8Wre62M4-XDEQyTw28KUph185kkb2bSUMa-8ST3iy2BDvRa4H-FT-PwtO44YXvjDF9qgNJaOe7weHhIZydGRSuIDWEKag0sqpMbFeD1LbcVoeo02Rh6qq2HEMrZmn2IjBC9G"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">Towel DC</p></div>
+</button>
+<!-- Bed Sheet -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border border-outline-variant hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95">
+<div class="h-24 bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="Bed Sheet" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApCbo6my6XjtwCuhST4PIlKq0t7DNfDiujiaiQS2cHYvKqSiywXcNfV1_ZrzC2puIBGjc2MggKaXMjdCLmdJA_wj4UoC57CarzBniZSshug-IjNO-eQ9rfUXFWXOJ20Fw-qiTycHYTrRFKO_KcXKUnucH4QwdzHRscvlnT1061Xhw9OBI-eROrnCzTtTiWXtpfoj3mXob2uWedOR9yzfZdU1IuFbpiZU_AA_pIuDoxAxNuROnIknfHZjxqutWmeYQMb4LI3W_MGXH6"/>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">Bed Sheet</p></div>
+</button>
+<!-- Shoe -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border border-outline-variant hover:border-primary hover:shadow-md transition-all group overflow-hidden active:scale-95">
+<div class="h-24 bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-4xl">styler</span>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">Shoe</p></div>
+</button>
+<!-- Only Iron -->
+<button class="flex flex-col bg-surface-container-lowest rounded-lg border-2 border-dashed border-primary/30 hover:bg-primary/5 transition-all group overflow-hidden active:scale-95">
+<div class="h-24 bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-4xl">iron</span>
+</div>
+<div class="p-2 text-center"><p class="font-headline font-bold text-[10px] truncate">Only Iron</p></div>
+</button>
+<!-- Custom -->
+<button class="flex flex-col items-center justify-center bg-primary/5 rounded-lg border-2 border-dashed border-primary/30 text-primary hover:bg-primary/10 transition-all p-2 group active:scale-95">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">add_circle</span>
+<p class="font-label text-[10px] font-bold uppercase mt-1">Custom</p>
+</button>
+</div>
+</div>
+</div>
+<!-- Sidebar (Current Order) -->
+<div class="lg:col-span-4">
+<div class="bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden sticky top-[80px] border border-outline-variant">
+<div class="p-4 bg-primary text-white flex justify-between items-center">
+<div>
+<h3 class="font-headline font-bold text-base">Current Order</h3>
+<p class="text-[10px] font-medium opacity-80 uppercase">TOKEN: #LKC2 | ID: #LS-8892</p>
+</div>
+<button class="bg-white/20 p-1.5 rounded-full hover:bg-white/30 transition-colors">
+<span class="material-symbols-outlined text-sm">info</span>
+</button>
+</div>
+<div class="p-4 space-y-3">
+<div class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+<div class="flex justify-between items-center p-2 rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold bg-primary-container text-white px-1.5 rounded">2x</span>
+<p class="font-bold text-xs">Wash &amp; Fold</p>
+</div>
+<p class="font-headline font-bold text-xs">₹25.00</p>
+</div>
+<div class="flex justify-between items-center p-2 rounded-lg bg-surface-container-low border border-primary/20">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold bg-primary text-white px-1.5 rounded">1x</span>
+<p class="font-bold text-xs">Shirt (Dry Clean)</p>
+</div>
+<p class="font-headline font-bold text-xs">₹8.75</p>
+</div>
+<div class="flex justify-between items-center p-2 rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold bg-primary-container text-white px-1.5 rounded">3x</span>
+<p class="font-bold text-xs">Ironing</p>
+</div>
+<p class="font-headline font-bold text-xs">₹6.00</p>
+</div>
+</div>
+<div class="pt-3 border-t border-outline-variant space-y-1.5">
+<div class="flex justify-between text-[11px]">
+<span class="text-outline">Subtotal</span>
+<span class="font-medium">₹39.75</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span class="text-outline">Tax (8%)</span>
+<span class="font-medium">₹3.18</span>
+</div>
+<div class="flex justify-between pt-1">
+<span class="font-headline font-extrabold text-lg">Total</span>
+<span class="font-headline font-extrabold text-lg text-primary">₹42.93</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-3 bg-secondary text-white rounded-lg font-headline font-bold text-sm shadow-md active:scale-95 transition-transform hover:opacity-90">
+                            Complete Order
+                        </button>
+<button class="p-3 bg-error/10 text-error rounded-lg active:scale-95 transition-transform hover:bg-error/20">
+<span class="material-symbols-outlined text-lg">delete_sweep</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Inventory Section -->
+<section class="space-y-6 pb-24 lg:pb-12">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-2xl" data-icon="inventory_2">inventory_2</span>
+<h2 class="font-headline font-bold text-xl text-on-surface">Supply Inventory</h2>
+</div>
+<button class="flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-full font-label text-[10px] font-bold text-primary hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-lg">download</span>
+                EXPORT
+            </button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-3 border border-outline-variant">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-xs">OxyClean</h4>
+<span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase font-label">Liquid</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[85%] rounded-full"></div>
+</div>
+<div class="flex justify-between items-end">
+<p class="font-headline font-bold text-base">42.5 L</p>
+<span class="text-[10px] text-outline font-bold">85%</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-3 border-2 border-error/10">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-xs">Fabric Softener</h4>
+<span class="bg-error-container text-error px-1.5 py-0.5 rounded text-[8px] font-bold uppercase font-label">LOW</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-error h-full w-[15%] rounded-full"></div>
+</div>
+<div class="flex justify-between items-end">
+<p class="font-headline font-bold text-base">2.2 L</p>
+<button class="bg-error text-white px-2 py-1 rounded-md font-label text-[8px] font-bold uppercase tracking-wider">ORDER</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-3 border border-outline-variant">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-xs">Premium Hangers</h4>
+<span class="bg-surface-container-high text-outline px-1.5 py-0.5 rounded text-[8px] font-bold uppercase font-label">WOOD</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-secondary-fixed-dim h-full w-[62%] rounded-full"></div>
+</div>
+<div class="flex justify-between items-end">
+<p class="font-headline font-bold text-base">310 pcs</p>
+<span class="text-[10px] text-outline font-bold">62%</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-3 border border-outline-variant">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-xs">Eco-Poly Bags</h4>
+<span class="bg-secondary-container text-on-secondary-fixed-variant px-1.5 py-0.5 rounded text-[8px] font-bold uppercase font-label">OK</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[92%] rounded-full"></div>
+</div>
+<div class="flex justify-between items-end">
+<p class="font-headline font-bold text-base">1,250 pcs</p>
+<span class="text-[10px] text-outline font-bold">92%</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar for Mobile/Tablet -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-white lg:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex justify-around items-center px-4 pb-4 pt-2 border-t border-outline-variant">
+<button class="flex flex-col items-center justify-center text-secondary min-w-[64px]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-wider mt-0.5">POS</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 p-2 group hover:text-primary transition-colors">
+<span class="material-symbols-outlined">inventory</span>
+<span class="font-label text-[10px] uppercase tracking-wider mt-0.5">Stock</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 p-2 group hover:text-primary transition-colors">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label text-[10px] uppercase tracking-wider mt-0.5">Logs</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 p-2 group hover:text-primary transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label text-[10px] uppercase tracking-wider mt-0.5">Profile</span>
+</button>
+</nav>
+<!-- Contextual FAB for scanning on mobile -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all lg:hidden z-40 border-4 border-white">
+<span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
+</button>
+</body></html>

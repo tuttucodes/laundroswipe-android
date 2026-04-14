@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LaundroSwipe Admin - POS &amp; Inventory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#b2c5ff",
+                    "secondary-fixed": "#6bfe9c",
+                    "on-secondary-fixed": "#00210c",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#004771",
+                    "tertiary-container": "#005f96",
+                    "surface-variant": "#dce3ec",
+                    "surface-tint": "#0c56d0",
+                    "primary-container": "#0052cc",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "surface-container-highest": "#dce3ec",
+                    "surface": "#f6f9ff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e2e9f1",
+                    "inverse-on-surface": "#ebf1fa",
+                    "secondary": "#006d37",
+                    "on-primary-fixed": "#001848",
+                    "surface-container-low": "#eef4fd",
+                    "surface-container": "#e8eef7",
+                    "outline-variant": "#c3c6d6",
+                    "on-tertiary-fixed-variant": "#004a77",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#00743a",
+                    "on-tertiary-fixed": "#001d33",
+                    "surface-dim": "#d4dbe3",
+                    "secondary-fixed-dim": "#4ae183",
+                    "outline": "#737685",
+                    "secondary-container": "#6bfe9c",
+                    "on-background": "#151c22",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "tertiary-fixed-dim": "#97cbff",
+                    "on-surface": "#151c22",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#f6f9ff",
+                    "primary-fixed": "#dae2ff",
+                    "inverse-surface": "#2a3138",
+                    "on-tertiary-container": "#b1d7ff",
+                    "on-error": "#ffffff",
+                    "primary": "#003d9b",
+                    "tertiary-fixed": "#cee5ff",
+                    "on-surface-variant": "#434654",
+                    "on-secondary-fixed-variant": "#005228",
+                    "background": "#f6f9ff",
+                    "on-primary-container": "#c4d2ff",
+                    "on-error-container": "#93000a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Work Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-shift-bg { background-color: #f6f9ff; }
+        .no-border { border: none !important; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #dce3ec; border-radius: 10px; }
+        .three-pane-height { height: calc(100vh - 80px); }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased overflow-hidden">
+<!-- TopAppBar -->
+<header class="h-16 w-full z-50 bg-[#f6f9ff]/80 backdrop-blur-md shadow-sm border-b border-outline-variant flex items-center justify-between px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="local_laundry_service">local_laundry_service</span>
+<h1 class="font-headline font-extrabold tracking-tight text-xl text-primary">LaundryFlow Admin</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex bg-surface-container rounded-full px-4 py-1.5 items-center gap-2 border border-outline-variant">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm font-label w-64" placeholder="Search order or token..." type="text"/>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low p-1 rounded-full pl-4 border border-outline-variant">
+<span class="font-label text-xs font-semibold text-on-surface-variant">Admin Station 01</span>
+<img alt="Staff Member Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-h0CtIcuJLvwxrUa4eKK-4t9RIDWb5urM4LYUra2co4bHS3wqPZ8ziEyDaos5pPCo5dc8I9Eu2OTsrwqVMAlbBJdpItivLjPT1LH5kPhNGZIqvD472iOCgaGDPLaaGPXxoD0DyuPGn9ILMOLrptIlv9z7l3xb8-Q0pD3XnLyssC1quAW69Vb3nQzl7KPW1H5_qKSbVjp8X9fl76t5W9ooiRT8jr0VMPTY0wXPNTzP3ejyyG-WYRY9tGDxMm1ui2PnmTdVJTdPLwzi"/>
+</div>
+</div>
+</header>
+<main class="three-pane-height grid grid-cols-12 overflow-hidden">
+<!-- LEFT PANE: Scanning & Management -->
+<aside class="col-span-3 border-r border-outline-variant bg-surface-container-lowest p-4 space-y-6 overflow-y-auto">
+<div class="space-y-3">
+<h3 class="font-headline font-bold text-sm text-outline uppercase tracking-wider">Quick Actions</h3>
+<button class="w-full bg-primary text-white p-4 rounded-xl flex items-center justify-center gap-3 shadow-md hover:bg-primary-container transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="font-headline font-bold">Scan QR Code</span>
+</button>
+<button class="w-full bg-surface-container border border-outline-variant text-primary p-4 rounded-xl flex items-center justify-center gap-3 hover:bg-primary/5 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="person_search">person_search</span>
+<span class="font-headline font-bold">Lookup Token</span>
+</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-headline font-bold text-sm text-outline uppercase tracking-wider">Add New Item</h3>
+<span class="material-symbols-outlined text-outline text-lg" data-icon="settings_suggest">settings_suggest</span>
+</div>
+<div class="space-y-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant">
+<div class="space-y-1">
+<label class="block text-[10px] font-bold text-outline uppercase tracking-wider px-1">Item Description</label>
+<input class="w-full bg-surface-container-lowest border-outline-variant focus:border-primary focus:ring-primary rounded-lg text-sm px-3 py-2 font-body" placeholder="e.g. Silk Saree" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="block text-[10px] font-bold text-outline uppercase tracking-wider px-1">Rate (₹)</label>
+<input class="w-full bg-surface-container-lowest border-outline-variant focus:border-primary focus:ring-primary rounded-lg text-sm px-3 py-2 font-body" placeholder="0.00" type="number"/>
+</div>
+<div class="space-y-1">
+<label class="block text-[10px] font-bold text-outline uppercase tracking-wider px-1">Item Image</label>
+<div class="relative group/file">
+<input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" type="file"/>
+<div class="w-full bg-surface-container-lowest border-2 border-dashed border-outline-variant rounded-lg p-3 flex items-center gap-3 group-hover/file:border-primary transition-colors">
+<span class="material-symbols-outlined text-outline text-xl" data-icon="add_photo_alternate">add_photo_alternate</span>
+<span class="text-xs text-outline font-medium">Choose file...</span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 bg-secondary text-white rounded-lg font-headline font-bold text-sm shadow-md hover:opacity-90 transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+<span class="material-symbols-outlined text-lg" data-icon="add_box">add_box</span>
+                        Create Preset
+                    </button>
+</div>
+</div>
+<!-- Supply Mini View -->
+<div class="space-y-3 pt-4 border-t border-outline-variant">
+<h3 class="font-headline font-bold text-sm text-outline uppercase tracking-wider">Supplies Status</h3>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-xs">
+<span class="font-medium">OxyClean</span>
+<span class="text-secondary font-bold">85%</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full"><div class="bg-secondary h-full w-[85%] rounded-full"></div></div>
+<div class="flex justify-between items-center text-xs">
+<span class="font-medium text-error">Softener</span>
+<span class="text-error font-bold">15%</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full"><div class="bg-error h-full w-[15%] rounded-full"></div></div>
+</div>
+</div>
+</aside>
+<!-- CENTER PANE: Item Grid Selection -->
+<section class="col-span-6 bg-surface p-6 overflow-y-auto space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="font-headline font-bold text-xl text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="touch_app">touch_app</span>
+                    Quick Tap Selection
+                </h2>
+<div class="flex gap-2">
+<button class="bg-secondary-container text-on-secondary-fixed-variant px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">Laundry</button>
+<button class="bg-surface-container-high text-outline px-4 py-1.5 rounded-full text-xs font-bold hover:bg-primary-fixed transition-colors">Dry Clean</button>
+<button class="bg-surface-container-high text-outline px-4 py-1.5 rounded-full text-xs font-bold hover:bg-primary-fixed transition-colors">Ironing</button>
+</div>
+</div>
+<!-- Expanded Visual Grid for efficiency -->
+<div class="grid grid-cols-4 xl:grid-cols-6 gap-4">
+<!-- Items -->
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant hover:border-primary hover:shadow-lg transition-all group overflow-hidden active:scale-95">
+<div class="aspect-square bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="T-Shirt" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOBejm3E1WjANSJAK1_PhXIKsu8zCZUGiVzRdnONP8ivrnAireU53wDBHEgULjHrqpIHmJvkkgNHDpTY9wzA1P20SSahg82VpuxC3F6l_VPx2oRlzMwXY7MWmT4eAbJ6P_9SwMsvAh0xS0nqm4mOOVdMMFrnKNhqs50NkN3qAE6KG0wL6qDIT0Q_4C7vPyirtMP-HCmmXSIoF7o_Bx8oDRglO8C9S_OVoxsH4hFBbKHvqWCVvHtw_DqRpNTmyJTLrCBeUgTw2wBHKE"/>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">T-Shirt</p>
+<p class="text-[10px] text-primary font-bold">₹12.50</p>
+</div>
+</button>
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border-2 border-primary/30 hover:border-primary hover:shadow-lg transition-all group overflow-hidden active:scale-95 relative">
+<div class="absolute top-2 right-2 bg-primary text-white text-[8px] px-1.5 py-0.5 rounded font-bold">DC</div>
+<div class="aspect-square bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="T-Shirt DC" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOBejm3E1WjANSJAK1_PhXIKsu8zCZUGiVzRdnONP8ivrnAireU53wDBHEgULjHrqpIHmJvkkgNHDpTY9wzA1P20SSahg82VpuxC3F6l_VPx2oRlzMwXY7MWmT4eAbJ6P_9SwMsvAh0xS0nqm4mOOVdMMFrnKNhqs50NkN3qAE6KG0wL6qDIT0Q_4C7vPyirtMP-HCmmXSIoF7o_Bx8oDRglO8C9S_OVoxsH4hFBbKHvqWCVvHtw_DqRpNTmyJTLrCBeUgTw2wBHKE"/>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">T-Shirt DC</p>
+<p class="text-[10px] text-primary font-bold">₹25.00</p>
+</div>
+</button>
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant hover:border-primary hover:shadow-lg transition-all group overflow-hidden active:scale-95">
+<div class="aspect-square bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="White Shirt" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk69owsSHEHLYNyeMoFonOIG6hyK7JOD_kNyuKxC5oO_BY_s9Ys2QoqpO79W7bc7vlz4Xs9g8ZJfw6nyO9r2w7wL1UIOqG79iCVUzuIn4fO-2fk5dzDLwwGdY7B6YeWnEYYloejRWVJUYRHDFlSs6SKVqoeKlExCkie4cJTysIAEf4jg4_2VaK2pJ5q-sc-okg0pSs-MCYHnQD7AQtpQ5DcHR0alVAxaic2U_0g8cUaOCtzsZjk-uxOlOcbAEGganfazVBK-Y7Xdz3"/>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">White Shirt</p>
+<p class="text-[10px] text-primary font-bold">₹15.00</p>
+</div>
+</button>
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border-2 border-primary/30 hover:border-primary hover:shadow-lg transition-all group overflow-hidden active:scale-95 relative">
+<div class="absolute top-2 right-2 bg-primary text-white text-[8px] px-1.5 py-0.5 rounded font-bold">DC</div>
+<div class="aspect-square bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="White Shirt DC" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCB4-G1HtxVKm7u2JXJ6FhMdcR8B5x7-6IVt3OJdB5fXiF373kDiER4D1uyxDGIf87Z3pWaJK4ojcq0u0tQbFW8KEO8VvTJVbYT-CGaleEkB8-4gDQO0kBcG6iYLnHQHGccc6BLdZmxSFaHflqoj1UjYsogiIu4jzuq1huw1rsMCUO2I_fYPzBBAqCUtNKzvWt19v31tQWgxM-yA-86xZNBZFkHDvLJh5wLgPunkZJXqcOnvG84xFhWpG5sPeQlHm4ydBG_H37TPUQY"/>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">Shirt DC</p>
+<p class="text-[10px] text-primary font-bold">₹30.00</p>
+</div>
+</button>
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant hover:border-primary hover:shadow-lg transition-all group overflow-hidden active:scale-95">
+<div class="aspect-square bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="Shorts" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs277H7BAA9QkeCFoOrWY9CjiQ3FXnagcWf5QVswTVNoVQdP-LXDwDzl1daAl7baibNeMqayJxD3kFqLWD2A8bnFSJ2H6J9rrPhBcnBdvHMf2qlE3m2WldArTV0eaj9zP2pPy4nktj9wNyfFSktlUtkXZ5eIdLuUGhn3eJ7DEf2_eDYNf69OMFLYnKmnHZr5jJ7Z9Z1oalpqfgQRtTbwJ45Cwz4-p2Et7QETc52GVu49zGVNgNwPjMB3_hLITplzln0YKiVDEmkoR1"/>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">Shorts</p>
+<p class="text-[10px] text-primary font-bold">₹10.00</p>
+</div>
+</button>
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant hover:border-primary hover:shadow-lg transition-all group overflow-hidden active:scale-95">
+<div class="aspect-square bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="Towel" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiGbUuvDFgo1zrrAWXQbJn0iKzbhqH9IwsvdIv4-LpGDXYhHWGdt748ig-Q3hx9ojqEa1bvbBAM4FlPXVHbHxPZGhS0aaAGykuerVuSTVvsCbWPUWI8gnmddiXPZkwtOKk1MkYZKfCBmq7WdBhRQiy-lTneLvl9DwdVzfflfWcxkAKoyO1-v-hksLRtH7JGEMykS3SxpgRB6C-PxV4-k_KQlKgv9_1LJ0mIlq0sxmCju5TWZhhMPVsh74ZptCTOkC5WtcF3R_f3kTY"/>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">Towel</p>
+<p class="text-[10px] text-primary font-bold">₹8.00</p>
+</div>
+</button>
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant hover:border-primary hover:shadow-lg transition-all group overflow-hidden active:scale-95">
+<div class="aspect-square bg-surface-container-low flex items-center justify-center overflow-hidden">
+<img alt="Bed Sheet" class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApCbo6my6XjtwCuhST4PIlKq0t7DNfDiujiaiQS2cHYvKqSiywXcNfV1_ZrzC2puIBGjc2MggKaXMjdCLmdJA_wj4UoC57CarzBniZSshug-IjNO-eQ9rfUXFWXOJ20Fw-qiTycHYTrRFKO_KcXKUnucH4QwdzHRscvlnT1061Xhw9OBI-eROrnCzTtTiWXtpfoj3mXob2uWedOR9yzfZdU1IuFbpiZU_AA_pIuDoxAxNuROnIknfHZjxqutWmeYQMb4LI3W_MGXH6"/>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">Bed Sheet</p>
+<p class="text-[10px] text-primary font-bold">₹40.00</p>
+</div>
+</button>
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant hover:border-primary transition-all group overflow-hidden active:scale-95">
+<div class="aspect-square bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-4xl" data-icon="styler">styler</span>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">Shoes</p>
+<p class="text-[10px] text-primary font-bold">₹120.00</p>
+</div>
+</button>
+<button class="flex flex-col bg-surface-container-lowest rounded-xl border-2 border-dashed border-primary/30 hover:bg-primary/5 transition-all group overflow-hidden active:scale-95">
+<div class="aspect-square bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-4xl" data-icon="iron">iron</span>
+</div>
+<div class="p-2 text-center border-t border-outline-variant">
+<p class="font-headline font-bold text-[11px] truncate uppercase">Iron Only</p>
+<p class="text-[10px] text-primary font-bold">₹5.00</p>
+</div>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary/5 rounded-xl border-2 border-dashed border-primary/30 text-primary hover:bg-primary/10 transition-all group p-4">
+<span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform" data-icon="add_circle">add_circle</span>
+<p class="font-label text-[10px] font-bold uppercase mt-2">Custom Item</p>
+</button>
+</div>
+<div class="pt-8 border-t border-outline-variant">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline font-bold text-lg text-on-surface">Recent Logs</h3>
+<button class="text-xs font-bold text-primary underline">View All</button>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant flex justify-between items-center">
+<div class="flex gap-3 items-center">
+<span class="material-symbols-outlined text-secondary" data-icon="check_circle">check_circle</span>
+<div>
+<p class="text-xs font-bold">Order #LS-8891 Completed</p>
+<p class="text-[10px] text-outline">₹850.00 • 2 mins ago</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant flex justify-between items-center">
+<div class="flex gap-3 items-center">
+<span class="material-symbols-outlined text-primary" data-icon="pending">pending</span>
+<div>
+<p class="text-xs font-bold">Order #LS-8890 Processing</p>
+<p class="text-[10px] text-outline">₹425.50 • 15 mins ago</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- RIGHT PANE: Current Order & Billing -->
+<aside class="col-span-3 border-l border-outline-variant bg-surface-container-lowest flex flex-col">
+<div class="p-6 bg-primary text-white">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline font-bold text-lg">Current Order</h3>
+<span class="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold">STATION 01</span>
+</div>
+<p class="text-[10px] font-medium opacity-80 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="tag">tag</span>
+                    TOKEN: #LKC2 | ID: #LS-8892
+                </p>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-3">
+<!-- Order Line Items -->
+<div class="group flex justify-between items-center p-3 rounded-xl bg-surface-container-low hover:ring-1 ring-primary/30 transition-all">
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-center justify-center bg-primary text-white w-8 h-8 rounded-lg font-bold text-xs">2x</div>
+<div>
+<p class="font-bold text-sm">Wash &amp; Fold</p>
+<p class="text-[10px] text-outline font-medium">Standard Laundry</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-headline font-bold text-sm">₹25.00</p>
+<button class="text-[10px] text-error font-bold opacity-0 group-hover:opacity-100 transition-opacity">Remove</button>
+</div>
+</div>
+<div class="group flex justify-between items-center p-3 rounded-xl bg-surface-container-low hover:ring-1 ring-primary/30 transition-all border border-primary/20">
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-center justify-center bg-primary text-white w-8 h-8 rounded-lg font-bold text-xs">1x</div>
+<div>
+<p class="font-bold text-sm">Shirt (Dry Clean)</p>
+<p class="text-[10px] text-primary font-bold">Premium Care</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-headline font-bold text-sm">₹8.75</p>
+<button class="text-[10px] text-error font-bold opacity-0 group-hover:opacity-100 transition-opacity">Remove</button>
+</div>
+</div>
+<div class="group flex justify-between items-center p-3 rounded-xl bg-surface-container-low hover:ring-1 ring-primary/30 transition-all">
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-center justify-center bg-primary text-white w-8 h-8 rounded-lg font-bold text-xs">3x</div>
+<div>
+<p class="font-bold text-sm">Ironing</p>
+<p class="text-[10px] text-outline font-medium">Steam Press</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-headline font-bold text-sm">₹6.00</p>
+<button class="text-[10px] text-error font-bold opacity-0 group-hover:opacity-100 transition-opacity">Remove</button>
+</div>
+</div>
+</div>
+<!-- Billing Footer -->
+<div class="p-6 border-t border-outline-variant bg-surface-container-low space-y-4">
+<div class="space-y-1.5">
+<div class="flex justify-between text-sm">
+<span class="text-outline">Subtotal</span>
+<span class="font-medium">₹39.75</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-outline">Tax (8% GST)</span>
+<span class="font-medium">₹3.18</span>
+</div>
+<div class="flex justify-between pt-2 border-t border-outline-variant">
+<span class="font-headline font-extrabold text-xl">Total Amount</span>
+<span class="font-headline font-extrabold text-xl text-primary">₹42.93</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-4 bg-secondary text-white rounded-xl font-headline font-bold text-base shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+                        Pay &amp; Finalize
+                    </button>
+<button class="p-4 bg-error/10 text-error rounded-xl hover:bg-error/20 active:scale-95 transition-transform" title="Clear Order">
+<span class="material-symbols-outlined" data-icon="delete_sweep">delete_sweep</span>
+</button>
+</div>
+</div>
+</aside>
+</main>
+<!-- Global Floating Inventory Bar (Small at bottom) -->
+<div class="fixed bottom-0 left-0 w-full h-4 bg-surface-container-high z-50 flex items-center px-4 overflow-hidden">
+<div class="flex gap-6 items-center">
+<p class="text-[8px] font-bold text-outline uppercase tracking-widest flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> System Online
+            </p>
+<p class="text-[8px] font-bold text-outline uppercase tracking-widest flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Softener Low (15%)
+            </p>
+</div>
+</div>
+</body></html>

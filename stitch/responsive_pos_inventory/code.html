@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LaundroSwipe Admin - POS &amp; Inventory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#b2c5ff",
+                    "secondary-fixed": "#6bfe9c",
+                    "on-secondary-fixed": "#00210c",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#004771",
+                    "tertiary-container": "#005f96",
+                    "surface-variant": "#dce3ec",
+                    "surface-tint": "#0c56d0",
+                    "primary-container": "#0052cc",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "surface-container-highest": "#dce3ec",
+                    "surface": "#f6f9ff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e2e9f1",
+                    "inverse-on-surface": "#ebf1fa",
+                    "secondary": "#006d37",
+                    "on-primary-fixed": "#001848",
+                    "surface-container-low": "#eef4fd",
+                    "surface-container": "#e8eef7",
+                    "outline-variant": "#c3c6d6",
+                    "on-tertiary-fixed-variant": "#004a77",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#00743a",
+                    "on-tertiary-fixed": "#001d33",
+                    "surface-dim": "#d4dbe3",
+                    "secondary-fixed-dim": "#4ae183",
+                    "outline": "#737685",
+                    "secondary-container": "#6bfe9c",
+                    "on-background": "#151c22",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "tertiary-fixed-dim": "#97cbff",
+                    "on-surface": "#151c22",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#f6f9ff",
+                    "primary-fixed": "#dae2ff",
+                    "inverse-surface": "#2a3138",
+                    "on-tertiary-container": "#b1d7ff",
+                    "on-error": "#ffffff",
+                    "primary": "#003d9b",
+                    "tertiary-fixed": "#cee5ff",
+                    "on-surface-variant": "#434654",
+                    "on-secondary-fixed-variant": "#005228",
+                    "background": "#f6f9ff",
+                    "on-primary-container": "#c4d2ff",
+                    "on-error-container": "#93000a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Work Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-shift-bg { background-color: #f6f9ff; }
+        .no-border { border: none !important; }
+        body { min-height: 100vh; }
+        @media (min-width: 1024px) {
+            .main-content { margin-left: 16rem; }
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- SideNavBar from COMPONENTS_22 -->
+<aside class="hidden lg:flex h-screen w-64 fixed left-0 top-0 z-50 bg-slate-50 dark:bg-slate-950 flex-col py-6 border-r border-slate-100 dark:border-slate-800 font-['Inter'] text-sm font-medium">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-2xl font-black text-blue-800 dark:text-blue-300" data-icon="local_laundry_service">local_laundry_service</span>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-blue-900 dark:text-blue-100 leading-none">LaundroSwipe</h1>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Admin Portal</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 mx-2 my-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all rounded-xl active:translate-x-1" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-xl mx-2 my-1 active:translate-x-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">point_of_sale</span>
+<span class="font-bold">POS</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 mx-2 my-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all rounded-xl active:translate-x-1" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span>Item Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 mx-2 my-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all rounded-xl active:translate-x-1" href="#">
+<span class="material-symbols-outlined">shelves</span>
+<span>Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 mx-2 my-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all rounded-xl active:translate-x-1" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Reports</span>
+</a>
+</nav>
+<div class="px-4 mb-6">
+<button class="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add</span>
+            New Order
+        </button>
+</div>
+<div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 mx-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 mx-2 text-error hover:bg-error/5 transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar from COMPONENTS_22 -->
+<header class="main-content sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm shadow-blue-900/5 flex justify-between items-center px-6 py-3 w-full">
+<div class="flex items-center gap-4">
+<button class="lg:hidden p-2 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-full transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex bg-surface-container-low rounded-full px-4 py-2 items-center gap-2 max-w-xs transition-colors hover:bg-blue-50/50">
+<span class="material-symbols-outlined text-slate-500" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm font-['Work_Sans']" placeholder="Search services..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-px bg-slate-200 mx-1"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-blue-900">Admin Station 01</p>
+<p class="text-[10px] text-slate-500">Active Shift</p>
+</div>
+<img alt="Admin profile" class="w-9 h-9 rounded-full border-2 border-emerald-100 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-h0CtIcuJLvwxrUa4eKK-4t9RIDWb5urM4LYUra2co4bHS3wqPZ8ziEyDaos5pPCo5dc8I9Eu2OTsrwqVMAlbBJdpItivLjPT1LH5kPhNGZIqvD472iOCgaGDPLaaGPXxoD0DyuPGn9ILMOLrptIlv9z7l3xb8-Q0pD3XnLyssC1quAW69Vb3nQzl7KPW1H5_qKSbVjp8X9fl76t5W9ooiRT8jr0VMPTY0wXPNTzP3ejyyG-WYRY9tGDxMm1ui2PnmTdVJTdPLwzi"/>
+</div>
+</div>
+</header>
+<main class="main-content pt-8 pb-32 px-4 md:px-8 max-w-[1600px] space-y-10">
+<!-- POS Section -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<div class="lg:col-span-8 space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="font-headline font-bold text-3xl text-on-surface">Point of Sale</h2>
+<div class="flex gap-3">
+<span class="bg-secondary-container text-on-secondary-fixed-variant px-4 py-1.5 rounded-full text-xs font-label font-bold uppercase tracking-widest shadow-sm">Live Store</span>
+</div>
+</div>
+<!-- Optimized Bento Grid Services for Tablet -->
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4 xl:gap-6">
+<button class="group p-6 bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all text-left flex flex-col justify-between aspect-square active:scale-95 border border-slate-100">
+<div class="w-14 h-14 bg-primary-fixed rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-3xl" data-icon="dry_cleaning">dry_cleaning</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg md:text-xl">Wash &amp; Fold</p>
+<p class="font-label text-secondary font-bold text-base">₹1,050.00 /kg</p>
+</div>
+</button>
+<button class="group p-6 bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all text-left flex flex-col justify-between aspect-square active:scale-95 border border-slate-100">
+<div class="w-14 h-14 bg-secondary-container rounded-2xl flex items-center justify-center text-on-secondary-container group-hover:bg-secondary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-3xl" data-icon="iron">iron</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg md:text-xl">Ironing</p>
+<p class="font-label text-secondary font-bold text-base">₹165.00 /pc</p>
+</div>
+</button>
+<button class="group p-6 bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all text-left flex flex-col justify-between aspect-square active:scale-95 border border-slate-100">
+<div class="w-14 h-14 bg-tertiary-fixed rounded-2xl flex items-center justify-center text-tertiary group-hover:bg-tertiary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-3xl" data-icon="checkroom">checkroom</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg md:text-xl">Dry Clean</p>
+<p class="font-label text-secondary font-bold text-base">₹735.00 /pc</p>
+</div>
+</button>
+<button class="group p-6 bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all text-left flex flex-col justify-between aspect-square active:scale-95 border border-slate-100">
+<div class="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center text-outline group-hover:bg-primary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-3xl" data-icon="blanket">blanket</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg md:text-xl">Bedding</p>
+<p class="font-label text-secondary font-bold text-base">₹1,260.00 /set</p>
+</div>
+</button>
+<button class="group p-6 bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all text-left flex flex-col justify-between aspect-square active:scale-95 border border-slate-100">
+<div class="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center text-outline group-hover:bg-primary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined text-3xl" data-icon="curtains">curtains</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg md:text-xl">Curtains</p>
+<p class="font-label text-secondary font-bold text-base">₹1,850.00 /pc</p>
+</div>
+</button>
+<div class="p-6 bg-primary/5 rounded-2xl border-2 border-dashed border-primary/30 flex flex-col items-center justify-center text-primary group cursor-pointer hover:bg-primary/10 transition-colors aspect-square">
+<span class="material-symbols-outlined text-4xl mb-3" data-icon="add_circle">add_circle</span>
+<p class="font-label text-sm font-bold uppercase tracking-wider text-center">Custom Service</p>
+</div>
+</div>
+</div>
+<!-- Current Order Sidebar - Sticky on Desktop/Tablet -->
+<div class="lg:col-span-4">
+<div class="bg-surface-container-lowest rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden sticky top-24 border border-slate-100">
+<div class="p-8 bg-blue-900 text-white">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline font-bold text-xl">Current Order</h3>
+<p class="text-blue-200 text-xs font-medium mt-1">#LS-8892 • Table 01</p>
+</div>
+<span class="bg-white/10 px-2 py-1 rounded text-[10px] font-bold">POS MODE</span>
+</div>
+</div>
+<div class="p-8 space-y-6">
+<div class="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-bold text-base text-on-surface">Wash &amp; Fold (4.5kg)</p>
+<p class="text-xs text-outline font-label">Standard Detergent</p>
+</div>
+<p class="font-headline font-bold text-lg">₹4,725.00</p>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<p class="font-bold text-base text-on-surface">Ironing (3 Shirts)</p>
+<p class="text-xs text-outline font-label">Hanger service</p>
+</div>
+<p class="font-headline font-bold text-lg">₹495.00</p>
+</div>
+</div>
+<div class="pt-6 border-t-2 border-dashed border-outline-variant space-y-3">
+<div class="flex justify-between text-sm">
+<span class="text-outline font-medium">Subtotal</span>
+<span class="font-semibold text-on-surface">₹5,220.00</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-outline font-medium">GST (18%)</span>
+<span class="font-semibold text-on-surface">₹939.60</span>
+</div>
+<div class="flex justify-between pt-3">
+<span class="font-headline font-extrabold text-2xl text-on-surface">Total</span>
+<span class="font-headline font-extrabold text-2xl text-primary">₹6,159.60</span>
+</div>
+</div>
+<div class="space-y-3 pt-2">
+<button class="w-full py-5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-2xl font-headline font-bold text-lg shadow-xl shadow-emerald-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">payments</span>
+                            Collect Payment
+                        </button>
+<button class="w-full py-3 text-error font-label font-bold text-xs uppercase tracking-widest hover:bg-error/5 rounded-xl transition-colors">
+                            Discard Transaction
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Inventory Section -->
+<section class="space-y-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-secondary/10 text-secondary rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl" data-icon="inventory_2">inventory_2</span>
+</div>
+<div>
+<h2 class="font-headline font-bold text-2xl text-on-surface">Supply Inventory</h2>
+<p class="text-xs text-outline font-medium">Last updated: 10 mins ago</p>
+</div>
+</div>
+<button class="flex items-center gap-2 bg-white px-5 py-2.5 rounded-full font-label text-sm font-bold text-primary border border-slate-200 hover:bg-primary-fixed transition-all shadow-sm">
+<span class="material-symbols-outlined text-lg" data-icon="download">download</span>
+                Export Inventory
+            </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+<!-- Detergent -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm space-y-4 border border-slate-100 hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-lg">OxyClean Detergent</h4>
+<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase font-label">Liquid</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-outline font-medium">Available Stock</span>
+<span class="font-bold text-secondary">85%</span>
+</div>
+<div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[85%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-end justify-between pt-2">
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider">Remaining</p>
+<p class="font-headline font-extrabold text-2xl text-on-surface">42.5 L</p>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-primary bg-primary/5 hover:bg-primary hover:text-white rounded-xl transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="edit_square">edit_square</span>
+</button>
+</div>
+</div>
+<!-- Softener -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm space-y-4 border-2 border-error/10 hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-lg">Fabric Softener</h4>
+<span class="bg-error-container text-error px-3 py-1 rounded-full text-[10px] font-bold uppercase font-label">Low Stock</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-outline font-medium">Critical Level</span>
+<span class="font-bold text-error">15%</span>
+</div>
+<div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+<div class="bg-error h-full w-[15%] rounded-full shadow-[0_0_8px_rgba(186,26,26,0.4)]"></div>
+</div>
+</div>
+<div class="flex items-end justify-between pt-2">
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider">Remaining</p>
+<p class="font-headline font-extrabold text-2xl text-on-surface">2.2 L</p>
+</div>
+<button class="bg-error text-white px-4 py-2 rounded-xl font-label text-[10px] font-bold uppercase tracking-wider active:scale-90 transition-transform shadow-lg shadow-error/20">
+                        Order Now
+                    </button>
+</div>
+</div>
+<!-- Hangers -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm space-y-4 border border-slate-100 hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-lg">Premium Hangers</h4>
+<span class="bg-slate-100 text-outline px-3 py-1 rounded-full text-[10px] font-bold uppercase font-label">Wooden</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-outline font-medium">Stock Level</span>
+<span class="font-bold text-on-surface">62%</span>
+</div>
+<div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+<div class="bg-primary-fixed-dim h-full w-[62%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-end justify-between pt-2">
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider">Remaining</p>
+<p class="font-headline font-extrabold text-2xl text-on-surface">310 pcs</p>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-primary bg-primary/5 hover:bg-primary hover:text-white rounded-xl transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="edit_square">edit_square</span>
+</button>
+</div>
+</div>
+<!-- Bags -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm space-y-4 border border-slate-100 hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-lg">Eco-Poly Bags</h4>
+<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase font-label">Optimal</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-outline font-medium">Stock Level</span>
+<span class="font-bold text-secondary">92%</span>
+</div>
+<div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[92%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-end justify-between pt-2">
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider">Remaining</p>
+<p class="font-headline font-extrabold text-2xl text-on-surface">1,250 pcs</p>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-primary bg-primary/5 hover:bg-primary hover:text-white rounded-xl transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="edit_square">edit_square</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar for Mobile/Small Tablet -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 bg-white/95 backdrop-blur-2xl shadow-[0_-15px_45px_rgba(0,0,0,0.08)] flex justify-around items-center px-6 pb-8 pt-3 rounded-t-[2.5rem] border-t border-slate-100">
+<button class="flex flex-col items-center justify-center text-slate-400 p-2 group hover:text-primary transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="dashboard">dashboard</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-wider mt-1.5">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-emerald-600 text-white rounded-2xl w-16 h-16 -mt-10 shadow-xl shadow-emerald-600/30 transition-transform active:scale-90 border-4 border-white">
+<span class="material-symbols-outlined text-2xl" data-icon="point_of_sale" style="font-variation-settings: 'FILL' 1;">point_of_sale</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-wider mt-0.5">POS</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 p-2 group hover:text-primary transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="inventory_2">inventory_2</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-wider mt-1.5">Stock</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 p-2 group hover:text-primary transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="person">person</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-wider mt-1.5">Profile</span>
+</button>
+</nav>
+<!-- Contextual FAB -->
+<button class="fixed bottom-32 right-6 w-14 h-14 bg-blue-600 text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all lg:hidden z-40">
+<span class="material-symbols-outlined text-2xl" data-icon="qr_code_scanner">qr_code_scanner</span>
+</button>
+</body></html>

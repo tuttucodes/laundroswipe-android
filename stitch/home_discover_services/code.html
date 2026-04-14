@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LaundroSwipe - Freshness at Your Fingertips</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&amp;family=Inter:wght@400;500;600&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#434654",
+                    "tertiary-fixed": "#cee5ff",
+                    "secondary-container": "#6bfe9c",
+                    "primary-fixed": "#dae2ff",
+                    "on-tertiary-fixed": "#001d33",
+                    "on-secondary-fixed-variant": "#005228",
+                    "error": "#ba1a1a",
+                    "primary": "#003d9b",
+                    "outline-variant": "#c3c6d6",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#2a3138",
+                    "tertiary-fixed-dim": "#97cbff",
+                    "background": "#f6f9ff",
+                    "on-tertiary-container": "#b1d7ff",
+                    "surface-bright": "#f6f9ff",
+                    "primary-container": "#0052cc",
+                    "tertiary-container": "#005f96",
+                    "on-primary-container": "#c4d2ff",
+                    "error-container": "#ffdad6",
+                    "surface": "#f6f9ff",
+                    "surface-dim": "#d4dbe3",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#ebf1fa",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "on-background": "#151c22",
+                    "surface-container": "#e8eef7",
+                    "on-secondary-fixed": "#00210c",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed-dim": "#4ae183",
+                    "surface-tint": "#0c56d0",
+                    "on-surface": "#151c22",
+                    "surface-container-highest": "#dce3ec",
+                    "secondary": "#006d37",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#001848",
+                    "surface-container-high": "#e2e9f1",
+                    "tertiary": "#004771",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "outline": "#737685",
+                    "on-secondary": "#ffffff",
+                    "surface-variant": "#dce3ec",
+                    "on-secondary-container": "#00743a",
+                    "secondary-fixed": "#6bfe9c",
+                    "surface-container-low": "#eef4fd",
+                    "on-tertiary-fixed-variant": "#004a77",
+                    "inverse-primary": "#b2c5ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Work Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopAppBar -->
+<header class="bg-[#f6f9ff]/80 dark:bg-slate-900/80 backdrop-blur-md fixed top-0 w-full z-50 shadow-[0_8px_32px_rgba(0,61,155,0.04)]">
+<div class="flex items-center justify-between px-6 py-4 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-primary-fixed flex-shrink-0">
+<img alt="User profile" data-alt="Portrait of a professional man with a friendly expression, soft studio lighting, clean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtYtm-HOgfWhyFWSUK_3Z-V1haGi4QTr6RGOahv2QVzAiqhu-DpIaOUvJJngLE33zXrWb8HwikoxPbiypHrg8g4tKfGi60i-gDwUSwtkl5YJ96qAEwWKr1B6DFKwRRZPfiIg02NrQA3IW7tV8OUgM3Odve0iVzmFzm52MbcFYX18qGS6d-Dei_BA1lgFuBhu6LzeGEtX71-hAlchguWlfmzbHVUcJomM_K05CLynubYflxQDnrpJNVcPo_y6Czp2CDxhL7zw7NSh06"/>
+</div>
+<div class="hidden sm:block">
+<span class="block text-['Work_Sans'] text-[11px] font-medium tracking-wide uppercase text-slate-500">Welcome back</span>
+<span class="block font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-xl text-[#003d9b]">LaundroSwipe</span>
+</div>
+</div>
+<!-- Branding Center (Mobile) -->
+<div class="sm:hidden">
+<span class="text-2xl font-extrabold text-[#003d9b] tracking-tighter">LaundroSwipe</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-slate-200/50 rounded-full transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[#003d9b]" data-icon="notifications">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-screen-xl mx-auto">
+<!-- Hero Search Section -->
+<section class="mb-10">
+<h1 class="font-headline text-4xl sm:text-5xl font-extrabold tracking-tight text-primary mb-6 max-w-2xl leading-[1.1]">
+                Find the best care for <span class="text-secondary">your clothes.</span>
+</h1>
+<div class="relative group">
+<div class="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+</div>
+<input class="w-full h-16 pl-14 pr-6 bg-surface-container-lowest border-none rounded-xl shadow-sm focus:ring-2 focus:ring-primary/20 transition-all text-lg placeholder:text-outline-variant font-body" placeholder="Search for laundries or services..." type="text"/>
+</div>
+</section>
+<!-- Quick Actions Bento Grid -->
+<section class="mb-12">
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-headline text-2xl font-bold tracking-tight text-on-background">Quick Actions</h2>
+<button class="text-primary font-label font-semibold text-sm hover:underline">View All</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+<!-- Wash & Fold -->
+<div class="col-span-2 md:col-span-1 group relative overflow-hidden bg-gradient-to-br from-primary to-primary-container p-6 rounded-xl h-48 flex flex-col justify-between cursor-pointer shadow-lg shadow-primary/10 active:scale-95 transition-transform">
+<div class="bg-white/10 w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="local_laundry_service">local_laundry_service</span>
+</div>
+<div>
+<h3 class="text-white font-headline text-xl font-bold mb-1">Wash &amp; Fold</h3>
+<p class="text-primary-fixed text-sm font-body">Daily wear essentials</p>
+</div>
+<div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform"></div>
+</div>
+<!-- Dry Cleaning -->
+<div class="group relative overflow-hidden bg-surface-container-high p-6 rounded-xl h-48 flex flex-col justify-between cursor-pointer active:scale-95 transition-transform">
+<div class="bg-primary/5 w-12 h-12 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="dry_cleaning">dry_cleaning</span>
+</div>
+<div>
+<h3 class="text-on-background font-headline text-xl font-bold mb-1">Dry Clean</h3>
+<p class="text-on-surface-variant text-sm font-body">Suits &amp; delicate care</p>
+</div>
+</div>
+<!-- Ironing -->
+<div class="group relative overflow-hidden bg-secondary-container p-6 rounded-xl h-48 flex flex-col justify-between cursor-pointer shadow-lg shadow-secondary/10 active:scale-95 transition-transform">
+<div class="bg-on-secondary-container/10 w-12 h-12 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container text-3xl" data-icon="iron">iron</span>
+</div>
+<div>
+<h3 class="text-on-secondary-container font-headline text-xl font-bold mb-1">Ironing</h3>
+<p class="text-on-secondary-fixed-variant text-sm font-body">Crisp &amp; wrinkle-free</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Recommended Services -->
+<section>
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="font-headline text-2xl font-bold tracking-tight text-on-background">Recommended Services</h2>
+<p class="text-on-surface-variant font-body text-sm mt-1">Based on your location and preferences</p>
+</div>
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="tune">tune</span>
+</button>
+</div>
+</div>
+<!-- Shop Cards -->
+<div class="space-y-6">
+<!-- Shop 1 -->
+<div class="group bg-surface-container-low rounded-xl overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+<div class="flex flex-col md:flex-row">
+<div class="w-full md:w-72 h-52 relative overflow-hidden flex-shrink-0">
+<img alt="Laundry shop interior" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="Modern high-end laundry shop interior with bright lighting, stainless steel machines, and neatly folded white towels" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeOjPVelWfHvICPJ_u_2WFOSqO7QsTGNFET0iaAkMxtXNph2puPE5AyaETUntxtWPn4yGN7N6riSd-Zi4hHE7BHUmot_AFbwkdxA6KX46K2wBhrbmaByZtKny2m3zykXX_VqhKpww4BRrsdwIfH3ld3ViJgaEFC9XczpOF_eMbMozd8WRZkdb7w7K_MPcra_XwWgLLR7rqKXk1sQMzFAQunzDC7eXyiwIXl1eaRJLf0OqmZK7vVdvwuu7bpBQao9hMMKQ-9T8hT7m-"/>
+<div class="absolute top-4 left-4">
+<span class="bg-secondary text-on-secondary text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Popular</span>
+</div>
+</div>
+<div class="p-6 flex flex-col justify-between flex-grow">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline text-xl font-bold text-on-background">Azure Premium Cleaners</h3>
+<div class="flex items-center gap-1 bg-white px-2 py-1 rounded-lg shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-[#FFD700] text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-xs font-bold font-label">4.9</span>
+</div>
+</div>
+<p class="text-on-surface-variant font-body text-sm mb-4 line-clamp-2">Specializing in silk, wool, and wedding gown preservation with eco-friendly solvents.</p>
+</div>
+<div class="flex items-center flex-wrap gap-4 pt-4 border-t border-outline-variant/10">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="near_me">near_me</span>
+<span class="text-xs font-medium font-label">0.8 miles away</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="schedule">schedule</span>
+<span class="text-xs font-medium font-label">24h turnaround</span>
+</div>
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-lg" data-icon="delivery_dining">delivery_dining</span>
+<span class="text-xs font-bold font-label uppercase tracking-tighter">Free Pickup</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Shop 2 -->
+<div class="group bg-surface-container-low rounded-xl overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+<div class="flex flex-col md:flex-row">
+<div class="w-full md:w-72 h-52 relative overflow-hidden flex-shrink-0">
+<img alt="Clothes on hangers" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="Close-up of clean clothes hanging on a rack in a boutique style laundry, soft focus, daylight, mint green tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARvk7FCwievGlXBqJRraGgNwHqJESBeFms1RX3LCiY5ePbKDZXmOXI3cep0Nh-6w-laMnccVnJ-3cmY_nAPU7dZshUH4dZVKZ4pDz-XggZL9LtD9zaoqgzrCjyVgaB8DMeyODCUUTjat7a-u4uWBxjv4Toe8Aczqq0dWVbazFFaZuCobt9-cVSjDC4ppU0uVJb8ph7XJk5YsYcw4wbfHktPwCwl1AExro-ht3aeX5ZsaqmX1wQnyctHt61KhDKKFwQJTdaxiVc3oyB"/>
+<div class="absolute top-4 left-4">
+<span class="bg-primary text-on-primary text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Fast Track</span>
+</div>
+</div>
+<div class="p-6 flex flex-col justify-between flex-grow">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline text-xl font-bold text-on-background">Mint Fresh Laundry</h3>
+<div class="flex items-center gap-1 bg-white px-2 py-1 rounded-lg shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-[#FFD700] text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-xs font-bold font-label">4.7</span>
+</div>
+</div>
+<p class="text-on-surface-variant font-body text-sm mb-4 line-clamp-2">The fastest wash &amp; fold in the neighborhood. High-efficiency machines and organic detergents.</p>
+</div>
+<div class="flex items-center flex-wrap gap-4 pt-4 border-t border-outline-variant/10">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="near_me">near_me</span>
+<span class="text-xs font-medium font-label">1.2 miles away</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="schedule">schedule</span>
+<span class="text-xs font-medium font-label">6h Express</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="payments">payments</span>
+<span class="text-xs font-medium font-label">From $1.50/lb</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-end px-4 pb-8 pt-4 bg-[#f6f9ff] dark:bg-slate-950 shadow-[0_-12px_40px_rgba(0,0,0,0.03)] rounded-t-3xl">
+<!-- Explore (Active) -->
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#006d37] to-[#003d9b] text-white rounded-full px-5 py-2.5 scale-110 -translate-y-2 shadow-lg shadow-[#006d37]/20 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide uppercase mt-1">Explore</span>
+</a>
+<!-- Orders -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 px-4 py-2 hover:text-[#003d9b] dark:hover:text-blue-400 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide uppercase mt-1">Orders</span>
+</a>
+<!-- Schedule -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 px-4 py-2 hover:text-[#003d9b] dark:hover:text-blue-400 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide uppercase mt-1">Schedule</span>
+</a>
+<!-- Admin -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 px-4 py-2 hover:text-[#003d9b] dark:hover:text-blue-400 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard_customize">dashboard_customize</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide uppercase mt-1">Admin</span>
+</a>
+</nav>
+</body></html>

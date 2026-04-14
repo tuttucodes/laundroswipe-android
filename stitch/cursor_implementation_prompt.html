@@ -1,0 +1,49 @@
+# LaundroSwipe Cursor Implementation Prompt
+
+## Context & Goal
+I am implementing a major UI/UX update to the LaundroSwipe laundry and dry-cleaning platform. The goal is to enhance the order flow with a "Digital Handshake" (QR + Token) and update the currency across the entire application to Indian Rupee (INR - ₹).
+
+**CRITICAL:** 
+- **DO NOT** clear or touch the existing backend database schema for order data. 
+- **DO NOT** break existing pricing or service logic.
+- **ADDITION ONLY:** These changes are purely UI/UX enhancements and front-end flow updates.
+
+---
+
+## 1. Currency Update (Global)
+Update all price displays across the user and admin apps to use the Indian Rupee symbol (₹).
+- Replace all instances of "$" with "₹".
+- Ensure that the numeric values (e.g., 25.00, 4.50) are preserved.
+- Specifically update:
+    - User Home (Service discovery cards)
+    - Service Details (Menu items, bundle deals)
+    - Schedule Pickup (Order summary, delivery fees)
+    - Admin POS (Quick-tap grid, current cart/bill summary)
+    - Admin Dashboard (Revenue metrics)
+
+## 2. Order Flow: Digital Handshake (QR + Token)
+Implement the new "Smart Flow" for order verification:
+
+### A. User App - Order Status/Tracking
+- Update the Tracking/Receipt screen to include a `Digital Handshake` card.
+- **QR Component:** Generate a dynamic QR code that represents the `OrderToken` (e.g., #LKC2).
+- **Token Fallback:** Display the text `Token Number: #LKC2` clearly beneath the QR code to ensure compatibility if the vendor's scanner fails.
+- **Action:** Add a "Show QR for Drop-off" primary button if the order is in the "Order Placed" or "Pickup in Progress" state.
+
+### B. Admin POS - Scanning & Lookup
+- Add a "Scan Digital Handshake (QR)" button to the top of the Point of Sale view.
+- When clicked, trigger the camera to scan the user's QR code.
+- On success, the scan should retrieve the customer profile and open a pre-filled bill linked to that token/order ID.
+- Maintain the "Lookup Order Token" manual entry field as a fallback for the text-based token number.
+
+## 3. Visual & Style Requirements
+- Maintain the "Linen Logic" aesthetic (Cool blues #0052CC, emerald greens #006D37).
+- Use `Plus Jakarta Sans` for headers and `Inter` or `Work Sans` for body text.
+- Ensure all new components (QR cards, scan buttons) follow the `ROUND_EIGHT` corner radius defined in the design system.
+
+---
+
+## Technical Constraints (For Cursor/LLM)
+- Use Tailwind CSS for all styling.
+- Preserve existing component props and data interfaces.
+- Ensure the "Digital Handshake" module is a standalone, reusable component that can be easily plugged into the existing order detail view without altering the parent state management logic.
