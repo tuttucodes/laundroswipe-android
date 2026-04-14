@@ -2726,7 +2726,7 @@ export default function LaundroApp() {
         )}
         {viewingVendor && (
           <div className="bill-popup-overlay" onClick={() => setViewingVendor(null)} role="dialog" aria-modal="true" aria-label="Vendor info">
-            <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ borderRadius: 24, padding: 24 }}>
+            <div className="bill-popup-card stitch-service-detail-modal" onClick={(e) => e.stopPropagation()} style={{ borderRadius: 24, padding: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {viewingVendor.logo_url ? (
@@ -2741,11 +2741,31 @@ export default function LaundroApp() {
                 </div>
                 <button type="button" className="btn bout bsm" onClick={() => setViewingVendor(null)} aria-label="Close">Close</button>
               </div>
+              <div className="stitch-service-detail-hero">
+                <div className="stitch-service-detail-badges">
+                  <span className="stitch-service-pill">Premium Partner</span>
+                  <span className="stitch-service-pill stitch-service-pill-soft">Fast Pickup</span>
+                </div>
+                <p className="stitch-service-detail-subtitle">
+                  Transparent pricing and campus-aware laundry handling with quick status updates.
+                </p>
+              </div>
               {viewingVendor.brief && (
                 <div style={{ padding: 14, borderRadius: 16, background: 'rgba(23,70,162,0.05)', marginBottom: 16 }}>
                   <p style={{ fontSize: 14, color: 'var(--tx)', margin: 0, lineHeight: 1.6 }}>{viewingVendor.brief}</p>
                 </div>
               )}
+              <div className="stitch-service-detail-services">
+                <p className="stitch-service-detail-label">Services</p>
+                <div className="stitch-service-detail-grid">
+                  {SERVICES.filter((s) => !s.comingSoon).slice(0, 4).map((s) => (
+                    <div key={s.id} className="stitch-service-detail-item">
+                      <span aria-hidden>{s.emoji}</span>
+                      <span>{s.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
               {viewingVendor.pricing_details && (
                 <>
                   <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--b)', marginBottom: 8 }}>Pricing</p>
@@ -2754,6 +2774,19 @@ export default function LaundroApp() {
                   </div>
                 </>
               )}
+              <div className="stitch-service-detail-actions">
+                <button
+                  type="button"
+                  className="btn bp bbl"
+                  onClick={() => {
+                    const v = homeVendors.find((x) => profileForVendor(x).slug === viewingVendor.slug);
+                    if (v) goToScheduleWithVendor(v.id);
+                    setViewingVendor(null);
+                  }}
+                >
+                  Select this partner
+                </button>
+              </div>
             </div>
           </div>
         )}
