@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUserContext } from '@/lib/authenticated-user';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
 import { VENDORS } from '@/lib/constants';
+import { normalizeScheduleDateRowsFromDb, type RawDbScheduleDateRow } from '@/lib/schedule-normalize';
+import { assertBookingMatchesSchedule } from '@/lib/schedule-booking-guard';
+import type { ScheduleSlotRow } from '@/lib/api';
 
 type CreateOrderBody = {
   on?: string;
@@ -121,7 +124,7 @@ export async function POST(request: Request) {
     vendorId = vendorRow?.id ?? null;
   }
 
-  if (!vendorId) {
+  if (!vendorId || !vendorSlug) {
     return NextResponse.json({ error: 'Unknown laundry partner. Please pick a vendor from the list.' }, { status: 400 });
   }
 
@@ -153,6 +156,36 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+  }
+
+  const [slotsRes, datesRes] = await Promise.all([
+    supabase
+      .from('schedule_slots')
+      .select('id, label, time_from, time_to, sort_order, active, created_at')
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('schedule_dates')
+      .select('date, enabled, slot_ids, enabled_by_vendor, created_at, updated_at')
+      .order('date', { ascending: true }),
+  ]);
+  if (slotsRes.error || datesRes.error) {
+    const msg = slotsRes.error?.message || datesRes.error?.message || 'Schedule lookup failed';
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+  const scheduleSlots = (slotsRes.data ?? []) as ScheduleSlotRow[];
+  const scheduleDates = normalizeScheduleDateRowsFromDb((datesRes.data ?? []) as RawDbScheduleDateRow[]);
+  const bookingGuard = assertBookingMatchesSchedule({
+    dates: scheduleDates,
+    slots: scheduleSlots,
+    vendorSlug,
+    pickupDate,
+    timeSlotId: timeSlot,
+  });
+  if (!bookingGuard.ok) {
+    return NextResponse.json(
+      { error: bookingGuard.error, code: bookingGuard.code },
+      { status: bookingGuard.code === 'PICKUP_DATE_PAST' ? 400 : 409 },
+    );
   }
 
   const { data, error } = await supabase

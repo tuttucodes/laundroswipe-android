@@ -1,7 +1,7 @@
 import { supabase, hasSupabase } from './supabase';
 import { orderLookupTokenVariants, stripLeadingHashesFromToken } from './vendor-bill-token';
 import { mergeEveSlotIdsInList } from './schedule-slot-merge';
-import { scheduleDateKey } from './schedule-date-key';
+import { normalizeScheduleDateRowsFromDb, type RawDbScheduleDateRow } from './schedule-normalize';
 
 export type VendorCatalogRow = {
   slug: string;
@@ -783,68 +783,66 @@ export const LSApi = {
     }
   },
 
-  async fetchScheduleSlots(): Promise<ScheduleSlotRow[] | null> {
+  /**
+   * Loads bookable dates + slot definitions via `GET /api/schedule` (preferred), with Supabase fallback.
+   */
+  async fetchPublicSchedule(): Promise<{ slots: ScheduleSlotRow[]; dates: ScheduleDateRow[] } | null> {
+    if (typeof window !== 'undefined') {
+      try {
+        const res = await fetch('/api/schedule', { credentials: 'same-origin' });
+        const data = (await res.json().catch(() => ({}))) as {
+          slots?: ScheduleSlotRow[];
+          dates?: ScheduleDateRow[];
+          error?: string;
+        };
+        if (res.ok && Array.isArray(data.slots) && Array.isArray(data.dates)) {
+          return { slots: data.slots, dates: data.dates };
+        }
+        if (!res.ok) {
+          console.error('fetchPublicSchedule HTTP', res.status, data?.error);
+        }
+      } catch (e) {
+        console.error('fetchPublicSchedule fetch error', e);
+      }
+    }
+
     if (!supabase) return null;
     try {
-      const { data, error } = await supabase
-        .from('schedule_slots')
-        .select('id, label, time_from, time_to, sort_order, active, created_at')
-        .order('sort_order', { ascending: true });
-      if (error) {
-        console.error('Supabase fetchScheduleSlots error', error);
+      const [slotsRes, datesRes] = await Promise.all([
+        supabase
+          .from('schedule_slots')
+          .select('id, label, time_from, time_to, sort_order, active, created_at')
+          .order('sort_order', { ascending: true }),
+        supabase
+          .from('schedule_dates')
+          .select('date, enabled, slot_ids, enabled_by_vendor, created_at, updated_at')
+          .order('date', { ascending: true }),
+      ]);
+      if (slotsRes.error) {
+        console.error('Supabase fetchScheduleSlots error', slotsRes.error);
         return null;
       }
-      return (data ?? []) as ScheduleSlotRow[];
+      if (datesRes.error) {
+        console.error('Supabase fetchScheduleDates error', datesRes.error);
+        return null;
+      }
+      const slots = (slotsRes.data ?? []) as ScheduleSlotRow[];
+      const dates = normalizeScheduleDateRowsFromDb((datesRes.data ?? []) as RawDbScheduleDateRow[]) as ScheduleDateRow[];
+      return { slots, dates };
     } catch (e) {
-      console.error('fetchScheduleSlots exception', e);
+      console.error('fetchPublicSchedule Supabase exception', e);
       return null;
     }
   },
 
+  async fetchScheduleSlots(): Promise<ScheduleSlotRow[] | null> {
+    const bundle = await this.fetchPublicSchedule();
+    return bundle?.slots ?? null;
+  },
+
   async fetchScheduleDates(): Promise<ScheduleDateRow[] | null> {
-    if (!supabase) return null;
-    try {
-      const { data, error } = await supabase
-        .from('schedule_dates')
-        .select('date, enabled, slot_ids, enabled_by_vendor, created_at, updated_at')
-        .order('date', { ascending: true });
-      if (error) {
-        console.error('Supabase fetchScheduleDates error', error);
-        return null;
-      }
-      const rows = (data ?? []) as (ScheduleDateRow & { slot_ids?: unknown })[];
-      return rows.map((r) => {
-        const raw = r.slot_ids;
-        let slot_ids: string[] = [];
-        let slot_ids_by_vendor: Record<string, string[]> | null = null;
-        if (Array.isArray(raw)) {
-          slot_ids = mergeEveSlotIdsInList(raw.filter((s): s is string => typeof s === 'string'));
-        } else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-          const map = raw as Record<string, unknown>;
-          const byVendor: Record<string, string[]> = {};
-          for (const [k, v] of Object.entries(map)) {
-            if (Array.isArray(v)) {
-              byVendor[k] = mergeEveSlotIdsInList(v.filter((s): s is string => typeof s === 'string'));
-            }
-          }
-          if (Object.keys(byVendor).length > 0) slot_ids_by_vendor = byVendor;
-        }
-        const dateNorm = scheduleDateKey(r.date) ?? String(r.date ?? '').trim();
-        return {
-          ...r,
-          date: dateNorm,
-          slot_ids,
-          slot_ids_by_vendor,
-          enabled_by_vendor:
-            r.enabled_by_vendor && typeof r.enabled_by_vendor === 'object'
-              ? (r.enabled_by_vendor as Record<string, boolean>)
-              : null,
-        };
-      });
-    } catch (e) {
-      console.error('fetchScheduleDates exception', e);
-      return null;
-    }
+    const bundle = await this.fetchPublicSchedule();
+    return bundle?.dates ?? null;
   },
 
   async fetchNotifications(): Promise<UserNotificationRow[] | null> {

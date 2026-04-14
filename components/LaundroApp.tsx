@@ -18,6 +18,8 @@ import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
 import { dedupeScheduleSlotsByTimeAndLabel, mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
+import { scheduleDateRowByKey } from '@/lib/schedule-normalize';
+import { isScheduleOrderErrorCode, userMessageForScheduleOrderError } from '@/lib/schedule-order-errors';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
 import {
   SERVICE_FEE_SHORT_EXPLANATION,
@@ -821,11 +823,11 @@ export default function LaundroApp() {
 
   // Load schedule on home + schedule so Star Wash (slot-gated) and dates step stay accurate.
   useEffect(() => {
-    if (!['home', 'schedule'].includes(screen) || !LSApi.hasSupabase) return;
+    if (!['home', 'schedule'].includes(screen)) return;
     const refreshSchedule = () => {
-      Promise.all([LSApi.fetchScheduleSlots(), LSApi.fetchScheduleDates()]).then(([slots, dates]) => {
-        setScheduleSlots(slots ?? []);
-        setScheduleDates(dates ?? []);
+      LSApi.fetchPublicSchedule().then((bundle) => {
+        setScheduleSlots(bundle?.slots ?? []);
+        setScheduleDates(bundle?.dates ?? []);
       });
     };
     refreshSchedule();
@@ -853,7 +855,7 @@ export default function LaundroApp() {
   }, []);
 
   const slotIdsForDateByVendor = useCallback((date: string, vendorId?: string) => {
-    const row = scheduleDates.find((d) => d.date === date);
+    const row = scheduleDateRowByKey(scheduleDates, date);
     if (!row) return [] as string[];
     const map = row.slot_ids_by_vendor;
     if (map && Object.keys(map).length > 0) {
@@ -875,7 +877,7 @@ export default function LaundroApp() {
   }, [normalizeScheduleIdForVendor, scheduleDates]);
 
   const isDateEnabledForVendor = useCallback((date: string, vendorId?: string) => {
-    const row = scheduleDates.find((d) => d.date === date);
+    const row = scheduleDateRowByKey(scheduleDates, date);
     if (!row) return false;
     if (!vendorId) return Boolean(row.enabled);
     const vendorEnabledMap = row.enabled_by_vendor;
@@ -1262,7 +1264,11 @@ export default function LaundroApp() {
           row = result.order;
           break;
         }
-        if (result.error) lastError = result.error;
+        if (result.error) {
+          lastError = isScheduleOrderErrorCode(result.code)
+            ? userMessageForScheduleOrderError(result.code, result.error)
+            : result.error;
+        }
         if (result.code === 'TERMS_NOT_ACCEPTED') {
           setTermsChecked(false);
           setShowTermsModal(true);
@@ -1274,6 +1280,9 @@ export default function LaundroApp() {
           showToast(result.error || 'Add your student details to book', 'er');
           setOrderSubmitting(false);
           return;
+        }
+        if (isScheduleOrderErrorCode(result.code)) {
+          break;
         }
       }
 
