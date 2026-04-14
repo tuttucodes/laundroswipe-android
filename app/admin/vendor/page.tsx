@@ -252,6 +252,12 @@ export default function VendorPage() {
     await lookupByToken(token);
   };
 
+  const openScannerModal = () => {
+    setScannerErr('');
+    setScannerOpen(true);
+    setScannerBusy(false);
+  };
+
   const startScanner = async () => {
     setScannerErr('');
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
@@ -269,7 +275,6 @@ export default function VendorPage() {
         audio: false,
       });
       scannerStreamRef.current = stream;
-      setScannerOpen(true);
       setScannerBusy(true);
       const video = scannerVideoRef.current;
       if (!video) return;
@@ -315,8 +320,15 @@ export default function VendorPage() {
       scannerFrameRef.current = requestAnimationFrame(() => {
         void scanTick();
       });
-    } catch {
-      setScannerErr('Camera access denied or unavailable.');
+    } catch (error: unknown) {
+      const err = error as { name?: string };
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+        setScannerErr('Camera permission denied. Allow camera access and retry.');
+      } else if (err?.name === 'NotFoundError' || err?.name === 'OverconstrainedError') {
+        setScannerErr('No usable camera found on this device.');
+      } else {
+        setScannerErr('Camera access denied or unavailable.');
+      }
       setScannerBusy(false);
       setScannerOpen(true);
     }
@@ -879,7 +891,7 @@ export default function VendorPage() {
             className="vendor-btn-secondary"
             style={{ width: '100%', marginTop: 10 }}
             onClick={() => {
-              void startScanner();
+              openScannerModal();
             }}
           >
             Scan Digital Handshake
@@ -922,7 +934,21 @@ export default function VendorPage() {
             </p>
             <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bd)', background: '#000', minHeight: 220 }}>
               <video ref={scannerVideoRef} muted playsInline style={{ width: '100%', height: 280, objectFit: 'cover', display: scannerBusy ? 'block' : 'none' }} />
-              {!scannerBusy && <div style={{ color: '#fff', fontSize: 13, padding: 16 }}>Camera is not active. You can still enter token manually.</div>}
+              {!scannerBusy && (
+                <div style={{ color: '#fff', fontSize: 13, padding: 16, display: 'grid', gap: 10 }}>
+                  <div>Camera is not active. Grant permission to start scanning.</div>
+                  <button
+                    type="button"
+                    className="vendor-btn-primary"
+                    style={{ width: '100%' }}
+                    onClick={() => {
+                      void startScanner();
+                    }}
+                  >
+                    Allow camera & start scan
+                  </button>
+                </div>
+              )}
             </div>
             {(scannerErr || lookupErr) && (
               <p style={{ marginTop: 10, color: 'var(--er)', fontSize: 13 }}>{scannerErr || lookupErr}</p>
