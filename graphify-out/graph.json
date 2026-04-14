@@ -868,10 +868,18 @@
       "community": 1
     },
     {
+      "label": "vendorScheduleRowVisibleForVendor()",
+      "file_type": "code",
+      "source_file": "app/api/admin/schedule/route.ts",
+      "source_location": "L100",
+      "id": "route_vendorschedulerowvisibleforvendor",
+      "community": 1
+    },
+    {
       "label": "writeVendorEnabled()",
       "file_type": "code",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L96",
+      "source_location": "L119",
       "id": "route_writevendorenabled",
       "community": 1
     },
@@ -3977,7 +3985,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L1",
       "id": "characterencodings",
-      "community": 4
+      "community": 3
     },
     {
       "label": "sanitizeReceiptText()",
@@ -3985,7 +3993,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L7",
       "id": "characterencodings_sanitizereceipttext",
-      "community": 4
+      "community": 3
     },
     {
       "label": "encodeAsciiLines()",
@@ -3993,7 +4001,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L19",
       "id": "characterencodings_encodeasciilines",
-      "community": 4
+      "community": 3
     },
     {
       "label": "ESCPOSBuilder.ts",
@@ -6789,7 +6797,19 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L96",
+      "source_location": "L100",
+      "weight": 1.0,
+      "_src": "route",
+      "_tgt": "route_vendorschedulerowvisibleforvendor",
+      "source": "route",
+      "target": "route_vendorschedulerowvisibleforvendor",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/admin/schedule/route.ts",
+      "source_location": "L119",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_writevendorenabled",
@@ -7353,7 +7373,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L218",
+      "source_location": "L254",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_get",
@@ -7365,7 +7385,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L241",
+      "source_location": "L277",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_tostoredslotid",
@@ -7377,7 +7397,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L267",
+      "source_location": "L303",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_vendorprefix",
@@ -7389,7 +7409,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L291",
+      "source_location": "L327",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_writevendorslotids",
@@ -7401,7 +7421,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L292",
+      "source_location": "L328",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_writevendorenabled",
@@ -7413,7 +7433,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L333",
+      "source_location": "L369",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_compactslotidsmap",
@@ -7425,7 +7445,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L336",
+      "source_location": "L372",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_scheduledatejsonmapsbare",

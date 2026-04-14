@@ -93,6 +93,29 @@ function scheduleDateJsonMapsBare(slotMap: Record<string, unknown>, enMap: Recor
   return Object.keys(slotMap).length === 0 && Object.keys(enMap).length === 0;
 }
 
+/**
+ * For vendor-scoped GET, drop rows where JSON has no entry for this vendor (legacy `global`-only
+ * seeds). Those rows could not be pruned on save and made “deleted” dates reappear on reload.
+ */
+function vendorScheduleRowVisibleForVendor(
+  rawSlotIds: unknown,
+  rawEnabledByVendor: unknown,
+  vendorSlug: string | null,
+  derivedSlotIds: string[],
+  derivedEnabled: boolean,
+): boolean {
+  if (!vendorSlug) return true;
+  if (rawSlotIds && typeof rawSlotIds === 'object' && !Array.isArray(rawSlotIds)) {
+    if (Object.prototype.hasOwnProperty.call(rawSlotIds, vendorSlug)) return true;
+  } else if (Array.isArray(rawSlotIds)) {
+    return derivedSlotIds.length > 0 || derivedEnabled;
+  }
+  if (rawEnabledByVendor && typeof rawEnabledByVendor === 'object' && !Array.isArray(rawEnabledByVendor)) {
+    if (Object.prototype.hasOwnProperty.call(rawEnabledByVendor, vendorSlug)) return true;
+  }
+  return derivedSlotIds.length > 0 || derivedEnabled;
+}
+
 function writeVendorEnabled(raw: unknown, vendorSlug: string | null, enabled: boolean): Record<string, boolean> | null {
   if (!vendorSlug) return null;
   const next: Record<string, boolean> = {};
@@ -141,17 +164,30 @@ export async function GET(request: Request) {
     const slots = allSlots
       .filter((s) => (vendorSlug ? s.id.startsWith(vendorPrefix(vendorSlug)) : !s.id.includes('__')))
       .map((s) => ({ ...s, id: fromStoredSlotId(s.id, vendorSlug) }));
-    const dates = (datesRes.data ?? []).map(
-      (r: ScheduleDateRow & { slot_ids?: unknown; enabled_by_vendor?: unknown }) => {
+    const dateRows = (datesRes.data ?? []) as Array<
+      ScheduleDateRow & { slot_ids?: unknown; enabled_by_vendor?: unknown }
+    >;
+    const dates = dateRows
+      .map((r) => {
         const dateNorm = scheduleDateKey(r.date) ?? String(r.date ?? '').trim();
+        const enabled = readVendorEnabled(r.enabled_by_vendor, vendorSlug, Boolean(r.enabled));
+        const slot_ids = readVendorSlotIds(r.slot_ids, vendorSlug);
         return {
           ...r,
           date: dateNorm,
-          enabled: readVendorEnabled(r.enabled_by_vendor, vendorSlug, Boolean(r.enabled)),
-          slot_ids: readVendorSlotIds(r.slot_ids, vendorSlug),
+          enabled,
+          slot_ids,
         };
-      },
-    );
+      })
+      .filter((row, i) =>
+        vendorScheduleRowVisibleForVendor(
+          dateRows[i]?.slot_ids,
+          dateRows[i]?.enabled_by_vendor,
+          vendorSlug,
+          row.slot_ids,
+          row.enabled,
+        ),
+      );
     return NextResponse.json({ slots, dates });
   } catch (e) {
     console.error('GET /api/admin/schedule', e);
@@ -305,8 +341,8 @@ export async function POST(request: Request) {
         if (error) return NextResponse.json({ error: error.message }, { status: 400 });
         datesUpserted += 1;
       }
-      // Vendor: skip prune when dates[] is empty — otherwise sentDates is empty and we strip this vendor from every row (easy after a failed load or mistaken save). Super admin may still prune by sending an empty list when editing a vendor.
-      if (vendorSlug && meantDates && (body.dates.length > 0 || session.role === 'super_admin')) {
+      // When `dates` is included (including []), prune this vendor from every DB row not in the payload so removed dates and empty calendars persist.
+      if (vendorSlug && meantDates) {
         const sentDates = new Set(
           body.dates.map((row) => scheduleDateKey(row?.date)).filter((d): d is string => !!d),
         );
