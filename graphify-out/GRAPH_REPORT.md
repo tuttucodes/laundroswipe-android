@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-14)
 
 ## Corpus Check
-- 134 files · ~418,407 words
+- 134 files · ~418,337 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 509 nodes · 769 edges · 37 communities detected
+- 509 nodes · 767 edges · 37 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -88,12 +88,12 @@ Cohesion: 0.21
 Nodes (8): getBlePrinterPreferences(), getEffectiveEscPosPaperSize(), load(), save(), setBlePrinterPreferences(), syncEscPosPaperFromAdminPrinter(), patchPrefs(), refreshPrefs()
 
 ### Community 13 - "Community 13"
-Cohesion: 0.39
-Nodes (11): addPrinter(), getDefaultPrinter(), getPreferPrintDialog(), getPrinterConfigForPrint(), getPrinterSettings(), load(), removePrinter(), save() (+3 more)
-
-### Community 14 - "Community 14"
 Cohesion: 0.32
 Nodes (10): b64urlDecode(), b64urlEncode(), createAdminToken(), getAdminSessionCookie(), getAdminSessionFromRequest(), getAdminTokenFromRequest(), getSecret(), isAdminRequest() (+2 more)
+
+### Community 14 - "Community 14"
+Cohesion: 0.39
+Nodes (11): addPrinter(), getDefaultPrinter(), getPreferPrintDialog(), getPrinterConfigForPrint(), getPrinterSettings(), load(), removePrinter(), save() (+3 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.18
