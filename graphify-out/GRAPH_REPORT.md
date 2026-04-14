@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-14)
 
 ## Corpus Check
-- 140 files · ~419,808 words
+- 140 files · ~419,867 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 540 nodes · 823 edges · 39 communities detected
+- 541 nodes · 825 edges · 39 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -15,7 +15,7 @@
 3. `showToast()` - 23 edges
 4. `BluetoothPrinterService` - 18 edges
 5. `MainActivity` - 16 edges
-6. `POST()` - 14 edges
+6. `POST()` - 15 edges
 7. `adminAuthHeaders()` - 10 edges
 8. `load()` - 10 edges
 9. `openDb()` - 9 edges
@@ -41,7 +41,7 @@ Nodes (48): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advan
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (40): checkPublicRateLimit(), getClientIp(), billFromTokenVerifiedForCandidates(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), debugLog(), DELETE() (+32 more)
+Nodes (41): checkPublicRateLimit(), getClientIp(), billFromTokenVerifiedForCandidates(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), debugLog(), DELETE() (+33 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.07
@@ -227,7 +227,7 @@ Nodes (0):
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `ESCPOSBuilder` connect `Community 7` to `Community 6`?**
-  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+  _High betweenness centrality (0.070) - this node is a cross-community bridge._
 - **What connects `PairedDeviceRow` to the rest of the system?**
   _1 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**

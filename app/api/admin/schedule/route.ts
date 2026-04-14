@@ -26,6 +26,14 @@ function fromStoredSlotId(slotId: string, vendorSlug: string | null): string {
   return slotId.startsWith(p) ? slotId.slice(p.length) : slotId;
 }
 
+/** Normalize Postgres DATE / timestamptz / ISO string to YYYY-MM-DD (must match admin payload keys). */
+function scheduleDateKey(input: unknown): string | null {
+  const s = String(input ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m?.[1] && /^\d{4}-\d{2}-\d{2}$/.test(m[1]) ? m[1] : null;
+}
+
 function readVendorSlotIds(raw: unknown, vendorSlug: string | null): string[] {
   if (Array.isArray(raw)) {
     const ids = raw.filter((s): s is string => typeof s === 'string');
@@ -230,9 +238,8 @@ export async function POST(request: Request) {
 
     if (body.dates != null && Array.isArray(body.dates)) {
       for (const row of body.dates) {
-        const dateStr = String(row?.date ?? '').trim();
-        if (!dateStr) continue;
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
+        const dateStr = scheduleDateKey(row?.date);
+        if (!dateStr) return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
         const slotIds = Array.isArray(row.slot_ids) ? row.slot_ids.filter((s): s is string => typeof s === 'string').slice(0, 20) : [];
         const storedSlotIds = mergeEveSlotIdsInList(slotIds.map((id) => toStoredSlotId(id, vendorSlug)));
         const existing = await supabase
@@ -257,19 +264,17 @@ export async function POST(request: Request) {
           );
         if (error) return NextResponse.json({ error: error.message }, { status: 400 });
       }
-      if (vendorSlug) {
+      if (vendorSlug && body.dates.length > 0) {
         const sentDates = new Set(
-          body.dates
-            .map((row) => String(row?.date ?? '').trim())
-            .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)),
+          body.dates.map((row) => scheduleDateKey(row?.date)).filter((d): d is string => !!d),
         );
         const { data: allDateRows, error: listDatesErr } = await supabase
           .from('schedule_dates')
           .select('date, slot_ids, enabled_by_vendor');
         if (listDatesErr) return NextResponse.json({ error: listDatesErr.message }, { status: 400 });
         for (const row of allDateRows ?? []) {
-          const dateStr = String(row.date);
-          if (sentDates.has(dateStr)) continue;
+          const dateKey = scheduleDateKey(row.date);
+          if (!dateKey || sentDates.has(dateKey)) continue;
           const raw = row.slot_ids as unknown;
           const enRaw = row.enabled_by_vendor as unknown;
           if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
@@ -288,7 +293,7 @@ export async function POST(request: Request) {
           const { error: pruneErr } = await supabase
             .from('schedule_dates')
             .update({ slot_ids: nextSlot, enabled_by_vendor: nextEn })
-            .eq('date', dateStr);
+            .eq('date', dateKey);
           if (pruneErr) return NextResponse.json({ error: pruneErr.message }, { status: 400 });
         }
       }

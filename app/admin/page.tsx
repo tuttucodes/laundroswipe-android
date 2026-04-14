@@ -1965,14 +1965,22 @@ export default function AdminPage() {
                       : '';
                     const res = await fetch(`/api/admin/schedule${scheduleQuery}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() }, body: JSON.stringify({ slots: scheduleSlots.filter((s) => s.id.trim()), dates: scheduleDates }) });
                     const data = await res.json().catch(() => ({}));
-                    if (res.ok && data.ok) { showToast('Schedule saved. Users will see updated dates and slots.', 'ok'); } else {
-                    if (res.status === 401) {
+                    if (res.ok && data.ok) {
+                      showToast('Schedule saved. Users will see updated dates and slots.', 'ok');
+                      const reload = await fetch(`/api/admin/schedule${scheduleQuery}`, { credentials: 'include', headers: adminAuthHeaders() });
+                      const reloadData = await reload.json().catch(() => ({}));
+                      if (reload.ok) {
+                        if (reloadData.slots) setScheduleSlots(reloadData.slots);
+                        if (reloadData.dates) setScheduleDates(reloadData.dates);
+                      }
+                    } else if (res.status === 401) {
                       sessionStorage.removeItem('admin_token');
                       localStorage.removeItem('admin_logged');
                       setLoggedIn(false);
                       showToast('Session expired. Please log in again.', 'er');
-                    } else { showToast(data?.error || 'Save failed', 'er'); }
-                  }
+                    } else {
+                      showToast(data?.error || 'Save failed', 'er');
+                    }
                   } catch {
                     showToast('Save failed', 'er');
                   } finally {
