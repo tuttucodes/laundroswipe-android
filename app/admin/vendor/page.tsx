@@ -17,6 +17,7 @@ import { getVendorBillItems } from '@/lib/constants';
 import { calculateServiceFee, formatServiceFeeReceiptLine, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { billCatalogThumbUrl } from '@/lib/bill-catalog-thumb';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
+import { clearBillsSyncMeta } from '@/lib/offline/bills-cache';
 import type { OrderRow, UserRow } from '@/lib/api';
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
 type LatestBill = { id: string; created_at: string; can_cancel: boolean; line_items: LineItem[] };
@@ -64,6 +65,7 @@ export default function VendorPage() {
   const [scannerErr, setScannerErr] = useState('');
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
   const billPersistInFlightRef = useRef(false);
+  const lastLookupAtRef = useRef(0);
   const scannerVideoRef = useRef<HTMLVideoElement | null>(null);
   const scannerStreamRef = useRef<MediaStream | null>(null);
   const scannerFrameRef = useRef<number | null>(null);
@@ -249,6 +251,9 @@ export default function VendorPage() {
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
+    const now = Date.now();
+    if (now - lastLookupAtRef.current < 400) return;
+    lastLookupAtRef.current = now;
     await lookupByToken(token);
   };
 
@@ -553,6 +558,7 @@ export default function VendorPage() {
         return;
       }
       setLatestBill((prev) => (prev ? { ...prev, line_items: editLineItems } : prev));
+      void clearBillsSyncMeta();
       setEditingLatestBill(false);
       showToast('Latest bill updated', 'ok');
     } catch {
@@ -681,6 +687,7 @@ export default function VendorPage() {
       } else {
         showToast('Bill saved', 'ok');
       }
+      void clearBillsSyncMeta();
     } catch {
       showToast('Save failed', 'er');
     } finally {
@@ -750,6 +757,7 @@ export default function VendorPage() {
       }
       setLatestBill(null);
       setBillAlreadyGenerated(false);
+      void clearBillsSyncMeta();
       showToast('Latest bill cancelled', 'ok');
     } catch {
       showToast('Cancel failed', 'er');
@@ -821,6 +829,7 @@ export default function VendorPage() {
       } else {
         showToast('Bill saved. Printing…', 'ok');
       }
+      void clearBillsSyncMeta();
       await doPrint();
     } catch {
       showToast('Save failed — not printing', 'er');

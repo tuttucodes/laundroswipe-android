@@ -5,6 +5,10 @@ import { VENDORS } from '@/lib/constants';
 import { mergeVendorBillItemsFromDbRow } from '@/lib/vendor-bill-catalog';
 import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { getVendorBillOverridesCached, getVendorsListCached } from '@/lib/supabase-metadata-cache';
+import { allowInWindow } from '@/lib/server-usage-guards';
+import { makeBillIdempotencyKey, stableLineItemsFingerprint } from '@/lib/bill-idempotency';
+import { getSavedIdempotentResponse, saveIdempotentResponse } from '@/lib/api-idempotency-store';
+import { logApiUsageDaily } from '@/lib/server-usage-log';
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
   const normalized = String(vendorName ?? '').trim().toLowerCase();
@@ -19,6 +23,10 @@ function resolveVendorSlugFromName(vendorName: string | null | undefined): strin
 export async function POST(request: Request) {
   const session = getAdminSessionFromRequest(request);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const ipKey = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!allowInWindow(`vendor-bills-save:${session.role}:${ipKey}`, 40, 60_000)) {
+    return NextResponse.json({ error: 'Too many save requests, please retry shortly' }, { status: 429 });
+  }
 
   const supabase = createServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
@@ -134,7 +142,7 @@ export async function POST(request: Request) {
     const validImg = (s: string | null | undefined) => {
       const t = String(s ?? '').trim();
       if (!t) return null;
-      return t.startsWith('data:image/') || t.startsWith('http://') || t.startsWith('https://') ? t : null;
+      return t.startsWith('http://') || t.startsWith('https://') ? t : null;
     };
     const fromClient = validImg(rawImage);
     const fromCatalog = !isCustomItem ? validImg(catRow?.image_url ?? null) : null;
@@ -146,6 +154,7 @@ export async function POST(request: Request) {
   if (safeLineItems.length === 0) {
     return NextResponse.json({ error: 'No valid line items' }, { status: 400 });
   }
+  const lineItemsFingerprint = stableLineItemsFingerprint(safeLineItems);
 
   const subtotal = safeLineItems.reduce((s, l) => s + l.price * l.qty, 0);
   const convenience_fee = 0;
@@ -174,6 +183,15 @@ export async function POST(request: Request) {
   const newLineItemsPayload = safeLineItems.map((l) => ({ id: l.id, label: l.label, price: l.price, qty: l.qty, image_url: l.image_url }));
 
   const billOrderToken = billOrderTokenEarly;
+  const vendorScope = session.role === 'vendor' ? String(session.vendorId ?? 'vendor') : 'super_admin';
+  const idempotencyKey = makeBillIdempotencyKey({
+    vendorScope,
+    operation: 'vendor_bills_save',
+    token: billOrderToken,
+    lineItemsFingerprint,
+  });
+  const savedResponse = await getSavedIdempotentResponse(supabase as any, idempotencyKey);
+  if (savedResponse) return NextResponse.json(savedResponse);
 
   // Latest active bill (fetched in batch 2). Retry without cancelled_at if column missing.
   let resolvedExistingBillRes = existingBillRes;
@@ -203,7 +221,10 @@ export async function POST(request: Request) {
     const newFingerprint = normalize(newLineItemsPayload);
 
     if (existingFingerprint === newFingerprint) {
-      return NextResponse.json({ ok: true, billId: eb.id, reused: true });
+      const payload = { ok: true, billId: eb.id, reused: true };
+      await saveIdempotentResponse(supabase as any, idempotencyKey, '/api/vendor/bills/save', payload);
+      void logApiUsageDaily(supabase as any, '/api/vendor/bills/save', JSON.stringify(payload).length);
+      return NextResponse.json(payload);
     }
 
     const { error: updErr } = await supabase
@@ -222,7 +243,10 @@ export async function POST(request: Request) {
       .eq('id', eb.id);
 
     if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
-    return NextResponse.json({ ok: true, billId: eb.id, updated: true });
+    const payload = { ok: true, billId: eb.id, updated: true };
+    await saveIdempotentResponse(supabase as any, idempotencyKey, '/api/vendor/bills/save', payload);
+    void logApiUsageDaily(supabase as any, '/api/vendor/bills/save', JSON.stringify(payload).length);
+    return NextResponse.json(payload);
   }
 
   // No existing active bill — insert (unique index on token may race; handle 23505)
@@ -249,7 +273,10 @@ export async function POST(request: Request) {
     .single();
 
   if (!error) {
-    return NextResponse.json({ ok: true, billId: data?.id, created: true });
+    const payload = { ok: true, billId: data?.id, created: true };
+    await saveIdempotentResponse(supabase as any, idempotencyKey, '/api/vendor/bills/save', payload);
+    void logApiUsageDaily(supabase as any, '/api/vendor/bills/save', JSON.stringify(payload).length);
+    return NextResponse.json(payload);
   }
 
   if (error.code === '23505') {
@@ -271,7 +298,10 @@ export async function POST(request: Request) {
     const normalize = (items: Array<{ id: string; qty: number; price: number }>) =>
       [...items].sort((a, b) => a.id.localeCompare(b.id)).map((i) => `${i.id}:${i.qty}:${i.price}`).join('|');
     if (normalize(existingItems) === normalize(newLineItemsPayload)) {
-      return NextResponse.json({ ok: true, billId: conflictBill.id, reused: true });
+      const payload = { ok: true, billId: conflictBill.id, reused: true };
+      await saveIdempotentResponse(supabase as any, idempotencyKey, '/api/vendor/bills/save', payload);
+      void logApiUsageDaily(supabase as any, '/api/vendor/bills/save', JSON.stringify(payload).length);
+      return NextResponse.json(payload);
     }
     const { error: updErr } = await supabase
       .from('vendor_bills')
@@ -288,7 +318,10 @@ export async function POST(request: Request) {
       })
       .eq('id', conflictBill.id);
     if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
-    return NextResponse.json({ ok: true, billId: conflictBill.id, updated: true });
+    const payload = { ok: true, billId: conflictBill.id, updated: true };
+    await saveIdempotentResponse(supabase as any, idempotencyKey, '/api/vendor/bills/save', payload);
+    void logApiUsageDaily(supabase as any, '/api/vendor/bills/save', JSON.stringify(payload).length);
+    return NextResponse.json(payload);
   }
 
   return NextResponse.json({ error: error.message }, { status: 500 });

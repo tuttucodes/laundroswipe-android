@@ -14,15 +14,16 @@ function isCustomOrPresetLineId(id: string): boolean {
   return id.startsWith('custom_') || id.startsWith('preset_');
 }
 
-/** Drop heavy data URLs / huge strings for catalog lines before POST /api/vendor/bills/save|update. */
+/** Drop heavy/non-storage-safe image payloads before POST /api/vendor/bills/save|update. */
 export function compactLineItemsForSavePayload<T extends SavePayloadLineItem>(items: T[]): T[] {
   return items.map((li) => {
     const id = String(li.id ?? '');
-    if (isCustomOrPresetLineId(id)) return li;
     const url = typeof li.image_url === 'string' ? li.image_url.trim() : '';
-    if (url.startsWith('data:image/') || url.length > 8192) {
+    const allowHttpUrl = url.startsWith('http://') || url.startsWith('https://');
+    if (!allowHttpUrl || url.length > 8192) {
       return { ...li, image_url: null };
     }
+    if (isCustomOrPresetLineId(id)) return li;
     return li;
   });
 }

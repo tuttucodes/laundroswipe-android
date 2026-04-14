@@ -3,6 +3,8 @@ import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
+import { allowInWindow } from '@/lib/server-usage-guards';
+import { logApiUsageDaily } from '@/lib/server-usage-log';
 
 function resolveVendorSlugFromName(vendorName: string | null | undefined): string | null {
   const normalized = String(vendorName ?? '').trim().toLowerCase();
@@ -17,6 +19,10 @@ function resolveVendorSlugFromName(vendorName: string | null | undefined): strin
 export async function POST(request: Request) {
   const session = getAdminSessionFromRequest(request);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const ipKey = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!allowInWindow(`vendor-bills-cancel:${session.role}:${ipKey}`, 40, 60_000)) {
+    return NextResponse.json({ error: 'Too many cancel requests, please retry shortly' }, { status: 429 });
+  }
 
   const supabase = createServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
@@ -55,12 +61,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Cancellation window expired (1 hour)' }, { status: 400 });
   }
 
-  // Cancel now means delete the bill so token can be billed again.
+  // Soft cancel preserves history and supports incremental sync.
   const { error: deleteErr } = await supabase
     .from('vendor_bills')
-    .delete()
+    .update({
+      cancelled_at: new Date().toISOString(),
+      cancelled_by_role: session.role,
+    })
     .eq('id', billId);
   if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  const payload = { ok: true, bill_id: billId, cancelled_at: new Date().toISOString() };
+  void logApiUsageDaily(supabase as any, '/api/vendor/bills/cancel', JSON.stringify(payload).length);
+  return NextResponse.json(payload);
 }
 

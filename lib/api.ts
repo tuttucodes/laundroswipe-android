@@ -935,6 +935,7 @@ export type VendorBillRow = {
   cancelled_at?: string | null;
   cancelled_by_role?: string | null;
   created_at: string;
+  updated_at?: string;
 };
 
 export type VendorProfileRow = {

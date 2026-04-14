@@ -4,6 +4,10 @@ import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
 import { mergeVendorBillItemsFromDbRow } from '@/lib/vendor-bill-catalog';
 import { getVendorBillOverridesCached, getVendorsListCached } from '@/lib/supabase-metadata-cache';
+import { allowInWindow } from '@/lib/server-usage-guards';
+import { makeBillIdempotencyKey, stableLineItemsFingerprint } from '@/lib/bill-idempotency';
+import { getSavedIdempotentResponse, saveIdempotentResponse } from '@/lib/api-idempotency-store';
+import { logApiUsageDaily } from '@/lib/server-usage-log';
 
 type DbVendor = { id: string; slug: string; name: string };
 
@@ -29,6 +33,10 @@ function resolveBillVendorSlug(
 export async function POST(request: Request) {
   const session = getAdminSessionFromRequest(request);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const ipKey = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!allowInWindow(`vendor-bills-update:${session.role}:${ipKey}`, 50, 60_000)) {
+    return NextResponse.json({ error: 'Too many update requests, please retry shortly' }, { status: 429 });
+  }
 
   const supabase = createServiceSupabase();
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
@@ -62,7 +70,7 @@ export async function POST(request: Request) {
 
   const { data: bill, error: fetchErr } = await supabase
     .from('vendor_bills')
-    .select('id, vendor_id, vendor_name, created_at, line_items')
+    .select('id, vendor_id, vendor_name, created_at, order_token, line_items')
     .eq('id', billId)
     .maybeSingle();
 
@@ -120,7 +128,7 @@ export async function POST(request: Request) {
     const validImg = (s: string | null | undefined) => {
       const t = String(s ?? '').trim();
       if (!t) return null;
-      return t.startsWith('data:image/') || t.startsWith('http://') || t.startsWith('https://') ? t : null;
+      return t.startsWith('http://') || t.startsWith('https://') ? t : null;
     };
     const catalogImg = catRow ? validImg(catRow.image_url) : null;
     const image_url =
@@ -134,6 +142,17 @@ export async function POST(request: Request) {
   if (safeLineItems.length === 0) {
     return NextResponse.json({ error: 'No valid line items' }, { status: 400 });
   }
+  const lineItemsFingerprint = stableLineItemsFingerprint(safeLineItems);
+  const vendorScope = session.role === 'vendor' ? String(session.vendorId ?? 'vendor') : 'super_admin';
+  const orderToken = String((bill as { order_token?: string | null }).order_token ?? billId);
+  const idempotencyKey = makeBillIdempotencyKey({
+    vendorScope,
+    operation: 'vendor_bills_update',
+    token: orderToken,
+    lineItemsFingerprint,
+  });
+  const savedResponse = await getSavedIdempotentResponse(supabase as any, idempotencyKey);
+  if (savedResponse) return NextResponse.json(savedResponse);
 
   const subtotal = safeLineItems.reduce((s, l) => s + l.price * l.qty, 0);
   const convenience_fee = 0;
@@ -156,5 +175,8 @@ export async function POST(request: Request) {
     .eq('id', billId);
 
   if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  const payload = { ok: true, billId };
+  await saveIdempotentResponse(supabase as any, idempotencyKey, '/api/vendor/bills/update', payload);
+  void logApiUsageDaily(supabase as any, '/api/vendor/bills/update', JSON.stringify(payload).length);
+  return NextResponse.json(payload);
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { escPosPlainReceiptHtmlForPaper, printThermalReceiptDirect, thermalPrinterConfigForEscPosPlain } from '@/lib/thermal-print';
 import { openThermalReceiptReactPrintWindow } from '@/lib/receipt/openThermalReceiptReactPrint';
@@ -20,6 +20,14 @@ import { getVendorBillItems } from '@/lib/constants';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 import { billCatalogThumbUrl } from '@/lib/bill-catalog-thumb';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
+import {
+  type BillListFilterFields,
+  getLastSyncForFilter,
+  patchCachedBillRow,
+  readCachedBillsPage,
+  removeCachedBillRow,
+  writeCachedBillsPage,
+} from '@/lib/offline/bills-cache';
 
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
 type CatalogRow = { id: string; label: string; price: number; image_url?: string | null };
@@ -48,16 +56,6 @@ function billTotalKeyForDup(total: unknown) {
   return (Math.round(n * 100) / 100).toFixed(2);
 }
 
-type BillListFilterFields = {
-  token: string;
-  dateFrom: string;
-  dateTo: string;
-  subtotalMin: string;
-  subtotalMax: string;
-  totalMin: string;
-  totalMax: string;
-};
-
 function buildVendorBillsQuery(page: number, limit: number, f: BillListFilterFields): URLSearchParams {
   const p = new URLSearchParams();
   p.set('page', String(page));
@@ -74,6 +72,7 @@ function buildVendorBillsQuery(page: number, limit: number, f: BillListFilterFie
 }
 
 export default function BillsPage() {
+  const lastLoadAtRef = useRef<number>(0);
   const [bills, setBills] = useState<VendorBillRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewingBill, setViewingBill] = useState<VendorBillRow | null>(null);
@@ -94,7 +93,7 @@ export default function BillsPage() {
   const [billsPage, setBillsPage] = useState(1);
   const [billsTotalPages, setBillsTotalPages] = useState(1);
   const [billsTotal, setBillsTotal] = useState(0);
-  const BILLS_PER_PAGE = 50;
+  const BILLS_PER_PAGE = 20;
 
   const [filterToken, setFilterToken] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
@@ -142,33 +141,84 @@ export default function BillsPage() {
     appliedTotalMax,
   ]);
 
-  const fetchBills = (page: number) => {
-    setLoading(true);
+  const authHeaders = () => {
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
-    const headers = token
-      ? ({ Authorization: `Bearer ${token}` } as Record<string, string>)
-      : ({} as Record<string, string>);
-    const q = buildVendorBillsQuery(page, BILLS_PER_PAGE, appliedFilterFields);
-    fetch(`/api/vendor/bills?${q.toString()}`, { credentials: 'include', headers })
-      .then(async (r) => {
-        if (r.status === 401) {
-          sessionStorage.removeItem('admin_token');
-          localStorage.removeItem('admin_logged');
-          setLoading(false);
-          return null;
-        }
-        const data = await r.json().catch(() => ({}));
-        return data;
-      })
-      .then((data) => {
-        if (!data) return;
-        setBills((data.bills ?? []) as VendorBillRow[]);
-        setBillsPage(data.page ?? 1);
-        setBillsTotalPages(data.total_pages ?? 1);
-        setBillsTotal(data.total ?? 0);
+    return token ? ({ Authorization: `Bearer ${token}` } as Record<string, string>) : ({} as Record<string, string>);
+  };
+
+  const applyBillsResponse = (rows: VendorBillRow[], page: number, totalPages: number, total: number) => {
+    setBills(rows);
+    setBillsPage(page);
+    setBillsTotalPages(totalPages);
+    setBillsTotal(total);
+  };
+
+  const maybeHydrateFromCache = async (page: number, filterFields: BillListFilterFields) => {
+    const cached = await readCachedBillsPage(filterFields, page, BILLS_PER_PAGE);
+    if (!cached) return null;
+    applyBillsResponse(cached.bills, page, cached.totalPages, cached.total);
+    setLoading(false);
+    return cached;
+  };
+
+  const loadBills = async (page: number, filterFields: BillListFilterFields, useCacheHydration = true) => {
+    const now = Date.now();
+    if (now - lastLoadAtRef.current < 350) return;
+    lastLoadAtRef.current = now;
+    setLoading(true);
+    const cached = useCacheHydration ? await maybeHydrateFromCache(page, filterFields) : null;
+    const headers = authHeaders();
+    const q = buildVendorBillsQuery(page, BILLS_PER_PAGE, filterFields);
+    const lastSync = page === 1 ? await getLastSyncForFilter(filterFields) : null;
+    if (lastSync) q.set('updated_after', lastSync);
+
+    try {
+      const r = await fetch(`/api/vendor/bills?${q.toString()}`, { credentials: 'include', headers });
+      if (r.status === 401) {
+        sessionStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_logged');
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+        return;
+      }
+      const data = await r.json().catch(() => ({} as any));
+      if (!r.ok || !data) {
+        setLoading(false);
+        return;
+      }
+
+      let rows = (data.bills ?? []) as VendorBillRow[];
+      let nextTotal = Number(data.total ?? 0);
+      let nextPages = Number(data.total_pages ?? 1);
+      if (lastSync && cached) {
+        // Incremental merge path: keep cache shape stable and patch changed rows only.
+        const merged = new Map<string, VendorBillRow>(cached.bills.map((b) => [b.id, b]));
+        for (const row of rows) {
+          if (row.cancelled_at) merged.delete(row.id);
+          else merged.set(row.id, row);
+        }
+        rows = Array.from(merged.values())
+          .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+          .slice(0, BILLS_PER_PAGE);
+        nextTotal = cached.total;
+        nextPages = cached.totalPages;
+      }
+
+      applyBillsResponse(rows, Number(data.page ?? page), nextPages, nextTotal);
+      await writeCachedBillsPage({
+        filter: filterFields,
+        page: Number(data.page ?? page),
+        limit: BILLS_PER_PAGE,
+        total: nextTotal,
+        totalPages: nextPages,
+        bills: rows,
+        syncedAt: typeof data.synced_at === 'string' ? data.synced_at : new Date().toISOString(),
+      });
+    } catch {
+      // If network fails after hydration we still keep the fast cached render.
+      if (!cached) setLoading(false);
+      return;
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -183,7 +233,7 @@ export default function BillsPage() {
         : null,
     );
 
-    fetchBills(1);
+    void loadBills(1, appliedFilterFields, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- initial load only; refetch uses Apply / pagination
   }, []);
 
@@ -205,29 +255,7 @@ export default function BillsPage() {
     setAppliedTotalMin(draft.totalMin);
     setAppliedTotalMax(draft.totalMax);
     setBillsPage(1);
-    setLoading(true);
-    const auth = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
-    const headers = auth ? ({ Authorization: `Bearer ${auth}` } as Record<string, string>) : ({} as Record<string, string>);
-    const q = buildVendorBillsQuery(1, BILLS_PER_PAGE, draft);
-    fetch(`/api/vendor/bills?${q.toString()}`, { credentials: 'include', headers })
-      .then(async (r) => {
-        if (r.status === 401) {
-          sessionStorage.removeItem('admin_token');
-          localStorage.removeItem('admin_logged');
-          setLoading(false);
-          return null;
-        }
-        return r.json().catch(() => ({}));
-      })
-      .then((data) => {
-        if (!data) return;
-        setBills((data.bills ?? []) as VendorBillRow[]);
-        setBillsPage(data.page ?? 1);
-        setBillsTotalPages(data.total_pages ?? 1);
-        setBillsTotal(data.total ?? 0);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    void loadBills(1, draft, true);
   };
 
   const clearBillFilters = () => {
@@ -246,28 +274,16 @@ export default function BillsPage() {
     setAppliedTotalMin('');
     setAppliedTotalMax('');
     setBillsPage(1);
-    setLoading(true);
-    const auth = typeof window !== 'undefined' ? sessionStorage.getItem('admin_token') : null;
-    const headers = auth ? ({ Authorization: `Bearer ${auth}` } as Record<string, string>) : ({} as Record<string, string>);
-    fetch(`/api/vendor/bills?page=1&limit=${BILLS_PER_PAGE}`, { credentials: 'include', headers })
-      .then(async (r) => {
-        if (r.status === 401) {
-          sessionStorage.removeItem('admin_token');
-          localStorage.removeItem('admin_logged');
-          setLoading(false);
-          return null;
-        }
-        return r.json().catch(() => ({}));
-      })
-      .then((data) => {
-        if (!data) return;
-        setBills((data.bills ?? []) as VendorBillRow[]);
-        setBillsPage(data.page ?? 1);
-        setBillsTotalPages(data.total_pages ?? 1);
-        setBillsTotal(data.total ?? 0);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    const cleared: BillListFilterFields = {
+      token: '',
+      dateFrom: '',
+      dateTo: '',
+      subtotalMin: '',
+      subtotalMax: '',
+      totalMin: '',
+      totalMax: '',
+    };
+    void loadBills(1, cleared, true);
   };
 
   useEffect(() => {
@@ -550,6 +566,7 @@ export default function BillsPage() {
         total: subtotal + feeBreakdown.finalFee,
       };
       setBills((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      void patchCachedBillRow(updated);
       if (viewingBill?.id === updated.id) setViewingBill(updated);
       setEditingBill(null);
       setCopyMsg('Bill updated');
@@ -583,6 +600,7 @@ export default function BillsPage() {
         return;
       }
       setBills((prev) => prev.filter((b) => b.id !== billId));
+      void removeCachedBillRow(billId);
       if (viewingBill?.id === billId) setViewingBill(null);
       setCopyMsg('Bill deleted');
       setTimeout(() => setCopyMsg(null), 2500);
@@ -855,7 +873,7 @@ export default function BillsPage() {
                 type="button"
                 className="vendor-btn-secondary"
                 disabled={billsPage <= 1 || loading}
-                onClick={() => fetchBills(billsPage - 1)}
+                onClick={() => void loadBills(billsPage - 1, appliedFilterFields, true)}
                 style={{ minWidth: 80 }}
               >
                 Previous
@@ -867,7 +885,7 @@ export default function BillsPage() {
                 type="button"
                 className="vendor-btn-secondary"
                 disabled={billsPage >= billsTotalPages || loading}
-                onClick={() => fetchBills(billsPage + 1)}
+                onClick={() => void loadBills(billsPage + 1, appliedFilterFields, true)}
                 style={{ minWidth: 80 }}
               >
                 Next

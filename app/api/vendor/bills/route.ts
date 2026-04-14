@@ -4,6 +4,8 @@ import { getAdminSessionFromRequest } from '@/lib/admin-session';
 import { VENDORS } from '@/lib/constants';
 import { getVendorsListCached } from '@/lib/supabase-metadata-cache';
 import { istYmdEndIso, istYmdStartIso } from '@/lib/ist-dates';
+import { allowInWindow, clampBillsLimit, isConservationMode } from '@/lib/server-usage-guards';
+import { logApiUsageDaily } from '@/lib/server-usage-log';
 
 function escapeIlikePattern(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
@@ -36,9 +38,14 @@ export async function GET(request: Request) {
   if (!supabase) return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
 
   const url = new URL(request.url);
+  const ipKey = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!allowInWindow(`vendor-bills-read:${session.role}:${ipKey}`, 120, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests, please retry shortly' }, { status: 429 });
+  }
   const page = Math.max(1, Number(url.searchParams.get('page') || '1'));
-  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || '50')));
+  const limit = clampBillsLimit(Number(url.searchParams.get('limit') || '20'));
   const offset = (page - 1) * limit;
+  const updatedAfter = (url.searchParams.get('updated_after') ?? '').trim();
 
   const tokenSearchRaw = (url.searchParams.get('token') ?? '').replace(/^#/, '').trim();
   const dateFromParam = (url.searchParams.get('date_from') ?? '').trim();
@@ -49,6 +56,7 @@ export async function GET(request: Request) {
   const totalMax = parseOptionalNumber(url.searchParams.get('total_max'));
   const subtotalMin = parseOptionalNumber(url.searchParams.get('subtotal_min'));
   const subtotalMax = parseOptionalNumber(url.searchParams.get('subtotal_max'));
+  const conservationMode = isConservationMode();
 
   const vendorSlug = session.role === 'vendor' ? session.vendorId?.toLowerCase().trim() ?? '' : '';
   const { data: vendorsData, error: vendorsError } = await getVendorsListCached(supabase);
@@ -69,7 +77,8 @@ export async function GET(request: Request) {
     let q = supabase
       .from('vendor_bills')
       .select(cols, { count: 'exact' })
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false });
     if (session.role === 'vendor') {
       q = q.is('cancelled_at', null);
     }
@@ -83,19 +92,20 @@ export async function GET(request: Request) {
     if (totalMax !== null) q = q.lte('total', totalMax);
     if (subtotalMin !== null) q = q.gte('subtotal', subtotalMin);
     if (subtotalMax !== null) q = q.lte('subtotal', subtotalMax);
+    if (updatedAfter) q = q.gt('created_at', updatedAfter);
     q = q.range(offset, offset + limit - 1);
     return q;
   };
 
   const withCancelCols = await buildQuery(
-    'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, cancelled_at, cancelled_by_role',
+      'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, updated_at, cancelled_at, cancelled_by_role',
   );
   data = withCancelCols.data as any[] | null;
   error = withCancelCols.error as { message: string; code?: string } | null;
   totalCount = (withCancelCols as any).count ?? 0;
   if (error?.code === '42703') {
     const fallback = await buildQuery(
-      'id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at',
+      'id, order_id, order_token, order_number, customer_name, customer_phone, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, created_at, updated_at',
     );
     data = ((fallback.data as any[] | null) ?? []).map((row) => ({
       ...row,
@@ -143,8 +153,19 @@ export async function GET(request: Request) {
     const byVendorId = b.vendor_id ? vendorsById.get(String(b.vendor_id)) : null;
     const byVendorName = resolveVendorSlugFromName(b.vendor_name, dbVendors);
     const billVendorSlug = (byVendorId ?? byVendorName ?? null) as string | null;
+    const safeLineItems =
+      conservationMode && Array.isArray(b.line_items)
+        ? (b.line_items as Array<Record<string, unknown>>).map((li) => ({
+            id: li.id,
+            label: li.label,
+            price: li.price,
+            qty: li.qty,
+            image_url: typeof li.image_url === 'string' && li.image_url.startsWith('http') ? li.image_url : null,
+          }))
+        : b.line_items;
     return {
       ...b,
+      line_items: safeLineItems,
       vendor_slug: billVendorSlug,
       customer_name: b.customer_name ?? nameFromUser,
       customer_phone: b.customer_phone ?? phoneFromUser,
@@ -153,13 +174,17 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({
+  const payload = {
     ok: true,
     bills: rows,
     page,
     limit,
     total: totalCount,
     total_pages: Math.ceil(totalCount / limit),
-  });
+    synced_at: new Date().toISOString(),
+    conservation_mode: conservationMode,
+  };
+  void logApiUsageDaily(supabase as any, '/api/vendor/bills', JSON.stringify(payload).length);
+  return NextResponse.json(payload);
 }
 

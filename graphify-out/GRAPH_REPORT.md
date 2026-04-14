@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-14)
 
 ## Corpus Check
-- 134 files · ~416,956 words
+- 139 files · ~419,072 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 504 nodes · 758 edges · 38 communities detected
+- 534 nodes · 814 edges · 39 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -18,8 +18,8 @@
 6. `POST()` - 13 edges
 7. `adminAuthHeaders()` - 10 edges
 8. `load()` - 10 edges
-9. `BluetoothDevicePickerAdapter` - 7 edges
-10. `num()` - 7 edges
+9. `openDb()` - 9 edges
+10. `loadBills()` - 7 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `fetchRevDetail()` --calls--> `adminAuthHeaders()`  [EXTRACTED]
@@ -37,10 +37,10 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.03
-Nodes (44): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advanceStatus(), applyBillFilters(), applySuggestedSlot(), billFingerprint(), billLineItemsToState() (+36 more)
+Nodes (48): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advanceStatus(), applyBillFilters(), applyBillsResponse(), applySuggestedSlot(), authHeaders() (+40 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.06
+Cohesion: 0.05
 Nodes (40): checkPublicRateLimit(), getClientIp(), billFromTokenVerifiedForCandidates(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), debugLog(), DELETE() (+32 more)
 
 ### Community 2 - "Community 2"
@@ -60,12 +60,12 @@ Cohesion: 0.14
 Nodes (19): getBlePrinterPreferences(), getEffectiveEscPosPaperSize(), load(), save(), setBlePrinterPreferences(), syncEscPosPaperFromAdminPrinter(), patchPrefs(), refreshPrefs() (+11 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.1
-Nodes (4): escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill(), vendorBillRowToThermalReceiptData()
-
-### Community 7 - "Community 7"
 Cohesion: 0.17
 Nodes (5): BluetoothPrinterService, getBluetooth(), isWebBluetoothAvailable(), pickWritableCharacteristic(), writeChunks()
+
+### Community 7 - "Community 7"
+Cohesion: 0.1
+Nodes (4): escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill(), vendorBillRowToThermalReceiptData()
 
 ### Community 8 - "Community 8"
 Cohesion: 0.19
@@ -88,51 +88,51 @@ Cohesion: 0.16
 Nodes (6): buildTestEscPosReceipt(), formatTestEscPosPlain(), unitTotalLines(), tryNativeEscPosPrint(), uint8ToBase64(), PrintQueue
 
 ### Community 13 - "Community 13"
+Cohesion: 0.38
+Nodes (12): clearBillsSyncMeta(), getLastSyncForFilter(), hasIndexedDb(), metaKey(), openDb(), pageKey(), patchCachedBillRow(), readCachedBillsPage() (+4 more)
+
+### Community 14 - "Community 14"
 Cohesion: 0.32
 Nodes (10): b64urlDecode(), b64urlEncode(), createAdminToken(), getAdminSessionCookie(), getAdminSessionFromRequest(), getAdminTokenFromRequest(), getSecret(), isAdminRequest() (+2 more)
 
-### Community 14 - "Community 14"
+### Community 15 - "Community 15"
 Cohesion: 0.18
 Nodes (3): BluetoothDevicePickerAdapter, PairedDeviceRow, VH
 
-### Community 15 - "Community 15"
+### Community 16 - "Community 16"
 Cohesion: 0.53
 Nodes (8): clean(), escapeReg(), isEmptyDisplay(), segregateCustomerDisplay(), segregateHostelBlockRoom(), segregateNameAndReg(), stripTrailingRoomFromBlock(), tryExtractRoomFromBlock()
 
-### Community 16 - "Community 16"
+### Community 17 - "Community 17"
 Cohesion: 0.32
 Nodes (3): addDaysYmd(), eachYmdInRange(), fillCollectedByDate()
 
-### Community 17 - "Community 17"
+### Community 18 - "Community 18"
 Cohesion: 0.29
 Nodes (0): 
 
-### Community 18 - "Community 18"
+### Community 19 - "Community 19"
+Cohesion: 0.47
+Nodes (4): allowInWindow(), envBool(), isConservationMode(), nowMs()
+
+### Community 20 - "Community 20"
 Cohesion: 0.4
 Nodes (1): BluetoothPrinterDevices
 
-### Community 19 - "Community 19"
+### Community 21 - "Community 21"
 Cohesion: 0.4
 Nodes (1): PrintBridge
 
-### Community 20 - "Community 20"
-Cohesion: 0.67
-Nodes (2): checkAdminRateLimit(), getClientId()
-
-### Community 21 - "Community 21"
-Cohesion: 0.5
-Nodes (0): 
-
 ### Community 22 - "Community 22"
-Cohesion: 0.67
+Cohesion: 0.5
 Nodes (0): 
 
 ### Community 23 - "Community 23"
 Cohesion: 0.67
-Nodes (0): 
+Nodes (2): checkAdminRateLimit(), getClientId()
 
 ### Community 24 - "Community 24"
-Cohesion: 1.0
+Cohesion: 0.67
 Nodes (0): 
 
 ### Community 25 - "Community 25"
@@ -187,36 +187,40 @@ Nodes (0):
 Cohesion: 1.0
 Nodes (0): 
 
+### Community 38 - "Community 38"
+Cohesion: 1.0
+Nodes (0): 
+
 ## Knowledge Gaps
 - **1 isolated node(s):** `PairedDeviceRow`
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 24`** (2 nodes): `manifest.ts`, `manifest()`
+- **Thin community `Community 25`** (2 nodes): `manifest.ts`, `manifest()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 25`** (2 nodes): `ScrollingMarquee.tsx`, `ScrollingMarquee()`
+- **Thin community `Community 26`** (2 nodes): `ScrollingMarquee.tsx`, `ScrollingMarquee()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 26`** (2 nodes): `SegmentTabs.tsx`, `SegmentTabs()`
+- **Thin community `Community 27`** (2 nodes): `SegmentTabs.tsx`, `SegmentTabs()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 27`** (2 nodes): `TestimonialCarousel.tsx`, `TestimonialCarousel()`
+- **Thin community `Community 28`** (2 nodes): `TestimonialCarousel.tsx`, `TestimonialCarousel()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 28`** (1 nodes): `next.config.js`
+- **Thin community `Community 29`** (1 nodes): `next.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 29`** (1 nodes): `next-env.d.ts`
+- **Thin community `Community 30`** (1 nodes): `next-env.d.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 30`** (1 nodes): `env.production.js`
+- **Thin community `Community 31`** (1 nodes): `env.production.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 31`** (1 nodes): `env.js`
+- **Thin community `Community 32`** (1 nodes): `env.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 32`** (1 nodes): `env.development.js`
+- **Thin community `Community 33`** (1 nodes): `env.development.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 33`** (1 nodes): `build.gradle.kts`
+- **Thin community `Community 34`** (1 nodes): `build.gradle.kts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 34`** (1 nodes): `settings.gradle.kts`
+- **Thin community `Community 35`** (1 nodes): `settings.gradle.kts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 35`** (1 nodes): `HeroAnimations.tsx`
+- **Thin community `Community 36`** (1 nodes): `HeroAnimations.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 36`** (1 nodes): `sw.js`
+- **Thin community `Community 37`** (1 nodes): `sw.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 37`** (1 nodes): `generate-env.js`
+- **Thin community `Community 38`** (1 nodes): `generate-env.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
@@ -227,7 +231,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.03 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.06 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
