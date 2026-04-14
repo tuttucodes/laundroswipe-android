@@ -1972,7 +1972,8 @@ export default function AdminPage() {
                     const scheduleQuery = isSuperAdmin && scheduleVendorSlug
                       ? `?vendor=${encodeURIComponent(scheduleVendorSlug)}`
                       : '';
-                    const res = await fetch(`/api/admin/schedule${scheduleQuery}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() }, body: JSON.stringify({ slots: scheduleSlots.filter((s) => s.id.trim()), dates: scheduleDates }) });
+                    const slotsPayload = scheduleSlots.filter((s) => s.id.trim());
+                    const res = await fetch(`/api/admin/schedule${scheduleQuery}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() }, body: JSON.stringify({ slots: slotsPayload, dates: scheduleDates }) });
                     const data = await res.json().catch(() => ({}));
                     if (res.ok && data.ok) {
                       const m = data.meta as
@@ -1993,8 +1994,8 @@ export default function AdminPage() {
                       const reload = await fetch(`/api/admin/schedule${scheduleQuery}`, { credentials: 'include', headers: adminAuthHeaders() });
                       const reloadData = await reload.json().catch(() => ({}));
                       if (reload.ok) {
-                        if (reloadData.slots) setScheduleSlots(reloadData.slots);
-                        if (reloadData.dates) setScheduleDates(reloadData.dates);
+                        if (Array.isArray(reloadData.slots)) setScheduleSlots(reloadData.slots);
+                        if (Array.isArray(reloadData.dates)) setScheduleDates(reloadData.dates);
                       } else {
                         showToast(reloadData?.error || 'Saved, but reloading the schedule failed. Refresh the page.', 'er');
                       }

@@ -1,18 +1,18 @@
-# Graph Report - .  (2026-04-14)
+# Graph Report - .  (2026-04-15)
 
 ## Corpus Check
-- 141 files · ~420,179 words
+- 141 files · ~419,989 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 542 nodes · 827 edges · 39 communities detected
+- 541 nodes · 825 edges · 39 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## God Nodes (most connected - your core abstractions)
 1. `ESCPOSBuilder` - 25 edges
-2. `GET()` - 24 edges
-3. `showToast()` - 23 edges
+2. `showToast()` - 23 edges
+3. `GET()` - 23 edges
 4. `BluetoothPrinterService` - 18 edges
 5. `MainActivity` - 16 edges
 6. `POST()` - 14 edges
@@ -41,7 +41,7 @@ Nodes (48): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advan
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (40): checkPublicRateLimit(), getClientIp(), billFromTokenVerifiedForCandidates(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), debugLog(), DELETE() (+32 more)
+Nodes (39): checkPublicRateLimit(), getClientIp(), billFromTokenVerifiedForCandidates(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), DELETE(), deliveredSinceOrFilter() (+31 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.07

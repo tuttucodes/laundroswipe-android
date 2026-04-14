@@ -670,48 +670,12 @@ export const LSApi = {
       const token = await this.getAccessToken();
       if (token) {
         try {
-          // #region agent log
-          fetch('http://127.0.0.1:7428/ingest/c02f407f-c764-45c0-ab87-69194259e7eb', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '2ac42a' },
-            body: JSON.stringify({
-              sessionId: '2ac42a',
-              runId: 'initial',
-              hypothesisId: 'H6_CLIENT_NEVER_CALLS_ROUTE',
-              location: 'lib/api.ts:fetchVendorBillsForUser-pre-route-call',
-              message: 'Client attempting /api/me/vendor-bills request',
-              data: { hasUserId: Boolean(userId), tokenLength: token.length },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-          // #endregion
           const res = await fetch('/api/me/vendor-bills', {
             method: 'GET',
             credentials: 'same-origin',
             headers: { Authorization: `Bearer ${token}` },
           });
           const payload = await res.json().catch(() => ({}));
-          // #region agent log
-          fetch('http://127.0.0.1:7428/ingest/c02f407f-c764-45c0-ab87-69194259e7eb', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '2ac42a' },
-            body: JSON.stringify({
-              sessionId: '2ac42a',
-              runId: 'initial',
-              hypothesisId: 'H7_ROUTE_RESPONSE_NOT_OK',
-              location: 'lib/api.ts:fetchVendorBillsForUser-post-route-call',
-              message: 'Client received /api/me/vendor-bills response',
-              data: {
-                status: res.status,
-                ok: res.ok,
-                payloadOk: Boolean(payload?.ok),
-                billsCount: Array.isArray(payload?.bills) ? payload.bills.length : null,
-                error: typeof payload?.error === 'string' ? payload.error : null,
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-          // #endregion
           if (res.ok && payload?.ok && Array.isArray(payload.bills)) {
             return payload.bills as VendorBillRow[];
           }

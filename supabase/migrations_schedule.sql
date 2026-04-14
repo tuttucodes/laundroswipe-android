@@ -56,4 +56,5 @@ FROM generate_series(
   (date_trunc('year', current_date) + interval '2 months 17 days')::date,
   interval '3 days'
 ) AS t(d)
-ON CONFLICT (date) DO UPDATE SET enabled = EXCLUDED.enabled, slot_ids = EXCLUDED.slot_ids;
+-- DO NOT use DO UPDATE here: re-running this script would replace vendor-shaped slot_ids (json object) with a flat array and break per-vendor booking.
+ON CONFLICT (date) DO NOTHING;

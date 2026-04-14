@@ -9,26 +9,6 @@ const BILL_SELECT =
 
 type BillRow = Record<string, unknown>;
 
-function debugLog(payload: {
-  runId: string;
-  hypothesisId: string;
-  location: string;
-  message: string;
-  data: Record<string, unknown>;
-}): void {
-  // #region agent log
-  fetch('http://127.0.0.1:7428/ingest/c02f407f-c764-45c0-ab87-69194259e7eb', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '2ac42a' },
-    body: JSON.stringify({
-      sessionId: '2ac42a',
-      ...payload,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-}
-
 function normBillToken(v: unknown): string {
   return stripLeadingHashesFromToken(String(v ?? '')).toLowerCase();
 }
@@ -102,13 +82,6 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   const candidateIds = [...candidateUserIds];
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H1_PROFILE_MAPPING',
-    location: 'app/api/me/vendor-bills/route.ts:resolve-profile',
-    message: 'Resolved profile id for bill query',
-    data: { authUserId, profileId, candidateIds },
-  });
 
   const collected: BillRow[] = [];
 
@@ -122,13 +95,6 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   if (buErr) return NextResponse.json({ error: buErr.message }, { status: 500 });
   if (byUser?.length) collected.push(...byUser);
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H2_BILLS_BY_USER_EMPTY',
-    location: 'app/api/me/vendor-bills/route.ts:query-by-user',
-    message: 'Bills fetched by vendor_bills.user_id',
-    data: { profileId, candidateIds, byUserCount: byUser?.length ?? 0 },
-  });
 
   const { data: orders, error: ordErr } = await service
     .from('orders')
@@ -138,18 +104,6 @@ export async function GET(request: Request): Promise<NextResponse> {
     .limit(200);
 
   if (ordErr) return NextResponse.json({ error: ordErr.message }, { status: 500 });
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H3_ORDERS_TOKENS_EMPTY',
-    location: 'app/api/me/vendor-bills/route.ts:orders-token-source',
-    message: 'Orders fetched for token matching',
-    data: {
-      profileId,
-      candidateIds,
-      ordersCount: orders?.length ?? 0,
-      sampleOrderTokens: (orders ?? []).slice(0, 5).map((o) => String((o as { token?: string }).token ?? '')),
-    },
-  });
 
   const orderIds = (orders ?? [])
     .map((o) => String((o as { id?: string }).id ?? '').trim())
@@ -166,13 +120,6 @@ export async function GET(request: Request): Promise<NextResponse> {
     : { data: [] as BillRow[], error: null as null | { message: string } };
   if (boErr) return NextResponse.json({ error: boErr.message }, { status: 500 });
   if (byOrder?.length) collected.push(...byOrder);
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H3B_BILLS_BY_ORDER_ID_EMPTY',
-    location: 'app/api/me/vendor-bills/route.ts:query-by-order-id',
-    message: 'Bills fetched by vendor_bills.order_id from user orders',
-    data: { orderIdsCount: orderIds.length, byOrderCount: byOrder?.length ?? 0 },
-  });
 
   // Bills by token: tokens only from this user's orders (`orders.user_id`); bill rows checked with `vendor_bills.user_id`.
   const allowedTokens = new Set<string>();
@@ -180,16 +127,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     const k = normBillToken((o as { token?: string }).token);
     if (k) allowedTokens.add(k);
   }
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H4_TOKEN_NORMALIZATION_MISMATCH',
-    location: 'app/api/me/vendor-bills/route.ts:token-normalization',
-    message: 'Normalized allowed tokens prepared from orders',
-    data: { allowedTokenCount: allowedTokens.size, sampleAllowedTokens: [...allowedTokens].slice(0, 5) },
-  });
 
-  let byTokenFetchedCount = 0;
-  let byTokenAcceptedCount = 0;
   for (const k of allowedTokens) {
     const tokenVariants = orderLookupTokenVariants(k);
     if (!tokenVariants.length) continue;
@@ -201,28 +139,13 @@ export async function GET(request: Request): Promise<NextResponse> {
       .limit(50);
     if (btErr) return NextResponse.json({ error: btErr.message }, { status: 500 });
     if (!byTok?.length) continue;
-    byTokenFetchedCount += byTok.length;
     for (const row of byTok) {
       if (billFromTokenVerifiedForCandidates(row, candidateUserIds, allowedTokens)) {
         collected.push(row);
-        byTokenAcceptedCount += 1;
       }
     }
   }
 
   const bills = mergeByIdSort(collected);
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H5_TOKEN_FILTER_REJECTS_VALID_BILLS',
-    location: 'app/api/me/vendor-bills/route.ts:final-merge',
-    message: 'Final bill merge statistics',
-    data: {
-      byUserCount: byUser?.length ?? 0,
-      byTokenFetchedCount,
-      byTokenAcceptedCount,
-      mergedCount: bills.length,
-      candidateIds,
-    },
-  });
   return NextResponse.json({ ok: true, profile_id: profileId, candidate_ids: candidateIds, bills });
 }

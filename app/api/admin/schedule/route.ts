@@ -1,17 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getAdminSessionFromRequest, isAdminRequest } from '@/lib/admin-session';
 import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
 import type { ScheduleSlotRow, ScheduleDateRow } from '@/lib/api';
 import { mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
 import { scheduleDateKey } from '@/lib/schedule-date-key';
-
-function getServiceSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
+import { createServiceSupabase } from '@/lib/supabase-service';
 
 function vendorPrefix(vendorSlug: string): string {
   return `${vendorSlug}__`;
@@ -41,7 +34,11 @@ function readVendorSlotIds(raw: unknown, vendorSlug: string | null): string[] {
   if (raw && typeof raw === 'object') {
     const map = raw as Record<string, unknown>;
     const key = vendorSlug ?? 'global';
-    const arr = map[key];
+    let arr = map[key];
+    if (!Array.isArray(arr) && vendorSlug) {
+      const g = map.global;
+      if (Array.isArray(g)) arr = g;
+    }
     return Array.isArray(arr) ? mergeEveSlotIdsInList(arr.filter((s): s is string => typeof s === 'string')) : [];
   }
   return [];
@@ -93,19 +90,24 @@ export async function GET(request: Request) {
   if (!session || (session.role !== 'super_admin' && session.role !== 'vendor')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
-  const supabase = getServiceSupabase();
+  const supabase = createServiceSupabase();
   if (!supabase) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
+    return NextResponse.json(
+      { error: 'Database not configured (SUPABASE_SERVICE_ROLE_KEY required for admin schedule)' },
+      { status: 503 },
+    );
   }
   try {
     const url = new URL(request.url);
-    const requestedVendor = url.searchParams.get('vendor')?.toLowerCase().trim() ?? null;
+    const requestedVendor = (url.searchParams.get('vendor')?.toLowerCase().trim() ?? '') || null;
     if (session.role === 'super_admin' && !requestedVendor) {
       return NextResponse.json({ error: 'vendor query parameter is required for super admin' }, { status: 400 });
     }
-    const vendorSlug = session.role === 'vendor'
-      ? session.vendorId?.toLowerCase().trim() ?? null
-      : (requestedVendor || null);
+    const vendorSessionSlug = (session.vendorId?.toLowerCase().trim() ?? '') || null;
+    const vendorSlug = session.role === 'vendor' ? vendorSessionSlug : requestedVendor;
+    if (session.role === 'vendor' && !vendorSlug) {
+      return NextResponse.json({ error: 'Vendor session is missing vendor id' }, { status: 403 });
+    }
     const [slotsRes, datesRes] = await Promise.all([
       supabase.from('schedule_slots').select('id, label, time_from, time_to, sort_order, active, created_at').order('sort_order', { ascending: true }),
       supabase.from('schedule_dates').select('date, enabled, slot_ids, enabled_by_vendor, created_at, updated_at').order('date', { ascending: true }),
@@ -168,9 +170,12 @@ export async function POST(request: Request) {
   if (!checkBodySize(request)) {
     return NextResponse.json({ error: 'Request too large' }, { status: 413 });
   }
-  const supabase = getServiceSupabase();
+  const supabase = createServiceSupabase();
   if (!supabase) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
+    return NextResponse.json(
+      { error: 'Database not configured (SUPABASE_SERVICE_ROLE_KEY required for admin schedule)' },
+      { status: 503 },
+    );
   }
   let body: SchedulePayload;
   try {
@@ -187,13 +192,15 @@ export async function POST(request: Request) {
 
   try {
     const url = new URL(request.url);
-    const requestedVendor = url.searchParams.get('vendor')?.toLowerCase().trim() ?? null;
+    const requestedVendor = (url.searchParams.get('vendor')?.toLowerCase().trim() ?? '') || null;
     if (session.role === 'super_admin' && !requestedVendor) {
       return NextResponse.json({ error: 'vendor query parameter is required for super admin' }, { status: 400 });
     }
-    const vendorSlug = session.role === 'vendor'
-      ? session.vendorId?.toLowerCase().trim() ?? null
-      : (requestedVendor || null);
+    const vendorSessionSlug = (session.vendorId?.toLowerCase().trim() ?? '') || null;
+    const vendorSlug = session.role === 'vendor' ? vendorSessionSlug : requestedVendor;
+    if (session.role === 'vendor' && !vendorSlug) {
+      return NextResponse.json({ error: 'Vendor session is missing vendor id' }, { status: 403 });
+    }
 
     let slotsUpserted = 0;
     let slotsDeleted = 0;
@@ -274,7 +281,8 @@ export async function POST(request: Request) {
         if (error) return NextResponse.json({ error: error.message }, { status: 400 });
         datesUpserted += 1;
       }
-      if (vendorSlug && meantDates) {
+      // Vendor: skip prune when dates[] is empty — otherwise sentDates is empty and we strip this vendor from every row (easy after a failed load or mistaken save). Super admin may still prune by sending an empty list when editing a vendor.
+      if (vendorSlug && meantDates && (body.dates.length > 0 || session.role === 'super_admin')) {
         const sentDates = new Set(
           body.dates.map((row) => scheduleDateKey(row?.date)).filter((d): d is string => !!d),
         );

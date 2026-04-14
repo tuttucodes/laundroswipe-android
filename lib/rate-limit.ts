@@ -39,11 +39,13 @@ export function checkAdminRateLimit(request: Request): { ok: true } | { ok: fals
   return { ok: true };
 }
 
-const MAX_BODY_BYTES = 100 * 1024; // 100KB for admin POST body
+const MAX_BODY_BYTES = 512 * 1024; // admin schedule payloads can be large (many dates)
 
 export function checkBodySize(request: Request): boolean {
   const len = request.headers.get('content-length');
   if (!len) return true; // no body or chunked
   const n = parseInt(len, 10);
-  return !Number.isNaN(n) && n >= 0 && n <= MAX_BODY_BYTES;
+  // Malformed Content-Length must not block saves (some proxies send bad values).
+  if (Number.isNaN(n) || n < 0) return true;
+  return n <= MAX_BODY_BYTES;
 }
