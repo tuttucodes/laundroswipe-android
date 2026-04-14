@@ -19,6 +19,7 @@ import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
+import { dedupeScheduleSlotsByTimeAndLabel, mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
 import {
   SERVICE_FEE_SHORT_EXPLANATION,
@@ -861,10 +862,23 @@ export default function LaundroApp() {
   const slotIdsForDateByVendor = useCallback((date: string, vendorId?: string) => {
     const row = scheduleDates.find((d) => d.date === date);
     if (!row) return [] as string[];
-    const normalized = (Array.isArray(row.slot_ids) ? row.slot_ids : [])
+    const map = row.slot_ids_by_vendor;
+    if (map && Object.keys(map).length > 0) {
+      if (vendorId && Object.prototype.hasOwnProperty.call(map, vendorId)) {
+        return mergeEveSlotIdsInList(map[vendorId] ?? []);
+      }
+      if (vendorId) {
+        const globalIds = map['global'];
+        if (globalIds?.length) return mergeEveSlotIdsInList(globalIds);
+        return [];
+      }
+      const globalOnly = map['global'];
+      return globalOnly?.length ? mergeEveSlotIdsInList(globalOnly) : [];
+    }
+    const normalized = (row.slot_ids ?? [])
       .map((id) => normalizeScheduleIdForVendor(id, vendorId))
       .filter((id): id is string => !!id);
-    return Array.from(new Set(normalized));
+    return mergeEveSlotIdsInList(normalized);
   }, [normalizeScheduleIdForVendor, scheduleDates]);
 
   const isDateEnabledForVendor = useCallback((date: string, vendorId?: string) => {
@@ -1323,19 +1337,41 @@ export default function LaundroApp() {
     .map((d) => formatScheduleDay(d.date));
   const days = daysFromApi.length > 0 ? daysFromApi : getScheduleDates();
   const selectedVendorProfile = selectedVendor ? profileForVendor(selectedVendor) : null;
-  const selectedVendorSlotList = selectedVendor
-    ? scheduleSlots
-        .map((slot) => {
-          const normalizedId = normalizeScheduleIdForVendor(slot.id, selectedVendor.id);
-          return normalizedId ? { ...slot, id: normalizedId } : null;
-        })
-        .filter((slot): slot is ScheduleSlotRow => !!slot)
-    : scheduleSlots.filter((slot) => !String(slot.id).includes('__'));
+  const selectedVendorSlotList = useMemo(() => {
+    if (!selectedVendor) {
+      return scheduleSlots.filter((slot) => !String(slot.id).includes('__'));
+    }
+    const vid = selectedVendor.id;
+    const candidates = scheduleSlots
+      .map((slot) => {
+        const n = normalizeScheduleIdForVendor(slot.id, vid);
+        return n ? { slot, n } : null;
+      })
+      .filter((x): x is { slot: ScheduleSlotRow; n: string } => !!x);
+    const byNorm = new Map<string, ScheduleSlotRow>();
+    const score = (slot: ScheduleSlotRow) =>
+      (slot.active ? 4 : 0) +
+      (String(slot.id).startsWith(`${vid}__`) ? 2 : 0) +
+      (!String(slot.id).includes('__') ? 1 : 0);
+    for (const { slot, n } of candidates) {
+      const existing = byNorm.get(n);
+      if (!existing) {
+        byNorm.set(n, { ...slot, id: n });
+        continue;
+      }
+      if (score(slot) > score(existing)) {
+        byNorm.set(n, { ...slot, id: n });
+      }
+    }
+    return Array.from(byNorm.values()).sort(
+      (a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id)
+    );
+  }, [scheduleSlots, selectedVendor, normalizeScheduleIdForVendor]);
   const timeSlotsForStep2 =
     selectedVendorSlotList.length > 0 && scheduleDates.length > 0 && sd.date
-      ? selectedVendorSlotList.filter(
+      ? dedupeScheduleSlotsByTimeAndLabel(selectedVendorSlotList.filter(
           (s) => s.active && slotIdsForDateByVendor(sd.date!, selectedVendor?.id).includes(s.id)
-        )
+        ))
       : TIME_SLOTS;
   const selectedTsFromApi = selectedVendorSlotList.find((t) => t.id === sd.ts);
   const selectedTs = selectedTsFromApi

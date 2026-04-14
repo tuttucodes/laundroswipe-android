@@ -1,5 +1,6 @@
 import { supabase, hasSupabase } from './supabase';
 import { orderLookupTokenVariants, stripLeadingHashesFromToken } from './vendor-bill-token';
+import { mergeEveSlotIdsInList } from './schedule-slot-merge';
 
 export type VendorCatalogRow = {
   slug: string;
@@ -57,7 +58,13 @@ export type ScheduleSlotRow = {
 export type ScheduleDateRow = {
   date: string;
   enabled: boolean;
+  /** Flat slot id list when `schedule_dates.slot_ids` is a JSON array (legacy). */
   slot_ids: string[];
+  /**
+   * When `schedule_dates.slot_ids` is vendor-keyed JSON, each key is a vendor slug (or `global`).
+   * Client must use this for vendor-scoped booking — do not merge all vendors into one list.
+   */
+  slot_ids_by_vendor?: Record<string, string[]> | null;
   enabled_by_vendor?: Record<string, boolean> | null;
   created_at?: string;
   updated_at?: string;
@@ -841,20 +848,32 @@ export const LSApi = {
         return null;
       }
       const rows = (data ?? []) as (ScheduleDateRow & { slot_ids?: unknown })[];
-      return rows.map((r) => ({
-        ...r,
-        slot_ids: Array.isArray(r.slot_ids)
-          ? r.slot_ids.filter((s): s is string => typeof s === 'string')
-          : r.slot_ids && typeof r.slot_ids === 'object'
-            ? Object.values(r.slot_ids as Record<string, unknown>)
-                .flatMap((v) => (Array.isArray(v) ? v : []))
-                .filter((s): s is string => typeof s === 'string')
-            : [],
-        enabled_by_vendor:
-          r.enabled_by_vendor && typeof r.enabled_by_vendor === 'object'
-            ? (r.enabled_by_vendor as Record<string, boolean>)
-            : null,
-      }));
+      return rows.map((r) => {
+        const raw = r.slot_ids;
+        let slot_ids: string[] = [];
+        let slot_ids_by_vendor: Record<string, string[]> | null = null;
+        if (Array.isArray(raw)) {
+          slot_ids = mergeEveSlotIdsInList(raw.filter((s): s is string => typeof s === 'string'));
+        } else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+          const map = raw as Record<string, unknown>;
+          const byVendor: Record<string, string[]> = {};
+          for (const [k, v] of Object.entries(map)) {
+            if (Array.isArray(v)) {
+              byVendor[k] = mergeEveSlotIdsInList(v.filter((s): s is string => typeof s === 'string'));
+            }
+          }
+          if (Object.keys(byVendor).length > 0) slot_ids_by_vendor = byVendor;
+        }
+        return {
+          ...r,
+          slot_ids,
+          slot_ids_by_vendor,
+          enabled_by_vendor:
+            r.enabled_by_vendor && typeof r.enabled_by_vendor === 'object'
+              ? (r.enabled_by_vendor as Record<string, boolean>)
+              : null,
+        };
+      });
     } catch (e) {
       console.error('fetchScheduleDates exception', e);
       return null;

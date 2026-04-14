@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getAdminSessionFromRequest, isAdminRequest } from '@/lib/admin-session';
 import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
 import type { ScheduleSlotRow, ScheduleDateRow } from '@/lib/api';
+import { mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
 
 function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -28,19 +29,19 @@ function fromStoredSlotId(slotId: string, vendorSlug: string | null): string {
 function readVendorSlotIds(raw: unknown, vendorSlug: string | null): string[] {
   if (Array.isArray(raw)) {
     const ids = raw.filter((s): s is string => typeof s === 'string');
-    if (!vendorSlug) return ids;
+    if (!vendorSlug) return mergeEveSlotIdsInList(ids);
     const p = vendorPrefix(vendorSlug);
     const vendorScoped = ids.filter((id) => id.startsWith(p)).map((id) => id.slice(p.length));
     // Legacy fallback only when values are truly unscoped.
     const hasAnyScopedIds = ids.some((id) => id.includes('__'));
-    if (vendorScoped.length > 0) return vendorScoped;
-    return hasAnyScopedIds ? [] : ids;
+    if (vendorScoped.length > 0) return mergeEveSlotIdsInList(vendorScoped);
+    return hasAnyScopedIds ? [] : mergeEveSlotIdsInList(ids);
   }
   if (raw && typeof raw === 'object') {
     const map = raw as Record<string, unknown>;
     const key = vendorSlug ?? 'global';
     const arr = map[key];
-    return Array.isArray(arr) ? arr.filter((s): s is string => typeof s === 'string') : [];
+    return Array.isArray(arr) ? mergeEveSlotIdsInList(arr.filter((s): s is string => typeof s === 'string')) : [];
   }
   return [];
 }
@@ -217,7 +218,7 @@ export async function POST(request: Request) {
         if (!dateStr) continue;
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
         const slotIds = Array.isArray(row.slot_ids) ? row.slot_ids.filter((s): s is string => typeof s === 'string').slice(0, 20) : [];
-        const storedSlotIds = slotIds.map((id) => toStoredSlotId(id, vendorSlug));
+        const storedSlotIds = mergeEveSlotIdsInList(slotIds.map((id) => toStoredSlotId(id, vendorSlug)));
         const existing = await supabase
           .from('schedule_dates')
           .select('enabled, slot_ids, enabled_by_vendor')
