@@ -1,4 +1,4 @@
-import { mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
+import { uniqueSlotIds } from '@/lib/schedule-slot-merge';
 import { scheduleDateKey } from '@/lib/schedule-date-key';
 
 /** Raw row from `schedule_dates` before client normalization. */
@@ -30,13 +30,13 @@ export function normalizeScheduleDateRowsFromDb(rows: RawDbScheduleDateRow[]): N
     let slot_ids: string[] = [];
     let slot_ids_by_vendor: Record<string, string[]> | null = null;
     if (Array.isArray(raw)) {
-      slot_ids = mergeEveSlotIdsInList(raw.filter((s): s is string => typeof s === 'string'));
+      slot_ids = uniqueSlotIds(raw.filter((s): s is string => typeof s === 'string'));
     } else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
       const map = raw as Record<string, unknown>;
       const byVendor: Record<string, string[]> = {};
       for (const [k, v] of Object.entries(map)) {
         if (Array.isArray(v)) {
-          byVendor[k] = mergeEveSlotIdsInList(v.filter((s): s is string => typeof s === 'string'));
+          byVendor[k] = uniqueSlotIds(v.filter((s): s is string => typeof s === 'string'));
         }
       }
       if (Object.keys(byVendor).length > 0) slot_ids_by_vendor = byVendor;

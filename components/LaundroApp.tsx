@@ -17,7 +17,7 @@ import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { LSApi } from '@/lib/api';
 import type { UserRow, VendorBillRow, ScheduleSlotRow, ScheduleDateRow, UserNotificationRow, VendorProfileRow } from '@/lib/api';
 import type { OrderRow } from '@/lib/api';
-import { dedupeScheduleSlotsByTimeAndLabel, mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
+import { dedupeScheduleSlotsByTimeAndLabel, uniqueSlotIds } from '@/lib/schedule-slot-merge';
 import { scheduleDateRowByKey } from '@/lib/schedule-normalize';
 import { isScheduleOrderErrorCode, userMessageForScheduleOrderError } from '@/lib/schedule-order-errors';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
@@ -860,20 +860,20 @@ export default function LaundroApp() {
     const map = row.slot_ids_by_vendor;
     if (map && Object.keys(map).length > 0) {
       if (vendorId && Object.prototype.hasOwnProperty.call(map, vendorId)) {
-        return mergeEveSlotIdsInList(map[vendorId] ?? []);
+        return uniqueSlotIds(map[vendorId] ?? []);
       }
       if (vendorId) {
         const globalIds = map['global'];
-        if (globalIds?.length) return mergeEveSlotIdsInList(globalIds);
+        if (globalIds?.length) return uniqueSlotIds(globalIds);
         return [];
       }
       const globalOnly = map['global'];
-      return globalOnly?.length ? mergeEveSlotIdsInList(globalOnly) : [];
+      return globalOnly?.length ? uniqueSlotIds(globalOnly) : [];
     }
     const normalized = (row.slot_ids ?? [])
       .map((id) => normalizeScheduleIdForVendor(id, vendorId))
       .filter((id): id is string => !!id);
-    return mergeEveSlotIdsInList(normalized);
+    return uniqueSlotIds(normalized);
   }, [normalizeScheduleIdForVendor, scheduleDates]);
 
   const isDateEnabledForVendor = useCallback((date: string, vendorId?: string) => {

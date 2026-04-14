@@ -1,6 +1,5 @@
 import { supabase, hasSupabase } from './supabase';
 import { orderLookupTokenVariants, stripLeadingHashesFromToken } from './vendor-bill-token';
-import { mergeEveSlotIdsInList } from './schedule-slot-merge';
 import { normalizeScheduleDateRowsFromDb, type RawDbScheduleDateRow } from './schedule-normalize';
 
 export type VendorCatalogRow = {

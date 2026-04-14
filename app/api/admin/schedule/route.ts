@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAdminSessionFromRequest, isAdminRequest } from '@/lib/admin-session';
 import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
 import type { ScheduleSlotRow, ScheduleDateRow } from '@/lib/api';
-import { mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
+import { uniqueSlotIds } from '@/lib/schedule-slot-merge';
 import { scheduleDateKey } from '@/lib/schedule-date-key';
 import { createServiceSupabase } from '@/lib/supabase-service';
 
@@ -23,13 +23,13 @@ function fromStoredSlotId(slotId: string, vendorSlug: string | null): string {
 function readVendorSlotIds(raw: unknown, vendorSlug: string | null): string[] {
   if (Array.isArray(raw)) {
     const ids = raw.filter((s): s is string => typeof s === 'string');
-    if (!vendorSlug) return mergeEveSlotIdsInList(ids);
+    if (!vendorSlug) return uniqueSlotIds(ids);
     const p = vendorPrefix(vendorSlug);
     const vendorScoped = ids.filter((id) => id.startsWith(p)).map((id) => id.slice(p.length));
     // Legacy fallback only when values are truly unscoped.
     const hasAnyScopedIds = ids.some((id) => id.includes('__'));
-    if (vendorScoped.length > 0) return mergeEveSlotIdsInList(vendorScoped);
-    return hasAnyScopedIds ? [] : mergeEveSlotIdsInList(ids);
+    if (vendorScoped.length > 0) return uniqueSlotIds(vendorScoped);
+    return hasAnyScopedIds ? [] : uniqueSlotIds(ids);
   }
   if (raw && typeof raw === 'object') {
     const map = raw as Record<string, unknown>;
@@ -39,7 +39,13 @@ function readVendorSlotIds(raw: unknown, vendorSlug: string | null): string[] {
       const g = map.global;
       if (Array.isArray(g)) arr = g;
     }
-    return Array.isArray(arr) ? mergeEveSlotIdsInList(arr.filter((s): s is string => typeof s === 'string')) : [];
+    return Array.isArray(arr)
+      ? uniqueSlotIds(
+          arr
+            .filter((s): s is string => typeof s === 'string')
+            .map((id) => fromStoredSlotId(id, vendorSlug)),
+        )
+      : [];
   }
   return [];
 }
@@ -257,7 +263,7 @@ export async function POST(request: Request) {
         const dateStr = scheduleDateKey(row?.date);
         if (!dateStr) return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
         const slotIds = Array.isArray(row.slot_ids) ? row.slot_ids.filter((s): s is string => typeof s === 'string').slice(0, 20) : [];
-        const storedSlotIds = mergeEveSlotIdsInList(slotIds.map((id) => toStoredSlotId(id, vendorSlug)));
+        const storedSlotIds = uniqueSlotIds(slotIds.map((id) => toStoredSlotId(id, vendorSlug)));
         const existing = await supabase
           .from('schedule_dates')
           .select('enabled, slot_ids, enabled_by_vendor')

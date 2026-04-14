@@ -1,4 +1,4 @@
-import { mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
+import { uniqueSlotIds } from '@/lib/schedule-slot-merge';
 import type { NormalizedScheduleDateRow } from '@/lib/schedule-normalize';
 import { scheduleDateRowByKey } from '@/lib/schedule-normalize';
 
@@ -24,16 +24,16 @@ function slotIdsForDateByVendor(row: NormalizedScheduleDateRow | undefined, vend
   const map = row.slot_ids_by_vendor;
   if (map && Object.keys(map).length > 0) {
     if (Object.prototype.hasOwnProperty.call(map, vendorId)) {
-      return mergeEveSlotIdsInList(map[vendorId] ?? []);
+      return uniqueSlotIds(map[vendorId] ?? []);
     }
     const globalIds = map['global'];
-    if (globalIds?.length) return mergeEveSlotIdsInList(globalIds);
+    if (globalIds?.length) return uniqueSlotIds(globalIds);
     return [];
   }
   const normalized = (row.slot_ids ?? [])
     .map((sid) => normalizeScheduleIdForVendor(sid, vendorId))
     .filter((sid): sid is string => !!sid);
-  return mergeEveSlotIdsInList(normalized);
+  return uniqueSlotIds(normalized);
 }
 
 function isDateEnabledForVendor(row: NormalizedScheduleDateRow | undefined, vendorId: string): boolean {
