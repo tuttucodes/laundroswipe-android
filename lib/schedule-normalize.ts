@@ -1,6 +1,17 @@
 import { uniqueSlotIds } from '@/lib/schedule-slot-merge';
 import { scheduleDateKey } from '@/lib/schedule-date-key';
 
+/**
+ * Values under each vendor key in JSONB are often stored scoped (e.g. `vit-chn__evening`).
+ * The booking UI and slot rows use local ids (`evening`), so strip `{key}__` when present.
+ */
+function slotIdJsonValueToLocal(vendorKey: string, id: string): string {
+  const v = String(id ?? '').trim();
+  if (!v) return v;
+  const prefix = `${vendorKey}__`;
+  return v.startsWith(prefix) ? v.slice(prefix.length) : v;
+}
+
 /** Raw row from `schedule_dates` before client normalization. */
 export type RawDbScheduleDateRow = {
   date: unknown;
@@ -36,7 +47,11 @@ export function normalizeScheduleDateRowsFromDb(rows: RawDbScheduleDateRow[]): N
       const byVendor: Record<string, string[]> = {};
       for (const [k, v] of Object.entries(map)) {
         if (Array.isArray(v)) {
-          byVendor[k] = uniqueSlotIds(v.filter((s): s is string => typeof s === 'string'));
+          byVendor[k] = uniqueSlotIds(
+            v
+              .filter((s): s is string => typeof s === 'string')
+              .map((sid) => slotIdJsonValueToLocal(k, sid)),
+          );
         }
       }
       if (Object.keys(byVendor).length > 0) slot_ids_by_vendor = byVendor;

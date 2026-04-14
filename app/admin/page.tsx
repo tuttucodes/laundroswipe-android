@@ -1812,7 +1812,12 @@ export default function AdminPage() {
         {tab === 'schedule' && (
           <>
             <h1 style={{ fontFamily: 'var(--fd)', fontSize: 26, marginBottom: 6 }}>Schedule</h1>
-            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enable/disable dates and slots. Users only see enabled dates and the slots you allow per date.</p>
+            <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 12, lineHeight: 1.55 }}>
+              Bookable dates and time slots are stored in Supabase tables <code style={{ fontSize: 13 }}>schedule_dates</code> and{' '}
+              <code style={{ fontSize: 13 }}>schedule_slots</code>. Use the sections below to edit definitions and which dates are open; then click{' '}
+              <strong>Save schedule</strong> to write every change (add/delete dates, add/delete slots, enable/disable, slot checkboxes) to the database.
+              Until you save, edits exist only in this browser tab.
+            </p>
             {isSuperAdmin && (
               <div style={{ marginBottom: 16, maxWidth: 320 }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Vendor schedule</label>
@@ -1977,11 +1982,21 @@ export default function AdminPage() {
                     const data = await res.json().catch(() => ({}));
                     if (res.ok && data.ok) {
                       const m = data.meta as
-                        | { slotsUpserted?: number; slotsDeleted?: number; datesUpserted?: number; datesPruned?: number }
+                        | {
+                            slotsUpserted?: number;
+                            slotsDeleted?: number;
+                            datesUpserted?: number;
+                            datesPruned?: number;
+                            datesDeleted?: number;
+                          }
                         | undefined;
                       const totalMut =
                         m != null
-                          ? (m.slotsUpserted ?? 0) + (m.slotsDeleted ?? 0) + (m.datesUpserted ?? 0) + (m.datesPruned ?? 0)
+                          ? (m.slotsUpserted ?? 0) +
+                            (m.slotsDeleted ?? 0) +
+                            (m.datesUpserted ?? 0) +
+                            (m.datesPruned ?? 0) +
+                            (m.datesDeleted ?? 0)
                           : 1;
                       if (m && totalMut === 0) {
                         showToast(

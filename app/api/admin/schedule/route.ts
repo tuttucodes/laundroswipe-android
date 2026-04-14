@@ -1,3 +1,9 @@
+/**
+ * Admin schedule API — reads/writes Supabase `schedule_slots` (slot definitions) and
+ * `schedule_dates` (bookable calendar + per-vendor `slot_ids` / `enabled_by_vendor` JSON).
+ * All mutations use the service role client (bypasses RLS). The Schedule tab in admin
+ * must call POST after edits so changes persist.
+ */
 import { NextResponse } from 'next/server';
 import { getAdminSessionFromRequest, isAdminRequest } from '@/lib/admin-session';
 import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
@@ -74,6 +80,11 @@ function readVendorEnabled(raw: unknown, vendorSlug: string | null, fallbackEnab
     if (Object.keys(map).length > 0) return false;
   }
   return fallbackEnabled;
+}
+
+/** After prune, delete the row only when no vendor keys remain (safe for shared schedule_dates rows). */
+function scheduleDateJsonMapsBare(slotMap: Record<string, unknown>, enMap: Record<string, boolean>): boolean {
+  return Object.keys(slotMap).length === 0 && Object.keys(enMap).length === 0;
 }
 
 function writeVendorEnabled(raw: unknown, vendorSlug: string | null, enabled: boolean): Record<string, boolean> | null {
@@ -212,6 +223,7 @@ export async function POST(request: Request) {
     let slotsDeleted = 0;
     let datesUpserted = 0;
     let datesPruned = 0;
+    let datesDeleted = 0;
 
     const meantSlots = body.slots !== undefined && Array.isArray(body.slots);
     const meantDates = body.dates !== undefined && Array.isArray(body.dates);
@@ -314,17 +326,23 @@ export async function POST(request: Request) {
           delete nextSlot[vendorSlug];
           const nextEn = { ...enMap };
           delete nextEn[vendorSlug];
-          const { error: pruneErr } = await supabase
-            .from('schedule_dates')
-            .update({ slot_ids: nextSlot, enabled_by_vendor: nextEn })
-            .eq('date', dateKey);
-          if (pruneErr) return NextResponse.json({ error: pruneErr.message }, { status: 400 });
-          datesPruned += 1;
+          if (scheduleDateJsonMapsBare(nextSlot, nextEn)) {
+            const { error: delErr } = await supabase.from('schedule_dates').delete().eq('date', dateKey);
+            if (delErr) return NextResponse.json({ error: delErr.message }, { status: 400 });
+            datesDeleted += 1;
+          } else {
+            const { error: pruneErr } = await supabase
+              .from('schedule_dates')
+              .update({ slot_ids: nextSlot, enabled_by_vendor: nextEn })
+              .eq('date', dateKey);
+            if (pruneErr) return NextResponse.json({ error: pruneErr.message }, { status: 400 });
+            datesPruned += 1;
+          }
         }
       }
     }
 
-    const totalMutations = slotsUpserted + slotsDeleted + datesUpserted + datesPruned;
+    const totalMutations = slotsUpserted + slotsDeleted + datesUpserted + datesPruned + datesDeleted;
     console.info(
       '[POST /api/admin/schedule]',
       JSON.stringify({
@@ -336,6 +354,7 @@ export async function POST(request: Request) {
         slotsDeleted,
         datesUpserted,
         datesPruned,
+        datesDeleted,
       }),
     );
 
@@ -345,7 +364,7 @@ export async function POST(request: Request) {
           ok: false,
           error:
             'No schedule changes were persisted. Ensure each time slot has a non-empty ID, then save again.',
-          meta: { slotsUpserted, slotsDeleted, datesUpserted, datesPruned },
+          meta: { slotsUpserted, slotsDeleted, datesUpserted, datesPruned, datesDeleted },
         },
         { status: 409 },
       );
@@ -353,7 +372,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      meta: { slotsUpserted, slotsDeleted, datesUpserted, datesPruned },
+      meta: { slotsUpserted, slotsDeleted, datesUpserted, datesPruned, datesDeleted },
     });
   } catch (e) {
     console.error('POST /api/admin/schedule', e);

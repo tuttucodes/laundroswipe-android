@@ -1,5 +1,12 @@
 -- Schedule config: slots (definitions) and dates (which dates + which slots per date).
--- Run in Supabase SQL Editor after master.sql. App reads these; admin writes via API (service role).
+--
+-- Prefer the versioned migrations under supabase/migrations/ (e.g. 20260402_schedule_vendor_enablement.sql)
+-- plus master.sql. Use this file only for a minimal bootstrap.
+--
+-- If you already ran an older copy of this file without enabled_by_vendor, run:
+--   supabase/sql/repair_after_standalone_migrations_schedule.sql
+--
+-- App reads these tables; admin writes via /api/admin/schedule (Supabase service role).
 
 -- Slots: id, label, time range, order, active
 CREATE TABLE IF NOT EXISTS schedule_slots (
@@ -21,6 +28,10 @@ CREATE TABLE IF NOT EXISTS schedule_dates (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Per-vendor enablement (matches app + supabase/migrations/20260402_schedule_vendor_enablement.sql)
+alter table public.schedule_dates
+  add column if not exists enabled_by_vendor jsonb not null default '{}'::jsonb;
+
 CREATE INDEX IF NOT EXISTS idx_schedule_slots_active ON schedule_slots(active);
 CREATE INDEX IF NOT EXISTS idx_schedule_dates_enabled ON schedule_dates(enabled) WHERE enabled = true;
 
@@ -35,6 +46,17 @@ CREATE POLICY "schedule_slots_select" ON schedule_slots FOR SELECT TO public USI
 CREATE POLICY "schedule_dates_select" ON schedule_dates FOR SELECT TO public USING (true);
 
 -- No INSERT/UPDATE/DELETE for anon/auth; admin uses service role in API route.
+
+-- Trigger helper (same as master.sql) so this file runs without running master first
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
 
 -- Updated_at trigger for schedule_dates
 DROP TRIGGER IF EXISTS schedule_dates_updated_at ON schedule_dates;

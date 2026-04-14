@@ -788,7 +788,7 @@ export const LSApi = {
   async fetchPublicSchedule(): Promise<{ slots: ScheduleSlotRow[]; dates: ScheduleDateRow[] } | null> {
     if (typeof window !== 'undefined') {
       try {
-        const res = await fetch('/api/schedule', { credentials: 'same-origin' });
+        const res = await fetch('/api/schedule', { credentials: 'same-origin', cache: 'no-store' });
         const data = (await res.json().catch(() => ({}))) as {
           slots?: ScheduleSlotRow[];
           dates?: ScheduleDateRow[];
