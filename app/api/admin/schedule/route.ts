@@ -40,11 +40,8 @@ function readVendorSlotIds(raw: unknown, vendorSlug: string | null): string[] {
   if (raw && typeof raw === 'object') {
     const map = raw as Record<string, unknown>;
     const key = vendorSlug ?? 'global';
-    let arr = map[key];
-    if (!Array.isArray(arr) && vendorSlug) {
-      const g = map.global;
-      if (Array.isArray(g)) arr = g;
-    }
+    const arr = map[key];
+    // Vendor admin: do not fall back to `global` — leftover global slots made "deleted" dates reappear.
     return Array.isArray(arr)
       ? uniqueSlotIds(
           arr
@@ -80,6 +77,15 @@ function readVendorEnabled(raw: unknown, vendorSlug: string | null, fallbackEnab
     if (Object.keys(map).length > 0) return false;
   }
   return fallbackEnabled;
+}
+
+/** Drop keys whose slot list is empty so `{ "global": [] }` does not block row cleanup. */
+function compactSlotIdsMap(map: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(map)) {
+    if (Array.isArray(v) && v.length > 0) out[k] = v;
+  }
+  return out;
 }
 
 /** After prune, delete the row only when no vendor keys remain (safe for shared schedule_dates rows). */
@@ -322,18 +328,19 @@ export async function POST(request: Request) {
           const hadSlots = Object.prototype.hasOwnProperty.call(slotMap, vendorSlug);
           const hadEnabled = Object.prototype.hasOwnProperty.call(enMap, vendorSlug);
           if (!hadSlots && !hadEnabled) continue;
-          const nextSlot = { ...slotMap };
+          const nextSlot: Record<string, unknown> = { ...slotMap };
           delete nextSlot[vendorSlug];
+          const nextSlotClean = compactSlotIdsMap(nextSlot);
           const nextEn = { ...enMap };
           delete nextEn[vendorSlug];
-          if (scheduleDateJsonMapsBare(nextSlot, nextEn)) {
+          if (scheduleDateJsonMapsBare(nextSlotClean, nextEn)) {
             const { error: delErr } = await supabase.from('schedule_dates').delete().eq('date', dateKey);
             if (delErr) return NextResponse.json({ error: delErr.message }, { status: 400 });
             datesDeleted += 1;
           } else {
             const { error: pruneErr } = await supabase
               .from('schedule_dates')
-              .update({ slot_ids: nextSlot, enabled_by_vendor: nextEn })
+              .update({ slot_ids: nextSlotClean, enabled_by_vendor: nextEn })
               .eq('date', dateKey);
             if (pruneErr) return NextResponse.json({ error: pruneErr.message }, { status: 400 });
             datesPruned += 1;

@@ -26,8 +26,6 @@ function slotIdsForDateByVendor(row: NormalizedScheduleDateRow | undefined, vend
     if (Object.prototype.hasOwnProperty.call(map, vendorId)) {
       return uniqueSlotIds(map[vendorId] ?? []);
     }
-    const globalIds = map['global'];
-    if (globalIds?.length) return uniqueSlotIds(globalIds);
     return [];
   }
   const normalized = (row.slot_ids ?? [])

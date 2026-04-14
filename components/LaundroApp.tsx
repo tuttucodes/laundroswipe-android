@@ -863,8 +863,7 @@ export default function LaundroApp() {
         return uniqueSlotIds(map[vendorId] ?? []);
       }
       if (vendorId) {
-        const globalIds = map['global'];
-        if (globalIds?.length) return uniqueSlotIds(globalIds);
+        // Do not use `global` for a specific vendor — avoids "deleted" dates coming back from template rows.
         return [];
       }
       const globalOnly = map['global'];
