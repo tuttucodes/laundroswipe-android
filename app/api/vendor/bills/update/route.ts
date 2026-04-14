@@ -8,7 +8,6 @@ import { allowInWindow } from '@/lib/server-usage-guards';
 import { makeBillIdempotencyKey, stableLineItemsFingerprint } from '@/lib/bill-idempotency';
 import { getSavedIdempotentResponse, saveIdempotentResponse } from '@/lib/api-idempotency-store';
 import { logApiUsageDaily } from '@/lib/server-usage-log';
-import { applyServiceFeeDiscount } from '@/lib/fees';
 
 type DbVendor = { id: string; slug: string; name: string };
 
@@ -156,9 +155,8 @@ export async function POST(request: Request) {
   if (savedResponse) return NextResponse.json(savedResponse);
 
   const subtotal = safeLineItems.reduce((s, l) => s + l.price * l.qty, 0);
-  const feeBreakdown = applyServiceFeeDiscount(subtotal);
-  const convenience_fee = feeBreakdown.finalFee;
-  const total = subtotal + convenience_fee;
+  const convenience_fee = 0;
+  const total = subtotal;
 
   const { error: updErr } = await supabase
     .from('vendor_bills')
