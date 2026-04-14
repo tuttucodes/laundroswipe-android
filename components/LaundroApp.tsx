@@ -28,6 +28,7 @@ import {
 } from '@/lib/fees';
 import { ThermalReceipt } from '@/components/receipt/ThermalReceipt';
 import { vendorBillRowToThermalReceiptData } from '@/lib/receipt/thermalReceiptTypes';
+import { DigitalHandshake } from '@/components/user/DigitalHandshake';
 
 const SERVICE_ICONS: Record<string, LucideIcon> = {
   wash_fold: Shirt,
@@ -2479,6 +2480,7 @@ export default function LaundroApp() {
               const canConfirmDelivery = order.status === 'delivered' && !order.deliveryConfirmedAt;
               const billForOrder = billByOrderToken.get(orderTokenKey(order.tk));
               const hasBillForOrder = Boolean(billForOrder);
+              const showDigitalHandshake = order.status !== 'delivered' && !order.deliveryConfirmedAt;
               return (
                 <>
                   <div className="vc">
@@ -2490,6 +2492,7 @@ export default function LaundroApp() {
                     </div>
                     {order.ins && <div className="vd">Instructions: {order.ins}</div>}
                   </div>
+                  {showDigitalHandshake && <DigitalHandshake token={order.tk} />}
                   {billForOrder && (
                     <div className="vc" style={{ marginTop: 12, background: 'rgba(23,70,162,0.06)', borderColor: 'rgba(23,70,162,0.18)' }}>
                       <div className="vn" style={{ fontSize: 15 }}>Your bill is ready</div>

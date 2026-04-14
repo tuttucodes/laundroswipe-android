@@ -69,8 +69,14 @@ export default function VendorPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [catalogFromApi, setCatalogFromApi] = useState<QuickItem[] | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerBusy, setScannerBusy] = useState(false);
+  const [scannerErr, setScannerErr] = useState('');
   const lastSavedBillFingerprintRef = useRef<string | null>(null);
   const billPersistInFlightRef = useRef(false);
+  const scannerVideoRef = useRef<HTMLVideoElement | null>(null);
+  const scannerStreamRef = useRef<MediaStream | null>(null);
+  const scannerFrameRef = useRef<number | null>(null);
   const vendorBillItems = getVendorBillItems(vendorId);
   const catalogBase: QuickItem[] =
     catalogFromApi ??
@@ -178,8 +184,26 @@ export default function VendorPage() {
       .catch(() => setCatalogFromApi(null));
   }, [vendorId]);
 
-  const handleLookup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const stopScanner = () => {
+    if (scannerFrameRef.current != null) {
+      cancelAnimationFrame(scannerFrameRef.current);
+      scannerFrameRef.current = null;
+    }
+    const stream = scannerStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      scannerStreamRef.current = null;
+    }
+    if (scannerVideoRef.current) scannerVideoRef.current.srcObject = null;
+    setScannerBusy(false);
+  };
+
+  useEffect(() => {
+    return () => stopScanner();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const lookupByToken = async (raw: string) => {
     setLookupErr('');
     setOrder(null);
     setUser(null);
@@ -201,7 +225,7 @@ export default function VendorPage() {
     setEditCustomQty('1');
     setEditCustomImage(null);
     lastSavedBillFingerprintRef.current = null;
-    const t = token.replace(/^#/, '').trim();
+    const t = raw.replace(/^#/, '').trim().toUpperCase();
     if (!t) {
       setLookupErr('Enter a token number');
       return;
@@ -230,6 +254,81 @@ export default function VendorPage() {
       showToast('Order loaded', 'ok');
     } catch {
       setLookupErr('Order lookup failed');
+    }
+  };
+
+  const handleLookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await lookupByToken(token);
+  };
+
+  const startScanner = async () => {
+    setScannerErr('');
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
+    const BarcodeDetectorCtor = (window as unknown as {
+      BarcodeDetector?: new (opts?: { formats?: string[] }) => { detect: (input: ImageBitmapSource) => Promise<Array<{ rawValue?: string }>> };
+    }).BarcodeDetector;
+    if (!BarcodeDetectorCtor) {
+      setScannerErr('QR scanning is not supported on this browser. Enter token manually.');
+      setScannerOpen(true);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      scannerStreamRef.current = stream;
+      setScannerOpen(true);
+      setScannerBusy(true);
+      const video = scannerVideoRef.current;
+      if (!video) return;
+      video.srcObject = stream;
+      await video.play();
+
+      const detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setScannerErr('Could not initialize scanner.');
+        setScannerBusy(false);
+        return;
+      }
+
+      const scanTick = async () => {
+        const currentVideo = scannerVideoRef.current;
+        if (!currentVideo || !scannerStreamRef.current) return;
+        if (currentVideo.readyState >= 2 && currentVideo.videoWidth > 0 && currentVideo.videoHeight > 0) {
+          canvas.width = currentVideo.videoWidth;
+          canvas.height = currentVideo.videoHeight;
+          ctx.drawImage(currentVideo, 0, 0, canvas.width, canvas.height);
+          try {
+            const codes = await detector.detect(canvas);
+            const first = codes[0]?.rawValue?.trim();
+            if (first) {
+              const normalized = first.replace(/^#/, '').toUpperCase();
+              setToken(normalized);
+              stopScanner();
+              setScannerOpen(false);
+              await lookupByToken(normalized);
+              return;
+            }
+          } catch {
+            // Keep scanning if one frame decode fails.
+          }
+        }
+        scannerFrameRef.current = requestAnimationFrame(() => {
+          void scanTick();
+        });
+      };
+
+      scannerFrameRef.current = requestAnimationFrame(() => {
+        void scanTick();
+      });
+    } catch {
+      setScannerErr('Camera access denied or unavailable.');
+      setScannerBusy(false);
+      setScannerOpen(true);
     }
   };
 
@@ -785,6 +884,16 @@ export default function VendorPage() {
             />
           </div>
           <button type="submit" className="vendor-btn-primary" style={{ width: '100%', minHeight: 52 }}>Lookup order</button>
+          <button
+            type="button"
+            className="vendor-btn-secondary"
+            style={{ width: '100%', marginTop: 10 }}
+            onClick={() => {
+              void startScanner();
+            }}
+          >
+            Scan Digital Handshake
+          </button>
           {lookupErr && <p style={{ color: 'var(--er)', fontSize: 13, marginTop: 8 }}>{lookupErr}</p>}
         </form>
         <div style={{ marginTop: 12 }}>
@@ -808,6 +917,29 @@ export default function VendorPage() {
           </button>
         </div>
       </div>
+
+      {scannerOpen && (
+        <div className="bill-popup-overlay" onClick={() => { stopScanner(); setScannerOpen(false); }} role="dialog" aria-modal="true" aria-label="Scan token">
+          <div className="bill-popup-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h3 style={{ margin: 0, fontFamily: 'var(--fd)', fontSize: 18 }}>Scan Digital Handshake</h3>
+              <button type="button" className="vendor-btn-secondary" style={{ minHeight: 40, padding: '8px 10px' }} onClick={() => { stopScanner(); setScannerOpen(false); }}>
+                Close
+              </button>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 12 }}>
+              Point your camera at the customer QR. We will auto-fill the token and lookup the order.
+            </p>
+            <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bd)', background: '#000', minHeight: 220 }}>
+              <video ref={scannerVideoRef} muted playsInline style={{ width: '100%', height: 280, objectFit: 'cover', display: scannerBusy ? 'block' : 'none' }} />
+              {!scannerBusy && <div style={{ color: '#fff', fontSize: 13, padding: 16 }}>Camera is not active. You can still enter token manually.</div>}
+            </div>
+            {(scannerErr || lookupErr) && (
+              <p style={{ marginTop: 10, color: 'var(--er)', fontSize: 13 }}>{scannerErr || lookupErr}</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {order && billAlreadyGenerated && !showAnyway && (
         <div className="vendor-card">

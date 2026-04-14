@@ -258,6 +258,7 @@ export default function AdminPage() {
   const [vendorProfileLoading, setVendorProfileLoading] = useState(false);
   const [vendorProfileSaving, setVendorProfileSaving] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [desktopDrawer, setDesktopDrawer] = useState(false);
   const isSuperAdmin = role === 'super_admin';
   const [vendorsList, setVendorsList] = useState<VendorSummary[]>([]);
   const [areasList, setAreasList] = useState<ServiceArea[]>([]);
@@ -312,6 +313,19 @@ export default function AdminPage() {
     : `${vendorDisplayName || vendorsList.find((v) => v.slug === vendorId)?.name || vendorId || 'Vendor'} Dashboard`;
 
   const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(min-width: 1024px)');
+    const sync = () => {
+      const desktop = media.matches;
+      setDesktopDrawer(desktop);
+      setMenuOpen(desktop);
+    };
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -988,12 +1002,12 @@ export default function AdminPage() {
         <h2 className="admin-header-title">{dashboardTitle}</h2>
       </header>
 
-      {menuOpen && <div className="admin-drawer-overlay" onClick={closeMenu} aria-hidden />}
+      {menuOpen && !desktopDrawer && <div className="admin-drawer-overlay" onClick={closeMenu} aria-hidden />}
 
-      <aside className={`admin-drawer ${menuOpen ? 'admin-drawer-open' : ''}`}>
+      <aside className={`admin-drawer ${menuOpen ? 'admin-drawer-open' : ''} ${desktopDrawer ? 'admin-drawer-desktop' : ''}`}>
         <div className="admin-drawer-head">
           <span className="admin-drawer-title">{dashboardTitle}</span>
-          <button type="button" className="admin-drawer-close" onClick={closeMenu} aria-label="Close menu">×</button>
+          {!desktopDrawer && <button type="button" className="admin-drawer-close" onClick={closeMenu} aria-label="Close menu">×</button>}
         </div>
         <nav className="admin-drawer-nav">
           <div className="admin-drawer-section">
@@ -1007,13 +1021,13 @@ export default function AdminPage() {
             )}
           </div>
           <div className="admin-drawer-section">
-            <span className="admin-drawer-section-label">Vendor & Bills</span>
-            <Link href="/admin/vendor" className="admin-nav-link" onClick={closeMenu}>🧾 Vendor / Bill</Link>
+            <span className="admin-drawer-section-label">Operations</span>
+            <Link href="/admin/vendor" className="admin-nav-link" onClick={closeMenu}>🧾 POS</Link>
             <Link href="/admin/pickup" className="admin-nav-link" onClick={closeMenu}>📦 Pickup / Delivery</Link>
-            <Link href="/admin/bills" className="admin-nav-link" onClick={closeMenu}>📋 Saved bills</Link>
+            <Link href="/admin/bills" className="admin-nav-link" onClick={closeMenu}>📋 Inventory / Bills</Link>
             {!isSuperAdmin && (
               <Link href="/admin/vendor/items" className="admin-nav-link" onClick={closeMenu}>
-                📦 Items &amp; rates
+                🏷️ Item Management
               </Link>
             )}
             <Link href="/admin/printers#android-print-apk" className="admin-nav-link" onClick={closeMenu}>

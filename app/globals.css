@@ -213,7 +213,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
 .scta{background:#fff;color:var(--b);border:none;padding:14px 24px;border-radius:var(--r);font-family:var(--fb);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);transition:.3s;width:100%;text-align:left}
 .scta:hover{transform:translateY(-2px)}.scta .aw{margin-left:auto;width:32px;height:32px;background:var(--bl);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .st{font-family:var(--fd);font-size:18px;font-weight:700;margin:28px 0 14px;display:block;color:var(--tx);letter-spacing:-.02em}
-.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.sg{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px}
+@media(min-width:768px){.sg{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(min-width:1024px){.sg{grid-template-columns:repeat(3,minmax(0,1fr));}}
 .sc{background:var(--bg-card);border-radius:var(--r);padding:18px 12px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:border-color .2s,transform .2s,box-shadow .2s;box-shadow:var(--sh)}
 .sc:hover{border-color:var(--bl);transform:translateY(-2px);box-shadow:var(--sh-card)}
 .sc .ic{margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:var(--b)}
@@ -433,6 +435,13 @@ body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dv
   .admin-table-wrap{margin:0 -12px;border-radius:0;max-width:100vw}
   .admin-table-wrap table{min-width:520px}
   .admin-table-wrap td,.admin-table-wrap th{padding:12px 14px}
+}
+@media(min-width:1024px){
+  .admin-root{display:grid;grid-template-columns:280px 1fr;align-items:start}
+  .admin-header{display:none}
+  .admin-drawer{position:sticky;top:0;transform:none;box-shadow:none;z-index:10;height:100dvh}
+  .admin-drawer-desktop{transform:none;box-shadow:none}
+  .admin-main{max-width:none;margin:0;padding:24px}
 }
 @media(max-width:480px){
   .admin-stat-grid{grid-template-columns:repeat(2,1fr);gap:10px}

@@ -6,6 +6,7 @@ import { getVendorBillItems } from '@/lib/constants';
 import type { BillItemOverride } from '@/lib/vendor-bill-catalog';
 
 type RowState = { label: string; price: string; image_url: string | null };
+type QuickPreset = { id: string; label: string; price: number; image_url?: string | null };
 
 export default function VendorItemsPage() {
   const [vendorId, setVendorId] = useState<string | null>(null);
@@ -16,6 +17,9 @@ export default function VendorItemsPage() {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [initialOverrides, setInitialOverrides] = useState<Record<string, BillItemOverride>>({});
   const [rows, setRows] = useState<Record<string, RowState>>({});
+  const [quickDesc, setQuickDesc] = useState('');
+  const [quickRate, setQuickRate] = useState('');
+  const [quickImage, setQuickImage] = useState<string | null>(null);
 
   const defaults = useMemo(() => (vendorId ? getVendorBillItems(vendorId) : []), [vendorId]);
 
@@ -106,6 +110,40 @@ export default function VendorItemsPage() {
 
   const setRow = (id: string, patch: Partial<RowState>) => {
     setRows((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+  };
+
+  const addQuickPresetItem = () => {
+    if (!vendorId || typeof window === 'undefined') return;
+    const label = quickDesc.trim();
+    const price = Number(quickRate);
+    if (!label) {
+      setToast({ msg: 'Enter an item description.', ok: false });
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      setToast({ msg: 'Enter a valid INR rate.', ok: false });
+      return;
+    }
+    const key = `vendor_quick_items_${vendorId}`;
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return [] as QuickPreset[];
+        const parsed = JSON.parse(raw) as QuickPreset[];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [] as QuickPreset[];
+      }
+    })();
+    const next: QuickPreset[] = [
+      ...existing,
+      { id: `preset_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, label, price, image_url: quickImage },
+    ];
+    localStorage.setItem(key, JSON.stringify(next));
+    setQuickDesc('');
+    setQuickRate('');
+    setQuickImage(null);
+    setToast({ msg: 'Added to POS quick presets.', ok: true });
   };
 
   const resetRow = (id: string) => {
@@ -208,6 +246,33 @@ export default function VendorItemsPage() {
         <p style={{ color: 'var(--ts)' }}>Loading catalog…</p>
       ) : (
         <>
+          <div className="vendor-card" style={{ marginBottom: 16 }}>
+            <h2 style={{ margin: '0 0 8px', fontFamily: 'var(--fd)', fontSize: 18, color: 'var(--b)' }}>Add New Item (Quick Preset)</h2>
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--ts)' }}>
+              Add a custom item card for POS billing. This does not change default catalog logic.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 0.8fr', gap: 8, marginBottom: 8 }}>
+              <input className="vendor-input" placeholder="Description (e.g., Blouse)" value={quickDesc} onChange={(e) => setQuickDesc(e.target.value)} />
+              <input className="vendor-input" placeholder="Rate (INR)" inputMode="decimal" value={quickRate} onChange={(e) => setQuickRate(e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) {
+                    setQuickImage(null);
+                    return;
+                  }
+                  readImageAsDataUrl(file, setQuickImage, (msg) => setToast({ msg, ok: false }));
+                }}
+              />
+              {quickImage && <img src={quickImage} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--bd)' }} />}
+              <button type="button" className="vendor-btn-secondary" onClick={addQuickPresetItem}>Add New Item</button>
+            </div>
+          </div>
+
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
             <button type="button" className="vendor-btn-primary" disabled={saving} onClick={save}>
               {saving ? 'Saving…' : 'Save changes'}
