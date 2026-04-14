@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-15)
 
 ## Corpus Check
-- 145 files · ~421,327 words
+- 145 files · ~421,213 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 552 nodes · 846 edges · 39 communities detected
+- 552 nodes · 844 edges · 39 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -60,12 +60,12 @@ Cohesion: 0.09
 Nodes (3): assertBookingMatchesSchedule(), isDateEnabledForVendor(), slotIdsForDateByVendor()
 
 ### Community 6 - "Community 6"
-Cohesion: 0.13
-Nodes (15): encodeAsciiLines(), sanitizeReceiptText(), applyServiceFeeDiscount(), calculateServiceFee(), formatServiceFeeReceiptLine(), escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill() (+7 more)
-
-### Community 7 - "Community 7"
 Cohesion: 0.14
 Nodes (19): getBlePrinterPreferences(), getEffectiveEscPosPaperSize(), load(), save(), setBlePrinterPreferences(), syncEscPosPaperFromAdminPrinter(), patchPrefs(), refreshPrefs() (+11 more)
+
+### Community 7 - "Community 7"
+Cohesion: 0.12
+Nodes (15): encodeAsciiLines(), sanitizeReceiptText(), applyServiceFeeDiscount(), calculateServiceFee(), formatServiceFeeReceiptLine(), escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill() (+7 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.17
