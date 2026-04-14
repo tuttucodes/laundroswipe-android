@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { escPosPlainReceiptHtmlForPaper, printThermalReceiptDirect, thermalPrinterConfigForEscPosPlain } from '@/lib/thermal-print';
 import { openThermalReceiptReactPrintWindow } from '@/lib/receipt/openThermalReceiptReactPrint';
 import { vendorReceiptInputToThermalReceiptData } from '@/lib/receipt/thermalReceiptTypes';
@@ -12,15 +11,6 @@ import {
   printEscPosViaBluetooth,
   type VendorReceiptInput,
 } from '@/lib/printing';
-
-const BluetoothPrinterPanel = dynamic(
-  () => import('@/components/vendor/BluetoothPrinterPanel').then((m) => ({ default: m.BluetoothPrinterPanel })),
-  { ssr: false },
-);
-const PrintBridgeApkCta = dynamic(
-  () => import('@/components/vendor/PrintBridgeApkCta').then((m) => ({ default: m.PrintBridgeApkCta })),
-  { ssr: false },
-);
 import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
@@ -1157,9 +1147,6 @@ export default function VendorPage() {
             )}
             <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
-
-            <PrintBridgeApkCta />
-            <BluetoothPrinterPanel />
 
             <div className="vendor-action-row" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <button
