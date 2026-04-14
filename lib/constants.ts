@@ -199,33 +199,3 @@ export function next10Days(): { date: Date; day: string; num: number; month: str
   return days;
 }
 
-/** Only March 15 and March 18 (current year) are bookable; both evening slot only. */
-export function getScheduleDates(): { date: Date; day: string; num: number; month: string; ok: boolean; full: string }[] {
-  const dn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const mn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const year = new Date().getFullYear();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const out: { date: Date; day: string; num: number; month: string; ok: boolean; full: string }[] = [];
-  for (const dayNum of [15, 18]) {
-    const d = new Date(year, 2, dayNum); // month 2 = March
-    if (d.getTime() < today.getTime()) continue;
-    const full = d.toISOString().split('T')[0];
-    out.push({
-      date: d,
-      day: dn[d.getDay()],
-      num: d.getDate(),
-      month: mn[d.getMonth()],
-      ok: true,
-      full,
-    });
-  }
-  return out;
-}
-
-/** True for March 15 and 18 — only evening slot available (afternoon disabled). */
-export function isEveningOnlyDate(dateStr: string | undefined): boolean {
-  if (!dateStr) return false;
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.getMonth() === 2 && (d.getDate() === 15 || d.getDate() === 18);
-}

@@ -1145,7 +1145,7 @@
       "source_file": "lib/api.ts",
       "source_location": "L1",
       "id": "api",
-      "community": 3
+      "community": 4
     },
     {
       "label": "createUser()",
@@ -1153,7 +1153,7 @@
       "source_file": "js/api.js",
       "source_location": "L23",
       "id": "api_createuser",
-      "community": 3
+      "community": 4
     },
     {
       "label": "createOrder()",
@@ -1161,7 +1161,7 @@
       "source_file": "js/api.js",
       "source_location": "L52",
       "id": "api_createorder",
-      "community": 3
+      "community": 4
     },
     {
       "label": "fetchOrders()",
@@ -1169,7 +1169,7 @@
       "source_file": "js/api.js",
       "source_location": "L81",
       "id": "api_fetchorders",
-      "community": 3
+      "community": 4
     },
     {
       "label": "fetchOrdersForUser()",
@@ -1177,7 +1177,7 @@
       "source_file": "js/api.js",
       "source_location": "L100",
       "id": "api_fetchordersforuser",
-      "community": 3
+      "community": 4
     },
     {
       "label": "fetchOrderByToken()",
@@ -1185,7 +1185,7 @@
       "source_file": "js/api.js",
       "source_location": "L120",
       "id": "api_fetchorderbytoken",
-      "community": 3
+      "community": 4
     },
     {
       "label": "fetchUsers()",
@@ -1193,7 +1193,7 @@
       "source_file": "js/api.js",
       "source_location": "L145",
       "id": "api_fetchusers",
-      "community": 3
+      "community": 4
     },
     {
       "label": "signInWithGoogle()",
@@ -1201,7 +1201,7 @@
       "source_file": "js/api.js",
       "source_location": "L164",
       "id": "api_signinwithgoogle",
-      "community": 3
+      "community": 4
     },
     {
       "label": "getAuthSession()",
@@ -1209,7 +1209,7 @@
       "source_file": "js/api.js",
       "source_location": "L186",
       "id": "api_getauthsession",
-      "community": 3
+      "community": 4
     },
     {
       "label": "signOutAuth()",
@@ -1217,7 +1217,7 @@
       "source_file": "js/api.js",
       "source_location": "L198",
       "id": "api_signoutauth",
-      "community": 3
+      "community": 4
     },
     {
       "label": "upsertUserFromAuth()",
@@ -1225,7 +1225,7 @@
       "source_file": "js/api.js",
       "source_location": "L207",
       "id": "api_upsertuserfromauth",
-      "community": 3
+      "community": 4
     },
     {
       "label": "advanceOrderStatus()",
@@ -1233,7 +1233,7 @@
       "source_file": "js/api.js",
       "source_location": "L250",
       "id": "api_advanceorderstatus",
-      "community": 3
+      "community": 4
     },
     {
       "label": "build.gradle.kts",
@@ -1561,7 +1561,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L1",
       "id": "index",
-      "community": 11
+      "community": 10
     },
     {
       "label": "sendExpoPush()",
@@ -1569,7 +1569,7 @@
       "source_file": "supabase/functions/push/index.ts",
       "source_location": "L28",
       "id": "index_sendexpopush",
-      "community": 11
+      "community": 10
     },
     {
       "label": "PwaRegister.tsx",
@@ -2225,7 +2225,7 @@
       "source_file": "components/receipt/ThermalReceipt.tsx",
       "source_location": "L1",
       "id": "thermalreceipt",
-      "community": 3
+      "community": 4
     },
     {
       "label": "money()",
@@ -2233,7 +2233,7 @@
       "source_file": "components/receipt/ThermalReceipt.tsx",
       "source_location": "L6",
       "id": "thermalreceipt_money",
-      "community": 3
+      "community": 4
     },
     {
       "label": "moneyPlain()",
@@ -2241,7 +2241,7 @@
       "source_file": "components/receipt/ThermalReceipt.tsx",
       "source_location": "L9",
       "id": "thermalreceipt_moneyplain",
-      "community": 3
+      "community": 4
     },
     {
       "label": "PrintBridgeApkCta.tsx",
@@ -2561,7 +2561,7 @@
       "source_file": "lib/schedule-booking-guard.ts",
       "source_location": "L1",
       "id": "schedule_booking_guard",
-      "community": 12
+      "community": 11
     },
     {
       "label": "normalizeScheduleIdForVendor()",
@@ -2569,7 +2569,7 @@
       "source_file": "lib/schedule-booking-guard.ts",
       "source_location": "L10",
       "id": "schedule_booking_guard_normalizescheduleidforvendor",
-      "community": 12
+      "community": 11
     },
     {
       "label": "slotIdsForDateByVendor()",
@@ -2577,7 +2577,7 @@
       "source_file": "lib/schedule-booking-guard.ts",
       "source_location": "L22",
       "id": "schedule_booking_guard_slotidsfordatebyvendor",
-      "community": 12
+      "community": 11
     },
     {
       "label": "isDateEnabledForVendor()",
@@ -2585,7 +2585,7 @@
       "source_file": "lib/schedule-booking-guard.ts",
       "source_location": "L39",
       "id": "schedule_booking_guard_isdateenabledforvendor",
-      "community": 12
+      "community": 11
     },
     {
       "label": "assertBookingMatchesSchedule()",
@@ -2593,7 +2593,7 @@
       "source_file": "lib/schedule-booking-guard.ts",
       "source_location": "L57",
       "id": "schedule_booking_guard_assertbookingmatchesschedule",
-      "community": 12
+      "community": 11
     },
     {
       "label": "server-usage-log.ts",
@@ -2633,7 +2633,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L1",
       "id": "native_print_bridge",
-      "community": 11
+      "community": 10
     },
     {
       "label": "uint8ToBase64()",
@@ -2641,7 +2641,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L25",
       "id": "native_print_bridge_uint8tobase64",
-      "community": 11
+      "community": 10
     },
     {
       "label": "isNativeEscPosBridgeAvailable()",
@@ -2649,7 +2649,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L31",
       "id": "native_print_bridge_isnativeescposbridgeavailable",
-      "community": 11
+      "community": 10
     },
     {
       "label": "tryNativeEscPosPrint()",
@@ -2657,7 +2657,7 @@
       "source_file": "lib/native-print-bridge.ts",
       "source_location": "L41",
       "id": "native_print_bridge_trynativeescposprint",
-      "community": 11
+      "community": 10
     },
     {
       "label": "schedule-order-errors.ts",
@@ -2689,7 +2689,7 @@
       "source_file": "lib/schedule-date-key.ts",
       "source_location": "L1",
       "id": "schedule_date_key",
-      "community": 12
+      "community": 11
     },
     {
       "label": "scheduleDateKey()",
@@ -2697,7 +2697,7 @@
       "source_file": "lib/schedule-date-key.ts",
       "source_location": "L5",
       "id": "schedule_date_key_scheduledatekey",
-      "community": 12
+      "community": 11
     },
     {
       "label": "supabase-service.ts",
@@ -2985,7 +2985,7 @@
       "source_file": "lib/schedule-normalize.ts",
       "source_location": "L1",
       "id": "schedule_normalize",
-      "community": 12
+      "community": 11
     },
     {
       "label": "slotIdJsonValueToLocal()",
@@ -2993,7 +2993,7 @@
       "source_file": "lib/schedule-normalize.ts",
       "source_location": "L8",
       "id": "schedule_normalize_slotidjsonvaluetolocal",
-      "community": 12
+      "community": 11
     },
     {
       "label": "normalizeScheduleDateRowsFromDb()",
@@ -3001,7 +3001,7 @@
       "source_file": "lib/schedule-normalize.ts",
       "source_location": "L38",
       "id": "schedule_normalize_normalizescheduledaterowsfromdb",
-      "community": 12
+      "community": 11
     },
     {
       "label": "scheduleDateRowByKey()",
@@ -3009,7 +3009,7 @@
       "source_file": "lib/schedule-normalize.ts",
       "source_location": "L75",
       "id": "schedule_normalize_scheduledaterowbykey",
-      "community": 12
+      "community": 11
     },
     {
       "label": "public-rate-limit.ts",
@@ -3041,7 +3041,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L1",
       "id": "constants",
-      "community": 10
+      "community": 12
     },
     {
       "label": "getVendorBillItems()",
@@ -3049,7 +3049,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L129",
       "id": "constants_getvendorbillitems",
-      "community": 10
+      "community": 12
     },
     {
       "label": "statusLabel()",
@@ -3057,7 +3057,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L156",
       "id": "constants_statuslabel",
-      "community": 10
+      "community": 12
     },
     {
       "label": "statusClass()",
@@ -3065,7 +3065,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L161",
       "id": "constants_statusclass",
-      "community": 10
+      "community": 12
     },
     {
       "label": "customerFacingStatusLabel()",
@@ -3073,7 +3073,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L168",
       "id": "constants_customerfacingstatuslabel",
-      "community": 10
+      "community": 12
     },
     {
       "label": "customerFacingStatusClass()",
@@ -3081,7 +3081,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L175",
       "id": "constants_customerfacingstatusclass",
-      "community": 10
+      "community": 12
     },
     {
       "label": "next10Days()",
@@ -3089,23 +3089,7 @@
       "source_file": "lib/constants.ts",
       "source_location": "L182",
       "id": "constants_next10days",
-      "community": 10
-    },
-    {
-      "label": "getScheduleDates()",
-      "file_type": "code",
-      "source_file": "lib/constants.ts",
-      "source_location": "L203",
-      "id": "constants_getscheduledates",
-      "community": 10
-    },
-    {
-      "label": "isEveningOnlyDate()",
-      "file_type": "code",
-      "source_file": "lib/constants.ts",
-      "source_location": "L227",
-      "id": "constants_iseveningonlydate",
-      "community": 10
+      "community": 12
     },
     {
       "label": "thermal-print.ts",
@@ -3265,7 +3249,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L1",
       "id": "vendor_bill_catalog",
-      "community": 10
+      "community": 12
     },
     {
       "label": "parseBillItemOverrides()",
@@ -3273,7 +3257,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L21",
       "id": "vendor_bill_catalog_parsebillitemoverrides",
-      "community": 10
+      "community": 12
     },
     {
       "label": "mergeVendorBillItems()",
@@ -3281,7 +3265,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L52",
       "id": "vendor_bill_catalog_mergevendorbillitems",
-      "community": 10
+      "community": 12
     },
     {
       "label": "mergeVendorBillItemsFromDbRow()",
@@ -3289,7 +3273,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L69",
       "id": "vendor_bill_catalog_mergevendorbillitemsfromdbrow",
-      "community": 10
+      "community": 12
     },
     {
       "label": "catalogIdSet()",
@@ -3297,7 +3281,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L76",
       "id": "vendor_bill_catalog_catalogidset",
-      "community": 10
+      "community": 12
     },
     {
       "label": "sanitizeBillItemOverridesForPut()",
@@ -3305,7 +3289,7 @@
       "source_file": "lib/vendor-bill-catalog.ts",
       "source_location": "L82",
       "id": "vendor_bill_catalog_sanitizebillitemoverridesforput",
-      "community": 10
+      "community": 12
     },
     {
       "label": "schedule-slot-merge.ts",
@@ -3313,7 +3297,7 @@
       "source_file": "lib/schedule-slot-merge.ts",
       "source_location": "L1",
       "id": "schedule_slot_merge",
-      "community": 12
+      "community": 11
     },
     {
       "label": "uniqueSlotIds()",
@@ -3321,7 +3305,7 @@
       "source_file": "lib/schedule-slot-merge.ts",
       "source_location": "L2",
       "id": "schedule_slot_merge_uniqueslotids",
-      "community": 12
+      "community": 11
     },
     {
       "label": "dedupeScheduleSlotsByTimeAndLabel()",
@@ -3329,7 +3313,7 @@
       "source_file": "lib/schedule-slot-merge.ts",
       "source_location": "L26",
       "id": "schedule_slot_merge_dedupescheduleslotsbytimeandlabel",
-      "community": 12
+      "community": 11
     },
     {
       "label": "ist-dates.ts",
@@ -3561,7 +3545,7 @@
       "source_file": "lib/supabase.ts",
       "source_location": "L1",
       "id": "supabase",
-      "community": 3
+      "community": 4
     },
     {
       "label": "rate-limit.ts",
@@ -3601,7 +3585,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L1",
       "id": "fees",
-      "community": 3
+      "community": 4
     },
     {
       "label": "calculateServiceFee()",
@@ -3609,7 +3593,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L14",
       "id": "fees_calculateservicefee",
-      "community": 3
+      "community": 4
     },
     {
       "label": "formatServiceFeeTiers()",
@@ -3617,7 +3601,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L22",
       "id": "fees_formatservicefeetiers",
-      "community": 3
+      "community": 4
     },
     {
       "label": "applyServiceFeeDiscount()",
@@ -3625,7 +3609,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L36",
       "id": "fees_applyservicefeediscount",
-      "community": 3
+      "community": 4
     },
     {
       "label": "formatServiceFeeReceiptLine()",
@@ -3633,7 +3617,7 @@
       "source_file": "lib/fees.ts",
       "source_location": "L48",
       "id": "fees_formatservicefeereceiptline",
-      "community": 3
+      "community": 4
     },
     {
       "label": "turnstile.ts",
@@ -3665,7 +3649,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L41",
       "id": "index_unittotallines",
-      "community": 11
+      "community": 10
     },
     {
       "label": "printEscPosViaBluetooth()",
@@ -3673,7 +3657,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L54",
       "id": "index_printescposviabluetooth",
-      "community": 11
+      "community": 10
     },
     {
       "label": "buildTestEscPosReceipt()",
@@ -3681,7 +3665,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L83",
       "id": "index_buildtestescposreceipt",
-      "community": 11
+      "community": 10
     },
     {
       "label": "formatTestEscPosPlain()",
@@ -3689,7 +3673,7 @@
       "source_file": "lib/printing/index.ts",
       "source_location": "L118",
       "id": "index_formattestescposplain",
-      "community": 11
+      "community": 10
     },
     {
       "label": "vendorReceipt.ts",
@@ -3697,7 +3681,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L1",
       "id": "vendorreceipt",
-      "community": 3
+      "community": 4
     },
     {
       "label": "money()",
@@ -3705,7 +3689,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L38",
       "id": "vendorreceipt_money",
-      "community": 3
+      "community": 4
     },
     {
       "label": "truncateForPaper()",
@@ -3713,7 +3697,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L42",
       "id": "vendorreceipt_truncateforpaper",
-      "community": 3
+      "community": 4
     },
     {
       "label": "wrapReceiptText()",
@@ -3721,7 +3705,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L51",
       "id": "vendorreceipt_wrapreceipttext",
-      "community": 3
+      "community": 4
     },
     {
       "label": "layoutUnitAndTotal()",
@@ -3729,7 +3713,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L84",
       "id": "vendorreceipt_layoutunitandtotal",
-      "community": 3
+      "community": 4
     },
     {
       "label": "buildVendorReceiptEscPos()",
@@ -3737,7 +3721,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L97",
       "id": "vendorreceipt_buildvendorreceiptescpos",
-      "community": 3
+      "community": 4
     },
     {
       "label": "formatVendorReceiptEscPosPlain()",
@@ -3745,7 +3729,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L167",
       "id": "vendorreceipt_formatvendorreceiptescposplain",
-      "community": 3
+      "community": 4
     },
     {
       "label": "savedVendorBillToReceiptInput()",
@@ -3753,7 +3737,7 @@
       "source_file": "lib/printing/receipt/vendorReceipt.ts",
       "source_location": "L220",
       "id": "vendorreceipt_savedvendorbilltoreceiptinput",
-      "community": 3
+      "community": 4
     },
     {
       "label": "BluetoothPrinterService.ts",
@@ -3945,7 +3929,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L1",
       "id": "printqueue",
-      "community": 11
+      "community": 10
     },
     {
       "label": "PrintQueue",
@@ -3953,7 +3937,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L5",
       "id": "printqueue_printqueue",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".constructor()",
@@ -3961,7 +3945,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L14",
       "id": "printqueue_printqueue_constructor",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".enqueue()",
@@ -3969,7 +3953,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L19",
       "id": "printqueue_printqueue_enqueue",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".drain()",
@@ -3977,7 +3961,7 @@
       "source_file": "lib/printing/queue/PrintQueue.ts",
       "source_location": "L26",
       "id": "printqueue_printqueue_drain",
-      "community": 11
+      "community": 10
     },
     {
       "label": "CharacterEncodings.ts",
@@ -3985,7 +3969,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L1",
       "id": "characterencodings",
-      "community": 4
+      "community": 3
     },
     {
       "label": "sanitizeReceiptText()",
@@ -3993,7 +3977,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L7",
       "id": "characterencodings_sanitizereceipttext",
-      "community": 4
+      "community": 3
     },
     {
       "label": "encodeAsciiLines()",
@@ -4001,7 +3985,7 @@
       "source_file": "lib/printing/escpos/CharacterEncodings.ts",
       "source_location": "L19",
       "id": "characterencodings_encodeasciilines",
-      "community": 4
+      "community": 3
     },
     {
       "label": "ESCPOSBuilder.ts",
@@ -4009,7 +3993,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L1",
       "id": "escposbuilder",
-      "community": 4
+      "community": 3
     },
     {
       "label": "escposPlainDivider()",
@@ -4017,7 +4001,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L34",
       "id": "escposbuilder_escposplaindivider",
-      "community": 4
+      "community": 3
     },
     {
       "label": "escposPlainTableRow()",
@@ -4025,7 +4009,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L41",
       "id": "escposbuilder_escposplaintablerow",
-      "community": 4
+      "community": 3
     },
     {
       "label": "escposPlainLineRight()",
@@ -4033,7 +4017,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L53",
       "id": "escposbuilder_escposplainlineright",
-      "community": 4
+      "community": 3
     },
     {
       "label": "escposPlainLineCenter()",
@@ -4041,7 +4025,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L61",
       "id": "escposbuilder_escposplainlinecenter",
-      "community": 4
+      "community": 3
     },
     {
       "label": "concatParts()",
@@ -4049,7 +4033,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L76",
       "id": "escposbuilder_concatparts",
-      "community": 4
+      "community": 3
     },
     {
       "label": "ESCPOSBuilder",
@@ -4057,7 +4041,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L87",
       "id": "escposbuilder_escposbuilder",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".constructor()",
@@ -4065,7 +4049,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L93",
       "id": "escposbuilder_escposbuilder_constructor",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".getPaperSize()",
@@ -4073,7 +4057,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L99",
       "id": "escposbuilder_escposbuilder_getpapersize",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".getCharsPerLine()",
@@ -4081,7 +4065,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L103",
       "id": "escposbuilder_escposbuilder_getcharsperline",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".getMaxDots()",
@@ -4089,7 +4073,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L107",
       "id": "escposbuilder_escposbuilder_getmaxdots",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".pushBytes()",
@@ -4097,7 +4081,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L111",
       "id": "escposbuilder_escposbuilder_pushbytes",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".pushRaw()",
@@ -4105,7 +4089,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L116",
       "id": "escposbuilder_escposbuilder_pushraw",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".initialize()",
@@ -4113,7 +4097,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L121",
       "id": "escposbuilder_escposbuilder_initialize",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".codePage()",
@@ -4121,7 +4105,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L126",
       "id": "escposbuilder_escposbuilder_codepage",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".printDensity()",
@@ -4129,7 +4113,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L134",
       "id": "escposbuilder_escposbuilder_printdensity",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".lineFeed()",
@@ -4137,7 +4121,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L139",
       "id": "escposbuilder_escposbuilder_linefeed",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".feed()",
@@ -4145,7 +4129,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L143",
       "id": "escposbuilder_escposbuilder_feed",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".align()",
@@ -4153,7 +4137,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L149",
       "id": "escposbuilder_escposbuilder_align",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".bold()",
@@ -4161,7 +4145,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L155",
       "id": "escposbuilder_escposbuilder_bold",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".underline()",
@@ -4169,7 +4153,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L159",
       "id": "escposbuilder_escposbuilder_underline",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".fontSize()",
@@ -4177,7 +4161,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L163",
       "id": "escposbuilder_escposbuilder_fontsize",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".text()",
@@ -4185,7 +4169,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L170",
       "id": "escposbuilder_escposbuilder_text",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".textDoubleSize()",
@@ -4193,7 +4177,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L178",
       "id": "escposbuilder_escposbuilder_textdoublesize",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".rawText()",
@@ -4201,7 +4185,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L185",
       "id": "escposbuilder_escposbuilder_rawtext",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".divider()",
@@ -4209,7 +4193,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L190",
       "id": "escposbuilder_escposbuilder_divider",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".tableRow()",
@@ -4217,7 +4201,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L197",
       "id": "escposbuilder_escposbuilder_tablerow",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".barcodeCode128()",
@@ -4225,7 +4209,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L202",
       "id": "escposbuilder_escposbuilder_barcodecode128",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".qrCode()",
@@ -4233,7 +4217,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L220",
       "id": "escposbuilder_escposbuilder_qrcode",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".cut()",
@@ -4241,7 +4225,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L243",
       "id": "escposbuilder_escposbuilder_cut",
-      "community": 4
+      "community": 3
     },
     {
       "label": ".build()",
@@ -4249,7 +4233,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L247",
       "id": "escposbuilder_escposbuilder_build",
-      "community": 4
+      "community": 3
     },
     {
       "label": "paperSizeFromCharsPerLine()",
@@ -4257,7 +4241,7 @@
       "source_file": "lib/printing/escpos/ESCPOSBuilder.ts",
       "source_location": "L252",
       "id": "escposbuilder_papersizefromcharsperline",
-      "community": 4
+      "community": 3
     },
     {
       "label": "ESCPOSConstants.ts",
@@ -4265,7 +4249,7 @@
       "source_file": "lib/printing/escpos/ESCPOSConstants.ts",
       "source_location": "L1",
       "id": "escposconstants",
-      "community": 4
+      "community": 3
     },
     {
       "label": "thermalReceiptTypes.ts",
@@ -4273,7 +4257,7 @@
       "source_file": "lib/receipt/thermalReceiptTypes.ts",
       "source_location": "L1",
       "id": "thermalreceipttypes",
-      "community": 3
+      "community": 4
     },
     {
       "label": "locationFromBill()",
@@ -4281,7 +4265,7 @@
       "source_file": "lib/receipt/thermalReceiptTypes.ts",
       "source_location": "L35",
       "id": "thermalreceipttypes_locationfrombill",
-      "community": 3
+      "community": 4
     },
     {
       "label": "vendorBillRowToThermalReceiptData()",
@@ -4289,7 +4273,7 @@
       "source_file": "lib/receipt/thermalReceiptTypes.ts",
       "source_location": "L41",
       "id": "thermalreceipttypes_vendorbillrowtothermalreceiptdata",
-      "community": 3
+      "community": 4
     },
     {
       "label": "vendorReceiptInputToThermalReceiptData()",
@@ -4297,7 +4281,7 @@
       "source_file": "lib/receipt/thermalReceiptTypes.ts",
       "source_location": "L74",
       "id": "thermalreceipttypes_vendorreceiptinputtothermalreceiptdata",
-      "community": 3
+      "community": 4
     },
     {
       "label": "openThermalReceiptReactPrint.tsx",
@@ -4305,7 +4289,7 @@
       "source_file": "lib/receipt/openThermalReceiptReactPrint.tsx",
       "source_location": "L1",
       "id": "openthermalreceiptreactprint",
-      "community": 3
+      "community": 4
     },
     {
       "label": "escapeHtml()",
@@ -4313,7 +4297,7 @@
       "source_file": "lib/receipt/openThermalReceiptReactPrint.tsx",
       "source_location": "L8",
       "id": "openthermalreceiptreactprint_escapehtml",
-      "community": 3
+      "community": 4
     },
     {
       "label": "openThermalReceiptReactPrintWindow()",
@@ -4321,7 +4305,7 @@
       "source_file": "lib/receipt/openThermalReceiptReactPrint.tsx",
       "source_location": "L16",
       "id": "openthermalreceiptreactprint_openthermalreceiptreactprintwindow",
-      "community": 3
+      "community": 4
     },
     {
       "label": "bills-cache.ts",
@@ -11363,30 +11347,6 @@
       "_tgt": "constants_next10days",
       "source": "constants",
       "target": "constants_next10days",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/constants.ts",
-      "source_location": "L203",
-      "weight": 1.0,
-      "_src": "constants",
-      "_tgt": "constants_getscheduledates",
-      "source": "constants",
-      "target": "constants_getscheduledates",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/constants.ts",
-      "source_location": "L227",
-      "weight": 1.0,
-      "_src": "constants",
-      "_tgt": "constants_iseveningonlydate",
-      "source": "constants",
-      "target": "constants_iseveningonlydate",
       "confidence_score": 1.0
     },
     {

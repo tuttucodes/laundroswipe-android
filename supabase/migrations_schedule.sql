@@ -70,13 +70,4 @@ INSERT INTO schedule_slots (id, label, time_from, time_to, sort_order, active) V
   ('evening', 'Evening (4:45–5:45 PM)', '16:45', '17:45', 2, true)
 ON CONFLICT (id) DO NOTHING;
 
--- Seed default dates: Mar 15 and 18 (current year), evening only
-INSERT INTO schedule_dates (date, enabled, slot_ids)
-SELECT d, true, '["evening"]'::jsonb
-FROM generate_series(
-  (date_trunc('year', current_date) + interval '2 months 14 days')::date,
-  (date_trunc('year', current_date) + interval '2 months 17 days')::date,
-  interval '3 days'
-) AS t(d)
--- DO NOT use DO UPDATE here: re-running this script would replace vendor-shaped slot_ids (json object) with a flat array and break per-vendor booking.
-ON CONFLICT (date) DO NOTHING;
+-- Bookable dates: add only via admin Schedule (no automatic seed rows).

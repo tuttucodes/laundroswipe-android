@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-15)
 
 ## Corpus Check
-- 145 files · ~421,419 words
+- 145 files · ~421,236 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 553 nodes · 845 edges · 39 communities detected
+- 551 nodes · 843 edges · 39 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -48,12 +48,12 @@ Cohesion: 0.07
 Nodes (17): billMapAndVisibleOrderIds(), handleCompleteProfile(), handleConfirmDelivery(), handleConfirmOrder(), handleSaveEditProfile(), handleSaveStudentDetailsModal(), init(), isCampusCollegeStudent() (+9 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.08
-Nodes (13): applyServiceFeeDiscount(), calculateServiceFee(), formatServiceFeeReceiptLine(), escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill(), vendorBillRowToThermalReceiptData(), buildVendorReceiptEscPos() (+5 more)
-
-### Community 4 - "Community 4"
 Cohesion: 0.09
 Nodes (6): encodeAsciiLines(), sanitizeReceiptText(), concatParts(), ESCPOSBuilder, escposPlainDivider(), escposPlainTableRow()
+
+### Community 4 - "Community 4"
+Cohesion: 0.08
+Nodes (13): applyServiceFeeDiscount(), calculateServiceFee(), formatServiceFeeReceiptLine(), escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill(), vendorBillRowToThermalReceiptData(), buildVendorReceiptEscPos() (+5 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.11
@@ -76,16 +76,16 @@ Cohesion: 0.12
 Nodes (1): MainActivity
 
 ### Community 10 - "Community 10"
-Cohesion: 0.19
-Nodes (9): customerFacingStatusClass(), customerFacingStatusLabel(), statusClass(), statusLabel(), catalogIdSet(), mergeVendorBillItems(), mergeVendorBillItemsFromDbRow(), parseBillItemOverrides() (+1 more)
-
-### Community 11 - "Community 11"
 Cohesion: 0.16
 Nodes (6): buildTestEscPosReceipt(), formatTestEscPosPlain(), unitTotalLines(), tryNativeEscPosPrint(), uint8ToBase64(), PrintQueue
 
-### Community 12 - "Community 12"
+### Community 11 - "Community 11"
 Cohesion: 0.18
 Nodes (3): assertBookingMatchesSchedule(), isDateEnabledForVendor(), slotIdsForDateByVendor()
+
+### Community 12 - "Community 12"
+Cohesion: 0.23
+Nodes (9): customerFacingStatusClass(), customerFacingStatusLabel(), statusClass(), statusLabel(), catalogIdSet(), mergeVendorBillItems(), mergeVendorBillItemsFromDbRow(), parseBillItemOverrides() (+1 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.38
@@ -235,8 +235,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
-- **Should `Community 4` be split into smaller, more focused modules?**
   _Cohesion score 0.09 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
 - **Should `Community 5` be split into smaller, more focused modules?**
   _Cohesion score 0.11 - nodes in this community are weakly interconnected._
