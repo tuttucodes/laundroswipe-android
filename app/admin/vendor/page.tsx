@@ -850,7 +850,7 @@ export default function VendorPage() {
       <p style={{ marginBottom: 16, fontSize: 14 }}>
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Back to Dashboard</Link>
       </p>
-      <h1 style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>{vendorName} · Vendor Bill</h1>
+      <h1 className="stitch-pos-title" style={{ fontFamily: 'var(--fd)', fontSize: 24, marginBottom: 6, color: 'var(--b)' }}>{vendorName} · Vendor Bill</h1>
       <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 8 }}>
         <Link href="/admin/vendor/items" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>
           Items &amp; rates (photos for quick tap)
@@ -858,7 +858,7 @@ export default function VendorPage() {
       </p>
       <p style={{ color: 'var(--ts)', fontSize: 14, marginBottom: 24 }}>Enter token to load order, or create a sample bill for walk-ins/emergency print.</p>
 
-      <div className="vendor-card">
+      <div className="vendor-card stitch-pos-lookup-card">
         <form onSubmit={handleLookup}>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Token number</label>
@@ -969,7 +969,7 @@ export default function VendorPage() {
       )}
 
       {(sampleMode || (order && (showAnyway || !billAlreadyGenerated))) && (
-        <div className="vendor-card">
+        <div className="vendor-card stitch-pos-workspace">
           {billAlreadyGenerated && showAnyway && !sampleMode && (
             <div style={{ padding: '12px 16px', background: '#FEF3C7', borderRadius: 8, marginBottom: 16, fontSize: 13, color: '#92400E' }}>
               Adding another bill for same token (e.g. missed items).
@@ -995,7 +995,7 @@ export default function VendorPage() {
             )}
           </div>
 
-          <div style={{ borderTop: '1px solid var(--bd)', paddingTop: 16, marginTop: 16 }}>
+            <div className="stitch-pos-items-section" style={{ borderTop: '1px solid var(--bd)', paddingTop: 16, marginTop: 16 }}>
             <div style={{ border: '1px dashed var(--bd)', borderRadius: 10, padding: 12, marginBottom: 16 }}>
               <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--tx)' }}>
                 Manage item presets shown in this bill generator (desc, rate, image)
@@ -1148,7 +1148,7 @@ export default function VendorPage() {
             <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
 
-            <div className="vendor-action-row" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div className="vendor-action-row stitch-pos-actions" style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => void handlePrint()}

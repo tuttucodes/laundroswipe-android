@@ -742,6 +742,28 @@ body{
 .stitch-pos-shell .vendor-card{
   border-radius:18px;
 }
+.stitch-pos-shell .stitch-pos-title{
+  font-size:30px!important;
+  line-height:1.1;
+  letter-spacing:-.02em;
+  color:var(--stitch-primary)!important;
+}
+.stitch-pos-shell .stitch-pos-lookup-card{
+  background:linear-gradient(180deg,#f8fbff,#eef4ff);
+  border:1px solid rgba(0,61,155,.18);
+}
+.stitch-pos-shell .stitch-pos-workspace{
+  background:linear-gradient(180deg,#fff,#f7fbff);
+}
+.stitch-pos-shell .stitch-pos-items-section{
+  background:linear-gradient(180deg,rgba(0,82,204,.03),rgba(0,82,204,.00));
+  border-radius:14px;
+  padding:16px 12px 12px;
+}
+.stitch-pos-shell .stitch-pos-actions{
+  border-top:1px dashed rgba(0,61,155,.22);
+  padding-top:14px;
+}
 .stitch-pos-shell .vendor-card:first-of-type{
   background:linear-gradient(180deg,#f8fbff,#eef4ff);
 }
@@ -868,12 +890,26 @@ body{
 .stitch-items-shell .vendor-card{
   background:linear-gradient(180deg,#fff,#f8fbff);
 }
+.stitch-items-shell .stitch-items-add-card{
+  border:1px solid rgba(0,61,155,.16);
+}
+.stitch-items-shell .stitch-items-row{
+  border:1px solid rgba(0,61,155,.14);
+  box-shadow:0 8px 18px rgba(0,61,155,.06);
+}
 .stitch-items-shell input[type="file"]{
   font-size:12px;
 }
 
 .stitch-billing-shell .vendor-card{
   background:linear-gradient(180deg,#fff,#f8fbff);
+}
+.stitch-billing-shell .stitch-billing-filters{
+  border:1px solid rgba(0,61,155,.18);
+}
+.stitch-billing-shell .stitch-billing-row{
+  border:1px solid rgba(0,61,155,.14);
+  box-shadow:0 8px 16px rgba(0,61,155,.06);
 }
 .stitch-billing-shell .vendor-btn-primary,
 .stitch-billing-shell .vendor-btn-secondary{

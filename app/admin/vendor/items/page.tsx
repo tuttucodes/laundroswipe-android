@@ -246,7 +246,7 @@ export default function VendorItemsPage() {
         <p style={{ color: 'var(--ts)' }}>Loading catalog…</p>
       ) : (
         <>
-          <div className="vendor-card" style={{ marginBottom: 16 }}>
+          <div className="vendor-card stitch-items-add-card" style={{ marginBottom: 16 }}>
             <h2 style={{ margin: '0 0 8px', fontFamily: 'var(--fd)', fontSize: 18, color: 'var(--b)' }}>Add New Item (Quick Preset)</h2>
             <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--ts)' }}>
               Add a custom item card for POS billing. This does not change default catalog logic.
@@ -297,7 +297,7 @@ export default function VendorItemsPage() {
               return (
                 <div
                   key={d.id}
-                  className="vendor-card"
+                  className="vendor-card stitch-items-row"
                   style={{ display: 'grid', gridTemplateColumns: 'minmax(72px, 88px) 1fr', gap: 14, alignItems: 'start' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>

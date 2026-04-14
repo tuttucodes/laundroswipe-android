@@ -632,7 +632,7 @@ export default function BillsPage() {
         </button>
       </div>
 
-      <div className="vendor-card" style={{ padding: 16, marginBottom: 20 }}>
+      <div className="vendor-card stitch-billing-filters" style={{ padding: 16, marginBottom: 20 }}>
         <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 6px', color: 'var(--tx)' }}>Search &amp; filters</p>
         <p style={{ fontSize: 12, color: 'var(--ts)', margin: '0 0 14px', lineHeight: 1.45 }}>
           Filter saved bills by token (partial match), bill date in India (IST), item subtotal, or grand total. Click <strong>Apply</strong> to run the search; pagination keeps these filters.
@@ -799,7 +799,7 @@ export default function BillsPage() {
             return (
             <div
               key={b.id}
-              className="vendor-card"
+              className="vendor-card stitch-billing-row"
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
