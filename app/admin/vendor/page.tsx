@@ -19,6 +19,35 @@ import { billCatalogThumbUrl } from '@/lib/bill-catalog-thumb';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
 import { clearBillsSyncMeta } from '@/lib/offline/bills-cache';
 import type { OrderRow, UserRow } from '@/lib/api';
+import jsQR from 'jsqr';
+
+type BarcodeDetectorClass = new (opts?: { formats?: string[] }) => {
+  detect: (input: ImageBitmapSource) => Promise<Array<{ rawValue?: string }>>;
+};
+
+function stopMediaStream(stream: MediaStream | null) {
+  if (!stream) return;
+  stream.getTracks().forEach((track) => track.stop());
+}
+
+/** Prefer rear camera; fall back so iOS/Android still open a usable stream. */
+async function acquireCameraStream(): Promise<MediaStream> {
+  const constraintsList: MediaStreamConstraints[] = [
+    { video: { facingMode: { ideal: 'environment' } }, audio: false },
+    { video: { facingMode: 'environment' }, audio: false },
+    { video: { facingMode: 'user' }, audio: false },
+    { video: true, audio: false },
+  ];
+  let lastErr: unknown;
+  for (const c of constraintsList) {
+    try {
+      return await navigator.mediaDevices.getUserMedia(c);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
+}
 type LineItem = { id: string; label: string; price: number; qty: number; image_url?: string | null };
 type LatestBill = { id: string; created_at: string; can_cancel: boolean; line_items: LineItem[] };
 type QuickItem = { id: string; label: string; price: number; image_url?: string | null };
@@ -181,11 +210,8 @@ export default function VendorPage() {
       cancelAnimationFrame(scannerFrameRef.current);
       scannerFrameRef.current = null;
     }
-    const stream = scannerStreamRef.current;
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      scannerStreamRef.current = null;
-    }
+    stopMediaStream(scannerStreamRef.current);
+    scannerStreamRef.current = null;
     if (scannerVideoRef.current) scannerVideoRef.current.srcObject = null;
     setScannerBusy(false);
   };
@@ -266,32 +292,58 @@ export default function VendorPage() {
   const startScanner = async () => {
     setScannerErr('');
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
-    const BarcodeDetectorCtor = (window as unknown as {
-      BarcodeDetector?: new (opts?: { formats?: string[] }) => { detect: (input: ImageBitmapSource) => Promise<Array<{ rawValue?: string }>> };
-    }).BarcodeDetector;
-    if (!BarcodeDetectorCtor) {
-      setScannerErr('QR scanning is not supported on this browser. Enter token manually.');
-      setScannerOpen(true);
+    if (!window.isSecureContext) {
+      setScannerErr('Camera needs a secure (HTTPS) page. Open this site with https:// or use manual token entry.');
       return;
     }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScannerErr('This browser does not expose the camera API. Try Safari or Chrome, or enter the token manually.');
+      return;
+    }
+
+    const BarcodeDetectorCtor = (window as unknown as { BarcodeDetector?: BarcodeDetectorClass }).BarcodeDetector;
+    const barcodeDetector = BarcodeDetectorCtor ? new BarcodeDetectorCtor({ formats: ['qr_code'] }) : null;
+    let jsQrFrameCounter = 0;
+
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
-        audio: false,
-      });
+      stream = await acquireCameraStream();
       scannerStreamRef.current = stream;
       setScannerBusy(true);
-      const video = scannerVideoRef.current;
-      if (!video) return;
-      video.srcObject = stream;
-      await video.play();
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
 
-      const detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
+      const video = scannerVideoRef.current;
+      if (!video) {
+        stopMediaStream(stream);
+        scannerStreamRef.current = null;
+        setScannerBusy(false);
+        setScannerErr('Camera preview is not ready. Close the scanner and try again.');
+        return;
+      }
+
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.muted = true;
+      video.srcObject = stream;
+      try {
+        await video.play();
+      } catch {
+        stopMediaStream(stream);
+        scannerStreamRef.current = null;
+        setScannerBusy(false);
+        setScannerErr('Could not start camera preview. Tap the button again or enter the token manually.');
+        return;
+      }
+
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        setScannerErr('Could not initialize scanner.');
+        stopMediaStream(stream);
+        scannerStreamRef.current = null;
         setScannerBusy(false);
+        setScannerErr('Could not initialize scanner.');
         return;
       }
 
@@ -303,10 +355,32 @@ export default function VendorPage() {
           canvas.height = currentVideo.videoHeight;
           ctx.drawImage(currentVideo, 0, 0, canvas.width, canvas.height);
           try {
-            const codes = await detector.detect(canvas);
-            const first = codes[0]?.rawValue?.trim();
-            if (first) {
-              const normalized = first.replace(/^#/, '').toUpperCase();
+            let raw: string | null = null;
+            if (barcodeDetector) {
+              const codes = await barcodeDetector.detect(canvas);
+              raw = codes[0]?.rawValue?.trim() ?? null;
+            } else {
+              jsQrFrameCounter += 1;
+              if (jsQrFrameCounter % 5 !== 0) {
+                scannerFrameRef.current = requestAnimationFrame(() => {
+                  void scanTick();
+                });
+                return;
+              }
+              let imageData: ImageData;
+              try {
+                imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              } catch {
+                scannerFrameRef.current = requestAnimationFrame(() => {
+                  void scanTick();
+                });
+                return;
+              }
+              const decoded = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+              raw = decoded?.data?.trim() ?? null;
+            }
+            if (raw) {
+              const normalized = raw.replace(/^#/, '').toUpperCase();
               setToken(normalized);
               stopScanner();
               setScannerOpen(false);
@@ -326,13 +400,17 @@ export default function VendorPage() {
         void scanTick();
       });
     } catch (error: unknown) {
+      if (stream) {
+        stopMediaStream(stream);
+        scannerStreamRef.current = null;
+      }
       const err = error as { name?: string };
       if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
-        setScannerErr('Camera permission denied. Allow camera access and retry.');
+        setScannerErr('Camera permission denied. Allow camera in the browser prompt or Settings, then tap the button again.');
       } else if (err?.name === 'NotFoundError' || err?.name === 'OverconstrainedError') {
-        setScannerErr('No usable camera found on this device.');
+        setScannerErr('No usable camera found on this device. Enter the token manually.');
       } else {
-        setScannerErr('Camera access denied or unavailable.');
+        setScannerErr('Camera access failed. Enter the token manually or try again.');
       }
       setScannerBusy(false);
       setScannerOpen(true);

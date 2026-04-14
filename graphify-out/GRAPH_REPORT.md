@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-15)
 
 ## Corpus Check
-- 145 files · ~421,552 words
+- 145 files · ~421,844 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 553 nodes · 846 edges · 39 communities detected
+- 555 nodes · 851 edges · 39 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -37,7 +37,7 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.03
-Nodes (48): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advanceStatus(), applyBillFilters(), applyBillsResponse(), applySuggestedSlot(), authHeaders() (+40 more)
+Nodes (52): acquireCameraStream(), addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advanceStatus(), applyBillFilters(), applyBillsResponse(), applySuggestedSlot() (+44 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
@@ -48,20 +48,20 @@ Cohesion: 0.07
 Nodes (17): billMapAndVisibleOrderIds(), handleCompleteProfile(), handleConfirmDelivery(), handleConfirmOrder(), handleSaveEditProfile(), handleSaveStudentDetailsModal(), init(), isCampusCollegeStudent() (+9 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.07
-Nodes (15): encodeAsciiLines(), sanitizeReceiptText(), applyServiceFeeDiscount(), calculateServiceFee(), formatServiceFeeReceiptLine(), escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill() (+7 more)
+Cohesion: 0.09
+Nodes (6): encodeAsciiLines(), sanitizeReceiptText(), concatParts(), ESCPOSBuilder, escposPlainDivider(), escposPlainTableRow()
 
 ### Community 4 - "Community 4"
-Cohesion: 0.1
-Nodes (4): concatParts(), ESCPOSBuilder, escposPlainDivider(), escposPlainTableRow()
+Cohesion: 0.08
+Nodes (13): applyServiceFeeDiscount(), calculateServiceFee(), formatServiceFeeReceiptLine(), escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill(), vendorBillRowToThermalReceiptData(), buildVendorReceiptEscPos() (+5 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.11
-Nodes (10): normalizeHostelBlockKey(), rollupHostelBlockKey(), dayRow(), legacyDayRow(), normalizeVendorDashboardPayload(), num(), parseBilledBlockRow(), parseBilledSlice() (+2 more)
+Cohesion: 0.09
+Nodes (14): getBlePrinterPreferences(), getEffectiveEscPosPaperSize(), load(), save(), setBlePrinterPreferences(), syncEscPosPaperFromAdminPrinter(), patchPrefs(), refreshPrefs() (+6 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.14
-Nodes (19): getBlePrinterPreferences(), getEffectiveEscPosPaperSize(), load(), save(), setBlePrinterPreferences(), syncEscPosPaperFromAdminPrinter(), patchPrefs(), refreshPrefs() (+11 more)
+Cohesion: 0.11
+Nodes (10): normalizeHostelBlockKey(), rollupHostelBlockKey(), dayRow(), legacyDayRow(), normalizeVendorDashboardPayload(), num(), parseBilledBlockRow(), parseBilledSlice() (+2 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.17
@@ -76,24 +76,24 @@ Cohesion: 0.12
 Nodes (1): MainActivity
 
 ### Community 10 - "Community 10"
-Cohesion: 0.16
-Nodes (6): buildTestEscPosReceipt(), formatTestEscPosPlain(), unitTotalLines(), tryNativeEscPosPrint(), uint8ToBase64(), PrintQueue
-
-### Community 11 - "Community 11"
 Cohesion: 0.18
 Nodes (3): assertBookingMatchesSchedule(), isDateEnabledForVendor(), slotIdsForDateByVendor()
 
-### Community 12 - "Community 12"
+### Community 11 - "Community 11"
 Cohesion: 0.23
 Nodes (9): customerFacingStatusClass(), customerFacingStatusLabel(), statusClass(), statusLabel(), catalogIdSet(), mergeVendorBillItems(), mergeVendorBillItemsFromDbRow(), parseBillItemOverrides() (+1 more)
 
-### Community 13 - "Community 13"
+### Community 12 - "Community 12"
 Cohesion: 0.38
 Nodes (12): clearBillsSyncMeta(), getLastSyncForFilter(), hasIndexedDb(), metaKey(), openDb(), pageKey(), patchCachedBillRow(), readCachedBillsPage() (+4 more)
 
-### Community 14 - "Community 14"
+### Community 13 - "Community 13"
 Cohesion: 0.32
 Nodes (10): b64urlDecode(), b64urlEncode(), createAdminToken(), getAdminSessionCookie(), getAdminSessionFromRequest(), getAdminTokenFromRequest(), getSecret(), isAdminRequest() (+2 more)
+
+### Community 14 - "Community 14"
+Cohesion: 0.39
+Nodes (11): addPrinter(), getDefaultPrinter(), getPreferPrintDialog(), getPrinterConfigForPrint(), getPrinterSettings(), load(), removePrinter(), save() (+3 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.18
@@ -235,8 +235,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09 - nodes in this community are weakly interconnected._
 - **Should `Community 4` be split into smaller, more focused modules?**
-  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
 - **Should `Community 5` be split into smaller, more focused modules?**
-  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09 - nodes in this community are weakly interconnected._
