@@ -1,5 +1,6 @@
 import type { VendorBillRow } from '@/lib/api';
 import type { VendorReceiptInput } from '@/lib/printing/receipt/vendorReceipt';
+import { calculateServiceFee } from '@/lib/fees';
 
 export type ThermalReceiptCustomer = {
   name: string;
@@ -49,6 +50,8 @@ export function vendorBillRowToThermalReceiptData(b: VendorBillRow): ThermalRece
   const sub = Number(b.subtotal ?? 0);
   const fee = Number(b.convenience_fee ?? 0);
   const tot = Number(b.total ?? 0);
+  const originalServiceFee = calculateServiceFee(sub);
+  const serviceFeeDiscount = fee === 0 ? originalServiceFee : 0;
   return {
     brandTitle: 'LAUNDROSWIPE',
     subtitle: String(b.vendor_name ?? 'LaundroSwipe').trim() || 'LaundroSwipe',
@@ -63,7 +66,7 @@ export function vendorBillRowToThermalReceiptData(b: VendorBillRow): ThermalRece
     },
     dateTime: b.created_at ? new Date(b.created_at).toLocaleString() : new Date().toLocaleString(),
     items,
-    discount: 0,
+    discount: serviceFeeDiscount,
     serviceFee: fee,
     total: tot,
     footer: 'Thank you!',
@@ -84,6 +87,8 @@ export function vendorReceiptInputToThermalReceiptData(input: VendorReceiptInput
     .filter(Boolean)
     .join(' · ');
   const fee = Math.max(0, Number(input.total ?? 0) - Number(input.subtotal ?? 0));
+  const originalServiceFee = calculateServiceFee(Number(input.subtotal ?? 0));
+  const serviceFeeDiscount = fee === 0 ? originalServiceFee : 0;
   return {
     brandTitle: 'LAUNDROSWIPE',
     subtitle: input.vendorName?.trim() || 'LaundroSwipe',
@@ -98,7 +103,7 @@ export function vendorReceiptInputToThermalReceiptData(input: VendorReceiptInput
     },
     dateTime: input.dateStr,
     items,
-    discount: 0,
+    discount: serviceFeeDiscount,
     serviceFee: fee,
     total: input.total,
     footer: input.footer ?? 'Thank you!',

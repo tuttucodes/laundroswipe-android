@@ -15,7 +15,7 @@ import {
 } from '@/lib/printing';
 import { getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import type { VendorBillRow } from '@/lib/api';
-import { applyServiceFeeDiscount, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import { applyServiceFeeDiscount, SERVICE_FEE_DISCOUNT_LABEL, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
 import { getVendorBillItems } from '@/lib/constants';
 import { isWithinVendorBillCancelEditWindow } from '@/lib/vendor-bill-policy';
 import { billCatalogThumbUrl } from '@/lib/bill-catalog-thumb';
@@ -1080,14 +1080,19 @@ export default function BillsPage() {
                   <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{sub.toFixed(2)}</p>
                   {fee.active && fee.originalFee > 0 ? (
                     <p style={{ fontWeight: 600, fontSize: 14 }}>
-                      Service fee (7-day discount):{' '}
+                      Service fee:{' '}
                       <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{fee.originalFee.toFixed(2)}</span> ₹0
                     </p>
                   ) : (
                     <p style={{ fontWeight: 600, fontSize: 14 }}>
-                      Service fee (7-day discount): ₹{fee.finalFee.toFixed(2)}
+                      Service fee: ₹{fee.finalFee.toFixed(2)}
                     </p>
                   )}
+                  {fee.discount > 0 ? (
+                    <p style={{ fontSize: 11, color: 'var(--ok)', marginBottom: 8 }}>
+                      {SERVICE_FEE_DISCOUNT_LABEL}: -₹{fee.discount.toFixed(2)}
+                    </p>
+                  ) : null}
                   <p style={{ fontSize: 11, color: 'var(--ts)', marginBottom: 8 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
                   <p style={{ fontWeight: 700, fontSize: 16 }}>Total: ₹{(sub + fee.finalFee).toFixed(2)}</p>
                 </>

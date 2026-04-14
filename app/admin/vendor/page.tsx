@@ -14,7 +14,12 @@ import {
 import { getBlePrinterPreferences, getEffectiveEscPosPaperSize } from '@/lib/ble-printer-settings';
 import { getPrinterConfigForPrint } from '@/lib/printer-settings';
 import { getVendorBillItems } from '@/lib/constants';
-import { calculateServiceFee, formatServiceFeeReceiptLine, SERVICE_FEE_SHORT_EXPLANATION } from '@/lib/fees';
+import {
+  applyServiceFeeDiscount,
+  formatServiceFeeReceiptLine,
+  SERVICE_FEE_DISCOUNT_LABEL,
+  SERVICE_FEE_SHORT_EXPLANATION,
+} from '@/lib/fees';
 import { billCatalogThumbUrl } from '@/lib/bill-catalog-thumb';
 import { compactLineItemsForSavePayload } from '@/lib/vendor-bill-network';
 import { clearBillsSyncMeta } from '@/lib/offline/bills-cache';
@@ -569,8 +574,10 @@ export default function VendorPage() {
   };
 
   const subtotal = lineItems.reduce((s, l) => s + l.price * l.qty, 0);
-  const serviceFee = 0;
-  const originalServiceFee = calculateServiceFee(subtotal);
+  const feeBreakdown = applyServiceFeeDiscount(subtotal);
+  const serviceFee = feeBreakdown.finalFee;
+  const originalServiceFee = feeBreakdown.originalFee;
+  const serviceFeeDiscount = feeBreakdown.discount;
   const total = subtotal + serviceFee;
 
   const billFingerprint = (): string => {
@@ -1172,14 +1179,19 @@ export default function VendorPage() {
             <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{subtotal}</p>
             {originalServiceFee > 0 ? (
               <p style={{ fontWeight: 600, fontSize: 14 }}>
-                Service fee (7-day discount):{' '}
+                Service fee:{' '}
                 <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{originalServiceFee}</span> ₹0
               </p>
             ) : (
               <p style={{ fontWeight: 600, fontSize: 14 }}>
-                Service fee (7-day discount): ₹{serviceFee}
+                Service fee: ₹{serviceFee}
               </p>
             )}
+            {serviceFeeDiscount > 0 ? (
+              <p style={{ fontSize: 12, color: 'var(--ok)', lineHeight: 1.4 }}>
+                {SERVICE_FEE_DISCOUNT_LABEL}: -₹{serviceFeeDiscount}
+              </p>
+            ) : null}
             <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
             <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{total}</p>
 
@@ -1349,8 +1361,10 @@ export default function VendorPage() {
 
               {(() => {
                 const sub = editLineItems.reduce((s, l) => s + l.price * l.qty, 0);
-                const editSvc = 0;
-                const editOrig = calculateServiceFee(sub);
+                const editFeeBreakdown = applyServiceFeeDiscount(sub);
+                const editSvc = editFeeBreakdown.finalFee;
+                const editOrig = editFeeBreakdown.originalFee;
+                const editDiscount = editFeeBreakdown.discount;
                 const editTotal = sub + editSvc;
                 return (
                   <>
@@ -1358,14 +1372,19 @@ export default function VendorPage() {
                     <p style={{ fontWeight: 600, fontSize: 14 }}>Subtotal: ₹{sub.toFixed(2)}</p>
                     {editOrig > 0 ? (
                       <p style={{ fontWeight: 600, fontSize: 14 }}>
-                        Service fee (7-day discount):{' '}
+                        Service fee:{' '}
                         <span style={{ textDecoration: 'line-through', color: 'var(--ts)' }}>₹{editOrig.toFixed(2)}</span> ₹0
                       </p>
                     ) : (
                       <p style={{ fontWeight: 600, fontSize: 14 }}>
-                        Service fee (7-day discount): ₹{editSvc.toFixed(2)}
+                        Service fee: ₹{editSvc.toFixed(2)}
                       </p>
                     )}
+                    {editDiscount > 0 ? (
+                      <p style={{ fontSize: 12, color: 'var(--ok)', lineHeight: 1.4 }}>
+                        {SERVICE_FEE_DISCOUNT_LABEL}: -₹{editDiscount.toFixed(2)}
+                      </p>
+                    ) : null}
                     <p style={{ fontSize: 12, color: 'var(--ts)', lineHeight: 1.5 }}>{SERVICE_FEE_SHORT_EXPLANATION}</p>
                     <p style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>Total: ₹{editTotal.toFixed(2)}</p>
                   </>
