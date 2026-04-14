@@ -5,7 +5,7 @@ import { getAuthenticatedUserContext } from '@/lib/authenticated-user';
 import { orderLookupTokenVariants, stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 
 const BILL_SELECT =
-  'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, vendor_slug, cancelled_at, cancelled_by_role, created_at';
+  'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, cancelled_at, cancelled_by_role, created_at';
 
 type BillRow = Record<string, unknown>;
 
