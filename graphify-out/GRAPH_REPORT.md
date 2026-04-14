@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-14)
 
 ## Corpus Check
-- 134 files · ~418,337 words
+- 134 files · ~418,556 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 509 nodes · 767 edges · 37 communities detected
+- 509 nodes · 767 edges · 38 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -41,7 +41,7 @@ Nodes (44): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advan
 
 ### Community 1 - "Community 1"
 Cohesion: 0.06
-Nodes (42): checkPublicRateLimit(), getClientIp(), checkAdminRateLimit(), getClientId(), billFromTokenVerifiedForProfile(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse() (+34 more)
+Nodes (40): checkPublicRateLimit(), getClientIp(), billFromTokenVerifiedForCandidates(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), debugLog(), DELETE() (+32 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.07
@@ -120,15 +120,15 @@ Cohesion: 0.4
 Nodes (1): PrintBridge
 
 ### Community 21 - "Community 21"
+Cohesion: 0.67
+Nodes (2): checkAdminRateLimit(), getClientId()
+
+### Community 22 - "Community 22"
 Cohesion: 0.5
 Nodes (0): 
 
-### Community 22 - "Community 22"
-Cohesion: 0.67
-Nodes (0): 
-
 ### Community 23 - "Community 23"
-Cohesion: 1.0
+Cohesion: 0.67
 Nodes (0): 
 
 ### Community 24 - "Community 24"
@@ -183,36 +183,40 @@ Nodes (0):
 Cohesion: 1.0
 Nodes (0): 
 
+### Community 37 - "Community 37"
+Cohesion: 1.0
+Nodes (0): 
+
 ## Knowledge Gaps
 - **1 isolated node(s):** `PairedDeviceRow`
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 23`** (2 nodes): `manifest.ts`, `manifest()`
+- **Thin community `Community 24`** (2 nodes): `manifest.ts`, `manifest()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 24`** (2 nodes): `ScrollingMarquee.tsx`, `ScrollingMarquee()`
+- **Thin community `Community 25`** (2 nodes): `ScrollingMarquee.tsx`, `ScrollingMarquee()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 25`** (2 nodes): `SegmentTabs.tsx`, `SegmentTabs()`
+- **Thin community `Community 26`** (2 nodes): `SegmentTabs.tsx`, `SegmentTabs()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 26`** (2 nodes): `TestimonialCarousel.tsx`, `TestimonialCarousel()`
+- **Thin community `Community 27`** (2 nodes): `TestimonialCarousel.tsx`, `TestimonialCarousel()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 27`** (1 nodes): `next.config.js`
+- **Thin community `Community 28`** (1 nodes): `next.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 28`** (1 nodes): `next-env.d.ts`
+- **Thin community `Community 29`** (1 nodes): `next-env.d.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 29`** (1 nodes): `env.production.js`
+- **Thin community `Community 30`** (1 nodes): `env.production.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 30`** (1 nodes): `env.js`
+- **Thin community `Community 31`** (1 nodes): `env.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 31`** (1 nodes): `env.development.js`
+- **Thin community `Community 32`** (1 nodes): `env.development.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 32`** (1 nodes): `build.gradle.kts`
+- **Thin community `Community 33`** (1 nodes): `build.gradle.kts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 33`** (1 nodes): `settings.gradle.kts`
+- **Thin community `Community 34`** (1 nodes): `settings.gradle.kts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 34`** (1 nodes): `HeroAnimations.tsx`
+- **Thin community `Community 35`** (1 nodes): `HeroAnimations.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 35`** (1 nodes): `sw.js`
+- **Thin community `Community 36`** (1 nodes): `sw.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 36`** (1 nodes): `generate-env.js`
+- **Thin community `Community 37`** (1 nodes): `generate-env.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions

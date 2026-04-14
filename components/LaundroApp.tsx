@@ -384,6 +384,7 @@ export default function LaundroApp() {
   const [confirmingDelivery, setConfirmingDelivery] = useState(false);
   const [myBills, setMyBills] = useState<VendorBillRow[]>([]);
   const [myBillsLoading, setMyBillsLoading] = useState(false);
+  const [myBillsError, setMyBillsError] = useState('');
   const [viewingBill, setViewingBill] = useState<VendorBillRow | null>(null);
   const [profilePw, setProfilePw] = useState('');
   const [profilePwConfirm, setProfilePwConfirm] = useState('');
@@ -790,10 +791,16 @@ export default function LaundroApp() {
     if (!user?.sid || !LSApi.hasSupabase) return;
     if (screen !== 'my-bills' && screen !== 'profile') return;
     const showMyBillsSpinner = screen === 'my-bills';
+    setMyBillsError('');
     if (showMyBillsSpinner) setMyBillsLoading(true);
     LSApi.fetchVendorBillsForUser(user.sid)
       .then((data) => {
-        setMyBills(data ?? []);
+        if (data === null) {
+          setMyBills([]);
+          setMyBillsError('Could not load your bills right now. Please try again.');
+          return;
+        }
+        setMyBills(data);
       })
       .finally(() => {
         if (showMyBillsSpinner) setMyBillsLoading(false);
@@ -2554,6 +2561,8 @@ export default function LaundroApp() {
                     <div className="skeleton skeleton-card" />
                     <div className="skeleton skeleton-card" />
                   </>
+                ) : myBillsError ? (
+                  <p className="vd">{myBillsError}</p>
                 ) : myBills.length === 0 ? (
                   <p className="vd">No bills yet. Bills appear here after a vendor generates one for your order.</p>
                 ) : (

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createServiceSupabase } from '@/lib/supabase-service';
 import { getAuthenticatedUserContext } from '@/lib/authenticated-user';
-import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
+import { orderLookupTokenVariants, stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 
 const BILL_SELECT =
   'id, order_id, order_token, order_number, customer_name, customer_phone, customer_reg_no, customer_hostel_block, customer_room_number, user_id, line_items, subtotal, convenience_fee, total, vendor_name, vendor_id, vendor_slug, cancelled_at, cancelled_by_role, created_at';
@@ -33,16 +33,15 @@ function normBillToken(v: unknown): string {
   return stripLeadingHashesFromToken(String(v ?? '')).toLowerCase();
 }
 
-/**
- * Match bills by `order_token` + ownership only (no `order_id` on bills — avoids bad / null links).
- * - `allowedTokens` comes from `orders.token` where `orders.user_id` = this profile.
- * - Reject if `vendor_bills.user_id` is set and is not this user.
- */
-function billFromTokenVerifiedForProfile(bill: BillRow, profileId: string, allowedTokens: Set<string>): boolean {
+function billFromTokenVerifiedForCandidates(
+  bill: BillRow,
+  candidateUserIds: Set<string>,
+  allowedTokens: Set<string>
+): boolean {
   const btok = normBillToken(bill.order_token);
   if (!allowedTokens.has(btok)) return false;
   const uid = bill.user_id != null && bill.user_id !== '' ? String(bill.user_id) : '';
-  if (uid && uid !== profileId) return false;
+  if (uid && !candidateUserIds.has(uid)) return false;
   return true;
 }
 
@@ -89,19 +88,26 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const authUserId = auth.authUserId;
 
-  let profileId: string;
+  const candidateUserIds = new Set<string>([authUserId]);
+  let profileId: string | null = null;
   try {
-    profileId = (await resolveProfileId(service, authUserId)) ?? authUserId;
+    const resolvedProfileId = await resolveProfileId(service, authUserId);
+    if (resolvedProfileId) {
+      profileId = resolvedProfileId;
+      candidateUserIds.add(resolvedProfileId);
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Could not resolve profile id';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
+
+  const candidateIds = [...candidateUserIds];
   debugLog({
     runId: 'initial',
     hypothesisId: 'H1_PROFILE_MAPPING',
     location: 'app/api/me/vendor-bills/route.ts:resolve-profile',
     message: 'Resolved profile id for bill query',
-    data: { authUserId, profileId },
+    data: { authUserId, profileId, candidateIds },
   });
 
   const collected: BillRow[] = [];
@@ -109,7 +115,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const { data: byUser, error: buErr } = await service
     .from('vendor_bills')
     .select(BILL_SELECT)
-    .eq('user_id', profileId)
+    .in('user_id', candidateIds)
     .is('cancelled_at', null)
     .order('created_at', { ascending: false })
     .limit(200);
@@ -121,13 +127,13 @@ export async function GET(request: Request): Promise<NextResponse> {
     hypothesisId: 'H2_BILLS_BY_USER_EMPTY',
     location: 'app/api/me/vendor-bills/route.ts:query-by-user',
     message: 'Bills fetched by vendor_bills.user_id',
-    data: { profileId, byUserCount: byUser?.length ?? 0 },
+    data: { profileId, candidateIds, byUserCount: byUser?.length ?? 0 },
   });
 
   const { data: orders, error: ordErr } = await service
     .from('orders')
     .select('token')
-    .eq('user_id', profileId)
+    .in('user_id', candidateIds)
     .order('created_at', { ascending: false })
     .limit(200);
 
@@ -139,6 +145,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     message: 'Orders fetched for token matching',
     data: {
       profileId,
+      candidateIds,
       ordersCount: orders?.length ?? 0,
       sampleOrderTokens: (orders ?? []).slice(0, 5).map((o) => String((o as { token?: string }).token ?? '')),
     },
@@ -161,17 +168,19 @@ export async function GET(request: Request): Promise<NextResponse> {
   let byTokenFetchedCount = 0;
   let byTokenAcceptedCount = 0;
   for (const k of allowedTokens) {
+    const tokenVariants = orderLookupTokenVariants(k);
+    if (!tokenVariants.length) continue;
     const { data: byTok, error: btErr } = await service
       .from('vendor_bills')
       .select(BILL_SELECT)
-      .ilike('order_token', k)
+      .in('order_token', tokenVariants)
       .is('cancelled_at', null)
       .limit(50);
     if (btErr) return NextResponse.json({ error: btErr.message }, { status: 500 });
     if (!byTok?.length) continue;
     byTokenFetchedCount += byTok.length;
     for (const row of byTok) {
-      if (billFromTokenVerifiedForProfile(row, profileId, allowedTokens)) {
+      if (billFromTokenVerifiedForCandidates(row, candidateUserIds, allowedTokens)) {
         collected.push(row);
         byTokenAcceptedCount += 1;
       }
@@ -189,7 +198,8 @@ export async function GET(request: Request): Promise<NextResponse> {
       byTokenFetchedCount,
       byTokenAcceptedCount,
       mergedCount: bills.length,
+      candidateIds,
     },
   });
-  return NextResponse.json({ ok: true, profile_id: profileId, bills });
+  return NextResponse.json({ ok: true, profile_id: profileId, candidate_ids: candidateIds, bills });
 }

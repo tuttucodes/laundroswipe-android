@@ -1,5 +1,5 @@
 import { supabase, hasSupabase } from './supabase';
-import { stripLeadingHashesFromToken } from './vendor-bill-token';
+import { orderLookupTokenVariants, stripLeadingHashesFromToken } from './vendor-bill-token';
 
 export type VendorCatalogRow = {
   slug: string;
@@ -820,10 +820,12 @@ export const LSApi = {
         if (tk) allowedTokens.add(tk);
       }
       for (const k of allowedTokens) {
+        const tokenVariants = orderLookupTokenVariants(k);
+        if (!tokenVariants.length) continue;
         const { data: byTok, error: tokErr } = await supabase
           .from('vendor_bills')
           .select(billSelect)
-          .ilike('order_token', k)
+          .in('order_token', tokenVariants)
           .is('cancelled_at', null)
           .limit(50);
         if (tokErr || !byTok?.length) continue;
