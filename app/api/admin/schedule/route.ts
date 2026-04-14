@@ -355,12 +355,37 @@ export async function POST(request: Request) {
           if (!dateKey || sentDates.has(dateKey)) continue;
           const raw = row.slot_ids as unknown;
           const enRaw = row.enabled_by_vendor as unknown;
-          if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
-          const slotMap = { ...(raw as Record<string, unknown>) };
           const enMap: Record<string, boolean> =
             enRaw && typeof enRaw === 'object' && !Array.isArray(enRaw)
               ? { ...(enRaw as Record<string, boolean>) }
               : {};
+
+          if (Array.isArray(raw)) {
+            const arr = raw.filter((s): s is string => typeof s === 'string');
+            const p = vendorPrefix(vendorSlug);
+            const hadScopedSlots = arr.some((id) => id.startsWith(p));
+            const hadEnabled = Object.prototype.hasOwnProperty.call(enMap, vendorSlug);
+            if (!hadScopedSlots && !hadEnabled) continue;
+            const nextArr = arr.filter((id) => !id.startsWith(p));
+            const nextEn = { ...enMap };
+            delete nextEn[vendorSlug];
+            if (nextArr.length === 0 && Object.keys(nextEn).length === 0) {
+              const { error: delErr } = await supabase.from('schedule_dates').delete().eq('date', dateKey);
+              if (delErr) return NextResponse.json({ error: delErr.message }, { status: 400 });
+              datesDeleted += 1;
+            } else {
+              const { error: pruneErr } = await supabase
+                .from('schedule_dates')
+                .update({ slot_ids: nextArr, enabled_by_vendor: nextEn })
+                .eq('date', dateKey);
+              if (pruneErr) return NextResponse.json({ error: pruneErr.message }, { status: 400 });
+              datesPruned += 1;
+            }
+            continue;
+          }
+
+          if (!raw || typeof raw !== 'object') continue;
+          const slotMap = { ...(raw as Record<string, unknown>) };
           const hadSlots = Object.prototype.hasOwnProperty.call(slotMap, vendorSlug);
           const hadEnabled = Object.prototype.hasOwnProperty.call(enMap, vendorSlug);
           if (!hadSlots && !hadEnabled) continue;

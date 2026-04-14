@@ -821,11 +821,9 @@ export default function AdminPage() {
     }
   };
 
-  const removeScheduleDate = (dateStr: string) => {
-    const target = scheduleDateKey(dateStr) ?? dateStr.trim();
-    setScheduleDates((prev) =>
-      prev.filter((d) => (scheduleDateKey(d.date) ?? String(d.date).trim()) !== target),
-    );
+  /** Index-based so delete always works (date string formats from DB/client can differ). */
+  const removeScheduleDateAtIndex = (index: number) => {
+    setScheduleDates((prev) => prev.filter((_, i) => i !== index));
   };
 
   const applySuggestedSlot = (timeSlotRaw: string) => {
@@ -1885,7 +1883,7 @@ export default function AdminPage() {
                             <strong style={{ color: 'var(--b)' }}>{s.time_slot}</strong>
                             <span style={{ color: 'var(--ts)', marginLeft: 8 }}>{s.count} orders</span>
                           </span>
-                          <button type="button" className="admin-nav-btn" onClick={() => applySuggestedSlot(s.time_slot)}>
+                          <button type="button" className="admin-nav-btn admin-inline-btn" onClick={() => applySuggestedSlot(s.time_slot)}>
                             {exists ? 'Add to enabled dates' : 'Add slot (1-click)'}
                           </button>
                         </li>
@@ -1914,22 +1912,25 @@ export default function AdminPage() {
                           <input type="checkbox" checked={s.active} onChange={(e) => setScheduleSlots((prev) => prev.map((x) => (x.id === s.id ? { ...x, active: e.target.checked } : x)))} />
                           Active
                         </label>
-                        <button type="button" className="admin-nav-btn" style={{ color: '#b42318', borderColor: 'rgba(180,35,24,0.35)' }} onClick={() => removeScheduleSlot(slotIdx)}>
+                        <button type="button" className="admin-nav-btn admin-inline-btn" style={{ color: '#b42318', borderColor: 'rgba(180,35,24,0.35)' }} onClick={() => removeScheduleSlot(slotIdx)}>
                           Delete
                         </button>
                       </div>
                     ))}
-                    <button type="button" className="admin-nav-btn" style={{ marginTop: 12 }} onClick={() => setScheduleSlots((prev) => [...prev, { id: '', label: '', time_from: '09:00', time_to: '17:00', sort_order: prev.length, active: true }])}>
+                    <button type="button" className="admin-nav-btn admin-inline-btn" style={{ marginTop: 12 }} onClick={() => setScheduleSlots((prev) => [...prev, { id: '', label: '', time_from: '09:00', time_to: '17:00', sort_order: prev.length, active: true }])}>
                       + Add slot
                     </button>
                   </div>
                 </section>
                 <section style={{ marginBottom: 32 }}>
                   <h2 style={{ fontFamily: 'var(--fd)', fontSize: 18, marginBottom: 12 }}>Bookable dates</h2>
-                  <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 12 }}>Enable or disable dates. For each date, choose which slots are available.</p>
+                  <p style={{ fontSize: 13, color: 'var(--ts)', marginBottom: 12 }}>
+                    Enable or disable dates. For each date, choose which slots are available. <strong>Delete date</strong> removes that row from the list right away; click{' '}
+                    <strong>Save schedule</strong> to write the change to the database.
+                  </p>
                   <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-                    {scheduleDates.map((d) => (
-                      <div key={d.date} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--bd)' }}>
+                    {scheduleDates.map((d, dateIdx) => (
+                      <div key={scheduleDateKey(d.date) ?? d.date} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--bd)' }}>
                         <strong style={{ minWidth: 120 }}>{d.date}</strong>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                           <input type="checkbox" checked={d.enabled} onChange={(e) => setScheduleDates((prev) => prev.map((x) => ((scheduleDateKey(x.date) ?? x.date) === (scheduleDateKey(d.date) ?? d.date) ? { ...x, enabled: e.target.checked } : x)))} />
@@ -1942,7 +1943,7 @@ export default function AdminPage() {
                             {sl.label || sl.id}
                           </label>
                         ))}
-                        <button type="button" className="admin-nav-btn" style={{ color: '#b42318', borderColor: 'rgba(180,35,24,0.35)', marginLeft: 'auto' }} onClick={() => removeScheduleDate(d.date)}>
+                        <button type="button" className="admin-nav-btn admin-inline-btn" style={{ color: '#b42318', borderColor: 'rgba(180,35,24,0.35)', marginLeft: 'auto' }} onClick={() => removeScheduleDateAtIndex(dateIdx)}>
                           Delete date
                         </button>
                       </div>
@@ -1951,7 +1952,7 @@ export default function AdminPage() {
                       <input type="date" id="new-schedule-date" style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid var(--bd)', fontSize: 13 }} />
                       <button
                         type="button"
-                        className="admin-nav-btn"
+                        className="admin-nav-btn admin-inline-btn"
                         onClick={() => {
                           const el = document.getElementById('new-schedule-date') as HTMLInputElement | null;
                           const v = el?.value?.trim();
