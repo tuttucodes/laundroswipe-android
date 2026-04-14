@@ -2104,8 +2104,8 @@ export default function LaundroApp() {
             )}
           </button>
         </header>
-        <main className="scr">
-          <div className="si" key={screen}>
+        <main className={`scr scr-${screen}`}>
+          <div className={`si si-${screen}`} key={screen}>
             {screen === 'home' && (
               <>
                 <div className="hh">

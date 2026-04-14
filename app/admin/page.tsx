@@ -992,7 +992,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="admin-root">
+    <div className="admin-root stitch-admin-shell">
       <header className="admin-header">
         <button type="button" className={`admin-hamburger ${menuOpen ? 'admin-hamburger-open' : ''}`} onClick={() => setMenuOpen((o) => !o)} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>
           <span className="admin-hamburger-bar" />
@@ -1072,7 +1072,7 @@ export default function AdminPage() {
         </div>
       </aside>
 
-      <main className="admin-main">
+      <main className={`admin-main admin-main-${tab}`}>
         {tab === 'dashboard' && !isSuperAdmin && (
           <VendorDashboard onUnauthorized={() => setLoggedIn(false)} />
         )}

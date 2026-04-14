@@ -607,7 +607,7 @@ export default function BillsPage() {
   };
 
   return (
-    <div className="vendor-page" style={{ fontFamily: 'var(--fb)', background: 'var(--bg)' }}>
+    <div className="vendor-page stitch-billing-shell" style={{ fontFamily: 'var(--fb)', background: 'var(--bg)' }}>
       <p style={{ marginBottom: 16, fontSize: 14 }}>
         <Link href="/admin" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>← Dashboard</Link>
         {' · '}

@@ -215,7 +215,7 @@ export default function VendorItemsPage() {
   }
 
   return (
-    <div className="vendor-page" style={{ fontFamily: 'var(--fb)', background: 'var(--bg)', padding: '16px 16px 48px' }}>
+    <div className="vendor-page stitch-items-shell" style={{ fontFamily: 'var(--fb)', background: 'var(--bg)', padding: '16px 16px 48px' }}>
       <p style={{ marginBottom: 12 }}>
         <Link href="/admin/vendor" style={{ color: 'var(--b)', fontWeight: 600, textDecoration: 'none' }}>
           ← Back to bill
