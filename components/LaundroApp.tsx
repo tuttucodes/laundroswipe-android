@@ -2472,7 +2472,23 @@ export default function LaundroApp() {
                     >
                       <div className="oc-row oc-head">
                         <span className="aotkv">#{o.tk}</span>
-                        <span className={`vdb ${customerFacingStatusClass(o.status, hasBill)}`}>{customerFacingStatusLabel(o.status, hasBill)}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span className={`vdb ${customerFacingStatusClass(o.status, hasBill)}`}>{customerFacingStatusLabel(o.status, hasBill)}</span>
+                          {hasBill && (
+                            <button
+                              type="button"
+                              className="btn bp bsm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const bill = billByOrderToken.get(orderTokenKey(o.tk));
+                                if (bill) setViewingBill(bill);
+                              }}
+                              onKeyDown={(e) => e.stopPropagation()}
+                            >
+                              View bill
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <p className="vd">{o.sl} · {o.pd} · {o.ts}</p>
                     </div>
