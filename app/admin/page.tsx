@@ -1975,12 +1975,28 @@ export default function AdminPage() {
                     const res = await fetch(`/api/admin/schedule${scheduleQuery}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() }, body: JSON.stringify({ slots: scheduleSlots.filter((s) => s.id.trim()), dates: scheduleDates }) });
                     const data = await res.json().catch(() => ({}));
                     if (res.ok && data.ok) {
-                      showToast('Schedule saved. Users will see updated dates and slots.', 'ok');
+                      const m = data.meta as
+                        | { slotsUpserted?: number; slotsDeleted?: number; datesUpserted?: number; datesPruned?: number }
+                        | undefined;
+                      const totalMut =
+                        m != null
+                          ? (m.slotsUpserted ?? 0) + (m.slotsDeleted ?? 0) + (m.datesUpserted ?? 0) + (m.datesPruned ?? 0)
+                          : 1;
+                      if (m && totalMut === 0) {
+                        showToast(
+                          'Save reported success but no rows were updated. Check that every time slot has an ID, then try again.',
+                          'er',
+                        );
+                      } else {
+                        showToast('Schedule saved. Users will see updated dates and slots.', 'ok');
+                      }
                       const reload = await fetch(`/api/admin/schedule${scheduleQuery}`, { credentials: 'include', headers: adminAuthHeaders() });
                       const reloadData = await reload.json().catch(() => ({}));
                       if (reload.ok) {
                         if (reloadData.slots) setScheduleSlots(reloadData.slots);
                         if (reloadData.dates) setScheduleDates(reloadData.dates);
+                      } else {
+                        showToast(reloadData?.error || 'Saved, but reloading the schedule failed. Refresh the page.', 'er');
                       }
                     } else if (res.status === 401) {
                       sessionStorage.removeItem('admin_token');
@@ -1988,7 +2004,13 @@ export default function AdminPage() {
                       setLoggedIn(false);
                       showToast('Session expired. Please log in again.', 'er');
                     } else {
-                      showToast(data?.error || 'Save failed', 'er');
+                      showToast(
+                        data?.error ||
+                          (res.status === 409
+                            ? 'No schedule changes were persisted. Ensure each time slot has a non-empty ID.'
+                            : 'Save failed'),
+                        'er',
+                      );
                     }
                   } catch {
                     showToast('Save failed', 'er');

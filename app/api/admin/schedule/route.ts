@@ -194,6 +194,16 @@ export async function POST(request: Request) {
     const vendorSlug = session.role === 'vendor'
       ? session.vendorId?.toLowerCase().trim() ?? null
       : (requestedVendor || null);
+
+    let slotsUpserted = 0;
+    let slotsDeleted = 0;
+    let datesUpserted = 0;
+    let datesPruned = 0;
+
+    const meantSlots = body.slots !== undefined && Array.isArray(body.slots);
+    const meantDates = body.dates !== undefined && Array.isArray(body.dates);
+    const meantScheduleWrite = meantSlots || meantDates;
+
     if (body.slots != null && Array.isArray(body.slots)) {
       for (const row of body.slots) {
         const clientId = String(row?.id ?? '').trim();
@@ -214,6 +224,7 @@ export async function POST(request: Request) {
             { onConflict: 'id' }
           );
         if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+        slotsUpserted += 1;
       }
       if (vendorSlug) {
         const kept = new Set<string>();
@@ -229,6 +240,7 @@ export async function POST(request: Request) {
           if (kept.has(row.id)) continue;
           const { error: delSlotErr } = await supabase.from('schedule_slots').delete().eq('id', row.id);
           if (delSlotErr) return NextResponse.json({ error: delSlotErr.message }, { status: 400 });
+          slotsDeleted += 1;
         }
       }
     }
@@ -260,8 +272,9 @@ export async function POST(request: Request) {
             { onConflict: 'date' }
           );
         if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+        datesUpserted += 1;
       }
-      if (vendorSlug && body.dates.length > 0) {
+      if (vendorSlug && meantDates) {
         const sentDates = new Set(
           body.dates.map((row) => scheduleDateKey(row?.date)).filter((d): d is string => !!d),
         );
@@ -292,11 +305,42 @@ export async function POST(request: Request) {
             .update({ slot_ids: nextSlot, enabled_by_vendor: nextEn })
             .eq('date', dateKey);
           if (pruneErr) return NextResponse.json({ error: pruneErr.message }, { status: 400 });
+          datesPruned += 1;
         }
       }
     }
 
-    return NextResponse.json({ ok: true });
+    const totalMutations = slotsUpserted + slotsDeleted + datesUpserted + datesPruned;
+    console.info(
+      '[POST /api/admin/schedule]',
+      JSON.stringify({
+        role: session.role,
+        vendorSlug,
+        meantSlots,
+        meantDates,
+        slotsUpserted,
+        slotsDeleted,
+        datesUpserted,
+        datesPruned,
+      }),
+    );
+
+    if (meantScheduleWrite && totalMutations === 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            'No schedule changes were persisted. Ensure each time slot has a non-empty ID, then save again.',
+          meta: { slotsUpserted, slotsDeleted, datesUpserted, datesPruned },
+        },
+        { status: 409 },
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      meta: { slotsUpserted, slotsDeleted, datesUpserted, datesPruned },
+    });
   } catch (e) {
     console.error('POST /api/admin/schedule', e);
     return NextResponse.json({ error: 'Failed to save schedule' }, { status: 500 });
