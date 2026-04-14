@@ -103,7 +103,7 @@
       "label": "getGatePassLetterHtml()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "id": "page_getgatepassletterhtml",
       "community": 0
     },
@@ -111,7 +111,7 @@
       "label": "printGatePassLetter()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L70",
+      "source_location": "L71",
       "id": "page_printgatepassletter",
       "community": 0
     },
@@ -119,7 +119,7 @@
       "label": "sanitizeSuggestedSlotId()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L169",
+      "source_location": "L170",
       "id": "page_sanitizesuggestedslotid",
       "community": 0
     },
@@ -127,7 +127,7 @@
       "label": "presetForSuggestedSlot()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L178",
+      "source_location": "L179",
       "id": "page_presetforsuggestedslot",
       "community": 0
     },
@@ -135,7 +135,7 @@
       "label": "closeMenu()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L315",
+      "source_location": "L316",
       "id": "page_closemenu",
       "community": 0
     },
@@ -143,7 +143,7 @@
       "label": "sync()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L320",
+      "source_location": "L321",
       "id": "page_sync",
       "community": 0
     },
@@ -151,7 +151,7 @@
       "label": "fetchRevDetail()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L592",
+      "source_location": "L593",
       "id": "page_fetchrevdetail",
       "community": 0
     },
@@ -167,7 +167,7 @@
       "label": "handleLogin()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L761",
+      "source_location": "L762",
       "id": "page_handlelogin",
       "community": 0
     },
@@ -175,7 +175,7 @@
       "label": "handleLogout()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L800",
+      "source_location": "L801",
       "id": "page_handlelogout",
       "community": 0
     },
@@ -191,7 +191,7 @@
       "label": "removeScheduleSlot()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L815",
+      "source_location": "L816",
       "id": "page_removescheduleslot",
       "community": 0
     },
@@ -199,7 +199,7 @@
       "label": "removeScheduleDate()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L823",
+      "source_location": "L824",
       "id": "page_removescheduledate",
       "community": 0
     },
@@ -207,7 +207,7 @@
       "label": "applySuggestedSlot()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L827",
+      "source_location": "L831",
       "id": "page_applysuggestedslot",
       "community": 0
     },
@@ -215,7 +215,7 @@
       "label": "advanceStatus()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L860",
+      "source_location": "L864",
       "id": "page_advancestatus",
       "community": 0
     },
@@ -223,7 +223,7 @@
       "label": "statusBadge()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L892",
+      "source_location": "L896",
       "id": "page_statusbadge",
       "community": 0
     },
@@ -231,7 +231,7 @@
       "label": "statusLabel()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L897",
+      "source_location": "L901",
       "id": "page_statuslabel",
       "community": 0
     },
@@ -247,7 +247,7 @@
       "label": "exportUsersToCsv()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L908",
+      "source_location": "L912",
       "id": "page_exportuserstocsv",
       "community": 0
     },
@@ -255,7 +255,7 @@
       "label": "fmtDate()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L1097",
+      "source_location": "L1101",
       "id": "page_fmtdate",
       "community": 0
     },
@@ -263,7 +263,7 @@
       "label": "fmtMoney()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L1098",
+      "source_location": "L1102",
       "id": "page_fmtmoney",
       "community": 0
     },
@@ -271,7 +271,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2043",
+      "source_location": "L2052",
       "id": "page_if",
       "community": 0
     },
@@ -279,7 +279,7 @@
       "label": "setBillsByDateData()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2247",
+      "source_location": "L2256",
       "id": "page_setbillsbydatedata",
       "community": 0
     },
@@ -287,7 +287,7 @@
       "label": "setBillsByBlockData()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2309",
+      "source_location": "L2318",
       "id": "page_setbillsbyblockdata",
       "community": 0
     },
@@ -295,7 +295,7 @@
       "label": "formatServiceFeeTiers()",
       "file_type": "code",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2399",
+      "source_location": "L2408",
       "id": "page_formatservicefeetiers",
       "community": 0
     },
@@ -807,7 +807,7 @@
       "label": "vendorPrefix()",
       "file_type": "code",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L15",
+      "source_location": "L16",
       "id": "route_vendorprefix",
       "community": 1
     },
@@ -815,7 +815,7 @@
       "label": "toStoredSlotId()",
       "file_type": "code",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L19",
+      "source_location": "L20",
       "id": "route_tostoredslotid",
       "community": 1
     },
@@ -823,23 +823,15 @@
       "label": "fromStoredSlotId()",
       "file_type": "code",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L23",
+      "source_location": "L24",
       "id": "route_fromstoredslotid",
-      "community": 1
-    },
-    {
-      "label": "scheduleDateKey()",
-      "file_type": "code",
-      "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L30",
-      "id": "route_scheduledatekey",
       "community": 1
     },
     {
       "label": "readVendorSlotIds()",
       "file_type": "code",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L37",
+      "source_location": "L30",
       "id": "route_readvendorslotids",
       "community": 1
     },
@@ -847,7 +839,7 @@
       "label": "writeVendorSlotIds()",
       "file_type": "code",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L57",
+      "source_location": "L50",
       "id": "route_writevendorslotids",
       "community": 1
     },
@@ -855,7 +847,7 @@
       "label": "readVendorEnabled()",
       "file_type": "code",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L71",
+      "source_location": "L64",
       "id": "route_readvendorenabled",
       "community": 1
     },
@@ -863,7 +855,7 @@
       "label": "writeVendorEnabled()",
       "file_type": "code",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L83",
+      "source_location": "L76",
       "id": "route_writevendorenabled",
       "community": 1
     },
@@ -1153,7 +1145,7 @@
       "source_file": "lib/api.ts",
       "source_location": "L1",
       "id": "api",
-      "community": 4
+      "community": 3
     },
     {
       "label": "createUser()",
@@ -1161,7 +1153,7 @@
       "source_file": "js/api.js",
       "source_location": "L23",
       "id": "api_createuser",
-      "community": 4
+      "community": 3
     },
     {
       "label": "createOrder()",
@@ -1169,7 +1161,7 @@
       "source_file": "js/api.js",
       "source_location": "L52",
       "id": "api_createorder",
-      "community": 4
+      "community": 3
     },
     {
       "label": "fetchOrders()",
@@ -1177,7 +1169,7 @@
       "source_file": "js/api.js",
       "source_location": "L81",
       "id": "api_fetchorders",
-      "community": 4
+      "community": 3
     },
     {
       "label": "fetchOrdersForUser()",
@@ -1185,7 +1177,7 @@
       "source_file": "js/api.js",
       "source_location": "L100",
       "id": "api_fetchordersforuser",
-      "community": 4
+      "community": 3
     },
     {
       "label": "fetchOrderByToken()",
@@ -1193,7 +1185,7 @@
       "source_file": "js/api.js",
       "source_location": "L120",
       "id": "api_fetchorderbytoken",
-      "community": 4
+      "community": 3
     },
     {
       "label": "fetchUsers()",
@@ -1201,7 +1193,7 @@
       "source_file": "js/api.js",
       "source_location": "L145",
       "id": "api_fetchusers",
-      "community": 4
+      "community": 3
     },
     {
       "label": "signInWithGoogle()",
@@ -1209,7 +1201,7 @@
       "source_file": "js/api.js",
       "source_location": "L164",
       "id": "api_signinwithgoogle",
-      "community": 4
+      "community": 3
     },
     {
       "label": "getAuthSession()",
@@ -1217,7 +1209,7 @@
       "source_file": "js/api.js",
       "source_location": "L186",
       "id": "api_getauthsession",
-      "community": 4
+      "community": 3
     },
     {
       "label": "signOutAuth()",
@@ -1225,7 +1217,7 @@
       "source_file": "js/api.js",
       "source_location": "L198",
       "id": "api_signoutauth",
-      "community": 4
+      "community": 3
     },
     {
       "label": "upsertUserFromAuth()",
@@ -1233,7 +1225,7 @@
       "source_file": "js/api.js",
       "source_location": "L207",
       "id": "api_upsertuserfromauth",
-      "community": 4
+      "community": 3
     },
     {
       "label": "advanceOrderStatus()",
@@ -1241,7 +1233,7 @@
       "source_file": "js/api.js",
       "source_location": "L250",
       "id": "api_advanceorderstatus",
-      "community": 4
+      "community": 3
     },
     {
       "label": "build.gradle.kts",
@@ -2121,7 +2113,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L1",
       "id": "vendordashboard",
-      "community": 3
+      "community": 4
     },
     {
       "label": "compareBlockKeys()",
@@ -2129,7 +2121,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L23",
       "id": "vendordashboard_compareblockkeys",
-      "community": 3
+      "community": 4
     },
     {
       "label": "adminAuthHeaders()",
@@ -2137,7 +2129,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L33",
       "id": "vendordashboard_adminauthheaders",
-      "community": 3
+      "community": 4
     },
     {
       "label": "readVendorDashboardCache()",
@@ -2145,7 +2137,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L40",
       "id": "vendordashboard_readvendordashboardcache",
-      "community": 3
+      "community": 4
     },
     {
       "label": "writeVendorDashboardCache()",
@@ -2153,7 +2145,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L53",
       "id": "vendordashboard_writevendordashboardcache",
-      "community": 3
+      "community": 4
     },
     {
       "label": "finishLoad()",
@@ -2161,7 +2153,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L189",
       "id": "vendordashboard_finishload",
-      "community": 3
+      "community": 4
     },
     {
       "label": "applyBlockRange()",
@@ -2169,7 +2161,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L416",
       "id": "vendordashboard_applyblockrange",
-      "community": 3
+      "community": 4
     },
     {
       "label": "resetBlockRange()",
@@ -2177,7 +2169,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L424",
       "id": "vendordashboard_resetblockrange",
-      "community": 3
+      "community": 4
     },
     {
       "label": "fmtDate()",
@@ -2185,7 +2177,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L433",
       "id": "vendordashboard_fmtdate",
-      "community": 3
+      "community": 4
     },
     {
       "label": "fmtMoney()",
@@ -2193,7 +2185,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L434",
       "id": "vendordashboard_fmtmoney",
-      "community": 3
+      "community": 4
     },
     {
       "label": "navBtn()",
@@ -2201,7 +2193,7 @@
       "source_file": "components/admin/VendorDashboard.tsx",
       "source_location": "L460",
       "id": "vendordashboard_navbtn",
-      "community": 3
+      "community": 4
     },
     {
       "label": "VendorRevenueTrendCard.tsx",
@@ -2209,7 +2201,7 @@
       "source_file": "components/admin/VendorRevenueTrendCard.tsx",
       "source_location": "L1",
       "id": "vendorrevenuetrendcard",
-      "community": 3
+      "community": 4
     },
     {
       "label": "mergeDailyTotals()",
@@ -2217,7 +2209,7 @@
       "source_file": "components/admin/VendorRevenueTrendCard.tsx",
       "source_location": "L7",
       "id": "vendorrevenuetrendcard_mergedailytotals",
-      "community": 3
+      "community": 4
     },
     {
       "label": "DigitalHandshake.tsx",
@@ -2233,7 +2225,7 @@
       "source_file": "components/receipt/ThermalReceipt.tsx",
       "source_location": "L1",
       "id": "thermalreceipt",
-      "community": 4
+      "community": 3
     },
     {
       "label": "money()",
@@ -2241,7 +2233,7 @@
       "source_file": "components/receipt/ThermalReceipt.tsx",
       "source_location": "L5",
       "id": "thermalreceipt_money",
-      "community": 4
+      "community": 3
     },
     {
       "label": "moneyPlain()",
@@ -2249,7 +2241,7 @@
       "source_file": "components/receipt/ThermalReceipt.tsx",
       "source_location": "L8",
       "id": "thermalreceipt_moneyplain",
-      "community": 4
+      "community": 3
     },
     {
       "label": "PrintBridgeApkCta.tsx",
@@ -2628,6 +2620,22 @@
       "community": 12
     },
     {
+      "label": "schedule-date-key.ts",
+      "file_type": "code",
+      "source_file": "lib/schedule-date-key.ts",
+      "source_location": "L1",
+      "id": "schedule_date_key",
+      "community": 3
+    },
+    {
+      "label": "scheduleDateKey()",
+      "file_type": "code",
+      "source_file": "lib/schedule-date-key.ts",
+      "source_location": "L5",
+      "id": "schedule_date_key_scheduledatekey",
+      "community": 3
+    },
+    {
       "label": "supabase-service.ts",
       "file_type": "code",
       "source_file": "lib/supabase-service.ts",
@@ -2649,7 +2657,7 @@
       "source_file": "lib/vendor-dashboard-types.ts",
       "source_location": "L1",
       "id": "vendor_dashboard_types",
-      "community": 3
+      "community": 4
     },
     {
       "label": "api-idempotency-store.ts",
@@ -2721,7 +2729,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L1",
       "id": "vendor_dashboard_normalize",
-      "community": 3
+      "community": 4
     },
     {
       "label": "num()",
@@ -2729,7 +2737,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L4",
       "id": "vendor_dashboard_normalize_num",
-      "community": 3
+      "community": 4
     },
     {
       "label": "str()",
@@ -2737,7 +2745,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L9",
       "id": "vendor_dashboard_normalize_str",
-      "community": 3
+      "community": 4
     },
     {
       "label": "dayRow()",
@@ -2745,7 +2753,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L13",
       "id": "vendor_dashboard_normalize_dayrow",
-      "community": 3
+      "community": 4
     },
     {
       "label": "legacyDayRow()",
@@ -2753,7 +2761,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L28",
       "id": "vendor_dashboard_normalize_legacydayrow",
-      "community": 3
+      "community": 4
     },
     {
       "label": "parseBilledSlice()",
@@ -2761,7 +2769,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L36",
       "id": "vendor_dashboard_normalize_parsebilledslice",
-      "community": 3
+      "community": 4
     },
     {
       "label": "parseCollectedBlockRow()",
@@ -2769,7 +2777,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L55",
       "id": "vendor_dashboard_normalize_parsecollectedblockrow",
-      "community": 3
+      "community": 4
     },
     {
       "label": "parseBilledBlockRow()",
@@ -2777,7 +2785,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L71",
       "id": "vendor_dashboard_normalize_parsebilledblockrow",
-      "community": 3
+      "community": 4
     },
     {
       "label": "normalizeVendorDashboardPayload()",
@@ -2785,7 +2793,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L88",
       "id": "vendor_dashboard_normalize_normalizevendordashboardpayload",
-      "community": 3
+      "community": 4
     },
     {
       "label": "normalizeVendorDashboardBlocksPayload()",
@@ -2793,7 +2801,7 @@
       "source_file": "lib/vendor-dashboard-normalize.ts",
       "source_location": "L179",
       "id": "vendor_dashboard_normalize_normalizevendordashboardblockspayload",
-      "community": 3
+      "community": 4
     },
     {
       "label": "ble-printer-settings.ts",
@@ -2857,7 +2865,7 @@
       "source_file": "lib/hostel-block.ts",
       "source_location": "L1",
       "id": "hostel_block",
-      "community": 3
+      "community": 4
     },
     {
       "label": "displayRollupBlockKey()",
@@ -2865,7 +2873,7 @@
       "source_file": "lib/hostel-block.ts",
       "source_location": "L11",
       "id": "hostel_block_displayrollupblockkey",
-      "community": 3
+      "community": 4
     },
     {
       "label": "normalizeHostelBlockKey()",
@@ -2873,7 +2881,7 @@
       "source_file": "lib/hostel-block.ts",
       "source_location": "L24",
       "id": "hostel_block_normalizehostelblockkey",
-      "community": 3
+      "community": 4
     },
     {
       "label": "rollupHostelBlockKey()",
@@ -2881,7 +2889,7 @@
       "source_file": "lib/hostel-block.ts",
       "source_location": "L55",
       "id": "hostel_block_rolluphostelblockkey",
-      "community": 3
+      "community": 4
     },
     {
       "label": "print-bridge-apk.ts",
@@ -3209,7 +3217,7 @@
       "source_file": "lib/schedule-slot-merge.ts",
       "source_location": "L1",
       "id": "schedule_slot_merge",
-      "community": 4
+      "community": 3
     },
     {
       "label": "mergeEveToCanonicalEveningId()",
@@ -3217,7 +3225,7 @@
       "source_file": "lib/schedule-slot-merge.ts",
       "source_location": "L6",
       "id": "schedule_slot_merge_mergeevetocanonicaleveningid",
-      "community": 4
+      "community": 3
     },
     {
       "label": "mergeEveSlotIdsInList()",
@@ -3225,7 +3233,7 @@
       "source_file": "lib/schedule-slot-merge.ts",
       "source_location": "L14",
       "id": "schedule_slot_merge_mergeeveslotidsinlist",
-      "community": 4
+      "community": 3
     },
     {
       "label": "dedupeScheduleSlotsByTimeAndLabel()",
@@ -3233,7 +3241,7 @@
       "source_file": "lib/schedule-slot-merge.ts",
       "source_location": "L33",
       "id": "schedule_slot_merge_dedupescheduleslotsbytimeandlabel",
-      "community": 4
+      "community": 3
     },
     {
       "label": "ist-dates.ts",
@@ -3465,7 +3473,7 @@
       "source_file": "lib/supabase.ts",
       "source_location": "L1",
       "id": "supabase",
-      "community": 4
+      "community": 3
     },
     {
       "label": "rate-limit.ts",
@@ -4177,7 +4185,7 @@
       "source_file": "lib/receipt/thermalReceiptTypes.ts",
       "source_location": "L1",
       "id": "thermalreceipttypes",
-      "community": 4
+      "community": 3
     },
     {
       "label": "locationFromBill()",
@@ -4185,7 +4193,7 @@
       "source_file": "lib/receipt/thermalReceiptTypes.ts",
       "source_location": "L35",
       "id": "thermalreceipttypes_locationfrombill",
-      "community": 4
+      "community": 3
     },
     {
       "label": "vendorBillRowToThermalReceiptData()",
@@ -4193,7 +4201,7 @@
       "source_file": "lib/receipt/thermalReceiptTypes.ts",
       "source_location": "L41",
       "id": "thermalreceipttypes_vendorbillrowtothermalreceiptdata",
-      "community": 4
+      "community": 3
     },
     {
       "label": "vendorReceiptInputToThermalReceiptData()",
@@ -4201,7 +4209,7 @@
       "source_file": "lib/receipt/thermalReceiptTypes.ts",
       "source_location": "L74",
       "id": "thermalreceipttypes_vendorreceiptinputtothermalreceiptdata",
-      "community": 4
+      "community": 3
     },
     {
       "label": "openThermalReceiptReactPrint.tsx",
@@ -4209,7 +4217,7 @@
       "source_file": "lib/receipt/openThermalReceiptReactPrint.tsx",
       "source_location": "L1",
       "id": "openthermalreceiptreactprint",
-      "community": 4
+      "community": 3
     },
     {
       "label": "escapeHtml()",
@@ -4217,7 +4225,7 @@
       "source_file": "lib/receipt/openThermalReceiptReactPrint.tsx",
       "source_location": "L8",
       "id": "openthermalreceiptreactprint_escapehtml",
-      "community": 4
+      "community": 3
     },
     {
       "label": "openThermalReceiptReactPrintWindow()",
@@ -4225,7 +4233,7 @@
       "source_file": "lib/receipt/openThermalReceiptReactPrint.tsx",
       "source_location": "L16",
       "id": "openthermalreceiptreactprint_openthermalreceiptreactprintwindow",
-      "community": 4
+      "community": 3
     },
     {
       "label": "bills-cache.ts",
@@ -4568,6 +4576,18 @@
       "source_location": "L8",
       "weight": 1.0,
       "_src": "page",
+      "_tgt": "schedule_date_key",
+      "source": "page",
+      "target": "schedule_date_key",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "app/admin/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_src": "page",
       "_tgt": "vendordashboard",
       "source": "page",
       "target": "vendordashboard",
@@ -4577,7 +4597,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_getgatepassletterhtml",
@@ -4589,7 +4609,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L70",
+      "source_location": "L71",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_printgatepassletter",
@@ -4601,7 +4621,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L169",
+      "source_location": "L170",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_sanitizesuggestedslotid",
@@ -4613,7 +4633,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L178",
+      "source_location": "L179",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_presetforsuggestedslot",
@@ -4625,7 +4645,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L315",
+      "source_location": "L316",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_closemenu",
@@ -4637,7 +4657,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L320",
+      "source_location": "L321",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_sync",
@@ -4649,7 +4669,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L592",
+      "source_location": "L593",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_fetchrevdetail",
@@ -4673,7 +4693,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L761",
+      "source_location": "L762",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handlelogin",
@@ -4685,7 +4705,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L800",
+      "source_location": "L801",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_handlelogout",
@@ -4709,7 +4729,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L815",
+      "source_location": "L816",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_removescheduleslot",
@@ -4721,7 +4741,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L823",
+      "source_location": "L824",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_removescheduledate",
@@ -4733,7 +4753,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L827",
+      "source_location": "L831",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_applysuggestedslot",
@@ -4745,7 +4765,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L860",
+      "source_location": "L864",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_advancestatus",
@@ -4757,7 +4777,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L892",
+      "source_location": "L896",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_statusbadge",
@@ -4769,7 +4789,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L897",
+      "source_location": "L901",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_statuslabel",
@@ -4793,7 +4813,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L908",
+      "source_location": "L912",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_exportuserstocsv",
@@ -4805,7 +4825,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L1097",
+      "source_location": "L1101",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_fmtdate",
@@ -4817,7 +4837,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L1098",
+      "source_location": "L1102",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_fmtmoney",
@@ -4829,7 +4849,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2043",
+      "source_location": "L2052",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_if",
@@ -4841,7 +4861,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2247",
+      "source_location": "L2256",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_setbillsbydatedata",
@@ -4853,7 +4873,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2309",
+      "source_location": "L2318",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_setbillsbyblockdata",
@@ -4865,7 +4885,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2399",
+      "source_location": "L2408",
       "weight": 1.0,
       "_src": "page",
       "_tgt": "page_formatservicefeetiers",
@@ -5765,7 +5785,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L71",
+      "source_location": "L72",
       "weight": 1.0,
       "_src": "page_printgatepassletter",
       "_tgt": "page_getgatepassletterhtml",
@@ -5777,7 +5797,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L828",
+      "source_location": "L832",
       "weight": 1.0,
       "_src": "page_applysuggestedslot",
       "_tgt": "page_sanitizesuggestedslotid",
@@ -5789,7 +5809,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L829",
+      "source_location": "L833",
       "weight": 1.0,
       "_src": "page_applysuggestedslot",
       "_tgt": "page_presetforsuggestedslot",
@@ -5801,7 +5821,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L602",
+      "source_location": "L603",
       "weight": 1.0,
       "_src": "page_fetchrevdetail",
       "_tgt": "page_adminauthheaders",
@@ -5813,7 +5833,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L857",
+      "source_location": "L861",
       "weight": 1.0,
       "_src": "page_applysuggestedslot",
       "_tgt": "page_showtoast",
@@ -5825,7 +5845,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L878",
+      "source_location": "L882",
       "weight": 1.0,
       "_src": "page_advancestatus",
       "_tgt": "page_showtoast",
@@ -5837,7 +5857,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L930",
+      "source_location": "L934",
       "weight": 1.0,
       "_src": "page_exportuserstocsv",
       "_tgt": "page_showtoast",
@@ -5849,7 +5869,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2047",
+      "source_location": "L2056",
       "weight": 1.0,
       "_src": "page_if",
       "_tgt": "page_showtoast",
@@ -5861,7 +5881,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2249",
+      "source_location": "L2258",
       "weight": 1.0,
       "_src": "page_setbillsbydatedata",
       "_tgt": "page_showtoast",
@@ -5873,7 +5893,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/admin/page.tsx",
-      "source_location": "L2311",
+      "source_location": "L2320",
       "weight": 1.0,
       "_src": "page_setbillsbyblockdata",
       "_tgt": "page_showtoast",
@@ -6554,10 +6574,22 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/admin/schedule/route.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_src": "route",
+      "_tgt": "schedule_date_key",
+      "source": "route",
+      "target": "schedule_date_key",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_vendorprefix",
@@ -6569,7 +6601,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L19",
+      "source_location": "L20",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_tostoredslotid",
@@ -6581,7 +6613,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L23",
+      "source_location": "L24",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_fromstoredslotid",
@@ -6596,18 +6628,6 @@
       "source_location": "L30",
       "weight": 1.0,
       "_src": "route",
-      "_tgt": "route_scheduledatekey",
-      "source": "route",
-      "target": "route_scheduledatekey",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L37",
-      "weight": 1.0,
-      "_src": "route",
       "_tgt": "route_readvendorslotids",
       "source": "route",
       "target": "route_readvendorslotids",
@@ -6617,7 +6637,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L57",
+      "source_location": "L50",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_writevendorslotids",
@@ -6629,7 +6649,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L71",
+      "source_location": "L64",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_readvendorenabled",
@@ -6641,7 +6661,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L83",
+      "source_location": "L76",
       "weight": 1.0,
       "_src": "route",
       "_tgt": "route_writevendorenabled",
@@ -7217,7 +7237,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L193",
+      "source_location": "L190",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_get",
@@ -7229,7 +7249,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L203",
+      "source_location": "L200",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_tostoredslotid",
@@ -7241,7 +7261,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L228",
+      "source_location": "L225",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_vendorprefix",
@@ -7253,19 +7273,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L241",
-      "weight": 1.0,
-      "_src": "route_post",
-      "_tgt": "route_scheduledatekey",
-      "source": "route_post",
-      "target": "route_scheduledatekey",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L251",
+      "source_location": "L248",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_writevendorslotids",
@@ -7277,7 +7285,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L252",
+      "source_location": "L249",
       "weight": 1.0,
       "_src": "route_post",
       "_tgt": "route_writevendorenabled",
@@ -7625,7 +7633,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L20",
+      "source_location": "L21",
       "weight": 1.0,
       "_src": "route_tostoredslotid",
       "_tgt": "route_vendorprefix",
@@ -7637,7 +7645,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L25",
+      "source_location": "L26",
       "weight": 1.0,
       "_src": "route_fromstoredslotid",
       "_tgt": "route_vendorprefix",
@@ -7649,7 +7657,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "app/api/admin/schedule/route.ts",
-      "source_location": "L41",
+      "source_location": "L34",
       "weight": 1.0,
       "_src": "route_readvendorslotids",
       "_tgt": "route_vendorprefix",
@@ -7907,6 +7915,18 @@
       "_tgt": "schedule_slot_merge",
       "source": "api",
       "target": "schedule_slot_merge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/api.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_src": "api",
+      "_tgt": "schedule_date_key",
+      "source": "api",
+      "target": "schedule_date_key",
       "confidence_score": 1.0
     },
     {
@@ -10331,6 +10351,18 @@
       "_tgt": "native_print_bridge_uint8tobase64",
       "source": "native_print_bridge_uint8tobase64",
       "target": "native_print_bridge_trynativeescposprint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/schedule-date-key.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_src": "schedule_date_key",
+      "_tgt": "schedule_date_key_scheduledatekey",
+      "source": "schedule_date_key",
+      "target": "schedule_date_key_scheduledatekey",
       "confidence_score": 1.0
     },
     {

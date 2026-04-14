@@ -4,6 +4,7 @@ import { getAdminSessionFromRequest, isAdminRequest } from '@/lib/admin-session'
 import { checkAdminRateLimit, checkBodySize } from '@/lib/rate-limit';
 import type { ScheduleSlotRow, ScheduleDateRow } from '@/lib/api';
 import { mergeEveSlotIdsInList } from '@/lib/schedule-slot-merge';
+import { scheduleDateKey } from '@/lib/schedule-date-key';
 
 function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -24,14 +25,6 @@ function fromStoredSlotId(slotId: string, vendorSlug: string | null): string {
   if (!vendorSlug) return slotId;
   const p = vendorPrefix(vendorSlug);
   return slotId.startsWith(p) ? slotId.slice(p.length) : slotId;
-}
-
-/** Normalize Postgres DATE / timestamptz / ISO string to YYYY-MM-DD (must match admin payload keys). */
-function scheduleDateKey(input: unknown): string | null {
-  const s = String(input ?? '').trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
-  return m?.[1] && /^\d{4}-\d{2}-\d{2}$/.test(m[1]) ? m[1] : null;
 }
 
 function readVendorSlotIds(raw: unknown, vendorSlug: string | null): string[] {
@@ -124,11 +117,15 @@ export async function GET(request: Request) {
       .filter((s) => (vendorSlug ? s.id.startsWith(vendorPrefix(vendorSlug)) : !s.id.includes('__')))
       .map((s) => ({ ...s, id: fromStoredSlotId(s.id, vendorSlug) }));
     const dates = (datesRes.data ?? []).map(
-      (r: ScheduleDateRow & { slot_ids?: unknown; enabled_by_vendor?: unknown }) => ({
-        ...r,
-        enabled: readVendorEnabled(r.enabled_by_vendor, vendorSlug, Boolean(r.enabled)),
-        slot_ids: readVendorSlotIds(r.slot_ids, vendorSlug),
-      })
+      (r: ScheduleDateRow & { slot_ids?: unknown; enabled_by_vendor?: unknown }) => {
+        const dateNorm = scheduleDateKey(r.date) ?? String(r.date ?? '').trim();
+        return {
+          ...r,
+          date: dateNorm,
+          enabled: readVendorEnabled(r.enabled_by_vendor, vendorSlug, Boolean(r.enabled)),
+          slot_ids: readVendorSlotIds(r.slot_ids, vendorSlug),
+        };
+      },
     );
     return NextResponse.json({ slots, dates });
   } catch (e) {

@@ -1,6 +1,7 @@
 import { supabase, hasSupabase } from './supabase';
 import { orderLookupTokenVariants, stripLeadingHashesFromToken } from './vendor-bill-token';
 import { mergeEveSlotIdsInList } from './schedule-slot-merge';
+import { scheduleDateKey } from './schedule-date-key';
 
 export type VendorCatalogRow = {
   slug: string;
@@ -864,8 +865,10 @@ export const LSApi = {
           }
           if (Object.keys(byVendor).length > 0) slot_ids_by_vendor = byVendor;
         }
+        const dateNorm = scheduleDateKey(r.date) ?? String(r.date ?? '').trim();
         return {
           ...r,
+          date: dateNorm,
           slot_ids,
           slot_ids_by_vendor,
           enabled_by_vendor:

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { COLLEGES } from '@/lib/constants';
 import { formatServiceFeeTiers } from '@/lib/fees';
 import type { OrderRow, UserRow } from '@/lib/api';
+import { scheduleDateKey } from '@/lib/schedule-date-key';
 import { VendorDashboard } from '@/components/admin/VendorDashboard';
 
 const STATUSES = ['scheduled', 'agent_assigned', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered'];
@@ -821,7 +822,10 @@ export default function AdminPage() {
   };
 
   const removeScheduleDate = (dateStr: string) => {
-    setScheduleDates((prev) => prev.filter((d) => d.date !== dateStr));
+    const target = scheduleDateKey(dateStr) ?? dateStr.trim();
+    setScheduleDates((prev) =>
+      prev.filter((d) => (scheduleDateKey(d.date) ?? String(d.date).trim()) !== target),
+    );
   };
 
   const applySuggestedSlot = (timeSlotRaw: string) => {
@@ -1923,13 +1927,13 @@ export default function AdminPage() {
                       <div key={d.date} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--bd)' }}>
                         <strong style={{ minWidth: 120 }}>{d.date}</strong>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                          <input type="checkbox" checked={d.enabled} onChange={(e) => setScheduleDates((prev) => prev.map((x) => (x.date === d.date ? { ...x, enabled: e.target.checked } : x)))} />
+                          <input type="checkbox" checked={d.enabled} onChange={(e) => setScheduleDates((prev) => prev.map((x) => ((scheduleDateKey(x.date) ?? x.date) === (scheduleDateKey(d.date) ?? d.date) ? { ...x, enabled: e.target.checked } : x)))} />
                           Enabled
                         </label>
                         <span style={{ color: 'var(--ts)', fontSize: 13 }}>Slots:</span>
                         {scheduleSlots.filter((sl) => sl.active || d.slot_ids.includes(sl.id)).map((sl) => (
                           <label key={sl.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-                            <input type="checkbox" checked={d.slot_ids.includes(sl.id)} onChange={(e) => setScheduleDates((prev) => prev.map((x) => (x.date === d.date ? { ...x, slot_ids: e.target.checked ? [...x.slot_ids, sl.id] : x.slot_ids.filter((id) => id !== sl.id) } : x)))} />
+                            <input type="checkbox" checked={d.slot_ids.includes(sl.id)} onChange={(e) => setScheduleDates((prev) => prev.map((x) => ((scheduleDateKey(x.date) ?? x.date) === (scheduleDateKey(d.date) ?? d.date) ? { ...x, slot_ids: e.target.checked ? [...x.slot_ids, sl.id] : x.slot_ids.filter((id) => id !== sl.id) } : x)))} />
                             {sl.label || sl.id}
                           </label>
                         ))}
@@ -1947,8 +1951,13 @@ export default function AdminPage() {
                           const el = document.getElementById('new-schedule-date') as HTMLInputElement | null;
                           const v = el?.value?.trim();
                           if (!v) return;
-                          if (scheduleDates.some((x) => x.date === v)) return;
-                          setScheduleDates((prev) => [...prev, { date: v, enabled: true, slot_ids: scheduleSlots.filter((s) => s.active).map((s) => s.id) }].sort((a, b) => a.date.localeCompare(b.date)));
+                          const vKey = scheduleDateKey(v) ?? v;
+                          if (scheduleDates.some((x) => (scheduleDateKey(x.date) ?? x.date) === vKey)) return;
+                          setScheduleDates((prev) =>
+                            [...prev, { date: vKey, enabled: true, slot_ids: scheduleSlots.filter((s) => s.active).map((s) => s.id) }].sort((a, b) =>
+                              a.date.localeCompare(b.date),
+                            ),
+                          );
                           if (el) el.value = '';
                         }}
                       >

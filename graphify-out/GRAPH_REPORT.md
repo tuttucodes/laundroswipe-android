@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-14)
 
 ## Corpus Check
-- 140 files · ~419,867 words
+- 141 files · ~419,946 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 541 nodes · 825 edges · 39 communities detected
+- 542 nodes · 827 edges · 39 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -15,7 +15,7 @@
 3. `showToast()` - 23 edges
 4. `BluetoothPrinterService` - 18 edges
 5. `MainActivity` - 16 edges
-6. `POST()` - 15 edges
+6. `POST()` - 14 edges
 7. `adminAuthHeaders()` - 10 edges
 8. `load()` - 10 edges
 9. `openDb()` - 9 edges
@@ -41,19 +41,19 @@ Nodes (48): addCustomItemMain(), addQuickItemPreset(), adminAuthHeaders(), advan
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (41): checkPublicRateLimit(), getClientIp(), billFromTokenVerifiedForCandidates(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), debugLog(), DELETE() (+33 more)
+Nodes (40): checkPublicRateLimit(), getClientIp(), billFromTokenVerifiedForCandidates(), billSavedRowsForFill(), blockRollupsFromRpc(), buildResponse(), debugLog(), DELETE() (+32 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.07
 Nodes (17): billMapAndVisibleOrderIds(), handleCompleteProfile(), handleConfirmDelivery(), handleConfirmOrder(), handleSaveEditProfile(), handleSaveStudentDetailsModal(), init(), isCampusCollegeStudent() (+9 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.11
-Nodes (10): normalizeHostelBlockKey(), rollupHostelBlockKey(), dayRow(), legacyDayRow(), normalizeVendorDashboardPayload(), num(), parseBilledBlockRow(), parseBilledSlice() (+2 more)
-
-### Community 4 - "Community 4"
 Cohesion: 0.08
 Nodes (4): escapeHtml(), openThermalReceiptReactPrintWindow(), locationFromBill(), vendorBillRowToThermalReceiptData()
+
+### Community 4 - "Community 4"
+Cohesion: 0.11
+Nodes (10): normalizeHostelBlockKey(), rollupHostelBlockKey(), dayRow(), legacyDayRow(), normalizeVendorDashboardPayload(), num(), parseBilledBlockRow(), parseBilledSlice() (+2 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.14
@@ -237,6 +237,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
-- **Should `Community 4` be split into smaller, more focused modules?**
   _Cohesion score 0.08 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
