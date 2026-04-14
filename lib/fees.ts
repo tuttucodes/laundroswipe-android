@@ -23,9 +23,8 @@ export function formatServiceFeeTiers(): string {
   return '₹0–₹49: ₹0 · ₹50–₹99: ₹5 · ₹100–₹199: ₹10 · ₹200+: ₹20';
 }
 
-// Temporary vendor billing offer window.
-const SERVICE_FEE_DISCOUNT_START = '2026-04-02';
-const SERVICE_FEE_DISCOUNT_DAYS = 7;
+// Temporary vendor billing offer: waive service fee on all new bills.
+export const SERVICE_FEE_DISCOUNT_LABEL = '(14 Day Discount)';
 
 export type ServiceFeeDiscount = {
   originalFee: number;
@@ -35,20 +34,16 @@ export type ServiceFeeDiscount = {
 };
 
 export function applyServiceFeeDiscount(subtotal: number, at: Date = new Date()): ServiceFeeDiscount {
+  void at;
   const originalFee = calculateServiceFee(subtotal);
-  const startsAt = new Date(`${SERVICE_FEE_DISCOUNT_START}T00:00:00`);
-  const endsAt = new Date(startsAt);
-  endsAt.setDate(endsAt.getDate() + SERVICE_FEE_DISCOUNT_DAYS);
-  const active = at >= startsAt && at < endsAt;
-  if (!active || originalFee <= 0) return { originalFee, finalFee: originalFee, discount: 0, active: false };
+  if (originalFee <= 0) return { originalFee, finalFee: 0, discount: 0, active: false };
   return { originalFee, finalFee: 0, discount: originalFee, active: true };
 }
 
 export type ServiceFeeReceiptCurrency = 'rs' | 'inr';
 
 /**
- * Single-line service fee for thermal receipts, copy/paste, and saved bills.
- * Always labels the line with "7-day discount" so every bill shows the program name.
+ * Single-line service fee summary for thermal receipts, copy/paste, and saved bills.
  */
 export function formatServiceFeeReceiptLine(
   subtotal: number,
@@ -60,10 +55,10 @@ export function formatServiceFeeReceiptLine(
   const fee = Math.round(Number(convenienceFeeCharged) * 100) / 100;
 
   if (fee === 0 && original > 0) {
-    return `Service fee (7-day discount): ${sym}0 (was ${sym}${original.toFixed(2)})`;
+    return `Service fee: ${sym}${original.toFixed(2)} | ${SERVICE_FEE_DISCOUNT_LABEL}: -${sym}${original.toFixed(2)} | Payable: ${sym}0`;
   }
   if (fee === 0) {
-    return `Service fee (7-day discount): ${sym}0`;
+    return `Service fee: ${sym}0`;
   }
-  return `Service fee (7-day discount): ${sym}${fee.toFixed(2)}`;
+  return `Service fee: ${sym}${fee.toFixed(2)}`;
 }

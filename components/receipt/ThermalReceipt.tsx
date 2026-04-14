@@ -1,6 +1,7 @@
 'use client';
 
 import type { ThermalReceiptData } from '@/lib/receipt/thermalReceiptTypes';
+import { SERVICE_FEE_DISCOUNT_LABEL } from '@/lib/fees';
 
 const money = (n: number) => `Rs.${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
 
@@ -155,7 +156,7 @@ export function ThermalReceipt({ data, showPrintButton = false }: ThermalReceipt
         </div>
         {discount > 0 ? (
           <div className="trc-sumRow">
-            <span>Discount</span>
+            <span>{serviceFee === 0 ? SERVICE_FEE_DISCOUNT_LABEL : 'Discount'}</span>
             <span className="trc-mono">−{money(discount)}</span>
           </div>
         ) : null}
