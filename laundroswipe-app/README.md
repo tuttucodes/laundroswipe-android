@@ -68,6 +68,12 @@ When the build finishes on [expo.dev](https://expo.dev):
 
 Repo workflow [`.github/workflows/eas-android-preview.yml`](../.github/workflows/eas-android-preview.yml) runs `eas build` on **workflow_dispatch**. Add repository secret **`EXPO_TOKEN`** (Expo access token). Ensure the Expo project has **`extra.eas.projectId`** committed (from `eas init`) and **EAS environment variables** for Supabase as above.
 
+## Troubleshooting
+
+### EAS Android build fails in “Run gradlew”
+
+The npm package `react-native-bluetooth-escpos-printer` ships an **obsolete** `android/build.gradle` (old AGP, jcenter, `compileSdk` 27). This repo applies a **`patch-package`** fix under [`patches/react-native-bluetooth-escpos-printer+0.0.5.patch`](patches/react-native-bluetooth-escpos-printer+0.0.5.patch) on every `npm install`. If Gradle still fails, open the EAS log phase **Run gradlew** and search for the first `error:` line.
+
 ## Learn more
 
 - [Expo Router](https://docs.expo.dev/router/introduction/)
