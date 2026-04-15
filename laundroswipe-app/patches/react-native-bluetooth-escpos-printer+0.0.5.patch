@@ -89,6 +89,30 @@ index d86e4f5..1f8faae 100644
 +  implementation "com.google.zxing:core:3.5.3"
  }
 \ No newline at end of file
+diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/src/main/java/cn/jystudio/bluetooth/RNBluetoothEscposPrinterPackage.java b/node_modules/react-native-bluetooth-escpos-printer/android/src/main/java/cn/jystudio/bluetooth/RNBluetoothEscposPrinterPackage.java
+index bed59b5..c04abbd 100644
+--- a/node_modules/react-native-bluetooth-escpos-printer/android/src/main/java/cn/jystudio/bluetooth/RNBluetoothEscposPrinterPackage.java
++++ b/node_modules/react-native-bluetooth-escpos-printer/android/src/main/java/cn/jystudio/bluetooth/RNBluetoothEscposPrinterPackage.java
+@@ -11,7 +11,6 @@ import com.facebook.react.ReactPackage;
+ import com.facebook.react.bridge.NativeModule;
+ import com.facebook.react.bridge.ReactApplicationContext;
+ import com.facebook.react.uimanager.ViewManager;
+-import com.facebook.react.bridge.JavaScriptModule;
+ 
+ public class RNBluetoothEscposPrinterPackage implements ReactPackage {
+     @Override
+@@ -22,11 +21,6 @@ public class RNBluetoothEscposPrinterPackage implements ReactPackage {
+                 new RNBluetoothTscPrinterModule(reactContext, service));
+     }
+ 
+-    // Deprecated from RN 0.47
+-    public List<Class<? extends JavaScriptModule>> createJSModules() {
+-        return Collections.emptyList();
+-    }
+-
+     @Override
+     public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
+         return Collections.emptyList();
 diff --git a/node_modules/react-native-bluetooth-escpos-printer/android/src/main/java/cn/jystudio/bluetooth/RNBluetoothManagerModule.java b/node_modules/react-native-bluetooth-escpos-printer/android/src/main/java/cn/jystudio/bluetooth/RNBluetoothManagerModule.java
 index dd5d33e..bcdf209 100644
 --- a/node_modules/react-native-bluetooth-escpos-printer/android/src/main/java/cn/jystudio/bluetooth/RNBluetoothManagerModule.java

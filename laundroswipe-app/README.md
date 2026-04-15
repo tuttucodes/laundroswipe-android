@@ -72,7 +72,11 @@ Repo workflow [`.github/workflows/eas-android-preview.yml`](../.github/workflows
 
 ### EAS Android build fails in “Run gradlew”
 
-The npm package `react-native-bluetooth-escpos-printer` ships an **obsolete** `android/build.gradle` (old AGP, jcenter, `compileSdk` 27). This repo applies a **`patch-package`** fix under [`patches/react-native-bluetooth-escpos-printer+0.0.5.patch`](patches/react-native-bluetooth-escpos-printer+0.0.5.patch) on every `npm install`. If Gradle still fails, open the EAS log phase **Run gradlew** and search for the first `error:` line.
+The npm package `react-native-bluetooth-escpos-printer` ships an **obsolete** `android/build.gradle` (old AGP, jcenter, `compileSdk` 27) and Java that references removed RN APIs (`JavaScriptModule`). This repo applies a **`patch-package`** fix under [`patches/react-native-bluetooth-escpos-printer+0.0.5.patch`](patches/react-native-bluetooth-escpos-printer+0.0.5.patch) on every `npm install`. If Gradle still fails, open the EAS log phase **Run gradlew** and search for the first `error:` line.
+
+### `Reanimated requires new architecture to be enabled`
+
+**React Native Reanimated 4.x** (bundled with Expo SDK 54) requires **`newArchEnabled: true`** in [`app.config.ts`](app.config.ts). This project sets that so EAS Gradle can succeed.
 
 ## Learn more
 

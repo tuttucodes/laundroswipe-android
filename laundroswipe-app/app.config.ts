@@ -8,7 +8,8 @@ const defineConfig = (): ExpoConfig => ({
   icon: './assets/images/icon.png',
   scheme: 'laundroswipeapp',
   userInterfaceStyle: 'automatic',
-  newArchEnabled: false,
+  // Reanimated 4.x (Expo SDK 54) requires the New Architecture — see react-native-reanimated assertNewArchitectureEnabledTask.
+  newArchEnabled: true,
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.laundroswipe.unified',
