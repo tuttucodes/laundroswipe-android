@@ -1,0 +1,36 @@
+# Queue an EAS Android preview APK build from GitHub (no local machine needed).
+#
+# Setup (once):
+# 1. In laundroswipe-app: npm run eas:login && npm run eas:init — commit any extra.eas.projectId / .eas changes.
+# 2. expo.dev → Account → Access tokens → create token; add as repo secret EXPO_TOKEN.
+# 3. expo.dev → Project → Environment variables → set EXPO_PUBLIC_SUPABASE_URL and
+#    EXPO_PUBLIC_SUPABASE_ANON_KEY for "preview" (and "production" if you use that profile).
+
+name: EAS Android preview APK
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: laundroswipe-app
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: laundroswipe-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: EAS build (Android APK, preview profile)
+        run: npx eas-cli build -p android --profile preview --non-interactive --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
