@@ -26,9 +26,11 @@ One-time: [Expo account](https://expo.dev/signup), then from this directory:
 
 ```bash
 npm install
-npm run eas:login
-npm run eas:init
+npx eas-cli login
+npx eas-cli init
 ```
+
+Use **`npx eas-cli`** for builds (do not add `eas-cli` as a project dependency — `expo doctor` flags it).
 
 Commit any new `extra.eas.projectId` (or `.eas/` metadata) that `eas init` adds to the repo so builds stay linked to the same project.
 
