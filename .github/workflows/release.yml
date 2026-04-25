@@ -34,14 +34,20 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Setup Expo + EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli@latest
+
+      - name: Verify EAS auth
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "EXPO_TOKEN secret is empty." >&2
+            exit 1
+          fi
+          eas whoami
 
       - name: Build Android APK on EAS
         id: build
@@ -68,7 +74,6 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          # Sanitize ref_name (alphanumeric + dot + hyphen + underscore only)
           SAFE_REF=$(printf '%s' "$REF_NAME" | tr -cd 'A-Za-z0-9._-')
           OUT="dist/laundroswipe-${SAFE_REF}.apk"
           curl -L --fail --retry 4 --retry-delay 5 -o "$OUT" "$ARTIFACT_URL"
