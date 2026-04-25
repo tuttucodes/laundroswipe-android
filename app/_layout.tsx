@@ -23,21 +23,32 @@ import { queryClient, asyncStoragePersister } from '@/lib/query-client';
 import { configureForegroundHandler } from '@/lib/push';
 import { useNotificationNavigation } from '@/hooks/use-notification-navigation';
 
-configureForegroundHandler();
+try {
+  configureForegroundHandler();
+} catch {
+  /* notification handler is best-effort; don't block boot */
+}
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
-const BOOT_TIMEOUT_MS = 8000;
+const HARD_HIDE_SPLASH_MS = 1000;
 
 export default function RootLayout() {
   const setSession = useAuth((s) => s.setSession);
   const setAdmin = useAuth((s) => s.setAdmin);
   const setLoading = useAuth((s) => s.setLoading);
-  useNotificationNavigation();
 
   const [bootError, setBootError] = useState<string | null>(null);
 
-  const [fontsLoaded, fontError] = useFonts({
+  // Notification routing is non-critical — wrap in safe call.
+  try {
+    useNotificationNavigation();
+  } catch {
+    /* ignore */
+  }
+
+  // Fonts — render shell regardless of result.
+  useFonts({
     Outfit_600SemiBold,
     Outfit_700Bold,
     Outfit_800ExtraBold,
@@ -46,23 +57,28 @@ export default function RootLayout() {
     SourceSans3_700Bold,
   });
 
+  // Always hide native splash within 1s — never gate on fonts/boot.
   useEffect(() => {
-    let cleanup: (() => void) | undefined;
-    let cancelled = false;
+    const t = setTimeout(() => SplashScreen.hideAsync().catch(() => undefined), HARD_HIDE_SPLASH_MS);
+    return () => clearTimeout(t);
+  }, []);
 
-    const safetyTimer = setTimeout(() => {
-      if (!cancelled) {
-        setLoading(false);
-      }
-    }, BOOT_TIMEOUT_MS);
+  // Surface env errors visibly instead of silent hang.
+  useEffect(() => {
+    if (!envOk) {
+      setBootError(`Missing env: ${envErrors.join(', ')}`);
+      setLoading(false);
+    }
+  }, [setLoading]);
+
+  // Load session in background — never blocks UI rendering.
+  useEffect(() => {
+    if (!envOk) return;
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
 
     (async () => {
       try {
-        if (!envOk) {
-          setBootError(`Missing env: ${envErrors.join(', ')}`);
-          setLoading(false);
-          return;
-        }
         const [sessionResult, admin] = await Promise.all([
           supabase.auth.getSession().catch(() => ({ data: { session: null } })),
           readAdminSession().catch(() => null),
@@ -76,39 +92,20 @@ export default function RootLayout() {
           setSession(session);
         });
         cleanup = () => data.subscription.unsubscribe();
-      } catch (e) {
-        if (!cancelled) {
-          setBootError((e as Error).message ?? 'Failed to boot');
-          setLoading(false);
-        }
+      } catch {
+        if (!cancelled) setLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
-      clearTimeout(safetyTimer);
       cleanup?.();
     };
   }, [setSession, setAdmin, setLoading]);
 
-  // Splash: hide on font success OR font error OR after a hard timeout.
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync().catch(() => undefined);
-    }
-  }, [fontsLoaded, fontError]);
-
-  useEffect(() => {
-    const t = setTimeout(() => SplashScreen.hideAsync().catch(() => undefined), BOOT_TIMEOUT_MS);
-    return () => clearTimeout(t);
-  }, []);
-
   if (bootError) {
     return <BootErrorScreen message={bootError} />;
   }
-
-  // Render UI even if fonts failed — fall back to system font rather than hang.
-  if (!fontsLoaded && !fontError) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -135,7 +132,15 @@ export default function RootLayout() {
 
 function BootErrorScreen({ message }: { message: string }) {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#1746A2' }}>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        backgroundColor: '#1746A2',
+      }}
+    >
       <Text style={{ color: 'white', fontSize: 22, fontWeight: '800', marginBottom: 12 }}>
         Configuration error
       </Text>
@@ -147,7 +152,13 @@ function BootErrorScreen({ message }: { message: string }) {
       </Text>
       <Pressable
         onPress={() => SplashScreen.hideAsync().catch(() => undefined)}
-        style={{ marginTop: 24, backgroundColor: 'white', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}
+        style={{
+          marginTop: 24,
+          backgroundColor: 'white',
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 8,
+        }}
       >
         <Text style={{ color: '#1746A2', fontWeight: '700' }}>OK</Text>
       </Pressable>

@@ -1,17 +1,54 @@
-import { Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
 import { useAuth, resolveRole } from '@/store/auth';
 import { useProfile } from '@/hooks/use-profile';
 import { needsStudentHostelDetails, isCampusCollegeStudent } from '@/lib/profile-gate';
 
+const STUCK_LOADING_MS = 4000;
+
 export default function Index() {
+  const router = useRouter();
   const { loading, session, admin, profile } = useAuth();
   const profileQuery = useProfile();
+  const [showSkip, setShowSkip] = useState(false);
 
-  if (loading || (session && profileQuery.isLoading && !profile)) {
+  const profileLoading = !!session && profileQuery.isLoading && !profile;
+  const isLoading = loading || profileLoading;
+
+  useEffect(() => {
+    if (!isLoading) return;
+    const t = setTimeout(() => setShowSkip(true), STUCK_LOADING_MS);
+    return () => clearTimeout(t);
+  }, [isLoading]);
+
+  if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-primary">
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+          backgroundColor: '#1746A2',
+        }}
+      >
         <ActivityIndicator color="#fff" />
+        <Text style={{ marginTop: 16, color: 'white', opacity: 0.85 }}>Loading…</Text>
+        {showSkip ? (
+          <Pressable
+            onPress={() => router.replace('/(auth)/onboarding')}
+            style={{
+              marginTop: 32,
+              backgroundColor: 'white',
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: '#1746A2', fontWeight: '700' }}>Continue to sign in</Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   }
