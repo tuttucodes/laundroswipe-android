@@ -29,10 +29,10 @@ export function useCachedOrderById(
     queryFn: () => (orderId ? LSApi.fetchOrderFullById(orderId) : Promise.resolve(null)),
     staleTime: 30_000,
     placeholderData: () => {
-      if (!orderId) return null;
+      if (!orderId) return undefined;
       const snap = queryClient.getQueryData<OrderRow[] | null>(ORDERS_KEY(userId));
-      if (!snap) return null;
-      return snap.find((o) => o.id === orderId) ?? null;
+      if (!snap) return undefined;
+      return snap.find((o) => o.id === orderId) ?? undefined;
     },
   });
 }

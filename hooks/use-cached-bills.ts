@@ -29,10 +29,15 @@ export function useCachedBillById(billId: string | null | undefined) {
     queryFn: () => (billId ? LSApi.fetchVendorBillById(billId) : Promise.resolve(null)),
     staleTime: 60_000,
     placeholderData: () => {
-      if (!billId) return null;
+      if (!billId) return undefined;
       const snap = queryClient.getQueryData<VendorBillRow[] | null>(MY_BILLS_KEY);
-      if (!snap) return null;
-      return snap.find((b) => b.id === billId) ?? null;
+      if (!snap) return undefined;
+      // Return matching row as a placeholder so detail screen can render
+      // immediately with slim data while the full row (with line_items)
+      // refreshes. If not found in the list snapshot, return undefined so
+      // the query stays pending instead of resolving to null (which would
+      // render "Bill not found").
+      return snap.find((b) => b.id === billId) ?? undefined;
     },
   });
 }
