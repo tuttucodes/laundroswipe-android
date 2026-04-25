@@ -10,12 +10,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ScanQrCode, Search } from 'lucide-react-native';
+import { Printer, ScanQrCode, Search } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { VendorApi, type VendorOrderLookup } from '@/lib/vendor-api';
 import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { ApiError } from '@/lib/api-client';
+import { useBluetoothPrinter } from '@/hooks/use-bluetooth-printer';
+import { printVendorBillById } from '@/lib/printing/print-vendor-bill';
 
 type LookupState =
   | { state: 'idle' }
@@ -29,7 +31,9 @@ export default function VendorLookup() {
   const [scanOn, setScanOn] = useState(false);
   const [perm, requestPerm] = useCameraPermissions();
   const [lookup, setLookup] = useState<LookupState>({ state: 'idle' });
+  const [printingId, setPrintingId] = useState<string | null>(null);
   const lastScan = useRef<{ token: string; at: number } | null>(null);
+  const printer = useBluetoothPrinter();
 
   const run = async (raw: string) => {
     const cleaned = stripLeadingHashesFromToken(raw);
@@ -70,6 +74,24 @@ export default function VendorLookup() {
       if (lookup.state === 'success') run(lookup.data.order.token);
     } catch (e) {
       Alert.alert('Failed', (e as Error).message);
+    }
+  };
+
+  const printBill = async (billId: string) => {
+    if (printingId) return;
+    if (!printer.prefs?.mac) {
+      Alert.alert('No printer', 'Pick a Bluetooth printer in Printer settings first.');
+      return;
+    }
+    setPrintingId(billId);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+    try {
+      const r = await printVendorBillById(billId, printer.prefs.paper, printer.print);
+      if (!r.ok) Alert.alert('Print failed', r.error);
+      else
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    } finally {
+      setPrintingId(null);
     }
   };
 
@@ -149,6 +171,8 @@ export default function VendorLookup() {
                 params: { token: lookup.data.order.token },
               })
             }
+            onPrint={printBill}
+            printingId={printingId}
           />
         ) : null}
       </ScrollView>
@@ -161,11 +185,15 @@ function LookupResult({
   onAdvance,
   onConfirmDelivery,
   onOpenBuilder,
+  onPrint,
+  printingId,
 }: {
   data: VendorOrderLookup;
   onAdvance: (orderId: string) => void;
   onConfirmDelivery: () => void;
   onOpenBuilder: () => void;
+  onPrint: (billId: string) => void;
+  printingId: string | null;
 }) {
   const u = data.user;
   const o = data.order;
@@ -210,6 +238,19 @@ function LookupResult({
           {bill.can_cancel ? (
             <Text className="mt-1 text-xs text-ink-2">Can edit / cancel within window.</Text>
           ) : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onPrint(bill.id)}
+            disabled={printingId === bill.id}
+            className="mt-3 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3 disabled:opacity-60"
+          >
+            {printingId === bill.id ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Printer color="#fff" size={16} />
+            )}
+            <Text className="text-sm font-semibold text-white">Print bill</Text>
+          </Pressable>
         </View>
       ) : (
         <Text className="text-sm text-ink-2">No bill yet.</Text>

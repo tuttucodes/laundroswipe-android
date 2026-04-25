@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,11 +13,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
-import { ChevronLeft, Image as ImageIcon, Minus, Save } from 'lucide-react-native';
+import { ChevronLeft, Image as ImageIcon, Minus, Printer, Save } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
 import { VendorApi, type VendorBillCatalog } from '@/lib/vendor-api';
 import { queryClient } from '@/lib/query-client';
+import { stableLineItemsFingerprint } from '@/lib/bill-idempotency';
+import { useBluetoothPrinter } from '@/hooks/use-bluetooth-printer';
+import { printVendorBillById } from '@/lib/printing/print-vendor-bill';
 
 type Qty = Record<string, number>;
 
@@ -37,6 +40,9 @@ export default function BillBuilder() {
   const [qty, setQty] = useState<Qty>({});
   const [filter, setFilter] = useState('');
   const [saving, setSaving] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const printer = useBluetoothPrinter();
+  const lastSavedRef = useRef<{ fingerprint: string; billId: string } | null>(null);
 
   const catalogQuery = useQuery({
     queryKey: ['vendor-bill-catalog'],
@@ -51,12 +57,23 @@ export default function BillBuilder() {
   });
 
   useEffect(() => {
-    if (lookupQuery.data?.latest_bill?.line_items && Object.keys(qty).length === 0) {
+    const latest = lookupQuery.data?.latest_bill;
+    if (latest?.line_items && Object.keys(qty).length === 0) {
       const next: Qty = {};
-      for (const li of lookupQuery.data.latest_bill.line_items) {
+      for (const li of latest.line_items) {
         next[li.id] = Number(li.qty) || 0;
       }
       setQty(next);
+      // Hydrate idempotency cache from server's latest bill so re-print of
+      // unchanged items doesn't trigger a redundant save.
+      const fp = stableLineItemsFingerprint(
+        latest.line_items.map((li) => ({
+          id: String(li.id),
+          qty: Number(li.qty) || 0,
+          price: Number(li.price) || 0,
+        })),
+      );
+      lastSavedRef.current = { fingerprint: fp, billId: latest.id };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lookupQuery.data?.latest_bill?.id]);
@@ -91,23 +108,49 @@ export default function BillBuilder() {
     });
   }, []);
 
+  const buildLineItems = useCallback(() => {
+    return Object.entries(qty)
+      .filter(([, v]) => v > 0)
+      .map(([id, v]) => ({
+        id,
+        qty: v,
+        price: catalog.find((c) => c.id === id)?.price ?? 0,
+      }));
+  }, [qty, catalog]);
+
+  const ensureSaved = useCallback(async (): Promise<{ billId: string } | null> => {
+    if (!token) return null;
+    const items = buildLineItems();
+    if (items.length === 0) {
+      Alert.alert('Empty bill', 'Add at least one item.');
+      return null;
+    }
+    const fingerprint = stableLineItemsFingerprint(items);
+    const cached = lastSavedRef.current;
+    if (cached && cached.fingerprint === fingerprint) {
+      return { billId: cached.billId };
+    }
+    const res = await VendorApi.saveBill({
+      token: String(token),
+      line_items: items.map(({ id, qty: q }) => ({ id, qty: q })),
+    });
+    lastSavedRef.current = { fingerprint, billId: res.billId };
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['vendor-bills-recent'] }),
+      queryClient.invalidateQueries({ queryKey: ['vendor-revenue-today'] }),
+      queryClient.invalidateQueries({ queryKey: ['vendor-bills'] }),
+      queryClient.invalidateQueries({ queryKey: ['vendor-lookup', token] }),
+    ]);
+    return { billId: res.billId };
+  }, [buildLineItems, token]);
+
   const save = async () => {
     if (!token || saving) return;
-    const lineItems = Object.entries(qty)
-      .filter(([, v]) => v > 0)
-      .map(([id, v]) => ({ id, qty: v }));
-    if (lineItems.length === 0) {
-      Alert.alert('Empty bill', 'Add at least one item.');
-      return;
-    }
     setSaving(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
     try {
-      await VendorApi.saveBill({ token: String(token), line_items: lineItems });
-      await queryClient.invalidateQueries({ queryKey: ['vendor-bills-recent'] });
-      await queryClient.invalidateQueries({ queryKey: ['vendor-revenue-today'] });
-      await queryClient.invalidateQueries({ queryKey: ['vendor-bills'] });
-      await queryClient.invalidateQueries({ queryKey: ['vendor-lookup', token] });
+      const r = await ensureSaved();
+      if (!r) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
       Alert.alert('Saved', 'Bill sent to customer.', [
         { text: 'OK', onPress: () => router.back() },
@@ -117,6 +160,35 @@ export default function BillBuilder() {
       Alert.alert('Save failed', (e as Error).message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveAndPrint = async () => {
+    if (!token || printing) return;
+    if (!printer.prefs?.mac) {
+      Alert.alert('No printer', 'Pick a Bluetooth printer in Printer settings first.');
+      return;
+    }
+    setPrinting(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+    try {
+      const r = await ensureSaved();
+      if (!r) return;
+      const printed = await printVendorBillById(
+        r.billId,
+        printer.prefs.paper,
+        printer.print,
+      );
+      if (!printed.ok) {
+        Alert.alert('Print failed', printed.error);
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+      }
+    } catch (e) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => undefined);
+      Alert.alert('Print failed', (e as Error).message);
+    } finally {
+      setPrinting(false);
     }
   };
 
@@ -182,20 +254,31 @@ export default function BillBuilder() {
       )}
 
       <View className="absolute inset-x-0 bottom-0 border-t border-border bg-surface px-5 py-4">
-        <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center justify-between gap-3">
           <View>
             <Text className="text-xs text-ink-2">{totals.count} items</Text>
             <Text className="font-display text-2xl font-bold text-ink">₹{totals.subtotal}</Text>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            onPress={save}
-            disabled={saving || totals.count === 0}
-            className="flex-row items-center gap-2 rounded-lg bg-primary px-5 py-3 disabled:opacity-60"
-          >
-            {saving ? <ActivityIndicator color="#fff" /> : <Save color="#fff" size={18} />}
-            <Text className="text-base font-semibold text-white">Save bill</Text>
-          </Pressable>
+          <View className="flex-1 flex-row gap-2">
+            <Pressable
+              accessibilityRole="button"
+              onPress={save}
+              disabled={saving || printing || totals.count === 0}
+              className="flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-surface py-3 disabled:opacity-60"
+            >
+              {saving ? <ActivityIndicator color="#1746A2" /> : <Save color="#1A1D2E" size={16} />}
+              <Text className="text-sm font-semibold text-ink">Save</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={saveAndPrint}
+              disabled={saving || printing || totals.count === 0}
+              className="flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3 disabled:opacity-60"
+            >
+              {printing ? <ActivityIndicator color="#fff" /> : <Printer color="#fff" size={16} />}
+              <Text className="text-sm font-semibold text-white">Save + print</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </SafeAreaView>

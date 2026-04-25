@@ -38,6 +38,8 @@ export default function VendorLayout() {
       <Tabs.Screen name="bills/[id]" options={{ href: null }} />
       <Tabs.Screen name="printer" options={{ href: null }} />
       <Tabs.Screen name="catalog" options={{ href: null }} />
+      <Tabs.Screen name="revenue" options={{ href: null }} />
+      <Tabs.Screen name="menu" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -15,17 +15,17 @@ import { Link, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import {
-  LogOut,
   ScanQrCode,
   ReceiptText,
   PackageCheck,
   Truck,
   Settings,
   ListChecks,
+  Menu,
+  TrendingUp,
 } from 'lucide-react-native';
 import { VendorApi } from '@/lib/vendor-api';
 import { useAuth } from '@/store/auth';
-import { clearAdminSession } from '@/lib/admin-auth';
 import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { Logo } from '@/components/ui/Logo';
 import { Container } from '@/components/ui/Container';
@@ -37,7 +37,6 @@ function todayYmd(): string {
 export default function VendorPos() {
   const router = useRouter();
   const admin = useAuth((s) => s.admin);
-  const setAdmin = useAuth((s) => s.setAdmin);
   const today = todayYmd();
   const [quickToken, setQuickToken] = useState('');
   const [quickLoading, setQuickLoading] = useState<null | 'pickup' | 'delivery'>(null);
@@ -82,12 +81,6 @@ export default function VendorPos() {
     staleTime: 60_000,
   });
 
-  const signOut = async () => {
-    await clearAdminSession();
-    setAdmin(null);
-    router.replace('/(auth)/login');
-  };
-
   return (
     <SafeAreaView className="flex-1 bg-bg">
       <ScrollView
@@ -127,11 +120,12 @@ export default function VendorPos() {
                 <Settings color="#1A1D2E" size={20} />
               </Pressable>
               <Pressable
-                onPress={signOut}
                 accessibilityRole="button"
+                accessibilityLabel="Menu"
+                onPress={() => router.push('/(vendor)/menu')}
                 className="h-10 w-10 items-center justify-center rounded-full bg-surface"
               >
-                <LogOut color="#DC2626" size={20} />
+                <Menu color="#1A1D2E" size={20} />
               </Pressable>
             </View>
           </Animated.View>
@@ -232,6 +226,22 @@ export default function VendorPos() {
                 <View className="flex-1">
                   <Text className="font-display text-base font-bold text-ink">Catalog editor</Text>
                   <Text className="text-xs text-ink-2">Edit item label, price, image</Text>
+                </View>
+              </Pressable>
+            </Link>
+            <Link href="/(vendor)/revenue" asChild>
+              <Pressable
+                accessibilityRole="button"
+                className="flex-row items-center gap-3 rounded-lg bg-surface px-5 py-4"
+              >
+                <View className="h-11 w-11 items-center justify-center rounded-full bg-primary-light">
+                  <TrendingUp color="#1746A2" size={22} />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-display text-base font-bold text-ink">
+                    Revenue dashboard
+                  </Text>
+                  <Text className="text-xs text-ink-2">Today · 7d · 30d breakdown</Text>
                 </View>
               </Pressable>
             </Link>
