@@ -40,13 +40,23 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli@latest
 
-      - name: Verify EAS auth
+      - name: Fingerprint EXPO_TOKEN secret
         run: |
           set -euo pipefail
           if [ -z "${EXPO_TOKEN:-}" ]; then
             echo "EXPO_TOKEN secret is empty." >&2
             exit 1
           fi
+          LEN=$(printf '%s' "$EXPO_TOKEN" | wc -c | tr -d ' ')
+          PREFIX=$(printf '%s' "$EXPO_TOKEN" | head -c 4)
+          SUFFIX=$(printf '%s' "$EXPO_TOKEN" | tail -c 4)
+          echo "Token length: $LEN"
+          echo "Token prefix: ${PREFIX}…"
+          echo "Token suffix: …${SUFFIX}"
+
+      - name: Verify EAS auth
+        run: |
+          set -euo pipefail
           eas whoami
 
       - name: Build Android APK on EAS
