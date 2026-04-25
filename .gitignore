@@ -31,7 +31,19 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.local
 .env*.local
+
+# Google Stitch references (local design refs, not app code)
+_stitch_refs/
+
+# Firebase + Play secrets (never commit)
+google-services.json
+GoogleService-Info.plist
+play-service-account.json
+*.jks
+*.keystore
 
 # typescript
 *.tsbuildinfo
