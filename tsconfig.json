@@ -15,5 +15,5 @@
     "expo-env.d.ts",
     "nativewind-env.d.ts"
   ],
-  "exclude": ["node_modules", "_stitch_refs", "dist", ".expo"]
+  "exclude": ["node_modules", "_stitch_refs", "dist", ".expo", "supabase/functions"]
 }
