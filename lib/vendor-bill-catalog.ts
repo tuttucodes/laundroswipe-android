@@ -1,4 +1,4 @@
-import { getVendorBillItems } from '@/lib/constants';
+import { getVendorBillItems } from './constants';
 
 export type BillItemOverride = {
   price?: number;
@@ -26,7 +26,12 @@ export function parseBillItemOverrides(raw: unknown): Record<string, BillItemOve
     if (!id || v === null || typeof v !== 'object') continue;
     const o: BillItemOverride = {};
     const rec = v as Record<string, unknown>;
-    if (typeof rec.price === 'number' && Number.isFinite(rec.price) && rec.price > 0 && rec.price <= MAX_PRICE) {
+    if (
+      typeof rec.price === 'number' &&
+      Number.isFinite(rec.price) &&
+      rec.price > 0 &&
+      rec.price <= MAX_PRICE
+    ) {
       o.price = rec.price;
     }
     if (typeof rec.label === 'string') {
@@ -71,28 +76,4 @@ export function mergeVendorBillItemsFromDbRow(
   bill_item_overrides: unknown,
 ): MergedBillItem[] {
   return mergeVendorBillItems(vendorSlug, parseBillItemOverrides(bill_item_overrides));
-}
-
-const catalogIdSet = (vendorSlug: string | null | undefined) =>
-  new Set<string>(getVendorBillItems(vendorSlug).map((x) => x.id));
-
-/**
- * Sanitize PUT body: only known catalog ids; drop empty entries.
- */
-export function sanitizeBillItemOverridesForPut(
-  vendorSlug: string | null | undefined,
-  body: unknown,
-): Record<string, BillItemOverride> {
-  if (!body || typeof body !== 'object') return {};
-  const allowed = catalogIdSet(vendorSlug);
-  const raw = (body as { overrides?: unknown }).overrides;
-  if (!raw || typeof raw !== 'object') return {};
-  const parsed = parseBillItemOverrides(raw);
-  const out: Record<string, BillItemOverride> = {};
-  for (const [id, o] of Object.entries(parsed)) {
-    if (!allowed.has(id)) continue;
-    if (Object.keys(o).length === 0) continue;
-    out[id] = o;
-  }
-  return out;
 }

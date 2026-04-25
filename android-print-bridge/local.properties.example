@@ -1,4 +1,0 @@
-## Copy to local.properties (never commit local.properties).
-## Point sdk.dir at your Android SDK (Android Studio → SDK Manager shows path).
-
-sdk.dir=/Users/you/Library/Android/sdk

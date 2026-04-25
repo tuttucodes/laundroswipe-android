@@ -20,8 +20,8 @@ type DedupeSlotShape = {
 };
 
 /**
- * Defensive dedupe for display/use in UI:
- * If two slots share the same label + time window, keep one (lower sort_order wins, then id).
+ * Defensive dedupe: if two slots share label + time window, keep one
+ * (lower sort_order wins, then id).
  */
 export function dedupeScheduleSlotsByTimeAndLabel<T extends DedupeSlotShape>(slots: T[]): T[] {
   const byKey = new Map<string, T>();
@@ -41,6 +41,6 @@ export function dedupeScheduleSlotsByTimeAndLabel<T extends DedupeSlotShape>(slo
     }
   }
   return Array.from(byKey.values()).sort(
-    (a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id)
+    (a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id),
   );
 }

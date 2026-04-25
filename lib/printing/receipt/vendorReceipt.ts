@@ -1,6 +1,6 @@
 import { formatServiceFeeReceiptLine } from '@/lib/fees';
 import type { VendorBillRow } from '@/lib/api';
-import { getBlePrinterPreferences } from '@/lib/ble-printer-settings';
+import { getPrinterPrefsSync } from '../printer-prefs';
 import {
   ESCPOSBuilder,
   PAPER_FONT_A_CHARS,
@@ -30,7 +30,6 @@ export type VendorReceiptInput = {
   serviceFeeLine: string;
   total: number;
   footer?: string;
-  /** Optional payment QR (UPI, etc.) */
   paymentQrPayload?: string;
   showQr?: boolean;
 };
@@ -47,7 +46,6 @@ function truncateForPaper(label: string, paper: PaperSize): string {
   return `${s.slice(0, Math.max(1, cap - 1))}…`;
 }
 
-/** Word-wrap for receipt lines (thermal width). */
 function wrapReceiptText(line: string, maxLen: number): string[] {
   const s = sanitizeReceiptText(line);
   if (s.length <= maxLen) return [s];
@@ -80,7 +78,6 @@ type UnitTotalLayout =
   | { mode: 'single'; line: string }
   | { mode: 'two'; unitLine: string; totalLine: string };
 
-/** Left `@ unit` + right line total on one row, or two rows if it does not fit. */
 function layoutUnitAndTotal(paper: PaperSize, unitStr: string, lineTotal: string): UnitTotalLayout {
   const w = PAPER_FONT_A_CHARS[paper];
   if (unitStr.length + lineTotal.length + 1 <= w) {
@@ -90,12 +87,8 @@ function layoutUnitAndTotal(paper: PaperSize, unitStr: string, lineTotal: string
   return { mode: 'two', unitLine: unitStr, totalLine: escposPlainLineRight(paper, lineTotal) };
 }
 
-/**
- * Build raw ESC/POS bytes for a LaundroSwipe vendor bill.
- * Header / meta / totals use normal height (saves paper); qty × item and rate lines stay double-height bold.
- */
 export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptInput): Uint8Array {
-  const density = getBlePrinterPreferences().printDensity;
+  const density = getPrinterPrefsSync().printDensity;
   const w = PAPER_FONT_A_CHARS[paper];
   const b = new ESCPOSBuilder(paper);
   b.initialize().codePage(0).printDensity(density);
@@ -143,7 +136,10 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
   for (const sf of wrapReceiptText(input.serviceFeeLine, w)) {
     b.text(sf);
   }
-  b.bold(true).fontSize('normal').text(`TOTAL: ${money(input.total)}`).bold(false);
+  b.bold(true)
+    .fontSize('normal')
+    .text(`TOTAL: ${money(input.total)}`)
+    .bold(false);
 
   if (input.showQr && input.paymentQrPayload?.trim()) {
     b.feed(1).align('center');
@@ -154,17 +150,19 @@ export function buildVendorReceiptEscPos(paper: PaperSize, input: VendorReceiptI
     }
   }
 
-  b.feed(1).align('center').bold(false).text(input.footer ?? 'Thank you!');
+  b.feed(1)
+    .align('center')
+    .bold(false)
+    .text(input.footer ?? 'Thank you!');
   b.feed(3).cut(false);
 
   return b.build();
 }
 
-/**
- * Plain-text lines matching `buildVendorReceiptEscPos` (same widths as `tableRow` / `divider`).
- * Use for the browser print dialog and as the text fallback when wrapping to ESC/POS bytes.
- */
-export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorReceiptInput): string {
+export function formatVendorReceiptEscPosPlain(
+  paper: PaperSize,
+  input: VendorReceiptInput,
+): string {
   const lines: string[] = [];
   const w = PAPER_FONT_A_CHARS[paper];
   lines.push(sanitizeReceiptText('LaundroSwipe'));
@@ -209,14 +207,17 @@ export function formatVendorReceiptEscPosPlain(paper: PaperSize, input: VendorRe
   if (input.showQr && input.paymentQrPayload?.trim()) {
     lines.push('');
     const q = input.paymentQrPayload.trim();
-    lines.push(sanitizeReceiptText(q.length > 90 ? `[QR on paper] ${q.slice(0, 87)}…` : `[QR on paper] ${q}`));
+    lines.push(
+      sanitizeReceiptText(
+        q.length > 90 ? `[QR on paper] ${q.slice(0, 87)}…` : `[QR on paper] ${q}`,
+      ),
+    );
   }
   lines.push('');
   lines.push(escposPlainLineCenter(paper, sanitizeReceiptText(input.footer ?? 'Thank you!')));
   return lines.join('\n');
 }
 
-/** Same `VendorReceiptInput` shape as `buildVendorReceiptEscPos` uses for saved bills (no payment QR). */
 export function savedVendorBillToReceiptInput(b: VendorBillRow): VendorReceiptInput {
   const totalItems = Array.isArray(b.line_items)
     ? b.line_items.reduce((s, l) => s + Number(l.qty || 0), 0)

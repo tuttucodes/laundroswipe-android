@@ -1,43 +1,105 @@
-import { QRCodeSVG } from 'qrcode.react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
+import { Dimensions, Text, View } from 'react-native';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetView,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
+import QRCode from 'react-native-qrcode-svg';
+import * as Brightness from 'expo-brightness';
 
-type DigitalHandshakeProps = {
+export type HandshakePayload = {
   token: string;
-  title?: string;
-  subtitle?: string;
+  orderId: string;
+  userId: string;
+  name?: string | null;
 };
 
-export function DigitalHandshake({ token, title = 'Express Drop-off QR', subtitle = 'Show this code or token at handoff.' }: DigitalHandshakeProps) {
-  return (
-    <div
-      className="vc"
-      style={{
-        marginTop: 12,
-        borderRadius: 18,
-        borderColor: 'rgba(0,82,204,.22)',
-        background: 'linear-gradient(180deg, rgba(0,82,204,0.08), rgba(0,109,55,0.05))',
-      }}
-    >
-      <div className="vn" style={{ fontSize: 16 }}>
-        {title}
-      </div>
-      <p className="vd" style={{ marginBottom: 12 }}>
-        {subtitle}
-      </p>
-      <div
-        style={{
-          width: 'fit-content',
-          margin: '0 auto 10px',
-          padding: 10,
-          borderRadius: 12,
-          background: '#fff',
-          border: '1px solid rgba(0,82,204,.2)',
+export type HandshakeRef = {
+  open(): void;
+  close(): void;
+};
+
+const { width: SCREEN_W } = Dimensions.get('window');
+const QR_SIZE = Math.min(280, SCREEN_W - 80);
+
+export const DigitalHandshake = forwardRef<HandshakeRef, { payload: HandshakePayload | null }>(
+  function DigitalHandshake({ payload }, ref) {
+    const sheetRef = useRef<BottomSheet>(null);
+    const previousBrightness = useRef<number | null>(null);
+
+    const open = useCallback(() => {
+      sheetRef.current?.expand();
+    }, []);
+    const close = useCallback(() => {
+      sheetRef.current?.close();
+    }, []);
+
+    useImperativeHandle(ref, () => ({ open, close }), [open, close]);
+
+    useEffect(() => {
+      let cancelled = false;
+      (async () => {
+        const { status } = await Brightness.requestPermissionsAsync();
+        if (cancelled || status !== 'granted') return;
+        try {
+          previousBrightness.current = await Brightness.getBrightnessAsync();
+          await Brightness.setBrightnessAsync(1);
+        } catch {
+          /* best-effort; not all sims support brightness */
+        }
+      })();
+      return () => {
+        cancelled = true;
+        if (previousBrightness.current !== null) {
+          Brightness.setBrightnessAsync(previousBrightness.current).catch(() => undefined);
+        }
+      };
+    }, []);
+
+    const qrValue = payload
+      ? JSON.stringify({ t: payload.token, o: payload.orderId, u: payload.userId })
+      : '';
+
+    const backdrop = useCallback(
+      (p: BottomSheetBackdropProps) => (
+        <BottomSheetBackdrop {...p} appearsOnIndex={0} disappearsOnIndex={-1} />
+      ),
+      [],
+    );
+
+    return (
+      <BottomSheet
+        ref={sheetRef}
+        index={-1}
+        snapPoints={[QR_SIZE + 200]}
+        enablePanDownToClose
+        backdropComponent={backdrop}
+        backgroundStyle={{
+          backgroundColor: '#FFFFFF',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
         }}
       >
-        <QRCodeSVG value={token} size={168} level="M" includeMargin />
-      </div>
-      <p className="vd" style={{ textAlign: 'center', fontSize: 13, marginBottom: 0 }}>
-        Token Number: <strong>#{token}</strong>
-      </p>
-    </div>
-  );
-}
+        <BottomSheetView style={{ padding: 24, alignItems: 'center' }}>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#1A1D2E' }}>
+            Show this to the agent
+          </Text>
+          <Text style={{ marginTop: 6, color: '#475569', textAlign: 'center' }}>
+            They scan this code to confirm your pickup or drop-off.
+          </Text>
+          <View
+            style={{ marginTop: 20, padding: 16, borderRadius: 18, backgroundColor: '#F8FAFC' }}
+          >
+            {qrValue ? (
+              <QRCode value={qrValue} size={QR_SIZE} backgroundColor="#F8FAFC" color="#1A1D2E" />
+            ) : null}
+          </View>
+          <Text style={{ marginTop: 16, fontWeight: '700', color: '#1746A2', letterSpacing: 4 }}>
+            #{payload?.token ?? '—'}
+          </Text>
+        </BottomSheetView>
+      </BottomSheet>
+    );
+  },
+);

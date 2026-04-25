@@ -1,0 +1,68 @@
+name: Submit to Play Store (internal)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: 'EAS build ID to submit (leave empty for latest)'
+        required: false
+      track:
+        description: 'Play Store track'
+        required: false
+        default: 'internal'
+
+jobs:
+  submit:
+    name: eas submit android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      BUILD_ID_INPUT: ${{ github.event.inputs.build_id }}
+      TRACK_INPUT: ${{ github.event.inputs.track }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Expo + EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Write Play Store service account key
+        env:
+          KEY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEY_JSON:-}" ]; then
+            echo "PLAY_SERVICE_ACCOUNT_JSON secret is required." >&2
+            exit 1
+          fi
+          printf '%s' "$KEY_JSON" > play-service-account.json
+
+      - name: Submit to Play Store
+        run: |
+          set -euo pipefail
+          # Sanitize inputs: only allow alphanumeric, hyphen, underscore.
+          SAFE_BUILD_ID=$(printf '%s' "${BUILD_ID_INPUT:-}" | tr -cd 'A-Za-z0-9._-')
+          SAFE_TRACK=$(printf '%s' "${TRACK_INPUT:-internal}" | tr -cd 'A-Za-z0-9._-')
+          ARGS=(submit --platform android --profile production --non-interactive --no-wait)
+          if [ -n "$SAFE_BUILD_ID" ]; then
+            ARGS+=(--id "$SAFE_BUILD_ID")
+          else
+            ARGS+=(--latest)
+          fi
+          echo "Submitting to track $SAFE_TRACK"
+          eas "${ARGS[@]}"

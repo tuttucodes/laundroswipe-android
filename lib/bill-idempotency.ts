@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import * as Crypto from 'expo-crypto';
 
 type LineItemFingerprintInput = {
   id: string;
@@ -19,13 +19,18 @@ export function stableLineItemsFingerprint(items: LineItemFingerprintInput[]): s
   return canon;
 }
 
-export function makeBillIdempotencyKey(parts: {
+/**
+ * Produces the same sha256 hex digest as the server's `makeBillIdempotencyKey`
+ * so mobile preflight matches server-side dedupe keys.
+ */
+export async function makeBillIdempotencyKey(parts: {
   vendorScope: string;
   operation: string;
   token: string;
   lineItemsFingerprint: string;
-}): string {
+}): Promise<string> {
   const payload = `${parts.vendorScope}|${parts.operation}|${parts.token}|${parts.lineItemsFingerprint}`;
-  return createHash('sha256').update(payload).digest('hex');
+  return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, payload, {
+    encoding: Crypto.CryptoEncoding.HEX,
+  });
 }
-

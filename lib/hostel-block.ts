@@ -1,18 +1,13 @@
 /**
- * Roll up bill snapshots into stable keys: A, D1, D2 (e.g. A-102, D2/719, "Mens A", "Block D 1").
- * A: require non-letter after leading A so "AB" is not merged into A.
- * D1/D2: allow optional space/dash between D and digit; D10 stays literal.
- * "Block A" / trailing "… A" / repeated HOSTEL/BLOCK prefixes map to the same keys as SQL normalize_hostel_block_key().
+ * Mirrors SQL normalize_hostel_block_key() so client-side rollups collapse to the same
+ * keys as server-side aggregates. A/D1/D2 handled specifically; D10+ stays literal.
  */
-/**
- * Canonical block label for dashboards and drill-down: empty, whitespace, JSON null-ish strings,
- * and case variants of "No block" map to exactly `No block` so rows are not dropped or deduped away in the UI.
- */
+
 export function displayRollupBlockKey(raw: string | null | undefined): string {
   if (raw == null) return 'No block';
   const s = String(raw)
-    .replace(/\u00a0/g, ' ')
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/ /g, ' ')
+    .replace(/[​-‍﻿]/g, '')
     .trim();
   if (!s) return 'No block';
   const lower = s.toLowerCase();
@@ -23,8 +18,8 @@ export function displayRollupBlockKey(raw: string | null | undefined): string {
 
 export function normalizeHostelBlockKey(raw: string | null | undefined): string {
   let s = String(raw ?? '')
-    .replace(/\u00a0/g, ' ')
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/ /g, ' ')
+    .replace(/[​-‍﻿]/g, '')
     .trim();
   if (!s) return 'No block';
 
@@ -51,7 +46,6 @@ export function normalizeHostelBlockKey(raw: string | null | undefined): string 
   return u;
 }
 
-/** Rollup key for dashboards: non-empty bill snapshot wins; otherwise linked user profile block. */
 export function rollupHostelBlockKey(
   billHostelBlock: string | null | undefined,
   userHostelBlock: string | null | undefined,

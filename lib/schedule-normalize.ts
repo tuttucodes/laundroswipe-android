@@ -1,9 +1,9 @@
-import { uniqueSlotIds } from '@/lib/schedule-slot-merge';
-import { scheduleDateKey } from '@/lib/schedule-date-key';
+import { uniqueSlotIds } from './schedule-slot-merge';
+import { scheduleDateKey } from './schedule-date-key';
 
 /**
  * Values under each vendor key in JSONB are often stored scoped (e.g. `vit-chn__evening`).
- * The booking UI and slot rows use local ids (`evening`), so strip `{key}__` when present.
+ * Booking UI uses local ids (`evening`), so strip `{key}__` when present.
  */
 function slotIdJsonValueToLocal(vendorKey: string, id: string): string {
   const v = String(id ?? '').trim();
@@ -12,7 +12,6 @@ function slotIdJsonValueToLocal(vendorKey: string, id: string): string {
   return v.startsWith(prefix) ? v.slice(prefix.length) : v;
 }
 
-/** Raw row from `schedule_dates` before client normalization. */
 export type RawDbScheduleDateRow = {
   date: unknown;
   enabled: boolean;
@@ -32,10 +31,9 @@ export type NormalizedScheduleDateRow = {
   updated_at?: string;
 };
 
-/**
- * Normalizes `schedule_dates` rows from Supabase (DATE / JSONB shapes) for booking + admin APIs.
- */
-export function normalizeScheduleDateRowsFromDb(rows: RawDbScheduleDateRow[]): NormalizedScheduleDateRow[] {
+export function normalizeScheduleDateRowsFromDb(
+  rows: RawDbScheduleDateRow[],
+): NormalizedScheduleDateRow[] {
   return rows.map((r) => {
     const raw = r.slot_ids;
     let slot_ids: string[] = [];
@@ -72,7 +70,10 @@ export function normalizeScheduleDateRowsFromDb(rows: RawDbScheduleDateRow[]): N
   });
 }
 
-export function scheduleDateRowByKey<T extends { date: string }>(rows: T[], date: string): T | undefined {
+export function scheduleDateRowByKey<T extends { date: string }>(
+  rows: T[],
+  date: string,
+): T | undefined {
   const k = scheduleDateKey(date) ?? date.trim();
   return rows.find((d) => (scheduleDateKey(d.date) ?? String(d.date).trim()) === k);
 }

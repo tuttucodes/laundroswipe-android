@@ -1,4 +1,4 @@
-/** Error codes returned by `POST /api/orders/create` when booking does not match admin schedule. */
+/** Error codes from POST /api/orders/create. */
 export const SCHEDULE_ORDER_ERROR_CODES = new Set([
   'INVALID_PICKUP_DATE',
   'INVALID_SLOT',
@@ -14,12 +14,15 @@ export function isScheduleOrderErrorCode(code: string | undefined): boolean {
 }
 
 /** User-facing copy; prefers friendly text, falls back to server message. */
-export function userMessageForScheduleOrderError(code: string | undefined, serverError?: string): string {
+export function userMessageForScheduleOrderError(
+  code: string | undefined,
+  serverError?: string,
+): string {
   switch (code) {
     case 'PICKUP_DATE_PAST':
       return 'That pickup date has already passed. Choose another date.';
     case 'DATE_NOT_BOOKABLE':
-      return 'That date is not open for booking. Refresh the page and pick an available date.';
+      return 'That date is not open for booking. Refresh and pick an available date.';
     case 'DATE_DISABLED':
       return 'This partner is not accepting bookings on that date. Try another date or laundry partner.';
     case 'SLOT_NOT_ALLOWED':

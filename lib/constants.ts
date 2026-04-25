@@ -11,12 +11,27 @@ export const COLLEGES = [
 ] as const;
 
 export const SERVICES = [
-  { id: 'wash_fold', name: 'Wash & Fold', emoji: '👕', desc: 'Washed, dried & neatly folded', comingSoon: false },
-  { id: 'wash_iron', name: 'Wash & Iron', emoji: '👔', desc: 'Washed, ironed & hung', comingSoon: false },
-  { id: 'dry_clean', name: 'Dry Cleaning', emoji: '🧥', desc: 'Premium dry clean care', comingSoon: false },
-  { id: 'iron_only', name: 'Iron Only', emoji: '♨️', desc: 'Press & steam finish', comingSoon: false },
-  { id: 'express', name: 'Express', emoji: '⚡', desc: 'Same-day turnaround', comingSoon: true },
-  { id: 'shoe_clean', name: 'Shoe Clean', emoji: '👟', desc: 'Deep clean per pair', comingSoon: false },
+  {
+    id: 'wash_iron',
+    name: 'Wash & Iron',
+    emoji: '👔',
+    desc: 'Washed, ironed & hung',
+    comingSoon: false,
+  },
+  {
+    id: 'dry_clean',
+    name: 'Dry Cleaning',
+    emoji: '🧥',
+    desc: 'Premium dry clean care',
+    comingSoon: false,
+  },
+  {
+    id: 'shoe_clean',
+    name: 'Shoe Clean',
+    emoji: '👟',
+    desc: 'Deep clean per pair',
+    comingSoon: false,
+  },
 ] as const;
 
 export const VENDORS = [
@@ -34,23 +49,20 @@ export const VENDORS = [
     location: 'VIT Chennai',
     emoji: '🧼',
     audienceLabel: 'For B, C & E Block Students Only',
-    /** Shown as bookable only when admin schedule has at least one bookable slot (see LaundroApp). */
     bookOnlyWhenSlotsAvailable: true,
     availability: { type: 'nearby', lat: 12.8406, lng: 80.1533, radiusKm: 18 },
   },
 ] as const;
-
-export const VENDOR = {
-  name: 'Pro Fab Power Laundry Services',
-  days: ['Tuesday', 'Saturday', 'Sunday'],
-  location: 'On-campus pickup point',
-} as const;
 
 export const VIT_VENDOR_BLOCK_ACCESS = {
   profab: ['A', 'D1', 'D2'],
   starwash: ['B', 'C', 'E'],
 } as const;
 
+/**
+ * Default bill item catalog for Pro Fab. Vendor-level overrides (price/label/image_url)
+ * are merged on top via vendor-bill-catalog.mergeVendorBillItemsFromDbRow.
+ */
 export const PROFAB_VENDOR_BILL_ITEMS = [
   { id: 'pant', label: 'Pant', price: 22 },
   { id: 'pant_dc', label: 'Pant DC', price: 50 },
@@ -117,9 +129,7 @@ export const PROFAB_VENDOR_BILL_ITEMS = [
   { id: 'pyjamma_dc', label: 'Pyjamma DC', price: 80 },
 ] as const;
 
-export const STARWASH_VENDOR_BILL_ITEMS = [
-  ...PROFAB_VENDOR_BILL_ITEMS,
-] as const;
+export const STARWASH_VENDOR_BILL_ITEMS = [...PROFAB_VENDOR_BILL_ITEMS] as const;
 
 export const VENDOR_BILL_ITEMS_BY_VENDOR = {
   profab: PROFAB_VENDOR_BILL_ITEMS,
@@ -127,7 +137,9 @@ export const VENDOR_BILL_ITEMS_BY_VENDOR = {
 } as const;
 
 export function getVendorBillItems(vendorId?: string | null) {
-  const key = String(vendorId ?? '').trim().toLowerCase() as keyof typeof VENDOR_BILL_ITEMS_BY_VENDOR;
+  const key = String(vendorId ?? '')
+    .trim()
+    .toLowerCase() as keyof typeof VENDOR_BILL_ITEMS_BY_VENDOR;
   return VENDOR_BILL_ITEMS_BY_VENDOR[key] ?? PROFAB_VENDOR_BILL_ITEMS;
 }
 
@@ -141,61 +153,48 @@ export const STATUSES = [
   'delivered',
 ] as const;
 
-export const STATUS_LABELS = [
-  'Pickup Scheduled',
-  'Agent Assigned',
-  'Picked Up',
-  'At Facility',
-  'Ready',
-  'Out for Delivery',
-  'Delivered',
-];
+export type OrderStatus = (typeof STATUSES)[number];
 
-export const STATUS_EMOJI = ['🟡', '🔵', '🟢', '⚙️', '📦', '🚚', '✅'];
+export const STATUS_LABELS: Record<OrderStatus, string> = {
+  scheduled: 'Pickup Scheduled',
+  agent_assigned: 'Agent Assigned',
+  picked_up: 'Picked Up',
+  processing: 'At Facility',
+  ready: 'Ready',
+  out_for_delivery: 'Out for Delivery',
+  delivered: 'Delivered',
+};
+
+export const STATUS_EMOJI: Record<OrderStatus, string> = {
+  scheduled: '🟡',
+  agent_assigned: '🔵',
+  picked_up: '🟢',
+  processing: '⚙️',
+  ready: '📦',
+  out_for_delivery: '🚚',
+  delivered: '✅',
+};
 
 export function statusLabel(s: string): string {
-  const i = STATUSES.indexOf(s as (typeof STATUSES)[number]);
-  return STATUS_LABELS[i] ?? s;
+  return (STATUS_LABELS as Record<string, string>)[s] ?? s;
 }
 
-export function statusClass(s: string): string {
-  if (['scheduled', 'agent_assigned'].includes(s)) return 's-sch';
+export function statusClass(s: string): 's-sch' | 's-pro' | 's-del' {
+  if (s === 'scheduled' || s === 'agent_assigned') return 's-sch';
   if (s === 'delivered') return 's-del';
   return 's-pro';
 }
 
-/** When a vendor bill exists but the order row is still early-stage, show laundry progress in the app. */
+/** When a bill exists but order is still early-stage, show "Bill ready" instead. */
 export function customerFacingStatusLabel(status: string, hasActiveBill: boolean): string {
-  if (hasActiveBill && (status === 'scheduled' || status === 'agent_assigned')) {
-    return 'Bill ready';
-  }
+  if (hasActiveBill && (status === 'scheduled' || status === 'agent_assigned')) return 'Bill ready';
   return statusLabel(status);
 }
 
-export function customerFacingStatusClass(status: string, hasActiveBill: boolean): string {
-  if (hasActiveBill && (status === 'scheduled' || status === 'agent_assigned')) {
-    return 's-pro';
-  }
+export function customerFacingStatusClass(
+  status: string,
+  hasActiveBill: boolean,
+): 's-sch' | 's-pro' | 's-del' {
+  if (hasActiveBill && (status === 'scheduled' || status === 'agent_assigned')) return 's-pro';
   return statusClass(status);
 }
-
-export function next10Days(): { date: Date; day: string; num: number; month: string; ok: boolean; full: string }[] {
-  const dn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const mn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const days: { date: Date; day: string; num: number; month: string; ok: boolean; full: string }[] = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    const w = d.getDay();
-    days.push({
-      date: d,
-      day: dn[w],
-      num: d.getDate(),
-      month: mn[d.getMonth()],
-      ok: w === 0 || w === 2 || w === 6, // Sun, Tue, Sat
-      full: d.toISOString().split('T')[0],
-    });
-  }
-  return days;
-}
-

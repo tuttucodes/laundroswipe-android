@@ -1,6 +1,5 @@
 /**
- * Normalize Postgres DATE / timestamptz / ISO strings to YYYY-MM-DD
- * so admin payloads, API JSON, and client booking state use one canonical key.
+ * Normalize Postgres DATE / timestamptz / ISO strings to YYYY-MM-DD.
  */
 export function scheduleDateKey(input: unknown): string | null {
   const s = String(input ?? '').trim();

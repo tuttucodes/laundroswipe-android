@@ -1,32 +1,53 @@
-# Node / tooling
-node_modules/
-.next/
-npm-debug.log*
-pnpm-lock.yaml
-yarn.lock
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# Env & config (never commit real credentials; .env.example is placeholders only)
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.*.local
-config/env.js
-config/env*.local.js
+.env*.local
 
-# Large signed APK (optional); use NEXT_PUBLIC_PRINT_BRIDGE_APK_URL or force-add to git if small team
-public/downloads/*.apk
+# Google Stitch references (local design refs, not app code)
+_stitch_refs/
 
-# Claude Code
-.claude/
+# Firebase + Play secrets (never commit)
+google-services.json
+GoogleService-Info.plist
+play-service-account.json
+*.jks
+*.keystore
 
-# Graphify local cache (regenerated)
-graphify-out/cache/
+# typescript
+*.tsbuildinfo
 
-# Editor / OS
-.DS_Store
-.vscode/
-.idea/
-
-.vercel
+# generated native folders
+/ios
+/android

@@ -1,6 +1,6 @@
-import { uniqueSlotIds } from '@/lib/schedule-slot-merge';
-import type { NormalizedScheduleDateRow } from '@/lib/schedule-normalize';
-import { scheduleDateRowByKey } from '@/lib/schedule-normalize';
+import { uniqueSlotIds } from './schedule-slot-merge';
+import type { NormalizedScheduleDateRow } from './schedule-normalize';
+import { scheduleDateRowByKey } from './schedule-normalize';
 
 export type ScheduleSlotLike = {
   id: string;
@@ -19,7 +19,10 @@ function normalizeScheduleIdForVendor(id: string, vendorId: string): string | nu
   return scopedVendor === vendorId ? localId : null;
 }
 
-function slotIdsForDateByVendor(row: NormalizedScheduleDateRow | undefined, vendorId: string): string[] {
+function slotIdsForDateByVendor(
+  row: NormalizedScheduleDateRow | undefined,
+  vendorId: string,
+): string[] {
   if (!row) return [];
   const map = row.slot_ids_by_vendor;
   if (map && Object.keys(map).length > 0) {
@@ -34,14 +37,15 @@ function slotIdsForDateByVendor(row: NormalizedScheduleDateRow | undefined, vend
   return uniqueSlotIds(normalized);
 }
 
-function isDateEnabledForVendor(row: NormalizedScheduleDateRow | undefined, vendorId: string): boolean {
+function isDateEnabledForVendor(
+  row: NormalizedScheduleDateRow | undefined,
+  vendorId: string,
+): boolean {
   if (!row) return false;
   if (!vendorId) return Boolean(row.enabled);
   const vendorEnabledMap = row.enabled_by_vendor;
   if (vendorEnabledMap && typeof vendorEnabledMap === 'object') {
-    if (typeof vendorEnabledMap[vendorId] === 'boolean') {
-      return Boolean(vendorEnabledMap[vendorId]);
-    }
+    if (typeof vendorEnabledMap[vendorId] === 'boolean') return Boolean(vendorEnabledMap[vendorId]);
     if (Object.keys(vendorEnabledMap).length > 0) return false;
   }
   return Boolean(row.enabled);
@@ -50,7 +54,8 @@ function isDateEnabledForVendor(row: NormalizedScheduleDateRow | undefined, vend
 export type BookingGuardFailure = { ok: false; error: string; code: string };
 
 /**
- * Ensures pickup date + slot id match admin-configured `schedule_dates` / `schedule_slots` for the vendor.
+ * Client preflight matching the server guard at /api/orders/create. Same error codes
+ * so mobile surfaces friendly messages from schedule-order-errors before round-tripping.
  */
 export function assertBookingMatchesSchedule(params: {
   dates: NormalizedScheduleDateRow[];
@@ -76,16 +81,27 @@ export function assertBookingMatchesSchedule(params: {
   }
 
   const row = scheduleDateRowByKey(dates, dateKey);
-  if (!row) {
-    return { ok: false, error: 'This date is not available for booking.', code: 'DATE_NOT_BOOKABLE' };
-  }
+  if (!row)
+    return {
+      ok: false,
+      error: 'This date is not available for booking.',
+      code: 'DATE_NOT_BOOKABLE',
+    };
   if (!isDateEnabledForVendor(row, vid)) {
-    return { ok: false, error: 'This date is not available for this laundry partner.', code: 'DATE_DISABLED' };
+    return {
+      ok: false,
+      error: 'This date is not available for this laundry partner.',
+      code: 'DATE_DISABLED',
+    };
   }
 
   const allowed = slotIdsForDateByVendor(row, vid);
   if (!allowed.includes(slotId)) {
-    return { ok: false, error: 'This time slot is not available on the selected date.', code: 'SLOT_NOT_ALLOWED' };
+    return {
+      ok: false,
+      error: 'This time slot is not available on the selected date.',
+      code: 'SLOT_NOT_ALLOWED',
+    };
   }
 
   const slotOk = slots.some((s) => {
@@ -94,9 +110,6 @@ export function assertBookingMatchesSchedule(params: {
     return local === slotId;
   });
 
-  if (!slotOk) {
-    return { ok: false, error: 'This time slot is not active.', code: 'SLOT_INACTIVE' };
-  }
-
+  if (!slotOk) return { ok: false, error: 'This time slot is not active.', code: 'SLOT_INACTIVE' };
   return { ok: true };
 }
