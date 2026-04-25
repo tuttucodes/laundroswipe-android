@@ -79,11 +79,20 @@ jobs:
           curl -L --fail --retry 4 --retry-delay 5 -o "$OUT" "$ARTIFACT_URL"
           echo "OUT=$OUT" >> "$GITHUB_ENV"
 
+      - name: Upload APK as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: laundroswipe-apk
+          path: dist/*.apk
+          retention-days: 30
+
       - name: Create GitHub Release
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.OUT }}
           name: LaundroSwipe ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           body: |
             Android APK built from EAS profile `${{ env.PROFILE }}`.
