@@ -11,7 +11,9 @@ import { stripLeadingHashesFromToken } from '@/lib/vendor-bill-token';
 import { useRegisterPush } from '@/hooks/use-register-push';
 import { Container } from '@/components/ui/Container';
 import { SkeletonRow } from '@/components/ui/Skeleton';
+import { ScaleButton } from '@/components/ui/ScaleButton';
 import { env } from '@/lib/env';
+import { shadow } from '@/theme/tokens';
 
 const SERVICE_VISUALS: Record<
   string,
@@ -65,7 +67,7 @@ export default function CustomerHome() {
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={['top']}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 130 }}
         refreshControl={
           <RefreshControl
             refreshing={query.isRefetching}
@@ -74,73 +76,59 @@ export default function CustomerHome() {
           />
         }
       >
-        <Container style={{ padding: 20 }}>
-          {/* Hero card */}
-          <Animated.View entering={FadeInDown.springify()}>
+        <Container style={{ padding: 24 }}>
+          {/* HIGH-END MASSIVE HERO */}
+          <Animated.View entering={FadeInDown.springify()} className="mb-4">
             <View
-              className="overflow-hidden rounded-3xl bg-primary"
-              style={{
-                shadowColor: '#1746A2',
-                shadowOpacity: 0.18,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 8 },
-                elevation: 6,
-              }}
+              className="overflow-hidden rounded-[32px] bg-ink"
+              style={{ padding: 28, ...shadow.elevated }}
             >
-              <View className="px-6 pb-6 pt-7">
-                <Text className="font-display text-3xl font-extrabold text-white">
-                  Hi, {firstName(profile?.full_name ?? bootstrap?.user?.full_name)} 👋
-                </Text>
-                <Text className="mt-2 text-sm text-white/85">
-                  Pick a service — we handle pickup, wash and delivery.
-                </Text>
-
-                <Link href="/(customer)/schedule" asChild>
-                  <Pressable
-                    accessibilityRole="button"
-                    style={({ pressed }) => (pressed ? { transform: [{ scale: 0.98 }] } : null)}
-                    className="mt-6 flex-row items-center justify-between rounded-2xl bg-white px-5 py-4"
-                  >
-                    <Text className="font-display text-lg font-extrabold text-primary">
-                      Schedule a pickup
-                    </Text>
-                    <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary-light">
-                      <ArrowRight color="#1746A2" size={18} />
-                    </View>
-                  </Pressable>
-                </Link>
-              </View>
-              {/* Decorative blurred circle */}
+              {/* Dynamic shape blobs */}
               <View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  top: -40,
-                  right: -40,
-                  width: 160,
-                  height: 160,
-                  borderRadius: 80,
-                  backgroundColor: 'rgba(255,255,255,0.10)',
-                }}
+                className="absolute right-[-60px] top-[-60px] h-[200px] w-[200px] rounded-full bg-primary/40"
+                style={{ transform: [{ scaleX: 1.2 }], opacity: 0.8 }}
               />
+              <View
+                className="absolute bottom-[-80px] left-[-40px] h-[180px] w-[180px] rounded-full bg-teal/30"
+                style={{ transform: [{ scaleY: 1.5 }], opacity: 0.8 }}
+              />
+
+              <Text className="font-display text-[44px] leading-[48px] font-extrabold text-white tracking-tight">
+                Hello,{'\n'}{firstName(profile?.full_name ?? bootstrap?.user?.full_name)}.
+              </Text>
+              <Text className="mt-3 text-base font-body text-white/80">
+                Outsource your laundry.{'\n'}Focus on what matters.
+              </Text>
+
+              <Link href="/(customer)/schedule" asChild>
+                <ScaleButton
+                  hapticMode="heavy"
+                  scaleTo={0.92}
+                  className="mt-8 flex-row items-center justify-between rounded-2xl bg-white px-6 py-5"
+                >
+                  <Text className="font-display text-lg font-extrabold text-ink">
+                    Schedule a pickup
+                  </Text>
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-bg">
+                    <ArrowRight color="#1A1D2E" size={20} strokeWidth={3} />
+                  </View>
+                </ScaleButton>
+              </Link>
             </View>
           </Animated.View>
 
-          {/* Active orders */}
+          {/* ACTIVE ORDERS */}
           {showSkeleton ? (
-            <View className="mt-7 gap-2">
+            <View className="mt-6 gap-3">
               <SkeletonRow />
               <SkeletonRow />
             </View>
           ) : active.length > 0 ? (
-            <Animated.View entering={FadeInDown.delay(80).springify()} className="mt-7">
-              <View className="flex-row items-center justify-between">
-                <Text className="font-display text-lg font-extrabold text-ink">Active orders</Text>
-                <Link href="/(customer)/orders" className="text-sm font-semibold text-primary">
-                  See all
-                </Link>
-              </View>
-              <View className="mt-3 gap-2">
+            <Animated.View entering={FadeInDown.delay(80).springify()} className="mt-6">
+              <Text className="font-display text-sm font-bold uppercase tracking-wider text-ink-2 mb-3">
+                Active Orders
+              </Text>
+              <View className="gap-3">
                 {active.map((o, i) => (
                   <Animated.View key={o.id} entering={FadeInDown.delay(120 + i * 50).springify()}>
                     <OrderCard order={o} bills={bootstrap?.bills ?? []} />
@@ -150,55 +138,56 @@ export default function CustomerHome() {
             </Animated.View>
           ) : null}
 
-          {/* Services */}
-          <Animated.View entering={FadeInDown.delay(140).springify()} className="mt-8">
-            <View className="flex-row items-end justify-between">
-              <Text className="font-display text-2xl font-extrabold text-ink">
-                What do you need today?
-              </Text>
-              <Text className="text-xs text-ink-2">{visibleServices.length} services</Text>
-            </View>
+          {/* BENTO BOX SERVICES */}
+          <Animated.View entering={FadeInDown.delay(160).springify()} className="mt-10">
+            <Text className="font-display text-sm font-bold uppercase tracking-wider text-ink-2 mb-3">
+              Explore Services
+            </Text>
 
-            <View className="mt-4 gap-3">
-              {visibleServices.map((s, i) => (
-                <Animated.View key={s.id} entering={FadeInDown.delay(180 + i * 60).springify()}>
-                  <ServiceCard
-                    id={s.id}
-                    name={s.name}
-                    desc={s.desc}
-                  />
-                </Animated.View>
-              ))}
+            <View className="gap-4">
+              {/* First Item Full Width */}
+              {visibleServices[0] && <BentoCard svc={visibleServices[0]} isFull />}
+              
+              {/* Next Two Half Width */}
+              {(visibleServices[1] || visibleServices[2]) && (
+                <View className="flex-row gap-4">
+                  {visibleServices[1] && <View className="flex-1"><BentoCard svc={visibleServices[1]} /></View>}
+                  {visibleServices[2] && <View className="flex-1"><BentoCard svc={visibleServices[2]} /></View>}
+                </View>
+              )}
             </View>
           </Animated.View>
 
-          {/* How it works */}
-          <Animated.View entering={FadeIn.delay(360)} className="mt-8 rounded-2xl bg-surface p-5">
-            <View className="flex-row items-start justify-between gap-3">
-              <Step n={1} label="Pick service & date" />
-              <Step n={2} label="We pick up" />
-              <Step n={3} label="Delivery" />
-            </View>
+          {/* HOW IT WORKS */}
+          <Animated.View entering={FadeInDown.delay(240).springify()} className="mt-10">
+             <View className="rounded-[28px] bg-surface p-7" style={shadow.card}>
+                <Text className="font-display text-xl font-extrabold text-ink mb-6 text-center">
+                  How it works
+                </Text>
+                <View className="flex-row items-start justify-between gap-2">
+                  <Step n={1} label="Schedule" />
+                  <Step n={2} label="We Bag It" />
+                  <Step n={3} label="Delivered" />
+                </View>
+             </View>
           </Animated.View>
 
-          {/* Brand footer */}
-          <Animated.View entering={FadeIn.delay(450)} className="mt-10 items-center gap-2">
-            <View className="h-px w-full bg-border" />
-            <Text className="mt-4 font-display text-2xl font-extrabold text-primary">
+          {/* BRAND FOOTER (Sleeker) */}
+          <Animated.View entering={FadeIn.delay(350).duration(800)} className="mt-12 items-center pb-8">
+            <View className="h-2 w-2 rounded-full bg-border-strong mb-6" />
+            <Text className="font-display text-3xl font-extrabold text-ink opacity-80">
               LaundroSwipe
             </Text>
-            <Text className="text-sm text-ink-2">Fast, fair & student-first laundry.</Text>
-            <Text className="mt-1 text-sm font-semibold text-ink">
-              Crafted with ❤️ in Chennai
+            <Text className="text-sm font-bold text-ink-2 mb-6 tracking-wide uppercase">
+              Stay fresh
             </Text>
-            <View className="mt-3 flex-row gap-4">
+            
+            <View className="flex-row gap-6 mb-4">
               <FooterLink label="Privacy" href={`${env.webOrigin}/privacy`} />
-              <Text className="text-ink-2">·</Text>
               <FooterLink label="Terms" href={`${env.webOrigin}/terms`} />
-              <Text className="text-ink-2">·</Text>
               <FooterLink label="Support" href={`${env.webOrigin}/support`} />
             </View>
-            <Text className="mt-3 text-xs text-ink-2">
+            <Text className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">
               © {new Date().getFullYear()} LaundroSwipe
             </Text>
           </Animated.View>
@@ -208,36 +197,40 @@ export default function CustomerHome() {
   );
 }
 
-function ServiceCard({ id, name, desc }: { id: string; name: string; desc: string }) {
-  const visuals = SERVICE_VISUALS[id] ?? { tone: 'primary-light', icon: Shirt };
+function BentoCard({ svc, isFull = false }: { svc: typeof SERVICES[0]; isFull?: boolean }) {
+  const visuals = SERVICE_VISUALS[svc.id] ?? { tone: 'primary-light', icon: Shirt };
   const Icon = visuals.icon;
   const bg = TONE_BG[visuals.tone] ?? '#E8EEFB';
   const fg = TONE_FG[visuals.tone] ?? '#1746A2';
+
   return (
-    <Link
-      href={{ pathname: '/(customer)/schedule', params: { svc: id } } as never}
-      asChild
-    >
-      <Pressable
+    <Link href={{ pathname: '/(customer)/schedule', params: { svc: svc.id } } as never} asChild>
+      <ScaleButton
+        hapticMode="medium"
         accessibilityRole="button"
-        accessibilityLabel={`Pick ${name}`}
-        style={({ pressed }) => (pressed ? { transform: [{ scale: 0.99 }] } : null)}
-        className="flex-row items-center gap-3 rounded-2xl bg-surface p-4"
+        accessibilityLabel={`Pick ${svc.name}`}
+        className={`rounded-[28px] bg-surface overflow-hidden ${isFull ? 'p-6' : 'p-5'}`}
+        style={shadow.card}
       >
-        <View
-          style={{ backgroundColor: bg }}
-          className="h-14 w-14 items-center justify-center rounded-2xl"
-        >
-          <Icon color={fg} size={26} />
+        <View className={`${isFull ? 'flex-row items-center justify-between' : 'flex-col items-start gap-4'}`}>
+           <View>
+              <View style={{ backgroundColor: bg }} className={`items-center justify-center rounded-[20px] ${isFull ? 'h-16 w-16 mb-4' : 'h-14 w-14 mb-3'}`}>
+                <Icon color={fg} size={isFull ? 30 : 26} />
+              </View>
+              <Text className={`font-display font-extrabold text-ink ${isFull ? 'text-2xl' : 'text-lg'}`}>
+                {svc.name}
+              </Text>
+              <Text className={`mt-1 font-body text-ink-2 ${isFull ? 'text-sm' : 'text-xs'}`}>
+                {svc.desc}
+              </Text>
+           </View>
+           {isFull && (
+              <View className="h-12 w-12 items-center justify-center rounded-2xl bg-border/40">
+                <ArrowRight color="#1A1D2E" size={24} />
+              </View>
+           )}
         </View>
-        <View className="flex-1">
-          <Text className="font-display text-base font-extrabold text-ink">{name}</Text>
-          <Text className="mt-0.5 text-xs text-ink-2">{desc}</Text>
-        </View>
-        <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary-light">
-          <ArrowRight color="#1746A2" size={18} />
-        </View>
-      </Pressable>
+      </ScaleButton>
     </Link>
   );
 }
@@ -245,10 +238,10 @@ function ServiceCard({ id, name, desc }: { id: string; name: string; desc: strin
 function Step({ n, label }: { n: number; label: string }) {
   return (
     <View className="flex-1 items-center">
-      <View className="h-9 w-9 items-center justify-center rounded-full bg-primary">
-        <Text className="font-display text-sm font-extrabold text-white">{n}</Text>
+      <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-primary-light mb-3">
+        <Text className="font-display text-lg font-extrabold text-primary">{n}</Text>
       </View>
-      <Text className="mt-2 text-center text-xs text-ink-2">{label}</Text>
+      <Text className="text-center font-display text-xs font-bold text-ink">{label}</Text>
     </View>
   );
 }
@@ -256,7 +249,7 @@ function Step({ n, label }: { n: number; label: string }) {
 function FooterLink({ label, href }: { label: string; href: string }) {
   return (
     <Pressable accessibilityRole="link" onPress={() => Linking.openURL(href).catch(() => undefined)}>
-      <Text className="text-sm font-semibold text-primary">{label}</Text>
+      <Text className="font-display text-xs font-bold text-primary uppercase tracking-wider">{label}</Text>
     </Pressable>
   );
 }
@@ -267,25 +260,32 @@ function OrderCard({ order, bills }: { order: OrderRow; bills: BootstrapPayload[
     (b) => stripLeadingHashesFromToken(b.order_token).toLowerCase() === tokenKey && !b.cancelled_at,
   );
   const status = customerFacingStatusLabel(order.status, hasBill);
+
+  const isActiveStatus = order.status !== 'delivered' && order.status !== 'cancelled';
+
   return (
     <Link href={{ pathname: '/(customer)/orders/[id]', params: { id: order.id } } as never} asChild>
-      <Pressable
+      <ScaleButton
+        hapticMode="light"
         accessibilityRole="button"
-        className="flex-row items-center gap-3 rounded-2xl bg-surface p-4"
+        className="flex-row items-center gap-4 rounded-[24px] bg-surface p-4"
+        style={shadow.card}
       >
-        <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary-light">
-          <Text className="font-display text-base font-extrabold text-primary">#</Text>
+        <View className={`h-12 w-12 items-center justify-center rounded-[18px] ${isActiveStatus ? 'bg-orange-light' : 'bg-primary-light'}`}>
+          <Text className={`font-display text-xl font-extrabold ${isActiveStatus ? 'text-orange' : 'text-primary'}`}>#</Text>
         </View>
         <View className="flex-1">
-          <Text className="font-display text-base font-bold text-ink">{order.service_name}</Text>
-          <Text className="text-xs text-ink-2" numberOfLines={1}>
-            {order.pickup_date} · {order.time_slot} · {order.vendor_name ?? 'Partner'}
+          <Text className="font-display text-lg font-extrabold text-ink">{order.service_name}</Text>
+          <Text className="mt-0.5 font-body text-xs text-ink-2" numberOfLines={1}>
+            {order.pickup_date} · {order.time_slot}
           </Text>
         </View>
-        <View className="rounded-full bg-primary-light px-3 py-1">
-          <Text className="text-xs font-semibold text-primary">{status}</Text>
+        <View className={`rounded-full px-4 py-2 ${isActiveStatus ? 'bg-ink' : 'bg-border'}`}>
+          <Text className={`font-display text-[10px] font-bold uppercase tracking-wider ${isActiveStatus ? 'text-white' : 'text-ink-2'}`}>
+            {status}
+          </Text>
         </View>
-      </Pressable>
+      </ScaleButton>
     </Link>
   );
 }

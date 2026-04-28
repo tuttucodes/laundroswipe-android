@@ -2,28 +2,14 @@ import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { House, Receipt, User } from 'lucide-react-native';
 import { colors, shadow } from '@/theme/tokens';
+import { TabBar } from '@/components/ui/TabBar';
 
 export default function CustomerLayout() {
   return (
     <Tabs
+      tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: Platform.select({ ios: 84, android: 64, default: 64 }),
-          paddingTop: 6,
-          ...shadow.elevated,
-        },
-        tabBarLabelStyle: {
-          fontFamily: 'SourceSans3_600SemiBold',
-          fontSize: 11,
-          marginBottom: Platform.select({ ios: 0, android: 6, default: 4 }),
-        },
-        tabBarItemStyle: { paddingVertical: 4 },
       }}
     >
       <Tabs.Screen
